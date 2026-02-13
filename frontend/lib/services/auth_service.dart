@@ -3,6 +3,7 @@ import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/foundation.dart';
+import '../models/user_model.dart';
 
 class AuthService {
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
@@ -16,7 +17,7 @@ class AuthService {
     );
   }
 
-  Future<Map<String, dynamic>?> signInWithGoogle() async {
+  Future<UserModel?> signInWithGoogle() async {
     try {
       await _ensureInitialized();
       final GoogleSignInAccount? googleUser = await _googleSignIn.authenticate(
@@ -37,8 +38,15 @@ class AuthService {
 
       if (response.statusCode == 200) {
         final data = jsonDecode(response.body);
+        final user = UserModel.fromJson(data['user']);
+
         await _storage.write(key: 'jwt_token', value: data['token']);
-        return data['user'];
+        await _storage.write(
+          key: 'user_profile',
+          value: jsonEncode(user.toJson()),
+        );
+
+        return user;
       } else {
         throw Exception('Backend authentication failed: ${response.body}');
       }
@@ -52,10 +60,17 @@ class AuthService {
     await _ensureInitialized();
     await _googleSignIn.signOut();
     await _storage.delete(key: 'jwt_token');
+    await _storage.delete(key: 'user_profile');
   }
 
   Future<String?> getToken() async {
     return await _storage.read(key: 'jwt_token');
+  }
+
+  Future<UserModel?> getUserProfile() async {
+    final profile = await _storage.read(key: 'user_profile');
+    if (profile == null) return null;
+    return UserModel.fromJson(jsonDecode(profile));
   }
 
   Future<bool> isAuthenticated() async {

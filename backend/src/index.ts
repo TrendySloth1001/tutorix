@@ -1,7 +1,8 @@
 import express from 'express';
-import cors from 'cors';
+import * as corsNamespace from 'cors';
+const cors = (corsNamespace as any).default || corsNamespace;
 import dotenv from 'dotenv';
-import authRoutes from './lib/auth/auth.route.js';
+import authRoutes from './modules/auth/auth.route.js';
 
 dotenv.config();
 

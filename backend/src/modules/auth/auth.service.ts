@@ -1,6 +1,7 @@
 import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
+import prisma from '../../infra/prisma.js';
 
 dotenv.config();
 
@@ -19,12 +20,23 @@ export class AuthService {
                 throw new Error('Invalid token payload');
             }
 
-            return {
-                email: payload.email,
-                name: payload.name,
-                picture: payload.picture,
-                sub: payload.sub, // Google user ID
-            };
+            // Upsert user in the database
+            const user = await prisma.user.upsert({
+                where: { googleId: payload.sub },
+                update: {
+                    email: payload.email!,
+                    name: payload.name ?? null,
+                    picture: payload.picture ?? null,
+                },
+                create: {
+                    googleId: payload.sub,
+                    email: payload.email!,
+                    name: payload.name ?? null,
+                    picture: payload.picture ?? null,
+                },
+            });
+
+            return user;
         } catch (error: any) {
             console.error('Error verifying Google token:', error);
             throw new Error(`Authentication failed: ${error.message}`);
@@ -33,8 +45,8 @@ export class AuthService {
 
     generateToken(user: any) {
         return jwt.sign(
-            { id: user.sub, email: user.email, name: user.name },
-            process.env.JWT_SECRET || 'secret',
+            { id: user.id, email: user.email },
+            process.env.JWT_SECRET as string,
             { expiresIn: '7d' }
         );
     }

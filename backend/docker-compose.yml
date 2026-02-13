@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: tutorix-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: tutorix_user
+      POSTGRES_PASSWORD: tutorix_password
+      POSTGRES_DB: tutorix_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    container_name: tutorix-redis
+    restart: always
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
