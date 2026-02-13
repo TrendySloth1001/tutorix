@@ -65,6 +65,14 @@ export class UserService {
         });
     }
 
+    async getSessions(userId: string) {
+        return prisma.loginSession.findMany({
+            where: { userId },
+            orderBy: { createdAt: 'desc' },
+            take: 20, // Limit to last 20 sessions for performance
+        });
+    }
+
     async findAll(page: number = 1, limit: number = 10) {
         const skip = (page - 1) * limit;
         const [users, total] = await Promise.all([

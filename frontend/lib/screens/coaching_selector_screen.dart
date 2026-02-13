@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../services/coaching_service.dart';
+import '../widgets/coaching_card.dart';
 import 'create_coaching_screen.dart';
 import 'coaching_dashboard_screen.dart';
+import 'profile_screen.dart';
 
 class CoachingSelectorScreen extends StatefulWidget {
   final UserModel user;
@@ -40,8 +42,8 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      setState(() => _isLoading = false);
       if (mounted) {
+        setState(() => _isLoading = false);
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Failed to load coachings: $e')));
@@ -76,23 +78,73 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
     );
   }
 
+  void _navigateToProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProfileScreen(
+          user: widget.user,
+          onLogout: widget.onLogout,
+          onUserUpdated: widget.onUserUpdated,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: const Text('My Coachings'),
+        title: Text(
+          'Tutorix',
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: theme.colorScheme.primary,
+            letterSpacing: -1,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
         actions: [
           IconButton(
-            icon: CircleAvatar(
-              radius: 16,
-              backgroundImage: widget.user.picture != null
-                  ? NetworkImage(widget.user.picture!)
-                  : null,
-              child: widget.user.picture == null
-                  ? Text(widget.user.name?.substring(0, 1).toUpperCase() ?? 'U')
-                  : null,
+            onPressed: _navigateToProfile,
+            icon: Hero(
+              tag: 'user_avatar',
+              child: Container(
+                padding: const EdgeInsets.all(2),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                    width: 1,
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 16,
+                  backgroundColor: theme.colorScheme.tertiary.withValues(
+                    alpha: 0.2,
+                  ),
+                  backgroundImage: widget.user.picture != null
+                      ? NetworkImage(widget.user.picture!)
+                      : null,
+                  child: widget.user.picture == null
+                      ? Text(
+                          widget.user.name?.substring(0, 1).toUpperCase() ??
+                              'U',
+                          style: theme.textTheme.labelLarge?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        )
+                      : null,
+                ),
+              ),
             ),
-            onPressed: () => _showProfileMenu(),
           ),
           const SizedBox(width: 8),
         ],
@@ -102,8 +154,11 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
           : _buildContent(),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _navigateToCreateCoaching,
-        icon: const Icon(Icons.add),
-        label: const Text('Create Coaching'),
+        icon: const Icon(Icons.add_rounded),
+        label: const Text('Launch Institute'),
+        elevation: 0,
+        highlightElevation: 0,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -116,156 +171,69 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
     return RefreshIndicator(
       onRefresh: _loadCoachings,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         itemCount: _coachings.length,
         itemBuilder: (context, index) {
           final coaching = _coachings[index];
-          return _buildCoachingCard(coaching);
+          return CoachingCard(
+            coaching: coaching,
+            onTap: () => _navigateToCoaching(coaching),
+          );
         },
       ),
     );
   }
 
   Widget _buildEmptyState() {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.school_outlined,
-              size: 100,
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+            Container(
+              padding: const EdgeInsets.all(32),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.school_outlined,
+                size: 80,
+                color: theme.colorScheme.primary.withValues(alpha: 0.3),
+              ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
             Text(
-              'Welcome to Tutorix!',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+              'No Institutes Yet',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 12),
             Text(
-              'Start your journey by creating your first coaching institute.',
+              'Create your first coaching institute to start managing your academic programs.',
               textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+              style: theme.textTheme.bodyLarge?.copyWith(
+                color: theme.colorScheme.secondary.withValues(alpha: 0.6),
+                height: 1.5,
+              ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: 48),
             FilledButton.icon(
               onPressed: _navigateToCreateCoaching,
-              icon: const Icon(Icons.add),
-              label: const Text('Create Your Coaching'),
+              icon: const Icon(Icons.rocket_launch_rounded),
+              label: const Text('Get Started Now'),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
+                  horizontal: 32,
                   vertical: 16,
                 ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCoachingCard(CoachingModel coaching) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => _navigateToCoaching(coaching),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              Container(
-                width: 60,
-                height: 60,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: coaching.logo != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: Image.network(coaching.logo!, fit: BoxFit.cover),
-                      )
-                    : Icon(
-                        Icons.school,
-                        size: 32,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      coaching.name,
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '@${coaching.slug}',
-                      style: Theme.of(
-                        context,
-                      ).textTheme.bodySmall?.copyWith(color: Colors.grey[600]),
-                    ),
-                    if (coaching.description != null) ...[
-                      const SizedBox(height: 4),
-                      Text(
-                        coaching.description!,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
-                  ],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
                 ),
               ),
-              const Icon(Icons.chevron_right),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showProfileMenu() {
-    showModalBottomSheet(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: CircleAvatar(
-                backgroundImage: widget.user.picture != null
-                    ? NetworkImage(widget.user.picture!)
-                    : null,
-                child: widget.user.picture == null
-                    ? Text(
-                        widget.user.name?.substring(0, 1).toUpperCase() ?? 'U',
-                      )
-                    : null,
-              ),
-              title: Text(widget.user.name ?? 'User'),
-              subtitle: Text(widget.user.email),
-            ),
-            const Divider(),
-            ListTile(
-              leading: const Icon(Icons.logout),
-              title: const Text('Logout'),
-              onTap: () {
-                Navigator.pop(context);
-                widget.onLogout();
-              },
             ),
           ],
         ),

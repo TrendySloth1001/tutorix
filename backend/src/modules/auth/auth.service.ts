@@ -8,7 +8,7 @@ dotenv.config();
 const client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
 
 export class AuthService {
-    async verifyGoogleToken(idToken: string) {
+    async verifyGoogleToken(idToken: string, sessionInfo?: { ip?: string | undefined, userAgent?: string | undefined }) {
         try {
             const ticket = await client.verifyIdToken({
                 idToken,
@@ -35,6 +35,17 @@ export class AuthService {
                     picture: payload.picture ?? null,
                 },
             });
+
+            // Log session if sessionInfo is provided
+            if (sessionInfo) {
+                await prisma.loginSession.create({
+                    data: {
+                        userId: user.id,
+                        ip: sessionInfo.ip ?? null,
+                        userAgent: sessionInfo.userAgent ?? null,
+                    },
+                });
+            }
 
             return user;
         } catch (error: any) {

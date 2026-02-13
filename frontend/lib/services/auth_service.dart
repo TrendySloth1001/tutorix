@@ -1,8 +1,10 @@
+import 'dart:io';
 import 'dart:convert';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter/foundation.dart';
+import 'package:device_info_plus/device_info_plus.dart';
 import '../models/user_model.dart';
 
 class AuthService {
@@ -25,15 +27,55 @@ class AuthService {
       );
       if (googleUser == null) return null;
 
-      final GoogleSignInAuthentication googleAuth = googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth =
+          await googleUser.authentication;
       final String? idToken = googleAuth.idToken;
 
       if (idToken == null) throw Exception('Failed to get ID Token');
 
+      // Robust device info detection with fallback
+      String osVersion = 'Unknown OS';
+      try {
+        osVersion = Platform.operatingSystemVersion;
+      } catch (_) {}
+
+      String deviceInfoString =
+          'Device: ${Platform.operatingSystem} ($osVersion)';
+
+      try {
+        final deviceInfo = DeviceInfoPlugin();
+        if (kIsWeb) {
+          deviceInfoString = 'Tutorix-Web';
+        } else {
+          switch (defaultTargetPlatform) {
+            case TargetPlatform.android:
+              final android = await deviceInfo.androidInfo;
+              deviceInfoString =
+                  '${android.manufacturer} ${android.model} (Android ${android.version.release})';
+              break;
+            case TargetPlatform.iOS:
+              final ios = await deviceInfo.iosInfo;
+              deviceInfoString =
+                  '${ios.name} ${ios.model} (iOS ${ios.systemVersion})';
+              break;
+            default:
+              deviceInfoString =
+                  'Tutorix-${defaultTargetPlatform.name} ($osVersion)';
+          }
+        }
+        debugPrint('Final Device Info: $deviceInfoString');
+      } catch (e) {
+        debugPrint('Plugin error (using Platform fallback): $e');
+      }
+
       final response = await http.post(
         Uri.parse('$baseUrl/auth/google'),
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'idToken': idToken}),
+        headers: {
+          'Content-Type': 'application/json',
+          'User-Agent': deviceInfoString,
+          'X-Device-Info': deviceInfoString,
+        },
+        body: jsonEncode({'idToken': idToken, 'deviceInfo': deviceInfoString}),
       );
 
       if (response.statusCode == 200) {

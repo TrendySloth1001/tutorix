@@ -1,3 +1,5 @@
+import 'package:flutter/foundation.dart';
+
 class UserModel {
   final String id;
   final String email;
@@ -26,23 +28,29 @@ class UserModel {
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
-    return UserModel(
-      id: json['id'] as String,
-      email: json['email'] as String,
-      name: json['name'] as String?,
-      phone: json['phone'] as String?,
-      picture: json['picture'] as String?,
-      isAdmin: json['isAdmin'] as bool? ?? false,
-      isTeacher: json['isTeacher'] as bool? ?? false,
-      isParent: json['isParent'] as bool? ?? false,
-      isWard: json['isWard'] as bool? ?? false,
-      onboardingComplete: json['onboardingComplete'] as bool? ?? false,
-      ownedCoachings:
-          (json['ownedCoachings'] as List<dynamic>?)
-              ?.map((e) => CoachingModel.fromJson(e as Map<String, dynamic>))
-              .toList() ??
-          [],
-    );
+    try {
+      return UserModel(
+        id: json['id'] as String,
+        email: json['email'] as String,
+        name: json['name'] as String?,
+        phone: json['phone'] as String?,
+        picture: json['picture'] as String?,
+        isAdmin: json['isAdmin'] as bool? ?? false,
+        isTeacher: json['isTeacher'] as bool? ?? false,
+        isParent: json['isParent'] as bool? ?? false,
+        isWard: json['isWard'] as bool? ?? false,
+        onboardingComplete: json['onboardingComplete'] as bool? ?? false,
+        ownedCoachings:
+            (json['ownedCoachings'] as List<dynamic>?)
+                ?.map((e) => CoachingModel.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            [],
+      );
+    } catch (e) {
+      debugPrint('Error parsing UserModel from JSON: $e');
+      debugPrint('JSON data: $json');
+      rethrow;
+    }
   }
 
   Map<String, dynamic> toJson() {
@@ -144,6 +152,42 @@ class CoachingModel {
       'ownerId': ownerId,
       'createdAt': createdAt?.toIso8601String(),
       'updatedAt': updatedAt?.toIso8601String(),
+    };
+  }
+}
+
+class LoginSession {
+  final String id;
+  final String userId;
+  final String? ip;
+  final String? userAgent;
+  final DateTime createdAt;
+
+  LoginSession({
+    required this.id,
+    required this.userId,
+    this.ip,
+    this.userAgent,
+    required this.createdAt,
+  });
+
+  factory LoginSession.fromJson(Map<String, dynamic> json) {
+    return LoginSession(
+      id: json['id'] as String,
+      userId: json['userId'] as String,
+      ip: json['ip'] as String?,
+      userAgent: json['userAgent'] as String?,
+      createdAt: DateTime.parse(json['createdAt'] as String),
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'userId': userId,
+      'ip': ip,
+      'userAgent': userAgent,
+      'createdAt': createdAt.toIso8601String(),
     };
   }
 }

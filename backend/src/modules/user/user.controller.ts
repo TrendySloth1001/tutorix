@@ -62,6 +62,21 @@ export class UserController {
         }
     }
 
+    // GET /user/me/sessions - Get current user login sessions
+    async getSessions(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            const sessions = await userService.getSessions(userId);
+            res.json({ sessions });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
     // POST /user/me/onboarding - Complete onboarding
     async completeOnboarding(req: Request, res: Response) {
         try {

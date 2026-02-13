@@ -135,4 +135,24 @@ class UserService {
       throw Exception(error['message'] ?? 'Failed to complete onboarding');
     }
   }
+
+  /// Get user login sessions
+  Future<List<LoginSession>> getSessions() async {
+    final token = await _getToken();
+    if (token == null) throw Exception('Not authenticated');
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/user/me/sessions'),
+      headers: _authHeaders(token),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      final List<dynamic> sessionsJson = data['sessions'];
+      return sessionsJson.map((json) => LoginSession.fromJson(json)).toList();
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Failed to fetch sessions');
+    }
+  }
 }

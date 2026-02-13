@@ -11,6 +11,7 @@ router.use(authMiddleware);
 // Current user routes
 router.get('/me', userController.getMe.bind(userController));
 router.patch('/me', userController.updateMe.bind(userController));
+router.get('/me/sessions', userController.getSessions.bind(userController));
 router.patch('/me/roles', userController.updateRoles.bind(userController));
 router.post('/me/onboarding', userController.completeOnboarding.bind(userController));
 

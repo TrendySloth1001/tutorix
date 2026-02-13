@@ -42,7 +42,6 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
       );
 
       if (coaching != null) {
-        // Get updated user with new admin role
         final updatedUser = await _userService.getMe();
 
         if (mounted) {
@@ -53,7 +52,11 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('${coaching.name} created successfully!'),
-              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              backgroundColor: Theme.of(context).colorScheme.primary,
             ),
           );
 
@@ -65,7 +68,11 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to create coaching: $e'),
-            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
+            backgroundColor: Colors.redAccent,
           ),
         );
       }
@@ -78,124 +85,200 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Scaffold(
-      appBar: AppBar(title: const Text('Create Coaching')),
+      backgroundColor: theme.colorScheme.surface,
+      appBar: AppBar(
+        title: Text(
+          'Launch Institute',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Header illustration
+              // Header illustration - Premium Style
               Container(
-                height: 150,
+                height: 180,
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(16),
+                  color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(28),
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(
-                      Icons.add_business,
-                      size: 64,
-                      color: Theme.of(context).colorScheme.primary,
+                    Container(
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.surface,
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.05,
+                            ),
+                            blurRadius: 15,
+                          ),
+                        ],
+                      ),
+                      child: Icon(
+                        Icons.rocket_launch_rounded,
+                        size: 48,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 16),
                     Text(
-                      'Launch Your Coaching',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Theme.of(context).colorScheme.primary,
+                      'Tutorix Institute',
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.8),
                         fontWeight: FontWeight.bold,
+                        letterSpacing: 1.1,
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 40),
 
               // Name field
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Coaching Name',
-                  hintText: 'e.g., Bright Future Academy',
-                  prefixIcon: Icon(Icons.school),
-                  border: OutlineInputBorder(),
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+                decoration: InputDecoration(
+                  labelText: 'Institute Name',
+                  hintText: 'e.g., Apex Academy',
+                  prefixIcon: Icon(
+                    Icons.school_rounded,
+                    color: theme.colorScheme.primary,
+                  ),
+                  filled: true,
+                  fillColor: theme.colorScheme.tertiary.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.primary,
+                      width: 1.5,
+                    ),
+                  ),
                 ),
                 textCapitalization: TextCapitalization.words,
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a name for your coaching';
+                    return 'Please provide a name';
                   }
                   if (value.trim().length < 3) {
-                    return 'Name must be at least 3 characters';
+                    return 'Name is too short';
                   }
                   return null;
                 },
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
 
               // Description field
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(
-                  labelText: 'Description (Optional)',
-                  hintText: 'What makes your coaching special?',
-                  prefixIcon: Icon(Icons.description),
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: 'Mission & Description',
+                  hintText: 'Briefly describe your vision...',
+                  prefixIcon: Icon(
+                    Icons.auto_awesome_rounded,
+                    color: theme.colorScheme.primary,
+                  ),
+                  filled: true,
+                  fillColor: theme.colorScheme.tertiary.withValues(alpha: 0.05),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(18),
+                    borderSide: BorderSide.none,
+                  ),
                   alignLabelWithHint: true,
                 ),
-                maxLines: 3,
+                maxLines: 4,
                 textCapitalization: TextCapitalization.sentences,
               ),
               const SizedBox(height: 32),
 
-              // Info card
-              Card(
-                color: Theme.of(context).colorScheme.secondaryContainer,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.info_outline,
-                        color: Theme.of(context).colorScheme.secondary,
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          'Creating a coaching will make you the Admin. You can invite teachers, parents, and students later.',
-                          style: Theme.of(context).textTheme.bodySmall,
-                        ),
-                      ),
-                    ],
+              // Info Note - Premium Minimal
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.05),
                   ),
                 ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.shield_rounded,
+                      size: 20,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'As the founder, you have full administrative control over curriculum and admissions.',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.secondary.withValues(
+                            alpha: 0.7,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 48),
 
               // Submit button
               FilledButton(
                 onPressed: _isLoading ? null : _createCoaching,
                 style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  elevation: 0,
                 ),
                 child: _isLoading
                     ? const SizedBox(
-                        height: 20,
-                        width: 20,
+                        height: 24,
+                        width: 24,
                         child: CircularProgressIndicator(
-                          strokeWidth: 2,
+                          strokeWidth: 2.5,
                           color: Colors.white,
                         ),
                       )
                     : const Text(
-                        'Create Coaching',
-                        style: TextStyle(fontSize: 16),
+                        'Launch Institute',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
               ),
+              const SizedBox(height: 24),
             ],
           ),
         ),

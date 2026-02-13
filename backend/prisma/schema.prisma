@@ -33,7 +33,19 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  ownedCoachings Coaching[] @relation("CoachingOwner")
+  ownedCoachings Coaching[]      @relation("CoachingOwner")
+  sessions      LoginSession[]
+}
+
+model LoginSession {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
 }
 
 model Coaching {

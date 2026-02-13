@@ -6,16 +6,30 @@ const authService = new AuthService();
 export class AuthController {
     async googleLogin(req: Request, res: Response) {
         try {
-            const { idToken } = req.body;
+            const { idToken, deviceInfo } = req.body;
 
             if (!idToken) {
                 return res.status(400).json({ message: 'ID Token is required' });
             }
 
-            const userData = await authService.verifyGoogleToken(idToken);
+            const forwarded = req.headers['x-forwarded-for'];
+            const ip = typeof forwarded === 'string'
+                ? forwarded.split(',')[0]
+                : req.ip;
 
-            // Here you would typically find or create the user in your database
-            // For now, we'll just return a success message and a mock user
+            const sessionInfo = {
+                ip,
+                userAgent: deviceInfo || (req.headers['x-device-info'] as string) || req.headers['user-agent'],
+            };
+
+            console.log('Login attempt data:', {
+                'ip': ip,
+                'deviceInfoFromBody': deviceInfo,
+                'x-device-info': req.headers['x-device-info'],
+                'user-agent': req.headers['user-agent']
+            });
+
+            const userData = await authService.verifyGoogleToken(idToken, sessionInfo);
 
             const token = authService.generateToken(userData);
 

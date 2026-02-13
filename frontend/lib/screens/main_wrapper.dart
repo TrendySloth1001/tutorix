@@ -30,7 +30,11 @@ class _MainWrapperState extends State<MainWrapper> {
     super.initState();
     _screens = [
       HomeScreen(user: widget.user, onUserUpdated: widget.onUserUpdated),
-      ProfileScreen(user: widget.user, onLogout: widget.onLogout),
+      ProfileScreen(
+        user: widget.user,
+        onLogout: widget.onLogout,
+        onUserUpdated: widget.onUserUpdated,
+      ),
     ];
   }
 
