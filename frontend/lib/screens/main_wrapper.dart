@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../widgets/custom_bottom_nav.dart';
+import '../controllers/auth_controller.dart';
 import 'home_screen.dart';
 import 'profile_screen.dart';
 
@@ -23,33 +25,6 @@ class MainWrapper extends StatefulWidget {
 class _MainWrapperState extends State<MainWrapper> {
   int _selectedIndex = 0;
 
-  late List<Widget> _screens;
-
-  @override
-  void initState() {
-    super.initState();
-    _initScreens();
-  }
-
-  @override
-  void didUpdateWidget(MainWrapper oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.user != widget.user) {
-      _initScreens();
-    }
-  }
-
-  void _initScreens() {
-    _screens = [
-      HomeScreen(user: widget.user, onUserUpdated: widget.onUserUpdated),
-      ProfileScreen(
-        user: widget.user,
-        onLogout: widget.onLogout,
-        onUserUpdated: widget.onUserUpdated,
-      ),
-    ];
-  }
-
   void _onItemSelected(int index) {
     setState(() {
       _selectedIndex = index;
@@ -58,8 +33,20 @@ class _MainWrapperState extends State<MainWrapper> {
 
   @override
   Widget build(BuildContext context) {
+    final authController = context.watch<AuthController>();
+    final user = authController.user!;
+
+    final List<Widget> screens = [
+      HomeScreen(user: user, onUserUpdated: widget.onUserUpdated),
+      ProfileScreen(
+        user: user,
+        onLogout: widget.onLogout,
+        onUserUpdated: widget.onUserUpdated,
+      ),
+    ];
+
     return Scaffold(
-      body: IndexedStack(index: _selectedIndex, children: _screens),
+      body: IndexedStack(index: _selectedIndex, children: screens),
       bottomNavigationBar: CustomBottomNav(
         selectedIndex: _selectedIndex,
         onItemSelected: _onItemSelected,

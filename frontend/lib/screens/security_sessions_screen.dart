@@ -119,8 +119,9 @@ class _SecuritySessionsScreenState extends State<SecuritySessionsScreen> {
               .replaceAll('Dart/3.10 ', '')
               .replaceAll(' (dart:io)', '')
               .trim();
-          if (deviceInfo.isEmpty || deviceInfo == '(dart:io)')
+          if (deviceInfo.isEmpty || deviceInfo == '(dart:io)') {
             deviceInfo = 'Android Device';
+          }
         } else {
           // Standard Browser User-Agent parsing
           final modelMatch = RegExp(r';\s*([^;)]+)').firstMatch(ua);
@@ -245,8 +246,9 @@ class _SecuritySessionsScreenState extends State<SecuritySessionsScreen> {
   IconData _getDeviceIcon(String? userAgent) {
     if (userAgent == null) return Icons.devices_rounded;
     if (userAgent.contains('Android')) return Icons.phone_android_rounded;
-    if (userAgent.contains('iPhone') || userAgent.contains('iPad'))
+    if (userAgent.contains('iPhone') || userAgent.contains('iPad')) {
       return Icons.phone_iphone_rounded;
+    }
     if (userAgent.contains('Macintosh')) return Icons.laptop_mac_rounded;
     if (userAgent.contains('Windows')) return Icons.laptop_windows_rounded;
     return Icons.devices_rounded;

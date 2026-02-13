@@ -1,9 +1,12 @@
 import { Router } from 'express';
 import { UserController } from './user.controller.js';
+import { InvitationController } from '../coaching/invitation.controller.js';
+import wardRoutes from './ward.route.js';
 import { authMiddleware } from '../../shared/middleware/auth.middleware.js';
 
 const router = Router();
 const userController = new UserController();
+const invitationController = new InvitationController();
 
 // Protected routes - require authentication
 router.use(authMiddleware);
@@ -15,9 +18,17 @@ router.get('/me/sessions', userController.getSessions.bind(userController));
 router.patch('/me/roles', userController.updateRoles.bind(userController));
 router.post('/me/onboarding', userController.completeOnboarding.bind(userController));
 
+// User invitation routes
+router.get('/invitations', invitationController.getMyInvitations.bind(invitationController));
+router.post('/invitations/:invitationId/respond', invitationController.respondToInvitation.bind(invitationController));
+
+// Ward management
+router.use('/wards', wardRoutes);
+
 // Admin routes
 router.get('/', userController.list.bind(userController));
 router.get('/:id', userController.getById.bind(userController));
 router.delete('/:id', userController.delete.bind(userController));
 
 export default router;
+

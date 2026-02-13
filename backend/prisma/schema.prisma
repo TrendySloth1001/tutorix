@@ -33,10 +33,12 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  ownedCoachings Coaching[]      @relation("CoachingOwner")
-  sessions      LoginSession[]
-  wards         Ward[]          @relation("UserWards")
-  memberships   CoachingMember[]
+  ownedCoachings     Coaching[]      @relation("CoachingOwner")
+  sessions           LoginSession[]
+  wards              Ward[]          @relation("UserWards")
+  memberships        CoachingMember[]
+  receivedInvitations Invitation[]   @relation("UserInvitations")
+  sentInvitations     Invitation[]   @relation("SentInvitations")
 }
 
 model Ward {
@@ -47,6 +49,7 @@ model Ward {
   parent    User     @relation("UserWards", fields: [parentId], references: [id], onDelete: Cascade)
   
   enrollments CoachingMember[]
+  invitations Invitation[]     @relation("WardInvitations")
   
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -78,6 +81,7 @@ model Coaching {
   owner       User     @relation("CoachingOwner", fields: [ownerId], references: [id])
 
   members     CoachingMember[]
+  invitations Invitation[]
 
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -109,4 +113,41 @@ model CoachingMember {
   @@index([coachingId])
   @@index([userId])
   @@index([wardId])
+}
+
+model Invitation {
+  id          String   @id @default(uuid())
+  coachingId  String
+  coaching    Coaching @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+  
+  role        String   // TEACHER, PARENT, STUDENT
+  
+  // Target: resolved user/ward
+  userId      String?
+  user        User?    @relation("UserInvitations", fields: [userId], references: [id])
+  wardId      String?
+  ward        Ward?    @relation("WardInvitations", fields: [wardId], references: [id])
+  
+  // Unresolved contact (user not yet on platform)
+  invitePhone String?
+  inviteEmail String?
+  inviteName  String?
+  
+  status      String   @default("PENDING") // PENDING, ACCEPTED, DECLINED, EXPIRED
+  
+  invitedById String
+  invitedBy   User     @relation("SentInvitations", fields: [invitedById], references: [id])
+  
+  message     String?
+  
+  createdAt   DateTime @default(now())
+  expiresAt   DateTime?
+  respondedAt DateTime?
+
+  @@unique([coachingId, userId, role])
+  @@unique([coachingId, wardId])
+  @@index([coachingId])
+  @@index([userId])
+  @@index([invitePhone])
+  @@index([inviteEmail])
 }

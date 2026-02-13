@@ -30,6 +30,20 @@ router.post('/avatar', authMiddleware, upload.single('avatar'), async (req, res)
     }
 });
 
+// POST /upload/logo - Upload a logo/image (no user update)
+router.post('/logo', authMiddleware, upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        const result = await uploadService.uploadFile(req.file, 'logo');
+        res.json(result);
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // GET /upload/assets/:bucket/:key - Proxy assets from MinIO
 router.get('/assets/:bucket/:key', async (req, res) => {
     try {

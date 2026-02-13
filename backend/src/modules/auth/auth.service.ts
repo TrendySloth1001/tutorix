@@ -2,10 +2,12 @@ import { OAuth2Client } from 'google-auth-library';
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
 import prisma from '../../infra/prisma.js';
+import { InvitationService } from '../coaching/invitation.service.js';
 
 dotenv.config();
 
 const client = new OAuth2Client(process.env.GOOGLE_WEB_CLIENT_ID);
+const invitationService = new InvitationService();
 
 export class AuthService {
     async verifyGoogleToken(idToken: string, sessionInfo?: { ip?: string | undefined, userAgent?: string | undefined }) {
@@ -47,6 +49,18 @@ export class AuthService {
                 });
             }
 
+            // Auto-claim any pending invitations for this user's email/phone
+            try {
+                await invitationService.claimPendingInvitations(
+                    user.id,
+                    user.email,
+                    user.phone ?? undefined
+                );
+            } catch (claimError) {
+                console.warn('Failed to claim pending invitations:', claimError);
+                // Non-critical: don't fail auth over invitation claim issues
+            }
+
             return user;
         } catch (error: any) {
             console.error('Error verifying Google token:', error);
@@ -62,3 +76,4 @@ export class AuthService {
         );
     }
 }
+

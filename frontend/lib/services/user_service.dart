@@ -93,10 +93,10 @@ class UserService {
       Uri.parse('$baseUrl/user/me/roles'),
       headers: _authHeaders(token),
       body: jsonEncode({
-        if (isAdmin != null) 'isAdmin': isAdmin,
-        if (isTeacher != null) 'isTeacher': isTeacher,
-        if (isParent != null) 'isParent': isParent,
-        if (isWard != null) 'isWard': isWard,
+        'isAdmin': ?isAdmin,
+        'isTeacher': ?isTeacher,
+        'isParent': ?isParent,
+        'isWard': ?isWard,
       }),
     );
 

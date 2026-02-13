@@ -22,6 +22,19 @@ export class UploadService {
         return { user, imageUrl };
     }
 
+    async uploadFile(file: Express.Multer.File, prefix: string = 'file') {
+        const fileName = `${prefix}-${Date.now()}.${file.originalname.split('.').pop()}`;
+
+        const imageUrl = await storageService.uploadFile(
+            storageService.buckets.AVATARS,
+            fileName,
+            file.buffer,
+            file.mimetype
+        );
+
+        return { url: imageUrl };
+    }
+
     async getAssetStream(bucket: string, key: string) {
         return await storageService.getStream(bucket, key);
     }

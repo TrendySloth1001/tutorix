@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/user_model.dart';
 import '../services/coaching_service.dart';
 import '../widgets/coaching_card.dart';
+import '../controllers/auth_controller.dart';
 import 'create_coaching_screen.dart';
 import 'coaching_dashboard_screen.dart';
+import 'notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final UserModel user;
@@ -71,6 +74,10 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final authController = context.watch<AuthController>();
+    final activeWard = authController.activeWard;
+    final displayName = activeWard?.name ?? widget.user.name ?? 'User';
+    final displayPicture = activeWard?.picture ?? widget.user.picture;
 
     return Scaffold(
       body: CustomScrollView(
@@ -95,10 +102,10 @@ class _HomeScreenState extends State<HomeScreen> {
                           backgroundColor: theme.colorScheme.primary.withValues(
                             alpha: 0.1,
                           ),
-                          backgroundImage: widget.user.picture != null
-                              ? NetworkImage(widget.user.picture!)
+                          backgroundImage: displayPicture != null
+                              ? NetworkImage(displayPicture)
                               : null,
-                          child: widget.user.picture == null
+                          child: displayPicture == null
                               ? Icon(
                                   Icons.person_rounded,
                                   color: theme.colorScheme.primary,
@@ -121,7 +128,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               Text(
-                                widget.user.name?.split(' ').first ?? 'User',
+                                displayName.split(' ').first,
                                 style: theme.textTheme.headlineSmall?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: -0.5,
@@ -130,10 +137,29 @@ class _HomeScreenState extends State<HomeScreen> {
                             ],
                           ),
                         ),
-                        IconButton(
-                          icon: const Icon(Icons.notifications_none_rounded),
-                          onPressed: () {},
-                          color: theme.colorScheme.primary,
+                        Builder(
+                          builder: (context) {
+                            final auth = context.watch<AuthController>();
+                            final count = auth.pendingInvitations.length;
+                            return IconButton(
+                              icon: Badge(
+                                isLabelVisible: count > 0,
+                                label: Text('$count'),
+                                child: const Icon(
+                                  Icons.notifications_none_rounded,
+                                ),
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const NotificationsScreen(),
+                                  ),
+                                );
+                              },
+                              color: theme.colorScheme.primary,
+                            );
+                          },
                         ),
                       ],
                     ),

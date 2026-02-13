@@ -30,11 +30,11 @@ class AppTheme {
 
       // Card Theme
       cardTheme: CardThemeData(
-        color: softGrey.withOpacity(0.3),
+        color: softGrey.withValues(alpha: 0.3),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: mutedOlive.withOpacity(0.2)),
+          side: BorderSide(color: mutedOlive.withValues(alpha: 0.2)),
         ),
       ),
 
@@ -64,14 +64,14 @@ class AppTheme {
       // Input Decoration Theme
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: softGrey.withOpacity(0.1),
+        fillColor: softGrey.withValues(alpha: 0.1),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: mutedOlive.withOpacity(0.5)),
+          borderSide: BorderSide(color: mutedOlive.withValues(alpha: 0.5)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: mutedOlive.withOpacity(0.3)),
+          borderSide: BorderSide(color: mutedOlive.withValues(alpha: 0.3)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

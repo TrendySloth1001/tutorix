@@ -96,9 +96,9 @@ class CoachingService {
       Uri.parse('$baseUrl/coaching/$id'),
       headers: _authHeaders(token),
       body: jsonEncode({
-        if (name != null) 'name': name,
-        if (description != null) 'description': description,
-        if (logo != null) 'logo': logo,
+        'name': ?name,
+        'description': ?description,
+        'logo': ?logo,
       }),
     );
 
@@ -136,5 +136,47 @@ class CoachingService {
       return data['available'] as bool;
     }
     return false;
+  }
+
+  /// Get all members of a coaching
+  Future<List<Map<String, dynamic>>> getMembers(String coachingId) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('Not authenticated');
+
+    final response = await http.get(
+      Uri.parse('$baseUrl/coaching/$coachingId/members'),
+      headers: _authHeaders(token),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      return List<Map<String, dynamic>>.from(data['members']);
+    } else {
+      throw Exception('Failed to fetch members');
+    }
+  }
+
+  /// Add a ward under a parent in a coaching
+  Future<Map<String, dynamic>?> addWardToCoaching({
+    required String coachingId,
+    required String parentUserId,
+    required String wardName,
+  }) async {
+    final token = await _getToken();
+    if (token == null) throw Exception('Not authenticated');
+
+    final response = await http.post(
+      Uri.parse('$baseUrl/coaching/$coachingId/members/ward'),
+      headers: _authHeaders(token),
+      body: jsonEncode({'parentUserId': parentUserId, 'wardName': wardName}),
+    );
+
+    if (response.statusCode == 201) {
+      final data = jsonDecode(response.body);
+      return data['ward'] as Map<String, dynamic>;
+    } else {
+      final error = jsonDecode(response.body);
+      throw Exception(error['message'] ?? 'Failed to add ward');
+    }
   }
 }

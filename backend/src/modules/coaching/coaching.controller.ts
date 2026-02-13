@@ -165,4 +165,37 @@ export class CoachingController {
             res.status(500).json({ message: error.message });
         }
     }
+
+    // GET /coaching/:id/members - Get all members of a coaching
+    async getMembers(req: Request, res: Response) {
+        try {
+            const coachingId = req.params.id as string;
+            const members = await coachingService.getMembers(coachingId);
+            res.json({ members });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // POST /coaching/:id/members/ward - Add a ward under a parent
+    async addWard(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            const coachingId = req.params.id as string;
+            const { parentUserId, wardName } = req.body;
+
+            if (!parentUserId || !wardName) {
+                return res.status(400).json({ message: 'parentUserId and wardName are required' });
+            }
+
+            const ward = await coachingService.addWardMember(coachingId, parentUserId, wardName);
+            res.status(201).json({ ward });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
 }

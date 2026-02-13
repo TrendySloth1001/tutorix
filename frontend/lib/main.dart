@@ -1,11 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_wrapper.dart';
+import 'screens/pending_invitations_screen.dart';
+import 'screens/ward_selection_screen.dart';
 import 'controllers/auth_controller.dart';
 import 'theme/app_theme.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (_) => AuthController()..initialize(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 class MyApp extends StatelessWidget {
@@ -22,46 +30,40 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class AuthWrapper extends StatefulWidget {
+class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
   @override
-  State<AuthWrapper> createState() => _AuthWrapperState();
-}
-
-class _AuthWrapperState extends State<AuthWrapper> {
-  final AuthController _authController = AuthController();
-
-  @override
-  void initState() {
-    super.initState();
-    _authController.initialize();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: _authController,
-      builder: (context, _) {
-        if (!_authController.isInitialized) {
-          return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
-          );
-        }
+    final authController = context.watch<AuthController>();
 
-        if (_authController.isAuthenticated) {
-          return MainWrapper(
-            user: _authController.user!,
-            onLogout: _authController.signOut,
-            onUserUpdated: _authController.updateUser,
-          );
-        }
+    if (!authController.isInitialized) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
 
-        return LoginScreen(
-          onLogin: _authController.signIn,
-          isLoading: _authController.isLoading,
-        );
-      },
+    if (authController.isAuthenticated) {
+      final user = authController.user!;
+
+      // Show pending invitations first (after signup/login)
+      if (authController.hasPendingInvitations) {
+        return const PendingInvitationsScreen();
+      }
+
+      // Force ward selection if user is a hybrid (Parent + Ward) or has wards
+      if ((user.isParent || user.isWard) && !authController.isProfileSelected) {
+        return const WardSelectionScreen();
+      }
+
+      return MainWrapper(
+        user: user,
+        onLogout: authController.signOut,
+        onUserUpdated: authController.updateUser,
+      );
+    }
+
+    return LoginScreen(
+      onLogin: authController.signIn,
+      isLoading: authController.isLoading,
     );
   }
 }
