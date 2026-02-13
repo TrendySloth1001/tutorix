@@ -16,8 +16,40 @@ model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
+  phone     String?
   picture   String?
   googleId  String   @unique
+
+  // Role flags - a user can have multiple roles
+  isAdmin   Boolean  @default(false)
+  isTeacher Boolean  @default(false)
+  isParent  Boolean  @default(false)
+  isWard    Boolean  @default(false)
+
+  // Onboarding status
+  onboardingComplete Boolean @default(false)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Relations
+  ownedCoachings Coaching[] @relation("CoachingOwner")
+}
+
+model Coaching {
+  id          String   @id @default(uuid())
+  name        String
+  slug        String   @unique
+  description String?
+  logo        String?
+  status      String   @default("active") // active, suspended
+
+  // Owner relation
+  ownerId     String
+  owner       User     @relation("CoachingOwner", fields: [ownerId], references: [id])
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ownerId])
 }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'screens/main_wrapper.dart';
 import 'controllers/auth_controller.dart';
+import 'theme/app_theme.dart';
 
 void main() {
   runApp(const MyApp());
@@ -15,10 +16,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Tutorix',
       debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
-        useMaterial3: true,
-      ),
+      theme: AppTheme.lightTheme,
       home: const AuthWrapper(),
     );
   }
@@ -55,6 +53,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           return MainWrapper(
             user: _authController.user!,
             onLogout: _authController.signOut,
+            onUserUpdated: _authController.updateUser,
           );
         }
 

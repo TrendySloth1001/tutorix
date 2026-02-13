@@ -7,8 +7,14 @@ import 'profile_screen.dart';
 class MainWrapper extends StatefulWidget {
   final UserModel user;
   final VoidCallback onLogout;
+  final Function(UserModel)? onUserUpdated;
 
-  const MainWrapper({super.key, required this.user, required this.onLogout});
+  const MainWrapper({
+    super.key,
+    required this.user,
+    required this.onLogout,
+    this.onUserUpdated,
+  });
 
   @override
   State<MainWrapper> createState() => _MainWrapperState();
@@ -23,7 +29,7 @@ class _MainWrapperState extends State<MainWrapper> {
   void initState() {
     super.initState();
     _screens = [
-      HomeScreen(user: widget.user),
+      HomeScreen(user: widget.user, onUserUpdated: widget.onUserUpdated),
       ProfileScreen(user: widget.user, onLogout: widget.onLogout),
     ];
   }

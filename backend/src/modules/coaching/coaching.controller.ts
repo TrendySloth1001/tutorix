@@ -1,0 +1,168 @@
+import type { Request, Response } from 'express';
+import { CoachingService } from './coaching.service.js';
+
+const coachingService = new CoachingService();
+
+export class CoachingController {
+    // POST /coaching - Create a new coaching
+    async create(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            const { name, description, logo } = req.body;
+
+            if (!name) {
+                return res.status(400).json({ message: 'Name is required' });
+            }
+
+            // Generate slug from name
+            let slug = coachingService.generateSlug(name);
+
+            // Ensure slug is unique
+            let isAvailable = await coachingService.isSlugAvailable(slug);
+            let counter = 1;
+            while (!isAvailable) {
+                slug = `${coachingService.generateSlug(name)}-${counter}`;
+                isAvailable = await coachingService.isSlugAvailable(slug);
+                counter++;
+            }
+
+            const coaching = await coachingService.create(userId, {
+                name,
+                slug,
+                description,
+                logo,
+            });
+
+            res.status(201).json({ coaching });
+        } catch (error: any) {
+            if (error.message.includes('Foreign key constraint violated')) {
+                return res.status(400).json({
+                    message: 'User record not found. Please logout and login again to refresh your session.'
+                });
+            }
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // GET /coaching/my - Get current user's coachings
+    async getMyCoachings(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            const coachings = await coachingService.findByOwner(userId);
+            res.json({ coachings });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // GET /coaching/:id - Get coaching by ID
+    async getById(req: Request, res: Response) {
+        try {
+            const id = req.params.id as string;
+            const coaching = await coachingService.findById(id);
+
+            if (!coaching) {
+                return res.status(404).json({ message: 'Coaching not found' });
+            }
+
+            res.json({ coaching });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // GET /coaching/slug/:slug - Get coaching by slug
+    async getBySlug(req: Request, res: Response) {
+        try {
+            const slug = req.params.slug as string;
+            const coaching = await coachingService.findBySlug(slug);
+
+            if (!coaching) {
+                return res.status(404).json({ message: 'Coaching not found' });
+            }
+
+            res.json({ coaching });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // PATCH /coaching/:id - Update coaching
+    async update(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            const id = req.params.id as string;
+            const { name, description, logo, status } = req.body;
+
+            const coaching = await coachingService.update(id, userId, {
+                name,
+                description,
+                logo,
+                status,
+            });
+
+            res.json({ coaching });
+        } catch (error: any) {
+            if (error.message.includes('not found')) {
+                return res.status(404).json({ message: error.message });
+            }
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // DELETE /coaching/:id - Delete coaching
+    async delete(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            const id = req.params.id as string;
+            await coachingService.delete(id, userId);
+
+            res.json({ message: 'Coaching deleted successfully' });
+        } catch (error: any) {
+            if (error.message.includes('not found')) {
+                return res.status(404).json({ message: error.message });
+            }
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // GET /coaching - List all coachings (public)
+    async list(req: Request, res: Response) {
+        try {
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 10;
+
+            const result = await coachingService.findAll(page, limit);
+            res.json(result);
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // GET /coaching/check-slug/:slug - Check if slug is available
+    async checkSlug(req: Request, res: Response) {
+        try {
+            const slug = req.params.slug as string;
+            const available = await coachingService.isSlugAvailable(slug);
+            res.json({ available, slug });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+}

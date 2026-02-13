@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/user_service.dart';
 
 class AuthController extends ChangeNotifier {
   final AuthService _authService = AuthService();
+  final UserService _userService = UserService();
 
   UserModel? _user;
   bool _isLoading = false;
@@ -17,7 +19,17 @@ class AuthController extends ChangeNotifier {
   Future<void> initialize() async {
     final authenticated = await _authService.isAuthenticated();
     if (authenticated) {
-      _user = await _authService.getUserProfile();
+      // Try to get fresh user data from server
+      try {
+        final freshUser = await _userService.getMe();
+        if (freshUser != null) {
+          _user = freshUser;
+        } else {
+          _user = await _authService.getUserProfile();
+        }
+      } catch (e) {
+        _user = await _authService.getUserProfile();
+      }
     }
     _isInitialized = true;
     notifyListeners();
@@ -45,5 +57,22 @@ class AuthController extends ChangeNotifier {
     await _authService.signOut();
     _user = null;
     notifyListeners();
+  }
+
+  void updateUser(UserModel updatedUser) {
+    _user = updatedUser;
+    notifyListeners();
+  }
+
+  Future<void> refreshUser() async {
+    try {
+      final freshUser = await _userService.getMe();
+      if (freshUser != null) {
+        _user = freshUser;
+        notifyListeners();
+      }
+    } catch (e) {
+      debugPrint('Refresh user error: $e');
+    }
   }
 }

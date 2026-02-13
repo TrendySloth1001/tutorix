@@ -4,17 +4,23 @@ import '../services/coaching_service.dart';
 import 'create_coaching_screen.dart';
 import 'coaching_dashboard_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class CoachingSelectorScreen extends StatefulWidget {
   final UserModel user;
-  final Function(UserModel)? onUserUpdated;
+  final VoidCallback onLogout;
+  final Function(UserModel) onUserUpdated;
 
-  const HomeScreen({super.key, required this.user, this.onUserUpdated});
+  const CoachingSelectorScreen({
+    super.key,
+    required this.user,
+    required this.onLogout,
+    required this.onUserUpdated,
+  });
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<CoachingSelectorScreen> createState() => _CoachingSelectorScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
   final CoachingService _coachingService = CoachingService();
   List<CoachingModel> _coachings = [];
   bool _isLoading = true;
@@ -35,6 +41,11 @@ class _HomeScreenState extends State<HomeScreen> {
       });
     } catch (e) {
       setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load coachings: $e')));
+      }
     }
   }
 
@@ -44,7 +55,7 @@ class _HomeScreenState extends State<HomeScreen> {
       MaterialPageRoute(
         builder: (context) => CreateCoachingScreen(
           onCoachingCreated: (coaching, updatedUser) {
-            widget.onUserUpdated?.call(updatedUser);
+            widget.onUserUpdated(updatedUser);
           },
         ),
       ),
@@ -69,8 +80,22 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Tutorix Home'),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
+        title: const Text('My Coachings'),
+        actions: [
+          IconButton(
+            icon: CircleAvatar(
+              radius: 16,
+              backgroundImage: widget.user.picture != null
+                  ? NetworkImage(widget.user.picture!)
+                  : null,
+              child: widget.user.picture == null
+                  ? Text(widget.user.name?.substring(0, 1).toUpperCase() ?? 'U')
+                  : null,
+            ),
+            onPressed: () => _showProfileMenu(),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
@@ -90,18 +115,13 @@ class _HomeScreenState extends State<HomeScreen> {
 
     return RefreshIndicator(
       onRefresh: _loadCoachings,
-      child: ListView(
+      child: ListView.builder(
         padding: const EdgeInsets.all(16),
-        children: [
-          Text(
-            'My Coachings',
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 16),
-          ..._coachings.map((coaching) => _buildCoachingCard(coaching)),
-        ],
+        itemCount: _coachings.length,
+        itemBuilder: (context, index) {
+          final coaching = _coachings[index];
+          return _buildCoachingCard(coaching);
+        },
       ),
     );
   }
@@ -116,9 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Icon(
               Icons.school_outlined,
               size: 100,
-              color: Theme.of(
-                context,
-              ).colorScheme.primary.withValues(alpha: 0.5),
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
             ),
             const SizedBox(height: 24),
             Text(
@@ -134,6 +152,18 @@ class _HomeScreenState extends State<HomeScreen> {
               style: Theme.of(
                 context,
               ).textTheme.bodyLarge?.copyWith(color: Colors.grey[600]),
+            ),
+            const SizedBox(height: 32),
+            FilledButton.icon(
+              onPressed: _navigateToCreateCoaching,
+              icon: const Icon(Icons.add),
+              label: const Text('Create Your Coaching'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
+              ),
             ),
           ],
         ),
@@ -202,6 +232,42 @@ class _HomeScreenState extends State<HomeScreen> {
               const Icon(Icons.chevron_right),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  void _showProfileMenu() {
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: CircleAvatar(
+                backgroundImage: widget.user.picture != null
+                    ? NetworkImage(widget.user.picture!)
+                    : null,
+                child: widget.user.picture == null
+                    ? Text(
+                        widget.user.name?.substring(0, 1).toUpperCase() ?? 'U',
+                      )
+                    : null,
+              ),
+              title: Text(widget.user.name ?? 'User'),
+              subtitle: Text(widget.user.email),
+            ),
+            const Divider(),
+            ListTile(
+              leading: const Icon(Icons.logout),
+              title: const Text('Logout'),
+              onTap: () {
+                Navigator.pop(context);
+                widget.onLogout();
+              },
+            ),
+          ],
         ),
       ),
     );
