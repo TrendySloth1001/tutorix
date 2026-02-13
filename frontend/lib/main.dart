@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'dart:convert';
+import 'auth/screens/login_screen.dart';
+import 'auth/services/auth_service.dart';
 
 void main() {
   runApp(const MyApp());
@@ -12,94 +12,105 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Tutorix',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      home: const MyHomePage(title: 'Flutter Backend Call'),
+      home: const AuthWrapper(),
     );
   }
 }
 
-class MyHomePage extends StatefulWidget {
-  const MyHomePage({super.key, required this.title});
-
-  final String title;
+class AuthWrapper extends StatefulWidget {
+  const AuthWrapper({super.key});
 
   @override
-  State<MyHomePage> createState() => _MyHomePageState();
+  State<AuthWrapper> createState() => _AuthWrapperState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  String _message = 'Press the button to fetch data';
-  bool _isLoading = false;
+class _AuthWrapperState extends State<AuthWrapper> {
+  final AuthService _authService = AuthService();
+  bool? _isAuthenticated;
+  Map<String, dynamic>? _user;
 
-  Future<void> _fetchData() async {
+  @override
+  void initState() {
+    super.initState();
+    _checkAuth();
+  }
+
+  Future<void> _checkAuth() async {
+    final authenticated = await _authService.isAuthenticated();
     setState(() {
-      _isLoading = true;
+      _isAuthenticated = authenticated;
     });
+  }
 
-    try {
-      final response = await http.get(
-        Uri.parse('https://qjhcp0ph-3010.inc1.devtunnels.ms/hello'),
-      );
-
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body);
-        setState(() {
-          _message = data['message'];
-        });
-      } else {
-        setState(() {
-          _message = 'Failed to load data: ${response.statusCode}';
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _message = 'Error: $e';
-      });
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+  void _onLoginSuccess(Map<String, dynamic> user) {
+    setState(() {
+      _isAuthenticated = true;
+      _user = user;
+    });
   }
 
   @override
   Widget build(BuildContext context) {
+    if (_isAuthenticated == null) {
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    if (_isAuthenticated!) {
+      return MyHomePage(title: 'Tutorix Home', user: _user);
+    }
+
+    return LoginScreen(onLoginSuccess: _onLoginSuccess);
+  }
+}
+
+class MyHomePage extends StatelessWidget {
+  const MyHomePage({super.key, required this.title, this.user});
+
+  final String title;
+  final Map<String, dynamic>? user;
+
+  @override
+  Widget build(BuildContext context) {
+    final AuthService authService = AuthService();
+
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
+        title: Text(title),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () async {
+              await authService.signOut();
+              // In a real app, use a navigator or state management to go back to login
+              // For now, a simple restart/rebuild is needed
+            },
+          ),
+        ],
       ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: <Widget>[
-            const Text(
-              'Backend Message:',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            if (user != null && user!['picture'] != null)
+              CircleAvatar(
+                backgroundImage: NetworkImage(user!['picture']),
+                radius: 40,
+              ),
+            const SizedBox(height: 20),
+            Text(
+              'Welcome, ${user?['name'] ?? 'User'}!',
+              style: Theme.of(context).textTheme.headlineMedium,
             ),
             const SizedBox(height: 10),
-            if (_isLoading)
-              const CircularProgressIndicator()
-            else
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  _message,
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.headlineMedium,
-                ),
-              ),
+            Text('Email: ${user?['email'] ?? 'N/A'}'),
           ],
         ),
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: _fetchData,
-        tooltip: 'Fetch Data',
-        child: const Icon(Icons.refresh),
       ),
     );
   }
