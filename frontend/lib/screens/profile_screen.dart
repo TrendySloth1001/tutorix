@@ -5,6 +5,8 @@ import '../models/user_model.dart';
 import '../services/upload_service.dart';
 import 'edit_profile_screen.dart';
 import 'security_sessions_screen.dart';
+import '../services/user_service.dart';
+import 'photo_viewer_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   final UserModel user;
@@ -61,6 +63,136 @@ class _ProfileScreenState extends State<ProfileScreen> {
     }
   }
 
+  Future<void> _removeAvatar() async {
+    try {
+      final userService = UserService();
+      setState(() => _isUploading = true);
+
+      final updatedUser = await userService.updateProfile(picture: null);
+
+      if (updatedUser != null && mounted) {
+        widget.onUserUpdated?.call(updatedUser);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile picture removed')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to remove avatar: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploading = false);
+      }
+    }
+  }
+
+  void _showPhotoOptions() {
+    final user = widget.user;
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Center(
+              child: Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: Theme.of(
+                      context,
+                    ).colorScheme.primary.withValues(alpha: 0.1),
+                    width: 2,
+                  ),
+                ),
+                child: CircleAvatar(
+                  radius: 80,
+                  backgroundColor: Theme.of(
+                    context,
+                  ).colorScheme.tertiary.withValues(alpha: 0.2),
+                  backgroundImage: user.picture != null
+                      ? NetworkImage(user.picture!)
+                      : null,
+                  child: user.picture == null
+                      ? Icon(
+                          Icons.person_rounded,
+                          size: 80,
+                          color: Theme.of(context).colorScheme.primary,
+                        )
+                      : null,
+                ),
+              ),
+            ),
+            const SizedBox(height: 32),
+            Text(
+              'Profile Photo',
+              style: Theme.of(
+                context,
+              ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 24),
+            ListTile(
+              leading: Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Theme.of(
+                    context,
+                  ).colorScheme.primary.withValues(alpha: 0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.photo_library_rounded,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+              title: Text(user.picture == null ? 'Add Photo' : 'Change Photo'),
+              onTap: () {
+                Navigator.pop(context);
+                _updateAvatar();
+              },
+            ),
+            if (user.picture != null) ...[
+              const SizedBox(height: 12),
+              ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.redAccent.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Colors.redAccent,
+                  ),
+                ),
+                title: const Text(
+                  'Remove Photo',
+                  style: TextStyle(color: Colors.redAccent),
+                ),
+                onTap: () {
+                  Navigator.pop(context);
+                  _removeAvatar();
+                },
+              ),
+            ],
+            const SizedBox(height: 16),
+          ],
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -96,33 +228,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Center(
                 child: Stack(
                   children: [
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.1,
+                    GestureDetector(
+                      onTap: _isUploading
+                          ? null
+                          : () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => PhotoViewerScreen(
+                                    user: user,
+                                    onUserUpdated: (updatedUser) {
+                                      widget.onUserUpdated?.call(updatedUser);
+                                    },
+                                  ),
+                                ),
+                              );
+                            },
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.1,
+                            ),
+                            width: 2,
                           ),
-                          width: 2,
                         ),
-                      ),
-                      child: Hero(
-                        tag: 'user_avatar',
-                        child: CircleAvatar(
-                          radius: 70,
-                          backgroundColor: theme.colorScheme.tertiary
-                              .withValues(alpha: 0.2),
-                          backgroundImage: user.picture != null
-                              ? NetworkImage(user.picture!)
-                              : null,
-                          child: user.picture == null
-                              ? Icon(
-                                  Icons.person_rounded,
-                                  size: 70,
-                                  color: theme.colorScheme.primary,
-                                )
-                              : null,
+                        child: Hero(
+                          tag: 'user_avatar',
+                          child: CircleAvatar(
+                            radius: 70,
+                            backgroundColor: theme.colorScheme.tertiary
+                                .withValues(alpha: 0.2),
+                            backgroundImage: user.picture != null
+                                ? NetworkImage(user.picture!)
+                                : null,
+                            child: user.picture == null
+                                ? Icon(
+                                    Icons.person_rounded,
+                                    size: 70,
+                                    color: theme.colorScheme.primary,
+                                  )
+                                : null,
+                          ),
                         ),
                       ),
                     ),
@@ -141,10 +290,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                       ),
                     Positioned(
+                      top: 0,
+                      left: 0,
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => EditProfileScreen(
+                                user: user,
+                                onUserUpdated: (updatedUser) {
+                                  widget.onUserUpdated?.call(updatedUser);
+                                },
+                              ),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: theme.colorScheme.surface,
+                              width: 3,
+                            ),
+                          ),
+                          child: Icon(
+                            Icons.edit_rounded,
+                            size: 20,
+                            color: theme.colorScheme.onPrimary,
+                          ),
+                        ),
+                      ),
+                    ),
+                    Positioned(
                       bottom: 0,
                       right: 0,
                       child: GestureDetector(
-                        onTap: _isUploading ? null : _updateAvatar,
+                        onTap: _isUploading ? null : _showPhotoOptions,
                         child: Container(
                           padding: const EdgeInsets.all(12),
                           decoration: BoxDecoration(
@@ -187,71 +371,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               const SizedBox(height: 32),
 
-              // Personal Details Section
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.tertiary.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(28),
-                  border: Border.all(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                  ),
-                ),
-                child: Column(
-                  children: [
-                    _buildQuickInfoRow(
-                      context,
-                      label: 'Full Name',
-                      value: user.name ?? 'Not set',
-                      icon: Icons.badge_outlined,
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Divider(height: 1, thickness: 0.5),
-                    ),
-                    _buildQuickInfoRow(
-                      context,
-                      label: 'Email Address',
-                      value: user.email,
-                      icon: Icons.alternate_email_rounded,
-                    ),
-                    const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 16),
-                      child: Divider(height: 1, thickness: 0.5),
-                    ),
-                    _buildQuickInfoRow(
-                      context,
-                      label: 'Phone Number',
-                      value: user.phone ?? 'Add phone number',
-                      icon: Icons.phone_android_rounded,
-                      isDimmed: user.phone == null,
-                    ),
-                  ],
-                ),
-              ),
-
               const SizedBox(height: 48),
 
               // Settings Groups - Premium Look
-              _buildSettingTile(
-                context,
-                icon: Icons.person_outline_rounded,
-                title: 'Personal Information',
-                subtitle: 'Manage your name, email and phone',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => EditProfileScreen(
-                        user: user,
-                        onUserUpdated: (updatedUser) {
-                          widget.onUserUpdated?.call(updatedUser);
-                        },
-                      ),
-                    ),
-                  );
-                },
-              ),
               _buildSettingTile(
                 context,
                 icon: Icons.shield_outlined,
@@ -286,63 +408,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildQuickInfoRow(
-    BuildContext context, {
-    required String label,
-    required String value,
-    required IconData icon,
-    bool isDimmed = false,
-  }) {
-    final theme = Theme.of(context);
-    return Row(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(12),
-            boxShadow: [
-              BoxShadow(
-                color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                blurRadius: 10,
-              ),
-            ],
-          ),
-          child: Icon(
-            icon,
-            size: 20,
-            color: theme.colorScheme.primary.withValues(alpha: 0.7),
-          ),
-        ),
-        const SizedBox(width: 16),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                label,
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.secondary.withValues(alpha: 0.5),
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                value,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: isDimmed
-                      ? theme.colorScheme.secondary.withValues(alpha: 0.4)
-                      : theme.colorScheme.onSurface,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
     );
   }
 

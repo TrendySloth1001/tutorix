@@ -31,8 +31,12 @@ export class UserController {
                 return res.status(401).json({ message: 'Unauthorized' });
             }
 
-            const { name, phone, picture } = req.body;
-            const user = await userService.update(userId, { name, phone, picture });
+            const updateData: any = {};
+            if ('name' in req.body) updateData.name = req.body.name;
+            if ('phone' in req.body) updateData.phone = req.body.phone;
+            if ('picture' in req.body) updateData.picture = req.body.picture;
+
+            const user = await userService.update(userId, updateData);
 
             res.json({ user });
         } catch (error: any) {

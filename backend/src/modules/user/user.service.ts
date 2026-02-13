@@ -3,7 +3,7 @@ import prisma from '../../infra/prisma.js';
 export interface UpdateUserDto {
     name?: string;
     phone?: string;
-    picture?: string;
+    picture?: string | null;
     isAdmin?: boolean;
     isTeacher?: boolean;
     isParent?: boolean;

@@ -48,9 +48,9 @@ class UserService {
       Uri.parse('$baseUrl/user/me'),
       headers: _authHeaders(token),
       body: jsonEncode({
-        if (name != null) 'name': name,
-        if (phone != null) 'phone': phone,
-        if (picture != null) 'picture': picture,
+        'name': name,
+        'phone': phone,
+        'picture': picture,
       }),
     );
 
