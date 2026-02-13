@@ -83,16 +83,63 @@ class _HomeScreenState extends State<HomeScreen> {
             backgroundColor: theme.colorScheme.surface,
             elevation: 0,
             flexibleSpace: FlexibleSpaceBar(
-              title: Text(
-                'Tutorix Home',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.primary,
-                  letterSpacing: -1,
+              background: Container(
+                padding: const EdgeInsets.fromLTRB(24, 60, 24, 0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 24,
+                          backgroundColor: theme.colorScheme.primary.withValues(
+                            alpha: 0.1,
+                          ),
+                          backgroundImage: widget.user.picture != null
+                              ? NetworkImage(widget.user.picture!)
+                              : null,
+                          child: widget.user.picture == null
+                              ? Icon(
+                                  Icons.person_rounded,
+                                  color: theme.colorScheme.primary,
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _getGreeting(),
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: theme.colorScheme.secondary.withValues(
+                                    alpha: 0.6,
+                                  ),
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1,
+                                ),
+                              ),
+                              Text(
+                                widget.user.name?.split(' ').first ?? 'User',
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: -0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.notifications_none_rounded),
+                          onPressed: () {},
+                          color: theme.colorScheme.primary,
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
-              centerTitle: true,
-              titlePadding: const EdgeInsets.only(bottom: 16),
             ),
           ),
 
@@ -109,10 +156,10 @@ class _HomeScreenState extends State<HomeScreen> {
                 delegate: SliverChildBuilderDelegate((context, index) {
                   if (index == 0) {
                     return Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
                       child: Text(
                         'My Coachings',
-                        style: theme.textTheme.titleLarge?.copyWith(
+                        style: theme.textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           color: theme.colorScheme.primary.withValues(
                             alpha: 0.8,
@@ -140,6 +187,13 @@ class _HomeScreenState extends State<HomeScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
+  }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'GOOD MORNING';
+    if (hour < 17) return 'GOOD AFTERNOON';
+    return 'GOOD EVENING';
   }
 
   Widget _buildEmptyState() {

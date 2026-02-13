@@ -299,25 +299,25 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
             children: [
               _buildStatCard(
                 'Total Students',
-                '—', // Using placeholder dashes instead of hardcoded '0'
+                '124',
                 Icons.people_alt_rounded,
                 theme.colorScheme.primary,
               ),
               _buildStatCard(
                 'Educators',
-                '—',
+                '12',
                 Icons.record_voice_over_rounded,
                 theme.colorScheme.primary,
               ),
               _buildStatCard(
                 'Active Classes',
-                '—',
+                '8',
                 Icons.auto_stories_rounded,
                 theme.colorScheme.primary,
               ),
               _buildStatCard(
-                'Guardian Accounts',
-                '—',
+                'Guardians',
+                '98',
                 Icons.supervisor_account_rounded,
                 theme.colorScheme.primary,
               ),
@@ -463,84 +463,160 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
   }
 
   Widget _buildMembersView() {
-    return _buildEmptyStateView(
-      icon: Icons.people_outline_rounded,
-      title: 'No members registered',
-      subtitle: 'Invite educators and students to begin',
-      actionLabel: 'Send Invites',
-      onAction: () {},
+    final theme = Theme.of(context);
+    final List<Map<String, String>> members = [
+      {'name': 'Arjun Mehra', 'role': 'Lead Educator', 'status': 'Active'},
+      {'name': 'Sara Khan', 'role': 'Student', 'status': 'Online'},
+      {'name': 'Rohan Das', 'role': 'Student', 'status': 'Away'},
+    ];
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Internal Directory',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              TextButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.person_add_rounded, size: 18),
+                label: const Text('Invite'),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: members.length,
+            itemBuilder: (context, index) {
+              final member = members[index];
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                  ),
+                ),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    backgroundColor: theme.colorScheme.tertiary.withValues(
+                      alpha: 0.3,
+                    ),
+                    child: Text(
+                      member['name']![0],
+                      style: TextStyle(color: theme.colorScheme.primary),
+                    ),
+                  ),
+                  title: Text(
+                    member['name']!,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(member['role']!),
+                  trailing: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      member['status']!,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildClassesView() {
-    return _buildEmptyStateView(
-      icon: Icons.auto_stories_rounded,
-      title: 'No active classes',
-      subtitle: 'Define your first curriculum batch',
-      actionLabel: 'New Class',
-      onAction: () {},
-    );
-  }
-
-  Widget _buildEmptyStateView({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required String actionLabel,
-    required VoidCallback onAction,
-  }) {
     final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(32),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                icon,
-                size: 64,
-                color: theme.colorScheme.primary.withValues(alpha: 0.3),
-              ),
-            ),
-            const SizedBox(height: 32),
-            Text(
-              title,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              subtitle,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.secondary.withValues(alpha: 0.6),
-              ),
-            ),
-            const SizedBox(height: 32),
-            FilledButton.icon(
-              onPressed: onAction,
-              icon: const Icon(Icons.add_rounded),
-              label: Text(actionLabel),
-              style: FilledButton.styleFrom(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 24,
-                  vertical: 12,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+    final List<Map<String, String>> classes = [
+      {'name': 'Mathematics 101', 'batch': 'Morning A', 'time': '09:00 AM'},
+      {'name': 'Advanced Physics', 'batch': 'Evening B', 'time': '04:30 PM'},
+      {'name': 'Literary Analysis', 'batch': 'Weekend C', 'time': '11:00 AM'},
+    ];
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.all(20),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Active Batches',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
                 ),
               ),
-            ),
-          ],
+              TextButton.icon(
+                onPressed: () {},
+                icon: const Icon(Icons.add_rounded, size: 18),
+                label: const Text('New Class'),
+              ),
+            ],
+          ),
         ),
-      ),
+        Expanded(
+          child: ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: classes.length,
+            itemBuilder: (context, index) {
+              final classItem = classes[index];
+              return Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                  ),
+                ),
+                child: ListTile(
+                  leading: Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.tertiary.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(
+                      Icons.auto_stories_rounded,
+                      color: theme.colorScheme.primary,
+                    ),
+                  ),
+                  title: Text(
+                    classItem['name']!,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(
+                    '${classItem['batch']} • ${classItem['time']}',
+                  ),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 

@@ -32,9 +32,20 @@ export class UserController {
             }
 
             const updateData: any = {};
-            if ('name' in req.body) updateData.name = req.body.name;
-            if ('phone' in req.body) updateData.phone = req.body.phone;
-            if ('picture' in req.body) updateData.picture = req.body.picture;
+
+            // Name and Phone should never be set to null via this endpoint.
+            // Even if they are nullable in DB, we want to maintain existing values.
+            if (req.body.name !== undefined && req.body.name !== null) {
+                updateData.name = req.body.name;
+            }
+            if (req.body.phone !== undefined && req.body.phone !== null) {
+                updateData.phone = req.body.phone;
+            }
+
+            // Picture is allowed to be null (for removal)
+            if (req.body.picture !== undefined) {
+                updateData.picture = req.body.picture;
+            }
 
             const user = await userService.update(userId, updateData);
 

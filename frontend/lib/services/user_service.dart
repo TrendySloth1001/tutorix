@@ -44,14 +44,22 @@ class UserService {
     final token = await _getToken();
     if (token == null) throw Exception('Not authenticated');
 
+    final Map<String, dynamic> body = {};
+    if (name != null) body['name'] = name;
+    if (phone != null) body['phone'] = phone;
+
+    // Logic to distinguish "unspecified" from "intended null" (clear)
+    // If picture is null but name/phone are also null, it's likely a targeted removal call.
+    if (picture != null) {
+      body['picture'] = picture;
+    } else if (name == null && phone == null) {
+      body['picture'] = null;
+    }
+
     final response = await http.patch(
       Uri.parse('$baseUrl/user/me'),
       headers: _authHeaders(token),
-      body: jsonEncode({
-        'name': name,
-        'phone': phone,
-        'picture': picture,
-      }),
+      body: jsonEncode(body),
     );
 
     if (response.statusCode == 200) {

@@ -23,11 +23,23 @@ class MainWrapper extends StatefulWidget {
 class _MainWrapperState extends State<MainWrapper> {
   int _selectedIndex = 0;
 
-  late final List<Widget> _screens;
+  late List<Widget> _screens;
 
   @override
   void initState() {
     super.initState();
+    _initScreens();
+  }
+
+  @override
+  void didUpdateWidget(MainWrapper oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.user != widget.user) {
+      _initScreens();
+    }
+  }
+
+  void _initScreens() {
     _screens = [
       HomeScreen(user: widget.user, onUserUpdated: widget.onUserUpdated),
       ProfileScreen(
