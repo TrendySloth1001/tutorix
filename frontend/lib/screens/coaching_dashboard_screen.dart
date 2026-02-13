@@ -299,25 +299,25 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
             children: [
               _buildStatCard(
                 'Total Students',
-                '124',
+                '—',
                 Icons.people_alt_rounded,
                 theme.colorScheme.primary,
               ),
               _buildStatCard(
                 'Educators',
-                '12',
+                '—',
                 Icons.record_voice_over_rounded,
                 theme.colorScheme.primary,
               ),
               _buildStatCard(
                 'Active Classes',
-                '8',
+                '—',
                 Icons.auto_stories_rounded,
                 theme.colorScheme.primary,
               ),
               _buildStatCard(
                 'Guardians',
-                '98',
+                '—',
                 Icons.supervisor_account_rounded,
                 theme.colorScheme.primary,
               ),
@@ -464,11 +464,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
 
   Widget _buildMembersView() {
     final theme = Theme.of(context);
-    final List<Map<String, String>> members = [
-      {'name': 'Arjun Mehra', 'role': 'Lead Educator', 'status': 'Active'},
-      {'name': 'Sara Khan', 'role': 'Student', 'status': 'Online'},
-      {'name': 'Rohan Das', 'role': 'Student', 'status': 'Away'},
-    ];
+    final List<Map<String, String>> members = [];
 
     return Column(
       children: [
@@ -491,69 +487,88 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
             ],
           ),
         ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: members.length,
-            itemBuilder: (context, index) {
-              final member = members[index];
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.05),
+        if (members.isEmpty)
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.people_outline_rounded,
+                    size: 64,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.2),
                   ),
-                ),
-                child: ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: theme.colorScheme.tertiary.withValues(
-                      alpha: 0.3,
-                    ),
-                    child: Text(
-                      member['name']![0],
-                      style: TextStyle(color: theme.colorScheme.primary),
+                  const SizedBox(height: 16),
+                  Text(
+                    'No members yet',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.secondary.withValues(alpha: 0.5),
                     ),
                   ),
-                  title: Text(
-                    member['name']!,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                ],
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: members.length,
+              itemBuilder: (context, index) {
+                final member = members[index];
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                    ),
                   ),
-                  subtitle: Text(member['role']!),
-                  trailing: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                  child: ListTile(
+                    leading: CircleAvatar(
+                      backgroundColor: theme.colorScheme.tertiary.withValues(
+                        alpha: 0.3,
+                      ),
+                      child: Text(
+                        member['name']![0],
+                        style: TextStyle(color: theme.colorScheme.primary),
+                      ),
                     ),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                    title: Text(
+                      member['name']!,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
                     ),
-                    child: Text(
-                      member['status']!,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.bold,
+                    subtitle: Text(member['role']!),
+                    trailing: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        member['status']!,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                   ),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
       ],
     );
   }
 
   Widget _buildClassesView() {
     final theme = Theme.of(context);
-    final List<Map<String, String>> classes = [
-      {'name': 'Mathematics 101', 'batch': 'Morning A', 'time': '09:00 AM'},
-      {'name': 'Advanced Physics', 'batch': 'Evening B', 'time': '04:30 PM'},
-      {'name': 'Literary Analysis', 'batch': 'Weekend C', 'time': '11:00 AM'},
-    ];
+    final List<Map<String, String>> classes = [];
 
     return Column(
       children: [
@@ -576,46 +591,71 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
             ],
           ),
         ),
-        Expanded(
-          child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: classes.length,
-            itemBuilder: (context, index) {
-              final classItem = classes[index];
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.05),
+        if (classes.isEmpty)
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.auto_stories_rounded,
+                    size: 64,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.2),
                   ),
-                ),
-                child: ListTile(
-                  leading: Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.tertiary.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.auto_stories_rounded,
-                      color: theme.colorScheme.primary,
+                  const SizedBox(height: 16),
+                  Text(
+                    'No classes scheduled',
+                    style: theme.textTheme.bodyLarge?.copyWith(
+                      color: theme.colorScheme.secondary.withValues(alpha: 0.5),
                     ),
                   ),
-                  title: Text(
-                    classItem['name']!,
-                    style: const TextStyle(fontWeight: FontWeight.bold),
+                ],
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              itemCount: classes.length,
+              itemBuilder: (context, index) {
+                final classItem = classes[index];
+                return Container(
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surface,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.05),
+                    ),
                   ),
-                  subtitle: Text(
-                    '${classItem['batch']} • ${classItem['time']}',
+                  child: ListTile(
+                    leading: Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.tertiary.withValues(
+                          alpha: 0.2,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Icon(
+                        Icons.auto_stories_rounded,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                    title: Text(
+                      classItem['name']!,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      '${classItem['batch']} • ${classItem['time']}',
+                    ),
+                    trailing: const Icon(Icons.chevron_right_rounded),
                   ),
-                  trailing: const Icon(Icons.chevron_right_rounded),
-                ),
-              );
-            },
+                );
+              },
+            ),
           ),
-        ),
       ],
     );
   }

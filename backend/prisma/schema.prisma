@@ -35,6 +35,23 @@ model User {
   // Relations
   ownedCoachings Coaching[]      @relation("CoachingOwner")
   sessions      LoginSession[]
+  wards         Ward[]          @relation("UserWards")
+  memberships   CoachingMember[]
+}
+
+model Ward {
+  id        String   @id @default(uuid())
+  name      String
+  picture   String?
+  parentId  String
+  parent    User     @relation("UserWards", fields: [parentId], references: [id], onDelete: Cascade)
+  
+  enrollments CoachingMember[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([parentId])
 }
 
 model LoginSession {
@@ -60,8 +77,36 @@ model Coaching {
   ownerId     String
   owner       User     @relation("CoachingOwner", fields: [ownerId], references: [id])
 
+  members     CoachingMember[]
+
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([ownerId])
+}
+
+model CoachingMember {
+  id         String   @id @default(uuid())
+  coachingId String
+  coaching   Coaching @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+  
+  role       String   @default("STUDENT") // ADMIN, TEACHER, STUDENT
+  
+  // Link to either a main User (for staff) or a Ward (for students)
+  userId     String?
+  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  wardId     String?
+  ward       Ward?    @relation(fields: [wardId], references: [id], onDelete: Cascade)
+  
+  status     String   @default("active") // active, pending, suspended
+  
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([coachingId, userId])
+  @@unique([coachingId, wardId])
+  @@index([coachingId])
+  @@index([userId])
+  @@index([wardId])
 }
