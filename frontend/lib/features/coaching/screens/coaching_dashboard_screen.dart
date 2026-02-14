@@ -10,11 +10,13 @@ import '../../../shared/services/notification_service.dart'; // Correct path
 class CoachingDashboardScreen extends StatefulWidget {
   final CoachingModel coaching;
   final VoidCallback? onMembersTap;
+  final VoidCallback? onBack;
 
   const CoachingDashboardScreen({
     super.key,
     required this.coaching,
     this.onMembersTap,
+    this.onBack,
   });
 
   @override
@@ -95,6 +97,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
               memberCount: _members.length,
               unreadNotifications: _unreadNotifications,
               onNotificationTap: _onNotificationTap,
+              onBack: widget.onBack,
             ),
 
             const SizedBox(height: 20),
@@ -180,18 +183,20 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
 // Private widgets — compact, premium, zero static data
 // ═══════════════════════════════════════════════════════════════════════════
 
-/// Coaching name + avatar header.
+/// Coaching name + avatar header with back button.
 class _Header extends StatelessWidget {
   final CoachingModel coaching;
   final int memberCount;
   final int unreadNotifications;
   final VoidCallback onNotificationTap;
+  final VoidCallback? onBack;
 
   const _Header({
     required this.coaching,
     required this.memberCount,
     required this.unreadNotifications,
     required this.onNotificationTap,
+    this.onBack,
   });
 
   @override
@@ -199,6 +204,28 @@ class _Header extends StatelessWidget {
     final theme = Theme.of(context);
     return Row(
       children: [
+        // Back Button - Carded style with shadow
+        if (onBack != null) ...[
+          Material(
+            color: theme.colorScheme.surface,
+            elevation: 2,
+            shadowColor: Colors.black26,
+            borderRadius: BorderRadius.circular(12),
+            child: InkWell(
+              onTap: onBack,
+              borderRadius: BorderRadius.circular(12),
+              child: Container(
+                padding: const EdgeInsets.all(10),
+                child: Icon(
+                  Icons.arrow_back_rounded,
+                  size: 22,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+        ],
         Container(
           width: 48,
           height: 48,

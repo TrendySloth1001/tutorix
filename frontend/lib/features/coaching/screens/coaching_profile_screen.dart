@@ -6,7 +6,7 @@ import '../services/coaching_service.dart';
 import '../services/coaching_onboarding_service.dart';
 import 'coaching_onboarding_screen.dart';
 
-/// Simplified coaching profile with dividers instead of cards
+/// Premium coaching profile with clean, minimal design
 class CoachingProfileScreen extends StatefulWidget {
   final CoachingModel coaching;
   final UserModel user;
@@ -54,9 +54,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     } catch (_) {}
   }
 
-  // ─────────────────────────────────────────────────────────────────────
-  // Edit Helpers
-  // ─────────────────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════
+  // Edit Methods
+  // ═══════════════════════════════════════════════════════════════════════
 
   Future<void> _editField({
     required String title,
@@ -73,7 +73,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) {
         final theme = Theme.of(ctx);
@@ -82,7 +82,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
             20,
             12,
             20,
-            MediaQuery.of(ctx).viewInsets.bottom + 20,
+            MediaQuery.of(ctx).viewInsets.bottom + 24,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -90,22 +90,22 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
             children: [
               Center(
                 child: Container(
-                  width: 36,
+                  width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 24),
               Text(
                 title,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: 16),
               TextField(
                 controller: controller,
                 autofocus: true,
@@ -114,26 +114,39 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                 keyboardType: keyboardType,
                 decoration: InputDecoration(
                   hintText: hint,
+                  filled: true,
+                  fillColor: theme.colorScheme.onSurface.withValues(
+                    alpha: 0.04,
+                  ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(
+                      color: theme.colorScheme.primary,
+                      width: 1.5,
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 20),
               Row(
                 children: [
                   Expanded(
-                    child: OutlinedButton(
+                    child: TextButton(
                       onPressed: () => Navigator.pop(ctx),
                       child: const Text('Cancel'),
                     ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
+                    flex: 2,
                     child: FilledButton(
                       onPressed: () =>
                           Navigator.pop(ctx, controller.text.trim()),
-                      child: const Text('Save'),
+                      child: const Text('Save Changes'),
                     ),
                   ),
                 ],
@@ -149,38 +162,51 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       try {
         await onSave(result);
         await _refreshCoaching();
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Updated'),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 1),
-            ),
-          );
-        }
+        if (mounted) _showSuccess('Updated successfully');
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
-          );
-        }
+        if (mounted) _showError('Update failed');
       } finally {
         if (mounted) setState(() => _isLoading = false);
       }
     }
   }
 
+  void _showSuccess(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: Colors.green,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showError(String msg) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: Colors.red,
+        behavior: SnackBarBehavior.floating,
+        margin: const EdgeInsets.all(16),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
+    );
+  }
+
   void _editName() => _editField(
     title: 'Coaching Name',
     currentValue: _coaching.name,
-    hint: 'Enter name',
+    hint: 'Enter coaching name',
     onSave: (v) => _coachingService.updateCoaching(id: _coaching.id, name: v),
   );
 
   void _editTagline() => _editField(
     title: 'Tagline',
     currentValue: _coaching.tagline ?? '',
-    hint: 'A short tagline...',
+    hint: 'A catchy tagline for your coaching...',
     maxLength: 100,
     onSave: (v) => _onboardingService.updateProfile(
       coachingId: _coaching.id,
@@ -191,8 +217,8 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
   void _editAbout() => _editField(
     title: 'About',
     currentValue: _coaching.aboutUs ?? '',
-    hint: 'Tell about your coaching...',
-    maxLines: 4,
+    hint: 'Tell students about your coaching...',
+    maxLines: 5,
     maxLength: 500,
     onSave: (v) => _onboardingService.updateProfile(
       coachingId: _coaching.id,
@@ -236,7 +262,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
   void _editWebsite() => _editField(
     title: 'Website',
     currentValue: _coaching.websiteUrl ?? '',
-    hint: 'https://...',
+    hint: 'https://yourcoaching.com',
     keyboardType: TextInputType.url,
     onSave: (v) => _onboardingService.updateProfile(
       coachingId: _coaching.id,
@@ -248,33 +274,51 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
       builder: (ctx) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const SizedBox(height: 8),
-            Container(
-              width: 36,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.grey.shade300,
-                borderRadius: BorderRadius.circular(2),
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ),
-            ListTile(
-              leading: const Icon(Icons.camera_alt_outlined),
-              title: const Text('Take Photo'),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: const Text('Choose from Gallery'),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-            const SizedBox(height: 8),
-          ],
+              const SizedBox(height: 20),
+              Text(
+                'Update Logo',
+                style: Theme.of(
+                  ctx,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _OptionTile(
+                      icon: Icons.camera_alt_rounded,
+                      label: 'Camera',
+                      onTap: () => Navigator.pop(ctx, ImageSource.camera),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _OptionTile(
+                      icon: Icons.photo_library_rounded,
+                      label: 'Gallery',
+                      onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -293,28 +337,21 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       final url = await _coachingService.uploadLogo(picked.path);
       await _coachingService.updateCoaching(id: _coaching.id, logo: url);
       await _refreshCoaching();
+      if (mounted) _showSuccess('Logo updated');
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Upload failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (mounted) _showError('Upload failed');
     } finally {
       if (mounted) setState(() => _isUploadingLogo = false);
     }
   }
 
-  void _continueOnboarding() async {
-    final resumeStep = CoachingOnboardingScreen.getResumeStep(_coaching);
+  void _openUpdateScreen({int step = 0}) async {
     await Navigator.push(
       context,
       MaterialPageRoute(
         builder: (_) => CoachingOnboardingScreen(
           existingCoaching: _coaching,
-          initialStep: resumeStep,
+          initialStep: step,
           onComplete: () {
             Navigator.pop(context);
             _refreshCoaching();
@@ -324,76 +361,75 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     );
   }
 
-  void _editAddress() async {
-    await Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) => CoachingOnboardingScreen(
-          existingCoaching: _coaching,
-          initialStep: 2,
-          onComplete: () {
-            Navigator.pop(context);
-            _refreshCoaching();
-          },
-        ),
-      ),
-    );
-  }
-
-  // ─────────────────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════
   // Build
-  // ─────────────────────────────────────────────────────────────────────
+  // ═══════════════════════════════════════════════════════════════════════
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final colors = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: colors.surface,
+      backgroundColor: theme.colorScheme.surface,
       body: Stack(
         children: [
           RefreshIndicator(
             onRefresh: _refreshCoaching,
-            child: ListView(
-              padding: EdgeInsets.fromLTRB(
-                0,
-                MediaQuery.of(context).padding.top,
-                0,
-                100,
-              ),
-              children: [
-                // Header
-                _buildHeader(theme),
+            child: CustomScrollView(
+              slivers: [
+                // App Bar with back button
+                SliverToBoxAdapter(child: _buildTopBar(theme)),
 
-                // Hero
-                _buildHero(theme),
-
-                // Incomplete onboarding banner
-                if (_isOwner && !_coaching.onboardingComplete)
-                  _buildOnboardingBanner(theme),
-
-                const Divider(height: 1),
-
-                // About
-                if (_coaching.aboutUs != null || _isOwner)
-                  _buildAboutSection(theme),
-
-                // Contact
-                _buildContactSection(theme),
-
-                // Address
-                if (_coaching.address != null || _isOwner)
-                  _buildAddressSection(theme),
-
-                // Timings
-                if (_coaching.address != null) _buildTimingsSection(theme),
-
-                // Branches
-                if (_coaching.branches.isNotEmpty) _buildBranchesSection(theme),
-
-                // General info
-                _buildGeneralSection(theme),
+                // Profile Content
+                SliverPadding(
+                  padding: const EdgeInsets.only(bottom: 100),
+                  sliver: SliverList(
+                    delegate: SliverChildListDelegate([
+                      _buildProfileHeader(theme),
+                      if (_isOwner && !_coaching.onboardingComplete)
+                        _buildSetupPrompt(theme),
+                      _buildSection(
+                        theme,
+                        title: 'About',
+                        onEdit: _isOwner ? _editAbout : null,
+                        child: _buildAboutContent(theme),
+                      ),
+                      _buildSection(
+                        theme,
+                        title: 'Contact Information',
+                        child: _buildContactContent(theme),
+                      ),
+                      if (_coaching.address != null || _isOwner)
+                        _buildSection(
+                          theme,
+                          title: 'Location',
+                          onEdit: _isOwner
+                              ? () => _openUpdateScreen(step: 2)
+                              : null,
+                          child: _buildLocationContent(theme),
+                        ),
+                      if (_coaching.address != null &&
+                          (_coaching.address!.workingDays.isNotEmpty ||
+                              _coaching.address!.openingTime != null))
+                        _buildSection(
+                          theme,
+                          title: 'Working Hours',
+                          child: _buildTimingContent(theme),
+                        ),
+                      if (_coaching.branches.isNotEmpty)
+                        _buildSection(
+                          theme,
+                          title: 'Branches',
+                          child: _buildBranchesContent(theme),
+                        ),
+                      _buildSection(
+                        theme,
+                        title: 'Information',
+                        child: _buildInfoContent(theme),
+                      ),
+                    ]),
+                  ),
+                ),
               ],
             ),
           ),
@@ -407,48 +443,53 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     );
   }
 
-  Widget _buildHeader(ThemeData theme) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      child: Row(
-        children: [
-          if (widget.onBack != null)
-            IconButton(
-              onPressed: widget.onBack,
-              icon: const Icon(Icons.arrow_back),
-            ),
-          const Spacer(),
-          if (_coaching.isVerified)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.verified, size: 14, color: Colors.blue),
-                  SizedBox(width: 4),
-                  Text(
-                    'Verified',
-                    style: TextStyle(
-                      color: Colors.blue,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
+  Widget _buildTopBar(ThemeData theme) {
+    return SafeArea(
+      bottom: false,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+        child: Row(
+          children: [
+            // Back Button - Carded style with shadow
+
+            // Verified badge
+            if (_coaching.isVerified)
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.blue.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.verified_rounded, size: 16, color: Colors.blue),
+                    const SizedBox(width: 4),
+                    Text(
+                      'Verified',
+                      style: TextStyle(
+                        color: Colors.blue,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildHero(ThemeData theme) {
+  Widget _buildProfileHeader(ThemeData theme) {
+    final colors = theme.colorScheme;
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       child: Column(
         children: [
           // Logo
@@ -456,23 +497,27 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
             onTap: _isOwner && !_isUploadingLogo ? _changeLogo : null,
             child: Stack(
               children: [
-                CircleAvatar(
-                  radius: 48,
-                  backgroundColor: theme.colorScheme.primary.withValues(
-                    alpha: 0.1,
+                Container(
+                  width: 88,
+                  height: 88,
+                  decoration: BoxDecoration(
+                    color: colors.primary.withValues(alpha: 0.08),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: colors.primary.withValues(alpha: 0.15),
+                      width: 3,
+                    ),
                   ),
-                  backgroundImage: _coaching.logo != null
-                      ? NetworkImage(_coaching.logo!)
-                      : null,
-                  child: _coaching.logo == null
-                      ? Icon(
-                          Icons.school_rounded,
-                          size: 40,
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.4,
-                          ),
-                        )
-                      : null,
+                  child: ClipOval(
+                    child: _coaching.logo != null
+                        ? Image.network(
+                            _coaching.logo!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stack) =>
+                                _buildLogoPlaceholder(colors),
+                          )
+                        : _buildLogoPlaceholder(colors),
+                  ),
                 ),
                 if (_isUploadingLogo)
                   Positioned.fill(
@@ -486,7 +531,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                           width: 24,
                           height: 24,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2,
+                            strokeWidth: 2.5,
                             color: Colors.white,
                           ),
                         ),
@@ -500,626 +545,527 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
+                        color: colors.primary,
                         shape: BoxShape.circle,
+                        border: Border.all(color: colors.surface, width: 2),
                       ),
                       child: Icon(
-                        Icons.camera_alt,
-                        size: 12,
-                        color: theme.colorScheme.onPrimary,
+                        Icons.camera_alt_rounded,
+                        size: 14,
+                        color: colors.onPrimary,
                       ),
                     ),
                   ),
               ],
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
 
-          // Name
-          GestureDetector(
-            onTap: _isOwner ? _editName : null,
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Flexible(
-                  child: Text(
-                    _coaching.name,
-                    style: theme.textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
+          // Name with Edit Button
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Flexible(
+                child: Text(
+                  _coaching.name,
+                  style: theme.textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.3,
+                  ),
+                  textAlign: TextAlign.center,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              if (_isOwner) ...[
+                const SizedBox(width: 8),
+                Material(
+                  color: colors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                  child: InkWell(
+                    onTap: () => _openUpdateScreen(step: 0),
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(6),
+                      child: Icon(
+                        Icons.edit_rounded,
+                        size: 18,
+                        color: colors.primary,
+                      ),
                     ),
-                    textAlign: TextAlign.center,
                   ),
                 ),
-                if (_isOwner) ...[
-                  const SizedBox(width: 6),
-                  Icon(
-                    Icons.edit,
-                    size: 14,
-                    color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                  ),
-                ],
               ],
-            ),
+            ],
           ),
 
           // Tagline
-          if (_coaching.tagline != null && _coaching.tagline!.isNotEmpty) ...[
-            const SizedBox(height: 4),
+          const SizedBox(height: 6),
+          if (_coaching.tagline != null && _coaching.tagline!.isNotEmpty)
             GestureDetector(
               onTap: _isOwner ? _editTagline : null,
               child: Text(
                 _coaching.tagline!,
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  color: colors.onSurface.withValues(alpha: 0.6),
                   fontStyle: FontStyle.italic,
                 ),
                 textAlign: TextAlign.center,
               ),
-            ),
-          ] else if (_isOwner) ...[
-            const SizedBox(height: 4),
+            )
+          else if (_isOwner)
             GestureDetector(
               onTap: _editTagline,
-              child: Text(
-                '+ Add tagline',
-                style: TextStyle(
-                  color: theme.colorScheme.primary,
-                  fontSize: 13,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add, size: 16, color: colors.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Add tagline',
+                    style: TextStyle(
+                      color: colors.primary,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ],
 
-          const SizedBox(height: 10),
-
-          // Category & Slug
-          Row(
-            mainAxisSize: MainAxisSize.min,
+          // Category & Slug Row
+          const SizedBox(height: 14),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 8,
+            runSpacing: 8,
             children: [
               if (_coaching.category != null)
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 4,
+                    horizontal: 12,
+                    vertical: 5,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
+                    color: colors.primary.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
                     _coaching.category!,
                     style: TextStyle(
-                      color: theme.colorScheme.primary,
+                      color: colors.primary,
                       fontSize: 12,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),
-              const SizedBox(width: 8),
-              Text(
-                '@${_coaching.slug}',
-                style: TextStyle(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                  fontSize: 12,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: colors.onSurface.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Text(
+                  '@${_coaching.slug}',
+                  style: TextStyle(
+                    color: colors.onSurface.withValues(alpha: 0.5),
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 5,
+                ),
+                decoration: BoxDecoration(
+                  color: _coaching.status == 'active'
+                      ? Colors.green.withValues(alpha: 0.1)
+                      : Colors.red.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 6,
+                      height: 6,
+                      decoration: BoxDecoration(
+                        color: _coaching.status == 'active'
+                            ? Colors.green
+                            : Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _coaching.status == 'active' ? 'Active' : 'Inactive',
+                      style: TextStyle(
+                        color: _coaching.status == 'active'
+                            ? Colors.green
+                            : Colors.red,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ],
-          ),
-
-          const SizedBox(height: 10),
-
-          // Status
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
-            decoration: BoxDecoration(
-              color: _coaching.status == 'active'
-                  ? Colors.green.withValues(alpha: 0.1)
-                  : Colors.red.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  _coaching.status == 'active'
-                      ? Icons.check_circle
-                      : Icons.pause_circle,
-                  size: 14,
-                  color: _coaching.status == 'active'
-                      ? Colors.green
-                      : Colors.red,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  _coaching.status == 'active' ? 'Active' : 'Suspended',
-                  style: TextStyle(
-                    color: _coaching.status == 'active'
-                        ? Colors.green
-                        : Colors.red,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ],
-            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildOnboardingBanner(ThemeData theme) {
-    final stepName = _getStepName();
-    return InkWell(
-      onTap: _continueOnboarding,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        child: Row(
-          children: [
-            Icon(Icons.rocket_launch, size: 20, color: Colors.orange),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Complete your setup',
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                      color: Colors.orange.shade800,
-                    ),
+  Widget _buildLogoPlaceholder(ColorScheme colors) {
+    return Container(
+      color: colors.primary.withValues(alpha: 0.05),
+      child: Icon(
+        Icons.school_rounded,
+        size: 36,
+        color: colors.primary.withValues(alpha: 0.3),
+      ),
+    );
+  }
+
+  Widget _buildSetupPrompt(ThemeData theme) {
+    final step = CoachingOnboardingScreen.getResumeStep(_coaching);
+    final stepNames = ['Basic Info', 'Details', 'Address', 'Review'];
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+      child: Material(
+        color: Colors.orange.shade50,
+        borderRadius: BorderRadius.circular(12),
+        child: InkWell(
+          onTap: () => _openUpdateScreen(step: step),
+          borderRadius: BorderRadius.circular(12),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  Text(
-                    'Continue from: $stepName',
-                    style: TextStyle(
-                      color: Colors.orange.shade600,
-                      fontSize: 12,
-                    ),
+                  child: Icon(
+                    Icons.rocket_launch_rounded,
+                    color: Colors.orange.shade700,
+                    size: 20,
                   ),
-                ],
-              ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Complete your profile',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: Colors.orange.shade900,
+                          fontSize: 14,
+                        ),
+                      ),
+                      Text(
+                        'Continue from ${stepNames[step]}',
+                        style: TextStyle(
+                          color: Colors.orange.shade700,
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  size: 16,
+                  color: Colors.orange.shade600,
+                ),
+              ],
             ),
-            Icon(
-              Icons.arrow_forward_ios,
-              size: 14,
-              color: Colors.orange.shade400,
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  String _getStepName() {
-    final step = CoachingOnboardingScreen.getResumeStep(_coaching);
-    switch (step) {
-      case 0:
-        return 'Basic Info';
-      case 1:
-        return 'Details';
-      case 2:
-        return 'Address';
-      case 3:
-        return 'Review';
-      default:
-        return 'Setup';
-    }
-  }
-
-  Widget _buildAboutSection(ThemeData theme) {
+  Widget _buildSection(
+    ThemeData theme, {
+    required String title,
+    required Widget child,
+    VoidCallback? onEdit,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(
-          theme,
-          'About',
-          onEdit: _isOwner ? _editAbout : null,
-        ),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: _coaching.aboutUs != null && _coaching.aboutUs!.isNotEmpty
-              ? Text(
-                  _coaching.aboutUs!,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    height: 1.5,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
-                  ),
-                )
-              : Text(
-                  'No description added',
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-        ),
-        const Divider(height: 1),
-      ],
-    );
-  }
-
-  Widget _buildContactSection(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(theme, 'Contact'),
-        _buildInfoRow(
-          theme,
-          Icons.email_outlined,
-          'Email',
-          _coaching.contactEmail,
-          onTap: _isOwner ? _editEmail : null,
-        ),
-        _buildInfoRow(
-          theme,
-          Icons.phone_outlined,
-          'Phone',
-          _coaching.contactPhone,
-          onTap: _isOwner ? _editPhone : null,
-        ),
-        _buildInfoRow(
-          theme,
-          Icons.chat_outlined,
-          'WhatsApp',
-          _coaching.whatsappPhone,
-          onTap: _isOwner ? _editWhatsApp : null,
-        ),
-        _buildInfoRow(
-          theme,
-          Icons.language_outlined,
-          'Website',
-          _coaching.websiteUrl,
-          onTap: _isOwner ? _editWebsite : null,
-        ),
-        const Divider(height: 1),
-      ],
-    );
-  }
-
-  Widget _buildAddressSection(ThemeData theme) {
-    final addr = _coaching.address;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(
-          theme,
-          'Location',
-          onEdit: _isOwner ? _editAddress : null,
-        ),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: addr != null
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      addr.addressLine1,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                    if (addr.addressLine2 != null &&
-                        addr.addressLine2!.isNotEmpty)
-                      Text(
-                        addr.addressLine2!,
-                        style: theme.textTheme.bodyMedium,
-                      ),
-                    if (addr.landmark != null && addr.landmark!.isNotEmpty)
-                      Text(
-                        'Near: ${addr.landmark}',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.6,
-                          ),
-                        ),
-                      ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${addr.city}, ${addr.state} - ${addr.pincode}',
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    if (addr.latitude != null && addr.longitude != null) ...[
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          const Icon(
-                            Icons.gps_fixed,
-                            size: 14,
-                            color: Colors.green,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'GPS location saved',
-                            style: TextStyle(
-                              color: Colors.green,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ],
-                )
-              : Text(
-                  'No address added',
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-        ),
-        const Divider(height: 1),
-      ],
-    );
-  }
-
-  Widget _buildTimingsSection(ThemeData theme) {
-    final addr = _coaching.address!;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(theme, 'Timings'),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+          child: Row(
             children: [
-              if (addr.openingTime != null || addr.closingTime != null)
-                Row(
-                  children: [
-                    Icon(
-                      Icons.schedule,
-                      size: 16,
+              Text(
+                title.toUpperCase(),
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                ),
+              ),
+              const Spacer(),
+              if (onEdit != null)
+                GestureDetector(
+                  onTap: onEdit,
+                  child: Text(
+                    'Edit',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
                       color: theme.colorScheme.primary,
                     ),
-                    const SizedBox(width: 8),
-                    Text(
-                      '${addr.openingTime ?? '--:--'} - ${addr.closingTime ?? '--:--'}',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              if (addr.workingDays.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                Wrap(
-                  spacing: 6,
-                  runSpacing: 6,
-                  children: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
-                      .map((day) {
-                        final isActive = addr.workingDays.contains(day);
-                        return Container(
-                          width: 36,
-                          height: 36,
-                          decoration: BoxDecoration(
-                            color: isActive
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.onSurface.withValues(
-                                    alpha: 0.06,
-                                  ),
-                            shape: BoxShape.circle,
-                          ),
-                          alignment: Alignment.center,
-                          child: Text(
-                            day.substring(0, 1),
-                            style: TextStyle(
-                              color: isActive
-                                  ? theme.colorScheme.onPrimary
-                                  : theme.colorScheme.onSurface.withValues(
-                                      alpha: 0.35,
-                                    ),
-                              fontWeight: FontWeight.w600,
-                              fontSize: 12,
-                            ),
-                          ),
-                        );
-                      })
-                      .toList(),
-                ),
-              ],
             ],
           ),
         ),
-        const Divider(height: 1),
-      ],
-    );
-  }
-
-  Widget _buildBranchesSection(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        _buildSectionHeader(theme, 'Branches (${_coaching.branches.length})'),
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-          child: Column(
-            children: _coaching.branches.map((branch) {
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Icon(
-                      Icons.location_on_outlined,
-                      size: 18,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 10),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            branch.name,
-                            style: theme.textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          Text(
-                            branch.fullAddress,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.6,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }).toList(),
-          ),
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: child,
         ),
-        const Divider(height: 1),
+        const SizedBox(height: 8),
+        Divider(
+          height: 1,
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
+        ),
       ],
     );
   }
 
-  Widget _buildGeneralSection(ThemeData theme) {
+  Widget _buildAboutContent(ThemeData theme) {
+    if (_coaching.aboutUs != null && _coaching.aboutUs!.isNotEmpty) {
+      return Text(
+        _coaching.aboutUs!,
+        style: theme.textTheme.bodyMedium?.copyWith(
+          height: 1.6,
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
+        ),
+      );
+    }
+    return Text(
+      'No description added yet',
+      style: TextStyle(
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+        fontStyle: FontStyle.italic,
+      ),
+    );
+  }
+
+  Widget _buildContactContent(ThemeData theme) {
+    return Column(
+      children: [
+        _ContactItem(
+          icon: Icons.email_outlined,
+          label: 'Email',
+          value: _coaching.contactEmail,
+          onTap: _isOwner ? _editEmail : null,
+        ),
+        _ContactItem(
+          icon: Icons.phone_outlined,
+          label: 'Phone',
+          value: _coaching.contactPhone,
+          onTap: _isOwner ? _editPhone : null,
+        ),
+        _ContactItem(
+          icon: Icons.chat_outlined,
+          label: 'WhatsApp',
+          value: _coaching.whatsappPhone,
+          onTap: _isOwner ? _editWhatsApp : null,
+        ),
+        _ContactItem(
+          icon: Icons.language_outlined,
+          label: 'Website',
+          value: _coaching.websiteUrl,
+          onTap: _isOwner ? _editWebsite : null,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLocationContent(ThemeData theme) {
+    final addr = _coaching.address;
+    if (addr == null) {
+      return Text(
+        'No address added yet',
+        style: TextStyle(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+          fontStyle: FontStyle.italic,
+        ),
+      );
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(theme, 'General'),
-        _buildSimpleInfoRow(
-          theme,
-          'Founded',
-          _coaching.foundedYear?.toString() ?? 'Not specified',
-        ),
-        _buildSimpleInfoRow(
-          theme,
-          'Created',
-          _coaching.createdAt != null
-              ? _formatDate(_coaching.createdAt!)
-              : 'Recently',
-        ),
-        if (_coaching.subjects.isNotEmpty)
-          _buildSimpleInfoRow(theme, 'Subjects', _coaching.subjects.join(', ')),
-        const SizedBox(height: 16),
-      ],
-    );
-  }
-
-  Widget _buildSectionHeader(
-    ThemeData theme,
-    String title, {
-    VoidCallback? onEdit,
-  }) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-            ),
+        Text(
+          addr.fullAddress,
+          style: theme.textTheme.bodyMedium?.copyWith(
+            height: 1.5,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
           ),
-          const Spacer(),
-          if (onEdit != null)
-            GestureDetector(
-              onTap: onEdit,
-              child: Text(
-                'Edit',
+        ),
+        if (addr.latitude != null && addr.longitude != null) ...[
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              Icon(Icons.gps_fixed_rounded, size: 16, color: Colors.green),
+              const SizedBox(width: 6),
+              Text(
+                'GPS location saved',
                 style: TextStyle(
-                  color: theme.colorScheme.primary,
+                  color: Colors.green,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
               ),
-            ),
+            ],
+          ),
         ],
-      ),
+      ],
     );
   }
 
-  Widget _buildInfoRow(
-    ThemeData theme,
-    IconData icon,
-    String label,
-    String? value, {
-    VoidCallback? onTap,
-  }) {
-    final hasValue = value != null && value.isNotEmpty;
-    return InkWell(
-      onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        child: Row(
-          children: [
-            Icon(
-              icon,
-              size: 20,
-              color: theme.colorScheme.primary.withValues(alpha: 0.7),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 11,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                    ),
-                  ),
-                  Text(
-                    hasValue ? value : 'Not added',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: hasValue
-                          ? FontWeight.w500
-                          : FontWeight.normal,
-                      color: hasValue
-                          ? theme.colorScheme.onSurface
-                          : theme.colorScheme.onSurface.withValues(alpha: 0.35),
-                      fontStyle: hasValue ? FontStyle.normal : FontStyle.italic,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (onTap != null)
+  Widget _buildTimingContent(ThemeData theme) {
+    final addr = _coaching.address!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (addr.openingTime != null || addr.closingTime != null)
+          Row(
+            children: [
               Icon(
-                Icons.chevron_right,
-                size: 20,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.25),
+                Icons.access_time_rounded,
+                size: 18,
+                color: theme.colorScheme.primary,
               ),
-          ],
-        ),
-      ),
+              const SizedBox(width: 10),
+              Text(
+                '${addr.openingTime ?? '--:--'} - ${addr.closingTime ?? '--:--'}',
+                style: theme.textTheme.bodyLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        if (addr.workingDays.isNotEmpty) ...[
+          const SizedBox(height: 14),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((
+              day,
+            ) {
+              final isActive = addr.workingDays.contains(day);
+              return Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: isActive
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.onSurface.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  day.substring(0, 2),
+                  style: TextStyle(
+                    color: isActive
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                ),
+              );
+            }).toList(),
+          ),
+        ],
+      ],
     );
   }
 
-  Widget _buildSimpleInfoRow(ThemeData theme, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 80,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+  Widget _buildBranchesContent(ThemeData theme) {
+    return Column(
+      children: _coaching.branches.map((branch) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(
+                  Icons.location_on_outlined,
+                  size: 18,
+                  color: theme.colorScheme.primary,
+                ),
               ),
-            ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      branch.name,
+                      style: theme.textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      branch.fullAddress,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.6,
+                        ),
+                        height: 1.4,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-            ),
-          ),
-        ],
-      ),
+        );
+      }).toList(),
+    );
+  }
+
+  Widget _buildInfoContent(ThemeData theme) {
+    return Column(
+      children: [
+        _InfoRow(
+          label: 'Founded',
+          value: _coaching.foundedYear?.toString() ?? 'Not specified',
+        ),
+        _InfoRow(
+          label: 'Created',
+          value: _coaching.createdAt != null
+              ? _formatDate(_coaching.createdAt!)
+              : 'Recently',
+        ),
+        if (_coaching.subjects.isNotEmpty)
+          _InfoRow(label: 'Subjects', value: _coaching.subjects.join(', ')),
+      ],
     );
   }
 
@@ -1139,5 +1085,163 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       'Dec',
     ];
     return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Helper Widgets
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _OptionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _OptionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Material(
+      color: theme.colorScheme.onSurface.withValues(alpha: 0.04),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 20),
+          child: Column(
+            children: [
+              Icon(icon, size: 28, color: theme.colorScheme.primary),
+              const SizedBox(height: 8),
+              Text(
+                label,
+                style: TextStyle(
+                  fontWeight: FontWeight.w500,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ContactItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String? value;
+  final VoidCallback? onTap;
+
+  const _ContactItem({
+    required this.icon,
+    required this.label,
+    this.value,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final hasValue = value != null && value!.isNotEmpty;
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Icon(
+              icon,
+              size: 20,
+              color: theme.colorScheme.primary.withValues(alpha: 0.7),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.45,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    hasValue ? value! : 'Not added',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: hasValue
+                          ? FontWeight.w500
+                          : FontWeight.normal,
+                      color: hasValue
+                          ? theme.colorScheme.onSurface
+                          : theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                      fontStyle: hasValue ? FontStyle.normal : FontStyle.italic,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (onTap != null)
+              Icon(
+                Icons.chevron_right_rounded,
+                size: 20,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _InfoRow({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 80,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 13,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+              ),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
