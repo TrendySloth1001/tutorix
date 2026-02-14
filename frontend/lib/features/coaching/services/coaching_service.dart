@@ -27,6 +27,15 @@ class CoachingService {
         .toList();
   }
 
+  /// GET /coaching/joined
+  Future<List<CoachingModel>> getJoinedCoachings() async {
+    final data = await _api.getAuthenticated(ApiConstants.coachingJoined);
+    final list = data['coachings'] as List<dynamic>;
+    return list
+        .map((e) => CoachingModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
   /// GET /coaching/:id
   Future<CoachingModel?> getCoachingById(String id) async {
     try {

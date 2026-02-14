@@ -15,6 +15,7 @@ router.get('/slug/:slug', coachingController.getBySlug.bind(coachingController))
 // Protected routes - require authentication (must be before /:id to match correctly)
 router.post('/', authMiddleware, coachingController.create.bind(coachingController));
 router.get('/my', authMiddleware, coachingController.getMyCoachings.bind(coachingController));
+router.get('/joined', authMiddleware, coachingController.getJoinedCoachings.bind(coachingController));
 router.patch('/:id', authMiddleware, coachingController.update.bind(coachingController));
 router.delete('/:id', authMiddleware, coachingController.delete.bind(coachingController));
 

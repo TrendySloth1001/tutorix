@@ -8,6 +8,18 @@ class CoachingModel {
   final String ownerId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
+  
+  // Owner info (optional)
+  final String? ownerName;
+  final String? ownerPicture;
+  
+  // Stats (optional - may not be present on all endpoints)
+  final int memberCount;
+  final int teacherCount;
+  final int studentCount;
+  
+  // User's role in this coaching (for joined coachings)
+  final String? myRole;
 
   const CoachingModel({
     required this.id,
@@ -19,9 +31,16 @@ class CoachingModel {
     required this.ownerId,
     this.createdAt,
     this.updatedAt,
+    this.ownerName,
+    this.ownerPicture,
+    this.memberCount = 0,
+    this.teacherCount = 0,
+    this.studentCount = 0,
+    this.myRole,
   });
 
   factory CoachingModel.fromJson(Map<String, dynamic> json) {
+    final owner = json['owner'] as Map<String, dynamic>?;
     return CoachingModel(
       id: json['id'] as String,
       name: json['name'] as String,
@@ -36,6 +55,12 @@ class CoachingModel {
       updatedAt: json['updatedAt'] != null
           ? DateTime.parse(json['updatedAt'] as String)
           : null,
+      ownerName: owner?['name'] as String?,
+      ownerPicture: owner?['picture'] as String?,
+      memberCount: json['memberCount'] as int? ?? 0,
+      teacherCount: json['teacherCount'] as int? ?? 0,
+      studentCount: json['studentCount'] as int? ?? 0,
+      myRole: json['myRole'] as String?,
     );
   }
 
@@ -49,5 +74,9 @@ class CoachingModel {
     'ownerId': ownerId,
     'createdAt': createdAt?.toIso8601String(),
     'updatedAt': updatedAt?.toIso8601String(),
+    'memberCount': memberCount,
+    'teacherCount': teacherCount,
+    'studentCount': studentCount,
+    'myRole': myRole,
   };
 }

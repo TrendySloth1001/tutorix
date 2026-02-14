@@ -70,10 +70,94 @@ export class CoachingService {
     }
 
     async findByOwner(ownerId: string) {
-        return prisma.coaching.findMany({
+        const coachings = await prisma.coaching.findMany({
             where: { ownerId },
             orderBy: { createdAt: 'desc' },
+            include: {
+                _count: {
+                    select: { members: true },
+                },
+                members: {
+                    select: { role: true },
+                },
+            },
         });
+
+        // Transform to include stats
+        return coachings.map((coaching) => {
+            const roleCounts = coaching.members.reduce(
+                (acc, m) => {
+                    acc[m.role] = (acc[m.role] || 0) + 1;
+                    return acc;
+                },
+                {} as Record<string, number>
+            );
+
+            return {
+                ...coaching,
+                memberCount: coaching._count.members,
+                teacherCount: roleCounts['TEACHER'] || 0,
+                studentCount: roleCounts['STUDENT'] || 0,
+                members: undefined,
+                _count: undefined,
+            };
+        });
+    }
+
+    /**
+     * Find coachings where user is a member (but not owner).
+     */
+    async findByMember(userId: string) {
+        const memberships = await prisma.coachingMember.findMany({
+            where: { userId },
+            include: {
+                coaching: {
+                    include: {
+                        owner: {
+                            select: { id: true, name: true, picture: true },
+                        },
+                        _count: {
+                            select: { members: true },
+                        },
+                        members: {
+                            select: { role: true },
+                        },
+                    },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        // Filter out coachings where user is owner, transform to include stats and role
+        return memberships
+            .filter((m) => m.coaching.ownerId !== userId)
+            .map((m) => {
+                const coaching = m.coaching;
+                const roleCounts = coaching.members.reduce(
+                    (acc, mem) => {
+                        acc[mem.role] = (acc[mem.role] || 0) + 1;
+                        return acc;
+                    },
+                    {} as Record<string, number>
+                );
+
+                return {
+                    id: coaching.id,
+                    name: coaching.name,
+                    slug: coaching.slug,
+                    description: coaching.description,
+                    logo: coaching.logo,
+                    status: coaching.status,
+                    ownerId: coaching.ownerId,
+                    owner: coaching.owner,
+                    createdAt: coaching.createdAt,
+                    updatedAt: coaching.updatedAt,
+                    memberCount: coaching._count.members,
+                    teacherCount: roleCounts['TEACHER'] || 0,
+                    studentCount: roleCounts['STUDENT'] || 0,
+                    myRole: m.role,
+                };
+            });
     }
 
     async update(id: string, ownerId: string, data: UpdateCoachingDto) {

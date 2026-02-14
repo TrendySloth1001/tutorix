@@ -21,7 +21,8 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   final CoachingService _coachingService = CoachingService();
   final NotificationService _notificationService = NotificationService();
-  List<CoachingModel> _coachings = [];
+  List<CoachingModel> _myCoachings = [];
+  List<CoachingModel> _joinedCoachings = [];
   bool _isLoading = true;
   int _unreadNotifications = 0;
 
@@ -48,7 +49,12 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadCoachings() async {
     setState(() => _isLoading = true);
     try {
-      _coachings = await _coachingService.getMyCoachings();
+      final results = await Future.wait([
+        _coachingService.getMyCoachings(),
+        _coachingService.getJoinedCoachings(),
+      ]);
+      _myCoachings = results[0];
+      _joinedCoachings = results[1];
     } catch (_) {}
     if (mounted) setState(() => _isLoading = false);
   }
@@ -90,6 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasAny = _myCoachings.isNotEmpty || _joinedCoachings.isNotEmpty;
 
     return Scaffold(
       body: CustomScrollView(
@@ -103,33 +110,73 @@ class _HomeScreenState extends State<HomeScreen> {
             const SliverFillRemaining(
               child: Center(child: CircularProgressIndicator()),
             )
-          else if (_coachings.isEmpty)
+          else if (!hasAny)
             SliverFillRemaining(child: _EmptyState())
           else
-            SliverPadding(
-              padding: const EdgeInsets.only(top: 16, bottom: 100),
-              sliver: SliverList(
-                delegate: SliverChildBuilderDelegate((context, index) {
-                  if (index == 0) {
-                    return Padding(
-                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                      child: Text(
-                        'My Coachings',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.8,
-                          ),
-                        ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 8, bottom: 100),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // My Coachings section
+                    if (_myCoachings.isNotEmpty) ...[
+                      _SectionHeader(
+                        title: 'My Coachings',
+                        count: _myCoachings.length,
+                        icon: Icons.school_rounded,
                       ),
-                    );
-                  }
-                  final coaching = _coachings[index - 1];
-                  return CoachingCard(
-                    coaching: coaching,
-                    onTap: () => _navigateToCoaching(coaching),
-                  );
-                }, childCount: _coachings.length + 1),
+                      ...List.generate(_myCoachings.length, (i) {
+                        final coaching = _myCoachings[i];
+                        return Column(
+                          children: [
+                            CoachingCard(
+                              coaching: coaching,
+                              onTap: () => _navigateToCoaching(coaching),
+                            ),
+                            if (i < _myCoachings.length - 1)
+                              Divider(
+                                height: 1,
+                                indent: 86,
+                                endIndent: 20,
+                                color: theme.colorScheme.secondary.withValues(alpha: 0.12),
+                              ),
+                          ],
+                        );
+                      }),
+                    ],
+
+                    // Joined section
+                    if (_joinedCoachings.isNotEmpty) ...[
+                      if (_myCoachings.isNotEmpty)
+                        const SizedBox(height: 24),
+                      _SectionHeader(
+                        title: 'Joined',
+                        count: _joinedCoachings.length,
+                        icon: Icons.group_rounded,
+                      ),
+                      ...List.generate(_joinedCoachings.length, (i) {
+                        final coaching = _joinedCoachings[i];
+                        return Column(
+                          children: [
+                            CoachingCard(
+                              coaching: coaching,
+                              onTap: () => _navigateToCoaching(coaching),
+                              showRole: true,
+                            ),
+                            if (i < _joinedCoachings.length - 1)
+                              Divider(
+                                height: 1,
+                                indent: 86,
+                                endIndent: 20,
+                                color: theme.colorScheme.secondary.withValues(alpha: 0.12),
+                              ),
+                          ],
+                        );
+                      }),
+                    ],
+                  ],
+                ),
               ),
             ),
         ],
@@ -303,6 +350,60 @@ class _EmptyState extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final int count;
+  final IconData icon;
+
+  const _SectionHeader({
+    required this.title,
+    required this.count,
+    required this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 18,
+            color: theme.colorScheme.primary.withValues(alpha: 0.6),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            title,
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.primary.withValues(alpha: 0.8),
+              letterSpacing: 0.3,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '$count',
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

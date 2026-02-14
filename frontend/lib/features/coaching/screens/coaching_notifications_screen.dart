@@ -245,7 +245,10 @@ class _CoachingNotificationsScreenState
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
         color: theme.colorScheme.surfaceContainerHighest,
-        child: Icon(Icons.archive_rounded, color: theme.colorScheme.onSurfaceVariant),
+        child: Icon(
+          Icons.archive_rounded,
+          color: theme.colorScheme.onSurfaceVariant,
+        ),
       ),
       onDismissed: (_) => _archive(n.id),
       child: Card(
@@ -322,7 +325,8 @@ class _CoachingNotificationsScreenState
                                 child: Icon(
                                   Icons.close_rounded,
                                   size: 20,
-                                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                                  color: theme.colorScheme.onSurfaceVariant
+                                      .withValues(alpha: 0.5),
                                 ),
                               ),
                             ],

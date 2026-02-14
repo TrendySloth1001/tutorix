@@ -63,6 +63,21 @@ export class CoachingController {
         }
     }
 
+    // GET /coaching/joined - Get coachings where user is a member (not owner)
+    async getJoinedCoachings(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            const coachings = await coachingService.findByMember(userId);
+            res.json({ coachings });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
     // GET /coaching/:id - Get coaching by ID
     async getById(req: Request, res: Response) {
         try {

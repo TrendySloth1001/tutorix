@@ -72,7 +72,7 @@ class _PersonalNotificationsScreenState
         _notifications.removeWhere((n) => n.id == id);
         if (wasUnread) _unreadCount = (_unreadCount - 1).clamp(0, 999);
       });
-      
+
       // Then archive on backend
       await _notificationService.archiveNotification(id);
     } catch (e) {
@@ -310,7 +310,10 @@ class _PersonalNotificationsScreenState
                                           child: Icon(
                                             Icons.close_rounded,
                                             size: 20,
-                                            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant
+                                                .withValues(alpha: 0.5),
                                           ),
                                         ),
                                       ],
