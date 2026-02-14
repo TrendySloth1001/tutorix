@@ -106,75 +106,81 @@ class _HomeScreenState extends State<HomeScreen> {
     final hasAny = _myCoachings.isNotEmpty || _joinedCoachings.isNotEmpty;
 
     return Scaffold(
-      body: CustomScrollView(
-        slivers: [
-          _HomeHeader(
-            user: widget.user,
-            unreadCount: _unreadNotifications,
-            onNotificationTap: _navigateToNotifications,
-          ),
-          if (_isLoading)
-            const SliverFillRemaining(
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else if (!hasAny)
-            SliverFillRemaining(child: _EmptyState())
-          else
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.only(top: 8, bottom: 100),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // My Coachings section
-                    if (_myCoachings.isNotEmpty) ...[
-                      _SectionHeader(
-                        title: 'My Coachings',
-                        count: _myCoachings.length,
-                        icon: Icons.school_rounded,
-                      ),
-                      const SizedBox(height: 4),
-                      ...List.generate(_myCoachings.length, (i) {
-                        final coaching = _myCoachings[i];
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            bottom: i < _myCoachings.length - 1 ? 12 : 0,
-                          ),
-                          child: CoachingCoverCard(
-                            coaching: coaching,
-                            onTap: () => _navigateToCoaching(coaching),
-                          ),
-                        );
-                      }),
-                    ],
+      body: RefreshIndicator(
+        onRefresh: () async {
+          await Future.wait([_loadCoachings(), _loadNotificationCount()]);
+        },
+        child: CustomScrollView(
+          physics: const AlwaysScrollableScrollPhysics(),
+          slivers: [
+            _HomeHeader(
+              user: widget.user,
+              unreadCount: _unreadNotifications,
+              onNotificationTap: _navigateToNotifications,
+            ),
+            if (_isLoading)
+              const SliverFillRemaining(
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else if (!hasAny)
+              SliverFillRemaining(hasScrollBody: false, child: _EmptyState())
+            else
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 8, bottom: 100),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // My Coachings section
+                      if (_myCoachings.isNotEmpty) ...[
+                        _SectionHeader(
+                          title: 'My Coachings',
+                          count: _myCoachings.length,
+                          icon: Icons.school_rounded,
+                        ),
+                        const SizedBox(height: 4),
+                        ...List.generate(_myCoachings.length, (i) {
+                          final coaching = _myCoachings[i];
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              bottom: i < _myCoachings.length - 1 ? 12 : 0,
+                            ),
+                            child: CoachingCoverCard(
+                              coaching: coaching,
+                              onTap: () => _navigateToCoaching(coaching),
+                            ),
+                          );
+                        }),
+                      ],
 
-                    // Joined section
-                    if (_joinedCoachings.isNotEmpty) ...[
-                      if (_myCoachings.isNotEmpty) const SizedBox(height: 24),
-                      _SectionHeader(
-                        title: 'Joined',
-                        count: _joinedCoachings.length,
-                        icon: Icons.group_rounded,
-                      ),
-                      ...List.generate(_joinedCoachings.length, (i) {
-                        final coaching = _joinedCoachings[i];
-                        return Padding(
-                          padding: EdgeInsets.only(
-                            bottom: i < _joinedCoachings.length - 1 ? 12 : 0,
-                          ),
-                          child: CoachingCoverCard(
-                            coaching: coaching,
-                            onTap: () => _navigateToCoaching(coaching),
-                            isOwner: false, // Explicitly set false for joined
-                          ),
-                        );
-                      }),
+                      // Joined section
+                      if (_joinedCoachings.isNotEmpty) ...[
+                        if (_myCoachings.isNotEmpty) const SizedBox(height: 24),
+                        _SectionHeader(
+                          title: 'Joined',
+                          count: _joinedCoachings.length,
+                          icon: Icons.group_rounded,
+                        ),
+                        ...List.generate(_joinedCoachings.length, (i) {
+                          final coaching = _joinedCoachings[i];
+                          return Padding(
+                            padding: EdgeInsets.only(
+                              bottom: i < _joinedCoachings.length - 1 ? 12 : 0,
+                            ),
+                            child: CoachingCoverCard(
+                              coaching: coaching,
+                              onTap: () => _navigateToCoaching(coaching),
+                              isOwner: false, // Explicitly set false for joined
+                            ),
+                          );
+                        }),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ),
-            ),
-        ],
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _navigateToCreate,
