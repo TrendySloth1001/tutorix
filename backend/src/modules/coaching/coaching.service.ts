@@ -168,6 +168,7 @@ export class CoachingService {
                     slug: coaching.slug,
                     description: coaching.description,
                     logo: coaching.logo,
+                    coverImage: coaching.coverImage,
                     status: coaching.status,
                     ownerId: coaching.ownerId,
                     owner: coaching.owner,

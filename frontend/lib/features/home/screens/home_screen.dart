@@ -7,7 +7,6 @@ import '../../coaching/models/coaching_model.dart';
 import '../../coaching/screens/coaching_onboarding_screen.dart';
 import '../../coaching/screens/coaching_shell.dart';
 import '../../coaching/services/coaching_service.dart';
-import '../../coaching/widgets/coaching_card.dart';
 import '../../coaching/widgets/coaching_cover_card.dart';
 import '../../notifications/screens/personal_notifications_screen.dart';
 
@@ -104,7 +103,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final hasAny = _myCoachings.isNotEmpty || _joinedCoachings.isNotEmpty;
 
     return Scaffold(
@@ -160,23 +158,15 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       ...List.generate(_joinedCoachings.length, (i) {
                         final coaching = _joinedCoachings[i];
-                        return Column(
-                          children: [
-                            CoachingCard(
-                              coaching: coaching,
-                              onTap: () => _navigateToCoaching(coaching),
-                              showRole: true,
-                            ),
-                            if (i < _joinedCoachings.length - 1)
-                              Divider(
-                                height: 1,
-                                indent: 86,
-                                endIndent: 20,
-                                color: theme.colorScheme.secondary.withValues(
-                                  alpha: 0.12,
-                                ),
-                              ),
-                          ],
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            bottom: i < _joinedCoachings.length - 1 ? 12 : 0,
+                          ),
+                          child: CoachingCoverCard(
+                            coaching: coaching,
+                            onTap: () => _navigateToCoaching(coaching),
+                            isOwner: false, // Explicitly set false for joined
+                          ),
                         );
                       }),
                     ],
