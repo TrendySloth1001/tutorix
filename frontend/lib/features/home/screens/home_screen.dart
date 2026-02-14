@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/services/notification_service.dart';
 import '../../coaching/models/coaching_model.dart';
+import '../../coaching/screens/coaching_onboarding_screen.dart';
 import '../../coaching/screens/coaching_shell.dart';
-import '../../coaching/screens/create_coaching_screen.dart';
 import '../../coaching/services/coaching_service.dart';
 import '../../coaching/widgets/coaching_card.dart';
 import '../../notifications/screens/personal_notifications_screen.dart';
@@ -60,15 +60,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _navigateToCreate() async {
-    final result = await Navigator.push<CoachingModel>(
+    await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CreateCoachingScreen(
-          onCoachingCreated: (_, user) => widget.onUserUpdated?.call(user),
+        builder: (_) => CoachingOnboardingScreen(
+          onComplete: () {
+            Navigator.pop(context);
+            _loadCoachings();
+          },
         ),
       ),
     );
-    if (result != null) _loadCoachings();
   }
 
   void _navigateToCoaching(CoachingModel coaching) {

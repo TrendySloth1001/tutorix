@@ -9,6 +9,7 @@ const invitationController = new InvitationController();
 
 // Public routes
 router.get('/', coachingController.list.bind(coachingController));
+router.get('/masters', coachingController.getMasters.bind(coachingController));
 router.get('/check-slug/:slug', coachingController.checkSlug.bind(coachingController));
 router.get('/slug/:slug', coachingController.getBySlug.bind(coachingController));
 
@@ -18,6 +19,15 @@ router.get('/my', authMiddleware, coachingController.getMyCoachings.bind(coachin
 router.get('/joined', authMiddleware, coachingController.getJoinedCoachings.bind(coachingController));
 router.patch('/:id', authMiddleware, coachingController.update.bind(coachingController));
 router.delete('/:id', authMiddleware, coachingController.delete.bind(coachingController));
+
+// Onboarding routes (protected)
+router.post('/:id/onboarding/profile', authMiddleware, coachingController.updateOnboardingProfile.bind(coachingController));
+router.post('/:id/onboarding/address', authMiddleware, coachingController.updateOnboardingAddress.bind(coachingController));
+router.post('/:id/onboarding/branch', authMiddleware, coachingController.addBranch.bind(coachingController));
+router.post('/:id/onboarding/complete', authMiddleware, coachingController.completeOnboarding.bind(coachingController));
+router.get('/:id/branches', coachingController.getBranches.bind(coachingController));
+router.delete('/:id/branches/:branchId', authMiddleware, coachingController.deleteBranch.bind(coachingController));
+router.get('/:id/full', coachingController.getFullDetails.bind(coachingController));
 
 // Invitation routes (protected)
 router.post('/:id/invite/lookup', authMiddleware, invitationController.lookup.bind(invitationController));

@@ -1,9 +1,28 @@
 import type { Request, Response } from 'express';
 import { CoachingService } from './coaching.service.js';
+import { getCoachingMasters, getSubjectsByCategory } from './masters.js';
 
 const coachingService = new CoachingService();
 
 export class CoachingController {
+    // GET /coaching/masters - Get static coaching data (categories, subjects, etc.)
+    async getMasters(req: Request, res: Response) {
+        try {
+            const { grouped } = req.query;
+
+            if (grouped === 'true') {
+                return res.json({
+                    ...getCoachingMasters(),
+                    subjectsByCategory: getSubjectsByCategory(),
+                });
+            }
+
+            return res.json(getCoachingMasters());
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
     // POST /coaching - Create a new coaching
     async create(req: Request, res: Response) {
         try {
@@ -257,6 +276,165 @@ export class CoachingController {
             if (error.message.includes('not found')) {
                 return res.status(404).json({ message: error.message });
             }
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // POST /coaching/:id/onboarding/profile - Update coaching profile during onboarding
+    async updateOnboardingProfile(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            const coachingId = req.params.id as string;
+            const coaching = await coachingService.findById(coachingId);
+
+            if (!coaching) {
+                return res.status(404).json({ message: 'Coaching not found' });
+            }
+
+            if (coaching.ownerId !== userId) {
+                return res.status(403).json({ message: 'Only owner can update coaching profile' });
+            }
+
+            const updated = await coachingService.updateProfile(coachingId, req.body);
+            res.json({ coaching: updated });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // POST /coaching/:id/onboarding/address - Set coaching address with GPS
+    async updateOnboardingAddress(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            const coachingId = req.params.id as string;
+            const coaching = await coachingService.findById(coachingId);
+
+            if (!coaching) {
+                return res.status(404).json({ message: 'Coaching not found' });
+            }
+
+            if (coaching.ownerId !== userId) {
+                return res.status(403).json({ message: 'Only owner can update coaching address' });
+            }
+
+            const address = await coachingService.setAddress(coachingId, req.body);
+            res.json({ address });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // POST /coaching/:id/onboarding/branch - Add a branch
+    async addBranch(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            const coachingId = req.params.id as string;
+            const coaching = await coachingService.findById(coachingId);
+
+            if (!coaching) {
+                return res.status(404).json({ message: 'Coaching not found' });
+            }
+
+            if (coaching.ownerId !== userId) {
+                return res.status(403).json({ message: 'Only owner can add branches' });
+            }
+
+            const branch = await coachingService.addBranch(coachingId, req.body);
+            res.json({ branch });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // GET /coaching/:id/branches - Get coaching branches
+    async getBranches(req: Request, res: Response) {
+        try {
+            const coachingId = req.params.id as string;
+            const branches = await coachingService.getBranches(coachingId);
+            res.json({ branches });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // DELETE /coaching/:id/branches/:branchId - Delete a branch
+    async deleteBranch(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            const coachingId = req.params.id as string;
+            const branchId = req.params.branchId as string;
+
+            const coaching = await coachingService.findById(coachingId);
+
+            if (!coaching) {
+                return res.status(404).json({ message: 'Coaching not found' });
+            }
+
+            if (coaching.ownerId !== userId) {
+                return res.status(403).json({ message: 'Only owner can delete branches' });
+            }
+
+            await coachingService.deleteBranch(branchId);
+            res.json({ message: 'Branch deleted successfully' });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // POST /coaching/:id/onboarding/complete - Mark onboarding as complete
+    async completeOnboarding(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            const coachingId = req.params.id as string;
+            const coaching = await coachingService.findById(coachingId);
+
+            if (!coaching) {
+                return res.status(404).json({ message: 'Coaching not found' });
+            }
+
+            if (coaching.ownerId !== userId) {
+                return res.status(403).json({ message: 'Only owner can complete onboarding' });
+            }
+
+            const updated = await coachingService.completeOnboarding(coachingId);
+            res.json({ coaching: updated });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // GET /coaching/:id/full - Get coaching with all details (address, branches)
+    async getFullDetails(req: Request, res: Response) {
+        try {
+            const coachingId = req.params.id as string;
+            const coaching = await coachingService.getFullDetails(coachingId);
+
+            if (!coaching) {
+                return res.status(404).json({ message: 'Coaching not found' });
+            }
+
+            res.json({ coaching });
+        } catch (error: any) {
             res.status(500).json({ message: error.message });
         }
     }

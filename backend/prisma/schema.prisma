@@ -86,18 +86,103 @@ model Coaching {
   logo        String?
   status      String  @default("active") // active, suspended
 
+  // Extended profile info
+  tagline       String? // Short catchy phrase
+  aboutUs       String? // Detailed description
+  foundedYear   Int?
+  websiteUrl    String?
+  contactEmail  String?
+  contactPhone  String?
+  whatsappPhone String?
+
+  // Category & Type
+  category String? // COACHING, TUITION, SCHOOL, COLLEGE, ONLINE, etc.
+  subjects String[] @default([]) // Subjects taught
+
+  // Social media
+  facebookUrl  String?
+  instagramUrl String?
+  youtubeUrl   String?
+  linkedinUrl  String?
+
+  // Verification & Trust
+  isVerified         Boolean @default(false)
+  verificationDocs   String[] @default([])
+  onboardingComplete Boolean @default(false)
+
   // Owner relation
   ownerId String
   owner   User   @relation("CoachingOwner", fields: [ownerId], references: [id])
 
+  // Relations
   members       CoachingMember[]
   invitations   Invitation[]
   notifications Notification[]
+  address       CoachingAddress?
+  branches      CoachingBranch[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([ownerId])
+}
+
+model CoachingAddress {
+  id         String   @id @default(uuid())
+  coachingId String   @unique
+  coaching   Coaching @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+
+  // Full address
+  addressLine1 String
+  addressLine2 String?
+  landmark     String?
+  city         String
+  state        String
+  pincode      String
+  country      String @default("India")
+
+  // GPS coordinates for exact location
+  latitude  Float?
+  longitude Float?
+
+  // Operating hours
+  openingTime String? // e.g., "09:00"
+  closingTime String? // e.g., "18:00"
+  workingDays String[] @default([]) // ["MON", "TUE", "WED", "THU", "FRI", "SAT"]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CoachingBranch {
+  id         String   @id @default(uuid())
+  coachingId String
+  coaching   Coaching @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+
+  name         String // Branch name/identifier
+  addressLine1 String
+  addressLine2 String?
+  landmark     String?
+  city         String
+  state        String
+  pincode      String
+  country      String @default("India")
+
+  // Contact for this branch
+  contactPhone String?
+  contactEmail String?
+
+  // Operating hours for this branch
+  openingTime String?
+  closingTime String?
+  workingDays String[] @default([])
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([coachingId])
 }
 
 model CoachingMember {

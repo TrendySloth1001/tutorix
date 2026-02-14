@@ -4,8 +4,8 @@ import '../../profile/screens/profile_screen.dart';
 import '../models/coaching_model.dart';
 import '../services/coaching_service.dart';
 import '../widgets/coaching_card.dart';
+import 'coaching_onboarding_screen.dart';
 import 'coaching_shell.dart';
-import 'create_coaching_screen.dart';
 
 class CoachingSelectorScreen extends StatefulWidget {
   final UserModel user;
@@ -50,16 +50,17 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
   }
 
   void _navigateToCreate() async {
-    final result = await Navigator.push<CoachingModel>(
+    await Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CreateCoachingScreen(
-          onCoachingCreated: (_, updatedUser) =>
-              widget.onUserUpdated(updatedUser),
+        builder: (_) => CoachingOnboardingScreen(
+          onComplete: () {
+            Navigator.pop(context);
+            _loadCoachings();
+          },
         ),
       ),
     );
-    if (result != null) _loadCoachings();
   }
 
   void _navigateToCoaching(CoachingModel coaching) {

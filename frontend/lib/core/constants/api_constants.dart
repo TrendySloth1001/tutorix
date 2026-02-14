@@ -22,10 +22,25 @@ class ApiConstants {
 
   // Coaching
   static const String coaching = '$baseUrl/coaching';
+  static const String coachingMasters = '$baseUrl/coaching/masters';
   static String coachingMy = '$baseUrl/coaching/my';
   static String coachingJoined = '$baseUrl/coaching/joined';
   static String coachingById(String id) => '$baseUrl/coaching/$id';
+  static String coachingFull(String id) => '$baseUrl/coaching/$id/full';
   static String checkSlug(String slug) => '$baseUrl/coaching/check-slug/$slug';
+
+  // Coaching Onboarding
+  static String coachingOnboardingProfile(String id) =>
+      '$baseUrl/coaching/$id/onboarding/profile';
+  static String coachingOnboardingAddress(String id) =>
+      '$baseUrl/coaching/$id/onboarding/address';
+  static String coachingOnboardingBranch(String id) =>
+      '$baseUrl/coaching/$id/onboarding/branch';
+  static String coachingOnboardingComplete(String id) =>
+      '$baseUrl/coaching/$id/onboarding/complete';
+  static String coachingBranches(String id) => '$baseUrl/coaching/$id/branches';
+  static String deleteBranch(String coachingId, String branchId) =>
+      '$baseUrl/coaching/$coachingId/branches/$branchId';
 
   // Coaching Invitations
   static String inviteLookup(String coachingId) =>

@@ -480,4 +480,118 @@ export class CoachingService {
             .replace(/\s+/g, '-')
             .replace(/-+/g, '-');
     }
+
+    // ── Onboarding Methods ────────────────────────────────────────────────
+
+    async updateProfile(coachingId: string, data: {
+        tagline?: string;
+        aboutUs?: string;
+        foundedYear?: number;
+        websiteUrl?: string;
+        contactEmail?: string;
+        contactPhone?: string;
+        whatsappPhone?: string;
+        category?: string;
+        subjects?: string[];
+        facebookUrl?: string;
+        instagramUrl?: string;
+        youtubeUrl?: string;
+        linkedinUrl?: string;
+    }) {
+        return prisma.coaching.update({
+            where: { id: coachingId },
+            data,
+        });
+    }
+
+    async setAddress(coachingId: string, data: {
+        addressLine1: string;
+        addressLine2?: string;
+        landmark?: string;
+        city: string;
+        state: string;
+        pincode: string;
+        country?: string;
+        latitude?: number;
+        longitude?: number;
+        openingTime?: string;
+        closingTime?: string;
+        workingDays?: string[];
+    }) {
+        return prisma.coachingAddress.upsert({
+            where: { coachingId },
+            update: data,
+            create: {
+                coachingId,
+                ...data,
+            },
+        });
+    }
+
+    async addBranch(coachingId: string, data: {
+        name: string;
+        addressLine1: string;
+        addressLine2?: string;
+        landmark?: string;
+        city: string;
+        state: string;
+        pincode: string;
+        country?: string;
+        contactPhone?: string;
+        contactEmail?: string;
+        openingTime?: string;
+        closingTime?: string;
+        workingDays?: string[];
+    }) {
+        return prisma.coachingBranch.create({
+            data: {
+                coachingId,
+                ...data,
+            },
+        });
+    }
+
+    async getBranches(coachingId: string) {
+        return prisma.coachingBranch.findMany({
+            where: { coachingId, isActive: true },
+            orderBy: { createdAt: 'asc' },
+        });
+    }
+
+    async deleteBranch(branchId: string) {
+        return prisma.coachingBranch.delete({
+            where: { id: branchId },
+        });
+    }
+
+    async completeOnboarding(coachingId: string) {
+        return prisma.coaching.update({
+            where: { id: coachingId },
+            data: { onboardingComplete: true },
+        });
+    }
+
+    async getFullDetails(coachingId: string) {
+        return prisma.coaching.findUnique({
+            where: { id: coachingId },
+            include: {
+                owner: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        picture: true,
+                    },
+                },
+                address: true,
+                branches: {
+                    where: { isActive: true },
+                    orderBy: { createdAt: 'asc' },
+                },
+                _count: {
+                    select: { members: true },
+                },
+            },
+        });
+    }
 }

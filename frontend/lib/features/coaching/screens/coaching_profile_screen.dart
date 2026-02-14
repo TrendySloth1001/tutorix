@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../shared/models/user_model.dart';
 import '../models/coaching_model.dart';
 import '../services/coaching_service.dart';
+import 'coaching_onboarding_screen.dart';
 
 /// Coaching profile — clean, premium design.
 /// Uses bottom sheets (no AlertDialog). Logo upload via image_picker.
@@ -242,6 +243,139 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     }
   }
 
+  // ── Onboarding helpers ─────────────────────────────────────────────────
+
+  String _getOnboardingStepName() {
+    final step = CoachingOnboardingScreen.getResumeStep(_coaching);
+    switch (step) {
+      case 0:
+        return 'Basic Info';
+      case 1:
+        return 'Details & Contact';
+      case 2:
+        return 'Address & Location';
+      case 3:
+        return 'Review';
+      default:
+        return 'Setup';
+    }
+  }
+
+  void _continueOnboarding() async {
+    final resumeStep = CoachingOnboardingScreen.getResumeStep(_coaching);
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CoachingOnboardingScreen(
+          existingCoaching: _coaching,
+          initialStep: resumeStep,
+          onComplete: () {
+            Navigator.pop(context);
+            // Refresh coaching data
+            _refreshCoaching();
+          },
+        ),
+      ),
+    );
+  }
+
+  Future<void> _refreshCoaching() async {
+    try {
+      final updated = await _coachingService.getCoachingById(_coaching.id);
+      if (updated != null && mounted) {
+        setState(() => _coaching = updated);
+        widget.onCoachingUpdated?.call(updated);
+      }
+    } catch (_) {}
+  }
+
+  Widget _buildOnboardingBanner(ThemeData theme) {
+    final stepName = _getOnboardingStepName();
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.orange.withValues(alpha: 0.15),
+            Colors.amber.withValues(alpha: 0.1),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.orange.withValues(alpha: 0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: Colors.orange.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.pending_actions_rounded,
+                  color: Colors.orange,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Complete Your Setup',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.orange.shade800,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Continue from: $stepName',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: Colors.orange.shade700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            'Finish setting up your coaching to make it visible to students and enable all features.',
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: _continueOnboarding,
+              icon: const Icon(Icons.arrow_forward, size: 18),
+              label: const Text('Continue Setup'),
+              style: FilledButton.styleFrom(
+                backgroundColor: Colors.orange,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── Build ──────────────────────────────────────────────────────────────
 
   @override
@@ -403,6 +537,12 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
 
           // ── Status badge ──
           Center(child: _StatusBadge(status: _coaching.status)),
+
+          // ── Incomplete onboarding banner ──
+          if (_isOwner && !_coaching.onboardingComplete) ...[
+            const SizedBox(height: 20),
+            _buildOnboardingBanner(theme),
+          ],
 
           const SizedBox(height: 24),
 
