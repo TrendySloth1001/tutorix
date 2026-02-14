@@ -168,81 +168,78 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
   }
 
   void _editName() => _editField(
-        title: 'Edit Name',
-        currentValue: _coaching.name,
-        hint: 'Coaching name',
-        onSave: (v) => _coachingService.updateCoaching(
-          id: _coaching.id,
-          name: v,
-        ),
-      );
+    title: 'Edit Name',
+    currentValue: _coaching.name,
+    hint: 'Coaching name',
+    onSave: (v) => _coachingService.updateCoaching(id: _coaching.id, name: v),
+  );
 
   void _editTagline() => _editField(
-        title: 'Edit Tagline',
-        currentValue: _coaching.tagline ?? '',
-        hint: 'A short catchy tagline...',
-        maxLength: 100,
-        onSave: (v) => _onboardingService.updateProfile(
-          coachingId: _coaching.id,
-          tagline: v.isEmpty ? null : v,
-        ),
-      );
+    title: 'Edit Tagline',
+    currentValue: _coaching.tagline ?? '',
+    hint: 'A short catchy tagline...',
+    maxLength: 100,
+    onSave: (v) => _onboardingService.updateProfile(
+      coachingId: _coaching.id,
+      tagline: v.isEmpty ? null : v,
+    ),
+  );
 
   void _editAbout() => _editField(
-        title: 'About Your Coaching',
-        currentValue: _coaching.aboutUs ?? '',
-        hint: 'Tell students what makes you special...',
-        maxLines: 5,
-        maxLength: 500,
-        onSave: (v) => _onboardingService.updateProfile(
-          coachingId: _coaching.id,
-          aboutUs: v.isEmpty ? null : v,
-        ),
-      );
+    title: 'About Your Coaching',
+    currentValue: _coaching.aboutUs ?? '',
+    hint: 'Tell students what makes you special...',
+    maxLines: 5,
+    maxLength: 500,
+    onSave: (v) => _onboardingService.updateProfile(
+      coachingId: _coaching.id,
+      aboutUs: v.isEmpty ? null : v,
+    ),
+  );
 
   void _editEmail() => _editField(
-        title: 'Contact Email',
-        currentValue: _coaching.contactEmail ?? '',
-        hint: 'coaching@example.com',
-        keyboardType: TextInputType.emailAddress,
-        onSave: (v) => _onboardingService.updateProfile(
-          coachingId: _coaching.id,
-          contactEmail: v.isEmpty ? null : v,
-        ),
-      );
+    title: 'Contact Email',
+    currentValue: _coaching.contactEmail ?? '',
+    hint: 'coaching@example.com',
+    keyboardType: TextInputType.emailAddress,
+    onSave: (v) => _onboardingService.updateProfile(
+      coachingId: _coaching.id,
+      contactEmail: v.isEmpty ? null : v,
+    ),
+  );
 
   void _editPhone() => _editField(
-        title: 'Contact Phone',
-        currentValue: _coaching.contactPhone ?? '',
-        hint: '9876543210',
-        keyboardType: TextInputType.phone,
-        onSave: (v) => _onboardingService.updateProfile(
-          coachingId: _coaching.id,
-          contactPhone: v.isEmpty ? null : v,
-        ),
-      );
+    title: 'Contact Phone',
+    currentValue: _coaching.contactPhone ?? '',
+    hint: '9876543210',
+    keyboardType: TextInputType.phone,
+    onSave: (v) => _onboardingService.updateProfile(
+      coachingId: _coaching.id,
+      contactPhone: v.isEmpty ? null : v,
+    ),
+  );
 
   void _editWhatsApp() => _editField(
-        title: 'WhatsApp Number',
-        currentValue: _coaching.whatsappPhone ?? '',
-        hint: '9876543210',
-        keyboardType: TextInputType.phone,
-        onSave: (v) => _onboardingService.updateProfile(
-          coachingId: _coaching.id,
-          whatsappPhone: v.isEmpty ? null : v,
-        ),
-      );
+    title: 'WhatsApp Number',
+    currentValue: _coaching.whatsappPhone ?? '',
+    hint: '9876543210',
+    keyboardType: TextInputType.phone,
+    onSave: (v) => _onboardingService.updateProfile(
+      coachingId: _coaching.id,
+      whatsappPhone: v.isEmpty ? null : v,
+    ),
+  );
 
   void _editWebsite() => _editField(
-        title: 'Website URL',
-        currentValue: _coaching.websiteUrl ?? '',
-        hint: 'https://yourcoaching.com',
-        keyboardType: TextInputType.url,
-        onSave: (v) => _onboardingService.updateProfile(
-          coachingId: _coaching.id,
-          websiteUrl: v.isEmpty ? null : v,
-        ),
-      );
+    title: 'Website URL',
+    currentValue: _coaching.websiteUrl ?? '',
+    hint: 'https://yourcoaching.com',
+    keyboardType: TextInputType.url,
+    onSave: (v) => _onboardingService.updateProfile(
+      coachingId: _coaching.id,
+      websiteUrl: v.isEmpty ? null : v,
+    ),
+  );
 
   Future<void> _changeLogo() async {
     final source = await _showImageSourceSheet();
@@ -298,14 +295,18 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
               ),
               const SizedBox(height: 12),
               ListTile(
-                leading: Icon(Icons.camera_alt_rounded,
-                    color: theme.colorScheme.primary),
+                leading: Icon(
+                  Icons.camera_alt_rounded,
+                  color: theme.colorScheme.primary,
+                ),
                 title: const Text('Take Photo'),
                 onTap: () => Navigator.pop(ctx, ImageSource.camera),
               ),
               ListTile(
-                leading: Icon(Icons.photo_library_rounded,
-                    color: theme.colorScheme.primary),
+                leading: Icon(
+                  Icons.photo_library_rounded,
+                  color: theme.colorScheme.primary,
+                ),
                 title: const Text('Choose from Gallery'),
                 onTap: () => Navigator.pop(ctx, ImageSource.gallery),
               ),
@@ -514,8 +515,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                           errorBuilder: (_, __, ___) => Icon(
                             Icons.school_rounded,
                             size: 44,
-                            color:
-                                theme.colorScheme.primary.withValues(alpha: 0.3),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.3,
+                            ),
                           ),
                         ),
                       )
@@ -633,8 +635,10 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
           children: [
             if (_coaching.category != null)
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(12),
@@ -860,10 +864,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                 if (addr.addressLine2 != null &&
                     addr.addressLine2!.isNotEmpty) ...[
                   const SizedBox(height: 2),
-                  Text(
-                    addr.addressLine2!,
-                    style: theme.textTheme.bodyMedium,
-                  ),
+                  Text(addr.addressLine2!, style: theme.textTheme.bodyMedium),
                 ],
                 if (addr.landmark != null && addr.landmark!.isNotEmpty) ...[
                   const SizedBox(height: 2),
@@ -883,11 +884,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      Icon(
-                        Icons.gps_fixed,
-                        size: 14,
-                        color: Colors.green,
-                      ),
+                      Icon(Icons.gps_fixed, size: 14, color: Colors.green),
                       const SizedBox(width: 6),
                       Text(
                         'GPS location available',
@@ -942,8 +939,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
             Wrap(
               spacing: 6,
               runSpacing: 6,
-              children: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
-                  .map((day) {
+              children: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((
+                day,
+              ) {
                 final isActive = addr.workingDays.contains(day);
                 return Container(
                   width: 38,
@@ -1014,8 +1012,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                       Text(
                         branch.fullAddress,
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color:
-                              theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     ],
@@ -1050,10 +1049,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
             value: _coaching.status == 'active' ? 'Active' : 'Suspended',
           ),
           if (_coaching.subjects.isNotEmpty)
-            _InfoTile(
-              label: 'Subjects',
-              value: _coaching.subjects.join(', '),
-            ),
+            _InfoTile(label: 'Subjects', value: _coaching.subjects.join(', ')),
         ],
       ),
     );
@@ -1085,7 +1081,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       'Sep',
       'Oct',
       'Nov',
-      'Dec'
+      'Dec',
     ];
     return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
   }
@@ -1210,11 +1206,7 @@ class _SectionCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                icon,
-                size: 18,
-                color: theme.colorScheme.primary,
-              ),
+              Icon(icon, size: 18, color: theme.colorScheme.primary),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -1296,7 +1288,9 @@ class _ContactRow extends StatelessWidget {
                   Text(
                     hasValue ? value! : 'Not added',
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: hasValue ? FontWeight.w500 : FontWeight.normal,
+                      fontWeight: hasValue
+                          ? FontWeight.w500
+                          : FontWeight.normal,
                       color: hasValue
                           ? theme.colorScheme.onSurface
                           : theme.colorScheme.onSurface.withValues(alpha: 0.4),
