@@ -67,22 +67,22 @@ class _CoachingNotificationsScreenState
     }
   }
 
-  Future<void> _delete(String id) async {
+  Future<void> _archive(String id) async {
     try {
       // Optimistically remove from UI first for better UX
       setState(() {
         _notifications.removeWhere((n) => n.id == id);
       });
 
-      // Then delete from backend
-      await _allowNotifications.deleteNotification(id);
+      // Then archive on backend
+      await _allowNotifications.archiveNotification(id);
     } catch (e) {
       if (mounted) {
-        // If deletion fails, we should reload to get accurate state
+        // If archive fails, reload to get accurate state
         _load();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to delete: $e'),
+            content: Text('Failed to archive: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -175,8 +175,8 @@ class _CoachingNotificationsScreenState
         await _memberService.removeMember(widget.coachingId, memberId);
 
         if (mounted) {
-          // Delete the notification immediately from UI
-          await _delete(notificationId);
+          // Archive the notification immediately from UI
+          await _archive(notificationId);
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -199,9 +199,9 @@ class _CoachingNotificationsScreenState
         }
       }
     } else if (action == 'ok') {
-      // Delete notification immediately when user dismisses
+      // Archive notification immediately when user dismisses
       if (mounted) {
-        await _delete(notificationId);
+        await _archive(notificationId);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Notification dismissed'),
@@ -244,10 +244,10 @@ class _CoachingNotificationsScreenState
       background: Container(
         alignment: Alignment.centerRight,
         padding: const EdgeInsets.only(right: 20),
-        color: Colors.red.shade100,
-        child: Icon(Icons.delete_outline, color: Colors.red.shade700),
+        color: theme.colorScheme.surfaceContainerHighest,
+        child: Icon(Icons.archive_rounded, color: theme.colorScheme.onSurfaceVariant),
       ),
-      onDismissed: (_) => _delete(n.id),
+      onDismissed: (_) => _archive(n.id),
       child: Card(
         elevation: 0,
         color: n.read
@@ -314,6 +314,15 @@ class _CoachingNotificationsScreenState
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onSurfaceVariant,
                                   fontSize: 10,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              GestureDetector(
+                                onTap: () => _archive(n.id),
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  size: 20,
+                                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                                 ),
                               ),
                             ],

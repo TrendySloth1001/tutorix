@@ -14,6 +14,9 @@ router.get('/me', controller.getUserNotifications.bind(controller));
 // Mark as read
 router.patch('/:id/read', controller.markAsRead.bind(controller));
 
+// Archive notification
+router.patch('/:id/archive', controller.archive.bind(controller));
+
 // Delete
 router.delete('/:id', controller.delete.bind(controller));
 

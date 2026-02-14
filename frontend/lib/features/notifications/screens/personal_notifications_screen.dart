@@ -63,20 +63,25 @@ class _PersonalNotificationsScreenState
     }
   }
 
-  Future<void> _delete(String id) async {
+  Future<void> _archive(String id) async {
     try {
-      await _notificationService.deleteNotification(id);
+      // Optimistically remove from UI first
+      final wasUnread =
+          _notifications.firstWhere((n) => n.id == id).read == false;
       setState(() {
-        final wasUnread =
-            _notifications.firstWhere((n) => n.id == id).read == false;
         _notifications.removeWhere((n) => n.id == id);
         if (wasUnread) _unreadCount = (_unreadCount - 1).clamp(0, 999);
       });
+      
+      // Then archive on backend
+      await _notificationService.archiveNotification(id);
     } catch (e) {
       if (mounted) {
+        // Reload on failure to get accurate state
+        _load();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to delete: $e'),
+            content: Text('Failed to archive: $e'),
             backgroundColor: Colors.red,
           ),
         );
@@ -234,15 +239,15 @@ class _PersonalNotificationsScreenState
                     key: Key(n.id),
                     direction: DismissDirection.endToStart,
                     background: Container(
-                      color: Colors.red,
+                      color: theme.colorScheme.surfaceContainerHighest,
                       alignment: Alignment.centerRight,
                       padding: const EdgeInsets.only(right: 24),
-                      child: const Icon(
-                        Icons.delete_rounded,
-                        color: Colors.white,
+                      child: Icon(
+                        Icons.archive_rounded,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    onDismissed: (_) => _delete(n.id),
+                    onDismissed: (_) => _archive(n.id),
                     child: Material(
                       color: n.read
                           ? Colors.transparent
@@ -299,6 +304,15 @@ class _PersonalNotificationsScreenState
                                               shape: BoxShape.circle,
                                             ),
                                           ),
+                                        const SizedBox(width: 8),
+                                        GestureDetector(
+                                          onTap: () => _archive(n.id),
+                                          child: Icon(
+                                            Icons.close_rounded,
+                                            size: 20,
+                                            color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                                          ),
+                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 4),

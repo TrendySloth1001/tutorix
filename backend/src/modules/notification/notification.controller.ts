@@ -95,4 +95,18 @@ export class NotificationController {
             return res.status(500).json({ error: error.message });
         }
     }
+
+    /**
+     * PATCH /notifications/:id/archive - Mark notification as archived
+     */
+    async archive(req: Request, res: Response) {
+        try {
+            const { id } = req.params as { id: string };
+            const result = await notificationService.archiveNotification(id);
+            return res.json(result);
+        } catch (error: any) {
+            console.error('NotificationController Error:', error);
+            return res.status(500).json({ error: error.message });
+        }
+    }
 }

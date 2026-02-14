@@ -12,10 +12,11 @@ export interface CreateNotificationDto {
 export class NotificationService {
     /**
      * Get notifications for a coaching (admin view).
+     * Excludes archived notifications.
      */
     async getCoachingNotifications(coachingId: string, limit = 20, offset = 0) {
         return prisma.notification.findMany({
-            where: { coachingId },
+            where: { coachingId, archived: false },
             orderBy: { createdAt: 'desc' },
             take: limit,
             skip: offset,
@@ -24,10 +25,11 @@ export class NotificationService {
 
     /**
      * Get personal notifications for a user.
+     * Excludes archived notifications.
      */
     async getUserNotifications(userId: string, limit = 20, offset = 0) {
         return prisma.notification.findMany({
-            where: { userId },
+            where: { userId, archived: false },
             orderBy: { createdAt: 'desc' },
             take: limit,
             skip: offset,
@@ -35,20 +37,20 @@ export class NotificationService {
     }
 
     /**
-     * Get Unread count for coaching
+     * Get Unread count for coaching (excludes archived)
      */
     async getCoachingUnreadCount(coachingId: string) {
         return prisma.notification.count({
-            where: { coachingId, read: false },
+            where: { coachingId, read: false, archived: false },
         });
     }
 
     /**
-     * Get Unread count for user
+     * Get Unread count for user (excludes archived)
      */
     async getUserUnreadCount(userId: string) {
         return prisma.notification.count({
-            where: { userId, read: false },
+            where: { userId, read: false, archived: false },
         });
     }
 
@@ -68,6 +70,16 @@ export class NotificationService {
     async deleteNotification(notificationId: string) {
         return prisma.notification.delete({
             where: { id: notificationId },
+        });
+    }
+
+    /**
+     * Archive a notification (mark as archived instead of deleting).
+     */
+    async archiveNotification(notificationId: string) {
+        return prisma.notification.update({
+            where: { id: notificationId },
+            data: { archived: true },
         });
     }
 

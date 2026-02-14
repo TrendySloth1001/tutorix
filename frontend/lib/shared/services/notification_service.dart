@@ -35,6 +35,14 @@ class NotificationService {
     );
   }
 
+  /// Archive a notification (mark as removed from view without deleting).
+  Future<void> archiveNotification(String notificationId) async {
+    await _api.patchAuthenticated(
+      '${ApiConstants.baseUrl}/notifications/$notificationId/archive',
+      body: {},
+    );
+  }
+
   /// Delete a notification.
   Future<void> deleteNotification(String notificationId) async {
     await _api.deleteAuthenticated(

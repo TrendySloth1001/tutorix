@@ -169,11 +169,12 @@ model Notification {
   userId     String? // For personal notifications (optional future use)
   user       User?     @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
 
-  type    String // e.g. 'MEMBER_JOINED_ANOTHER_COACHING'
-  title   String
-  message String
-  read    Boolean @default(false)
-  data    Json? // Metadata: { relatedUserId, relatedMemberId, targetCoachingName }
+  type     String // e.g. 'MEMBER_JOINED_ANOTHER_COACHING'
+  title    String
+  message  String
+  read     Boolean @default(false)
+  archived Boolean @default(false)
+  data     Json? // Metadata: { relatedUserId, relatedMemberId, targetCoachingName }
 
   createdAt DateTime @default(now())
 
