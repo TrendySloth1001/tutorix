@@ -18,6 +18,7 @@ class ApiConstants {
 
   // Upload
   static const String uploadAvatar = '$baseUrl/upload/avatar';
+  static const String uploadLogo = '$baseUrl/upload/logo';
 
   // Coaching
   static const String coaching = '$baseUrl/coaching';
@@ -34,6 +35,14 @@ class ApiConstants {
       '$baseUrl/coaching/$coachingId/invitations';
   static String cancelInvitation(String coachingId, String invitationId) =>
       '$baseUrl/coaching/$coachingId/invitations/$invitationId';
+
+  // Coaching Members
+  static String coachingMembers(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/members';
+  static String removeMember(String coachingId, String memberId) =>
+      '$baseUrl/coaching/$coachingId/members/$memberId';
+  static String updateMemberRole(String coachingId, String memberId) =>
+      '$baseUrl/coaching/$coachingId/members/$memberId';
 
   // User Invitations
   static const String userInvitations = '$baseUrl/user/invitations';

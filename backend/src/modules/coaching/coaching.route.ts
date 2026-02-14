@@ -27,6 +27,8 @@ router.delete('/:id/invitations/:invitationId', authMiddleware, invitationContro
 // Members routes (protected)
 router.get('/:id/members', authMiddleware, coachingController.getMembers.bind(coachingController));
 router.post('/:id/members/ward', authMiddleware, coachingController.addWard.bind(coachingController));
+router.delete('/:id/members/:memberId', authMiddleware, coachingController.removeMember.bind(coachingController));
+router.patch('/:id/members/:memberId', authMiddleware, coachingController.updateMemberRole.bind(coachingController));
 
 // Dynamic route last
 router.get('/:id', coachingController.getById.bind(coachingController));

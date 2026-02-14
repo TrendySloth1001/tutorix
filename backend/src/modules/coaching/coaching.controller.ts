@@ -198,4 +198,51 @@ export class CoachingController {
             res.status(500).json({ message: error.message });
         }
     }
+
+    // DELETE /coaching/:id/members/:memberId - Remove a member from coaching
+    async removeMember(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            const coachingId = req.params.id as string;
+            const memberId = req.params.memberId as string;
+
+            await coachingService.removeMember(coachingId, memberId);
+            res.json({ message: 'Member removed successfully' });
+        } catch (error: any) {
+            if (error.message.includes('not found')) {
+                return res.status(404).json({ message: error.message });
+            }
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // PATCH /coaching/:id/members/:memberId - Update member role
+    async updateMemberRole(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) {
+                return res.status(401).json({ message: 'Unauthorized' });
+            }
+
+            const coachingId = req.params.id as string;
+            const memberId = req.params.memberId as string;
+            const { role } = req.body;
+
+            if (!role) {
+                return res.status(400).json({ message: 'Role is required' });
+            }
+
+            const member = await coachingService.updateMemberRole(coachingId, memberId, role);
+            res.json({ member });
+        } catch (error: any) {
+            if (error.message.includes('not found')) {
+                return res.status(404).json({ message: error.message });
+            }
+            res.status(500).json({ message: error.message });
+        }
+    }
 }

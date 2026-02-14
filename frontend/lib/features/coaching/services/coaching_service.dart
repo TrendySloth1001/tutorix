@@ -64,4 +64,14 @@ class CoachingService {
       return false;
     }
   }
+
+  /// POST /upload/logo — upload coaching logo image, returns URL.
+  Future<String> uploadLogo(String filePath) async {
+    final data = await _api.uploadFile(
+      ApiConstants.uploadLogo,
+      fieldName: 'file',
+      filePath: filePath,
+    );
+    return data['url'] as String;
+  }
 }

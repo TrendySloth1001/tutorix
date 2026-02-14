@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../shared/models/user_model.dart';
 import '../../coaching/models/coaching_model.dart';
+import '../../coaching/screens/coaching_shell.dart';
 import '../../coaching/screens/create_coaching_screen.dart';
 import '../../coaching/services/coaching_service.dart';
 import '../../coaching/widgets/coaching_card.dart';
@@ -47,7 +48,16 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _navigateToCoaching(CoachingModel coaching) {
-    // TODO: implement coaching detail screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CoachingShell(
+          coaching: coaching,
+          user: widget.user,
+          onUserUpdated: widget.onUserUpdated,
+        ),
+      ),
+    );
   }
 
   @override

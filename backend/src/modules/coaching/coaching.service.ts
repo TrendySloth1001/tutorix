@@ -228,6 +228,58 @@ export class CoachingService {
         return ward;
     }
 
+    /**
+     * Remove a member from a coaching.
+     */
+    async removeMember(coachingId: string, memberId: string) {
+        const member = await prisma.coachingMember.findFirst({
+            where: { id: memberId, coachingId },
+        });
+
+        if (!member) {
+            throw new Error('Member not found in this coaching');
+        }
+
+        return prisma.coachingMember.delete({
+            where: { id: memberId },
+        });
+    }
+
+    /**
+     * Update a member's role in a coaching.
+     */
+    async updateMemberRole(coachingId: string, memberId: string, role: string) {
+        const member = await prisma.coachingMember.findFirst({
+            where: { id: memberId, coachingId },
+        });
+
+        if (!member) {
+            throw new Error('Member not found in this coaching');
+        }
+
+        return prisma.coachingMember.update({
+            where: { id: memberId },
+            data: { role },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        picture: true,
+                    },
+                },
+                ward: {
+                    select: {
+                        id: true,
+                        name: true,
+                        picture: true,
+                    },
+                },
+            },
+        });
+    }
+
     async isSlugAvailable(slug: string): Promise<boolean> {
         const existing = await prisma.coaching.findUnique({
             where: { slug },

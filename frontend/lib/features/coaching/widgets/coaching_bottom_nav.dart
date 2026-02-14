@@ -1,0 +1,118 @@
+import 'package:flutter/material.dart';
+
+/// Custom bottom navigation for the coaching detail screens.
+///
+/// Three tabs: Dashboard, Members, Profile — using the same pill-style
+/// animation as [CustomBottomNav].
+class CoachingBottomNav extends StatelessWidget {
+  final int selectedIndex;
+  final ValueChanged<int> onItemSelected;
+
+  const CoachingBottomNav({
+    super.key,
+    required this.selectedIndex,
+    required this.onItemSelected,
+  });
+
+  static const _items = [
+    _NavDef(icon: Icons.dashboard_rounded, label: 'Dashboard'),
+    _NavDef(icon: Icons.people_rounded, label: 'Members'),
+    _NavDef(icon: Icons.school_rounded, label: 'Profile'),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, -8),
+          ),
+        ],
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: List.generate(_items.length, (i) {
+              final item = _items[i];
+              return _NavItem(
+                icon: item.icon,
+                label: item.label,
+                isSelected: selectedIndex == i,
+                onTap: () => onItemSelected(i),
+              );
+            }),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavDef {
+  final IconData icon;
+  final String label;
+  const _NavDef({required this.icon, required this.label});
+}
+
+class _NavItem extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _NavItem({
+    required this.icon,
+    required this.label,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? theme.colorScheme.tertiary.withValues(alpha: 0.3)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              icon,
+              size: 22,
+              color: isSelected
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.secondary.withValues(alpha: 0.5),
+            ),
+            if (isSelected) ...[
+              const SizedBox(width: 8),
+              Text(
+                label,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}

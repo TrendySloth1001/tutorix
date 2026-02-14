@@ -37,6 +37,13 @@ class ApiClient {
     return _handleResponse(response);
   }
 
+  /// Authenticated GET → decoded JSON (could be list or map).
+  Future<dynamic> getAuthenticatedRaw(String url) async {
+    final headers = await _authHeaders();
+    final response = await http.get(Uri.parse(url), headers: headers);
+    return _handleResponseRaw(response);
+  }
+
   /// Public GET (no token) → decoded JSON map.
   Future<Map<String, dynamic>> getPublic(String url) async {
     final response = await http.get(Uri.parse(url), headers: _jsonHeaders);
@@ -122,6 +129,20 @@ class ApiClient {
 
     final message =
         data['message'] ?? 'Request failed (${response.statusCode})';
+    debugPrint('ApiClient error ${response.statusCode}: $message');
+    throw Exception(message);
+  }
+
+  dynamic _handleResponseRaw(http.Response response) {
+    final data = jsonDecode(response.body);
+
+    if (response.statusCode >= 200 && response.statusCode < 300) {
+      return data;
+    }
+
+    final message = data is Map
+        ? (data['message'] ?? 'Request failed (${response.statusCode})')
+        : 'Request failed (${response.statusCode})';
     debugPrint('ApiClient error ${response.statusCode}: $message');
     throw Exception(message);
   }

@@ -4,6 +4,7 @@ import '../../profile/screens/profile_screen.dart';
 import '../models/coaching_model.dart';
 import '../services/coaching_service.dart';
 import '../widgets/coaching_card.dart';
+import 'coaching_shell.dart';
 import 'create_coaching_screen.dart';
 
 class CoachingSelectorScreen extends StatefulWidget {
@@ -62,7 +63,16 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
   }
 
   void _navigateToCoaching(CoachingModel coaching) {
-    // TODO: implement coaching detail screen
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CoachingShell(
+          coaching: coaching,
+          user: widget.user,
+          onUserUpdated: widget.onUserUpdated,
+        ),
+      ),
+    );
   }
 
   void _navigateToProfile() {
