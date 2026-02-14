@@ -11,7 +11,11 @@ class CoachingMembersScreen extends StatefulWidget {
   final CoachingModel coaching;
   final UserModel user;
 
-  const CoachingMembersScreen({super.key, required this.coaching, required this.user});
+  const CoachingMembersScreen({
+    super.key,
+    required this.coaching,
+    required this.user,
+  });
 
   @override
   State<CoachingMembersScreen> createState() => _CoachingMembersScreenState();
@@ -31,17 +35,19 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
   bool get _canInvite {
     // Owner can always invite
     if (widget.coaching.ownerId == widget.user.id) return true;
-    
+
     // Check user's role in this coaching from myRole (for joined coachings)
     final role = widget.coaching.myRole;
     if (role == 'ADMIN' || role == 'TEACHER') return true;
-    
+
     // Also check from loaded members list
-    final userMembership = _members.where((m) => m.userId == widget.user.id).firstOrNull;
+    final userMembership = _members
+        .where((m) => m.userId == widget.user.id)
+        .firstOrNull;
     if (userMembership != null) {
       return userMembership.role == 'ADMIN' || userMembership.role == 'TEACHER';
     }
-    
+
     return false;
   }
 
