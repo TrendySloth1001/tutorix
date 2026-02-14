@@ -50,6 +50,13 @@ class ApiConstants {
   static String respondInvitation(String invitationId) =>
       '$baseUrl/user/invitations/$invitationId/respond';
 
+  // Academic
+  static const String academicMasters = '$baseUrl/academic/masters';
+  static const String academicProfile = '$baseUrl/academic/profile';
+  static const String academicRemindLater = '$baseUrl/academic/remind-later';
+  static const String academicOnboardingStatus =
+      '$baseUrl/academic/onboarding-status';
+
   // Google
   static const String googleClientId =
       '299795936862-s70dge4e1k99b3db0faqss8qrcrjj12b.apps.googleusercontent.com';

@@ -104,10 +104,6 @@ export class InvitationService {
      * If only phone/email is provided, it's an unresolved (pending signup) invitation.
      */
     async createInvitation(data: CreateInvitationDto) {
-        console.log('==========================================');
-        console.log('CREATE INVITATION CALLED');
-        console.log('==========================================');
-        console.log('Input data:', JSON.stringify(data, null, 2));
 
         // Check for ANY existing invitation (not just PENDING) due to unique constraint
         if (data.userId) {

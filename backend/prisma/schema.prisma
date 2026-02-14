@@ -38,13 +38,14 @@ model User {
   updatedAt DateTime @updatedAt
 
   // Relations
-  ownedCoachings      Coaching[]       @relation("CoachingOwner")
+  ownedCoachings      Coaching[]        @relation("CoachingOwner")
   sessions            LoginSession[]
-  wards               Ward[]           @relation("UserWards")
+  wards               Ward[]            @relation("UserWards")
   memberships         CoachingMember[]
-  receivedInvitations Invitation[]     @relation("UserInvitations")
-  sentInvitations     Invitation[]     @relation("SentInvitations")
-  notifications       Notification[]   @relation("UserNotifications")
+  receivedInvitations Invitation[]      @relation("UserInvitations")
+  sentInvitations     Invitation[]      @relation("SentInvitations")
+  notifications       Notification[]    @relation("UserNotifications")
+  academicProfile     AcademicProfile?
 }
 
 model Ward {
@@ -179,5 +180,36 @@ model Notification {
   createdAt DateTime @default(now())
 
   @@index([coachingId])
+  @@index([userId])
+}
+
+model AcademicProfile {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // School & Board
+  schoolName String?
+  board      String? // CBSE, ICSE, State board codes
+
+  // Class & Stream
+  classId String? // CLASS_1, CLASS_2, ... CLASS_12, DROPPER, etc.
+  stream  String? // SCIENCE_PCM, SCIENCE_PCB, COMMERCE, ARTS, etc.
+
+  // Subjects and competitive exams (JSON arrays)
+  subjects         String[] @default([])
+  competitiveExams String[] @default([])
+
+  // Target year for competitive exams
+  targetYear Int?
+
+  // Onboarding status
+  status      String    @default("PENDING") // PENDING, COMPLETED, REMIND_LATER
+  remindAt    DateTime? // When to show reminder again
+  completedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
   @@index([userId])
 }

@@ -3,6 +3,10 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/setting_tile.dart';
+import '../../academic/models/academic_masters.dart';
+import '../../academic/models/academic_profile.dart';
+import '../../academic/screens/academic_onboarding_screen.dart';
+import '../../academic/services/academic_service.dart';
 import '../services/upload_service.dart';
 import '../services/user_service.dart';
 import 'edit_profile_screen.dart';
@@ -27,8 +31,42 @@ class ProfileScreen extends StatefulWidget {
 
 class _ProfileScreenState extends State<ProfileScreen> {
   final UploadService _uploadService = UploadService();
+  final AcademicService _academicService = AcademicService();
   final ImagePicker _picker = ImagePicker();
   bool _isUploading = false;
+
+  // Academic profile state
+  AcademicProfile? _academicProfile;
+  AcademicMasters? _academicMasters;
+  bool _isStudentSomewhere = false;
+  bool _loadingAcademic = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadAcademicData();
+  }
+
+  Future<void> _loadAcademicData() async {
+    try {
+      final status = await _academicService.getOnboardingStatus();
+      final masters = await _academicService.getMasters();
+      final profile = await _academicService.getProfile();
+
+      if (mounted) {
+        setState(() {
+          _isStudentSomewhere = status.reason != 'not_a_student';
+          _academicMasters = masters;
+          _academicProfile = profile;
+          _loadingAcademic = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loadingAcademic = false);
+      }
+    }
+  }
 
   // ── Avatar actions ─────────────────────────────────────────────────────
 
@@ -194,6 +232,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () {},
               ),
 
+              // ── Academic Information (only for students) ───────────────
+              if (_isStudentSomewhere) ...[
+                const SizedBox(height: 28),
+                _buildAcademicSection(theme),
+              ],
+
               const SizedBox(height: 28),
 
               // ── Search Privacy ───────────────────────────────
@@ -267,6 +311,206 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ).showSnackBar(SnackBar(content: Text('Failed to update privacy: $e')));
       }
     }
+  }
+
+  Widget _buildAcademicSection(ThemeData theme) {
+    if (_loadingAcademic) {
+      return const SizedBox(
+        height: 100,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Academic Information',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+                letterSpacing: -0.3,
+              ),
+            ),
+            const Spacer(),
+            if (_academicProfile != null)
+              TextButton.icon(
+                onPressed: _editAcademicProfile,
+                icon: const Icon(Icons.edit_outlined, size: 16),
+                label: const Text('Edit'),
+              ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        Text(
+          'Help your teachers understand your learning needs',
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.secondary.withValues(alpha: 0.6),
+          ),
+        ),
+        const SizedBox(height: 12),
+
+        if (_academicProfile == null)
+          _buildSetupAcademicCard(theme)
+        else
+          _buildAcademicDetails(theme),
+      ],
+    );
+  }
+
+  Widget _buildSetupAcademicCard(ThemeData theme) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: theme.colorScheme.primary.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.school_outlined,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Complete your academic profile',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  'Add your class, board, and subjects',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          FilledButton(
+            onPressed: _editAcademicProfile,
+            child: const Text('Setup'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAcademicDetails(ThemeData theme) {
+    final profile = _academicProfile!;
+    final masters = _academicMasters;
+
+    // Get display names from masters
+    final boardName =
+        masters?.boards.where((b) => b.id == profile.board).firstOrNull?.name ??
+        profile.board;
+    final className =
+        masters?.classes
+            .where((c) => c.id == profile.classId)
+            .firstOrNull
+            ?.name ??
+        profile.classId;
+    final streamName = masters?.streams
+        .where((s) => s.id == profile.stream)
+        .firstOrNull
+        ?.name;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.tertiary.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (profile.schoolName != null && profile.schoolName!.isNotEmpty)
+            _AcademicDetailRow(
+              icon: Icons.apartment_outlined,
+              label: 'School',
+              value: profile.schoolName!,
+            ),
+          if (boardName != null)
+            _AcademicDetailRow(
+              icon: Icons.menu_book_outlined,
+              label: 'Board',
+              value: boardName,
+            ),
+          if (className != null)
+            _AcademicDetailRow(
+              icon: Icons.class_outlined,
+              label: 'Class',
+              value: className,
+            ),
+          if (streamName != null)
+            _AcademicDetailRow(
+              icon: Icons.category_outlined,
+              label: 'Stream',
+              value: streamName,
+            ),
+          if (profile.subjects.isNotEmpty)
+            _AcademicDetailRow(
+              icon: Icons.book_outlined,
+              label: 'Subjects',
+              value: profile.subjects
+                  .map(
+                    (id) =>
+                        masters?.subjects
+                            .where((s) => s.id == id)
+                            .firstOrNull
+                            ?.name ??
+                        id,
+                  )
+                  .join(', '),
+            ),
+          if (profile.competitiveExams.isNotEmpty)
+            _AcademicDetailRow(
+              icon: Icons.emoji_events_outlined,
+              label: 'Preparing for',
+              value: profile.competitiveExams
+                  .map(
+                    (id) =>
+                        masters?.competitiveExams
+                            .where((e) => e.id == id)
+                            .firstOrNull
+                            ?.name ??
+                        id,
+                  )
+                  .join(', '),
+            ),
+        ],
+      ),
+    );
+  }
+
+  void _editAcademicProfile() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => AcademicOnboardingScreen(
+          onComplete: () {
+            Navigator.pop(context);
+            _loadAcademicData();
+          },
+          onRemindLater: () => Navigator.pop(context),
+        ),
+      ),
+    );
   }
 
   void _navigateTo(Widget screen) {
@@ -534,6 +778,53 @@ class _PrivacyToggle extends StatelessWidget {
             value: value,
             onChanged: onChanged,
             activeColor: theme.colorScheme.primary,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AcademicDetailRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _AcademicDetailRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 18, color: theme.colorScheme.primary),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
