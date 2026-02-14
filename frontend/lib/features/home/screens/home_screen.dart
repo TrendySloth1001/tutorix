@@ -40,8 +40,7 @@ class _HomeScreenState extends State<HomeScreen> {
       context,
       MaterialPageRoute(
         builder: (_) => CreateCoachingScreen(
-          onCoachingCreated: (_, user) =>
-              widget.onUserUpdated?.call(user),
+          onCoachingCreated: (_, user) => widget.onUserUpdated?.call(user),
         ),
       ),
     );
@@ -52,10 +51,8 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CoachingDashboardScreen(
-          coaching: coaching,
-          user: widget.user,
-        ),
+        builder: (_) =>
+            CoachingDashboardScreen(coaching: coaching, user: widget.user),
       ),
     );
   }
@@ -78,30 +75,27 @@ class _HomeScreenState extends State<HomeScreen> {
             SliverPadding(
               padding: const EdgeInsets.only(top: 16, bottom: 100),
               sliver: SliverList(
-                delegate: SliverChildBuilderDelegate(
-                  (context, index) {
-                    if (index == 0) {
-                      return Padding(
-                        padding:
-                            const EdgeInsets.fromLTRB(24, 8, 24, 16),
-                        child: Text(
-                          'My Coachings',
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary
-                                .withValues(alpha: 0.8),
+                delegate: SliverChildBuilderDelegate((context, index) {
+                  if (index == 0) {
+                    return Padding(
+                      padding: const EdgeInsets.fromLTRB(24, 8, 24, 16),
+                      child: Text(
+                        'My Coachings',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.8,
                           ),
                         ),
-                      );
-                    }
-                    final coaching = _coachings[index - 1];
-                    return CoachingCard(
-                      coaching: coaching,
-                      onTap: () => _navigateToCoaching(coaching),
+                      ),
                     );
-                  },
-                  childCount: _coachings.length + 1,
-                ),
+                  }
+                  final coaching = _coachings[index - 1];
+                  return CoachingCard(
+                    coaching: coaching,
+                    onTap: () => _navigateToCoaching(coaching),
+                  );
+                }, childCount: _coachings.length + 1),
               ),
             ),
         ],
@@ -112,8 +106,7 @@ class _HomeScreenState extends State<HomeScreen> {
         label: const Text('Create Coaching'),
         elevation: 0,
         highlightElevation: 0,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -148,14 +141,17 @@ class _HomeHeader extends StatelessWidget {
             children: [
               CircleAvatar(
                 radius: 24,
-                backgroundColor: theme.colorScheme.primary
-                    .withValues(alpha: 0.1),
+                backgroundColor: theme.colorScheme.primary.withValues(
+                  alpha: 0.1,
+                ),
                 backgroundImage: user.picture != null
                     ? NetworkImage(user.picture!)
                     : null,
                 child: user.picture == null
-                    ? Icon(Icons.person_rounded,
-                        color: theme.colorScheme.primary)
+                    ? Icon(
+                        Icons.person_rounded,
+                        color: theme.colorScheme.primary,
+                      )
                     : null,
               ),
               const SizedBox(width: 16),
@@ -167,8 +163,9 @@ class _HomeHeader extends StatelessWidget {
                     Text(
                       _greeting,
                       style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.secondary
-                            .withValues(alpha: 0.6),
+                        color: theme.colorScheme.secondary.withValues(
+                          alpha: 0.6,
+                        ),
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1,
                       ),
@@ -184,8 +181,7 @@ class _HomeHeader extends StatelessWidget {
                 ),
               ),
               IconButton(
-                icon:
-                    const Icon(Icons.notifications_none_rounded),
+                icon: const Icon(Icons.notifications_none_rounded),
                 onPressed: () {},
                 color: theme.colorScheme.primary,
               ),
@@ -210,26 +206,28 @@ class _EmptyState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: theme.colorScheme.tertiary
-                    .withValues(alpha: 0.1),
+                color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.school_outlined,
-                  size: 80,
-                  color: theme.colorScheme.primary
-                      .withValues(alpha: 0.4)),
+              child: Icon(
+                Icons.school_outlined,
+                size: 80,
+                color: theme.colorScheme.primary.withValues(alpha: 0.4),
+              ),
             ),
             const SizedBox(height: 32),
-            Text('No Coachings Yet',
-                style: theme.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              'No Coachings Yet',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 12),
             Text(
               'Launch your first coaching institute and start managing your classes today.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.secondary
-                    .withValues(alpha: 0.6),
+                color: theme.colorScheme.secondary.withValues(alpha: 0.6),
                 height: 1.5,
               ),
             ),

@@ -64,11 +64,15 @@ class AppTheme {
         fillColor: AppColors.softGrey.withValues(alpha: 0.1),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.mutedOlive.withValues(alpha: 0.5)),
+          borderSide: BorderSide(
+            color: AppColors.mutedOlive.withValues(alpha: 0.5),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(color: AppColors.mutedOlive.withValues(alpha: 0.3)),
+          borderSide: BorderSide(
+            color: AppColors.mutedOlive.withValues(alpha: 0.3),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),

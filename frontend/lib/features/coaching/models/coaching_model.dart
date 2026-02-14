@@ -40,14 +40,14 @@ class CoachingModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'name': name,
-        'slug': slug,
-        'description': description,
-        'logo': logo,
-        'status': status,
-        'ownerId': ownerId,
-        'createdAt': createdAt?.toIso8601String(),
-        'updatedAt': updatedAt?.toIso8601String(),
-      };
+    'id': id,
+    'name': name,
+    'slug': slug,
+    'description': description,
+    'logo': logo,
+    'status': status,
+    'ownerId': ownerId,
+    'createdAt': createdAt?.toIso8601String(),
+    'updatedAt': updatedAt?.toIso8601String(),
+  };
 }

@@ -33,10 +33,7 @@ class UserService {
       body['picture'] = null;
     }
 
-    final data = await _api.patchAuthenticated(
-      ApiConstants.userMe,
-      body: body,
-    );
+    final data = await _api.patchAuthenticated(ApiConstants.userMe, body: body);
 
     final user = UserModel.fromJson(data['user']);
     await _storage.cacheUserProfile(user.toJson());

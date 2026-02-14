@@ -6,11 +6,7 @@ class CoachingCard extends StatelessWidget {
   final CoachingModel coaching;
   final VoidCallback onTap;
 
-  const CoachingCard({
-    super.key,
-    required this.coaching,
-    required this.onTap,
-  });
+  const CoachingCard({super.key, required this.coaching, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -45,8 +41,7 @@ class CoachingCard extends StatelessWidget {
                     width: 72,
                     height: 72,
                     decoration: BoxDecoration(
-                      color: theme.colorScheme.tertiary
-                          .withValues(alpha: 0.2),
+                      color: theme.colorScheme.tertiary.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: coaching.logo != null
@@ -87,8 +82,9 @@ class CoachingCard extends StatelessWidget {
                       Text(
                         '@${coaching.slug}',
                         style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.secondary
-                              .withValues(alpha: 0.7),
+                          color: theme.colorScheme.secondary.withValues(
+                            alpha: 0.7,
+                          ),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -99,8 +95,9 @@ class CoachingCard extends StatelessWidget {
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.secondary
-                                .withValues(alpha: 0.8),
+                            color: theme.colorScheme.secondary.withValues(
+                              alpha: 0.8,
+                            ),
                           ),
                         ),
                       ],
@@ -111,8 +108,7 @@ class CoachingCard extends StatelessWidget {
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 16,
-                  color:
-                      theme.colorScheme.primary.withValues(alpha: 0.3),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.3),
                 ),
               ],
             ),

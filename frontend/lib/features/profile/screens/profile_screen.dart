@@ -47,15 +47,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
       if (updated != null && mounted) {
         widget.onUserUpdated?.call(updated);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-              content: Text('Profile picture updated successfully')),
+          const SnackBar(content: Text('Profile picture updated successfully')),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update avatar: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to update avatar: $e')));
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -75,9 +74,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to remove avatar: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to remove avatar: $e')));
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -115,8 +114,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         title: Text(
           'Profile',
-          style:
-              theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -168,8 +168,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               Text(
                 user.email,
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color:
-                      theme.colorScheme.secondary.withValues(alpha: 0.7),
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.7),
                 ),
               ),
 
@@ -180,8 +179,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 icon: Icons.shield_outlined,
                 title: 'Security history',
                 subtitle: 'Login history and sessions',
-                onTap: () =>
-                    _navigateTo(const SecuritySessionsScreen()),
+                onTap: () => _navigateTo(const SecuritySessionsScreen()),
               ),
               SettingTile(
                 icon: Icons.notifications_none_rounded,
@@ -239,8 +237,7 @@ class _AvatarSection extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color:
-                      theme.colorScheme.primary.withValues(alpha: 0.1),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   width: 2,
                 ),
               ),
@@ -248,14 +245,18 @@ class _AvatarSection extends StatelessWidget {
                 tag: 'user_avatar',
                 child: CircleAvatar(
                   radius: 70,
-                  backgroundColor:
-                      theme.colorScheme.tertiary.withValues(alpha: 0.2),
+                  backgroundColor: theme.colorScheme.tertiary.withValues(
+                    alpha: 0.2,
+                  ),
                   backgroundImage: user.picture != null
                       ? NetworkImage(user.picture!)
                       : null,
                   child: user.picture == null
-                      ? Icon(Icons.person_rounded,
-                          size: 70, color: theme.colorScheme.primary)
+                      ? Icon(
+                          Icons.person_rounded,
+                          size: 70,
+                          color: theme.colorScheme.primary,
+                        )
                       : null,
                 ),
               ),
@@ -316,8 +317,7 @@ class _OverlayButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: theme.colorScheme.primary,
             shape: BoxShape.circle,
-            border:
-                Border.all(color: theme.colorScheme.surface, width: 3),
+            border: Border.all(color: theme.colorScheme.surface, width: 3),
           ),
           child: Icon(icon, size: 20, color: theme.colorScheme.onPrimary),
         ),
@@ -344,8 +344,7 @@ class _PhotoOptionsSheet extends StatelessWidget {
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -357,21 +356,24 @@ class _PhotoOptionsSheet extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
-                  color:
-                      theme.colorScheme.primary.withValues(alpha: 0.1),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   width: 2,
                 ),
               ),
               child: CircleAvatar(
                 radius: 80,
-                backgroundColor:
-                    theme.colorScheme.tertiary.withValues(alpha: 0.2),
+                backgroundColor: theme.colorScheme.tertiary.withValues(
+                  alpha: 0.2,
+                ),
                 backgroundImage: user.picture != null
                     ? NetworkImage(user.picture!)
                     : null,
                 child: user.picture == null
-                    ? Icon(Icons.person_rounded,
-                        size: 80, color: theme.colorScheme.primary)
+                    ? Icon(
+                        Icons.person_rounded,
+                        size: 80,
+                        color: theme.colorScheme.primary,
+                      )
                     : null,
               ),
             ),
@@ -379,23 +381,24 @@ class _PhotoOptionsSheet extends StatelessWidget {
           const SizedBox(height: 32),
           Text(
             'Profile Photo',
-            style: theme.textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 24),
           ListTile(
             leading: Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color:
-                    theme.colorScheme.primary.withValues(alpha: 0.1),
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.photo_library_rounded,
-                  color: theme.colorScheme.primary),
+              child: Icon(
+                Icons.photo_library_rounded,
+                color: theme.colorScheme.primary,
+              ),
             ),
-            title:
-                Text(user.picture == null ? 'Add Photo' : 'Change Photo'),
+            title: Text(user.picture == null ? 'Add Photo' : 'Change Photo'),
             onTap: onChangeTap,
           ),
           if (user.picture != null) ...[
@@ -407,11 +410,15 @@ class _PhotoOptionsSheet extends StatelessWidget {
                   color: Colors.redAccent.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(Icons.delete_outline_rounded,
-                    color: Colors.redAccent),
+                child: const Icon(
+                  Icons.delete_outline_rounded,
+                  color: Colors.redAccent,
+                ),
               ),
-              title: const Text('Remove Photo',
-                  style: TextStyle(color: Colors.redAccent)),
+              title: const Text(
+                'Remove Photo',
+                style: TextStyle(color: Colors.redAccent),
+              ),
               onTap: onRemoveTap,
             ),
           ],

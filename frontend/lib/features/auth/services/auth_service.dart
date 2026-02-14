@@ -12,9 +12,7 @@ class AuthService {
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
 
   Future<void> _ensureGoogleInitialized() async {
-    await _googleSignIn.initialize(
-      serverClientId: ApiConstants.googleClientId,
-    );
+    await _googleSignIn.initialize(serverClientId: ApiConstants.googleClientId);
   }
 
   /// Trigger Google OAuth → send idToken to backend → return [UserModel].
@@ -35,10 +33,7 @@ class AuthService {
       final data = await _api.postPublic(
         ApiConstants.googleAuth,
         body: {'idToken': idToken, 'deviceInfo': deviceInfo},
-        extraHeaders: {
-          'User-Agent': deviceInfo,
-          'X-Device-Info': deviceInfo,
-        },
+        extraHeaders: {'User-Agent': deviceInfo, 'X-Device-Info': deviceInfo},
       );
 
       final user = UserModel.fromJson(data['user']);

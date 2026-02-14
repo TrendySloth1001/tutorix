@@ -52,7 +52,8 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
               content: Text('${coaching.name} created successfully!'),
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12)),
+                borderRadius: BorderRadius.circular(12),
+              ),
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
           );
@@ -66,7 +67,8 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
             content: Text('Failed to create coaching: $e'),
             behavior: SnackBarBehavior.floating,
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12)),
+              borderRadius: BorderRadius.circular(12),
+            ),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -83,9 +85,12 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: Text('Launch Institute',
-            style: theme.textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.bold)),
+        title: Text(
+          'Launch Institute',
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
@@ -138,7 +143,8 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20)),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
                   elevation: 0,
                 ),
                 child: _isLoading
@@ -146,11 +152,17 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
                         height: 24,
                         width: 24,
                         child: CircularProgressIndicator(
-                            strokeWidth: 2.5, color: Colors.white),
+                          strokeWidth: 2.5,
+                          color: Colors.white,
+                        ),
                       )
-                    : const Text('Launch Institute',
+                    : const Text(
+                        'Launch Institute',
                         style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold)),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
               ),
               const SizedBox(height: 24),
             ],
@@ -174,15 +186,13 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
       controller: controller,
       maxLines: maxLines,
       textCapitalization: capitalization,
-      style:
-          theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
+      style: theme.textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.w500),
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
         prefixIcon: Icon(icon, color: theme.colorScheme.primary),
         filled: true,
-        fillColor:
-            theme.colorScheme.tertiary.withValues(alpha: 0.05),
+        fillColor: theme.colorScheme.tertiary.withValues(alpha: 0.05),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
           borderSide: BorderSide.none,
@@ -193,8 +203,7 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(18),
-          borderSide: BorderSide(
-              color: theme.colorScheme.primary, width: 1.5),
+          borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
         ),
         alignLabelWithHint: maxLines > 1,
       ),
@@ -225,21 +234,22 @@ class _HeaderIllustration extends StatelessWidget {
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
-                  color: theme.colorScheme.primary
-                      .withValues(alpha: 0.05),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.05),
                   blurRadius: 15,
                 ),
               ],
             ),
-            child: Icon(Icons.rocket_launch_rounded,
-                size: 48, color: theme.colorScheme.primary),
+            child: Icon(
+              Icons.rocket_launch_rounded,
+              size: 48,
+              color: theme.colorScheme.primary,
+            ),
           ),
           const SizedBox(height: 16),
           Text(
             'Tutorix Institute',
             style: theme.textTheme.titleMedium?.copyWith(
-              color: theme.colorScheme.primary
-                  .withValues(alpha: 0.8),
+              color: theme.colorScheme.primary.withValues(alpha: 0.8),
               fontWeight: FontWeight.bold,
               letterSpacing: 1.1,
             ),
@@ -265,17 +275,17 @@ class _InfoNote extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(Icons.shield_rounded,
-              size: 20,
-              color: theme.colorScheme.primary
-                  .withValues(alpha: 0.6)),
+          Icon(
+            Icons.shield_rounded,
+            size: 20,
+            color: theme.colorScheme.primary.withValues(alpha: 0.6),
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               'As the founder, you have full administrative control over curriculum and admissions.',
               style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.secondary
-                    .withValues(alpha: 0.7),
+                color: theme.colorScheme.secondary.withValues(alpha: 0.7),
               ),
             ),
           ),

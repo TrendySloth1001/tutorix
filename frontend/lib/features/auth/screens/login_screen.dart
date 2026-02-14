@@ -44,8 +44,9 @@ class LoginScreen extends StatelessWidget {
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color:
-                            theme.colorScheme.primary.withValues(alpha: 0.08),
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.08,
+                        ),
                         blurRadius: 30,
                         offset: const Offset(0, 10),
                       ),
@@ -72,8 +73,7 @@ class LoginScreen extends StatelessWidget {
                   'Your academic world, unified.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodyLarge?.copyWith(
-                    color:
-                        theme.colorScheme.secondary.withValues(alpha: 0.6),
+                    color: theme.colorScheme.secondary.withValues(alpha: 0.6),
                     letterSpacing: 0.2,
                   ),
                 ),
@@ -85,8 +85,7 @@ class LoginScreen extends StatelessWidget {
                 else
                   FilledButton.icon(
                     onPressed: onLogin,
-                    icon:
-                        const Icon(Icons.g_mobiledata_rounded, size: 32),
+                    icon: const Icon(Icons.g_mobiledata_rounded, size: 32),
                     label: const Text('Continue with Google'),
                     style: FilledButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,
@@ -103,8 +102,7 @@ class LoginScreen extends StatelessWidget {
                 Text(
                   'By continuing, you agree to our Terms of Service.',
                   style: theme.textTheme.labelSmall?.copyWith(
-                    color:
-                        theme.colorScheme.secondary.withValues(alpha: 0.4),
+                    color: theme.colorScheme.secondary.withValues(alpha: 0.4),
                   ),
                 ),
                 const SizedBox(height: 32),

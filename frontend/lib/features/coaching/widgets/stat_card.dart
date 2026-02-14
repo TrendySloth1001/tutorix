@@ -54,8 +54,7 @@ class StatCard extends StatelessWidget {
               Text(
                 title,
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.secondary
-                      .withValues(alpha: 0.6),
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.6),
                 ),
               ),
             ],

@@ -24,8 +24,9 @@ class MembersView extends StatelessWidget {
             children: [
               Text(
                 'Internal Directory',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               TextButton.icon(
                 onPressed: () {},
@@ -79,22 +80,18 @@ class _MemberTile extends StatelessWidget {
       ),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor:
-              theme.colorScheme.tertiary.withValues(alpha: 0.3),
+          backgroundColor: theme.colorScheme.tertiary.withValues(alpha: 0.3),
           child: Text(
             name[0],
             style: TextStyle(color: theme.colorScheme.primary),
           ),
         ),
-        title: Text(name,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text(role),
         trailing: Container(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           decoration: BoxDecoration(
-            color:
-                theme.colorScheme.primary.withValues(alpha: 0.1),
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(8),
           ),
           child: Text(

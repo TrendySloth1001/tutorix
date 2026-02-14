@@ -16,13 +16,9 @@ class ApiClient {
 
   // ── Headers ────────────────────────────────────────────────────────────
 
-  Map<String, String> get _jsonHeaders => {
-        'Content-Type': 'application/json',
-      };
+  Map<String, String> get _jsonHeaders => {'Content-Type': 'application/json'};
 
-  Future<Map<String, String>> _authHeaders({
-    Map<String, String>? extra,
-  }) async {
+  Future<Map<String, String>> _authHeaders({Map<String, String>? extra}) async {
     final token = await _storage.getToken();
     if (token == null) throw Exception('Not authenticated');
     return {
@@ -124,7 +120,8 @@ class ApiClient {
       return data;
     }
 
-    final message = data['message'] ?? 'Request failed (${response.statusCode})';
+    final message =
+        data['message'] ?? 'Request failed (${response.statusCode})';
     debugPrint('ApiClient error ${response.statusCode}: $message');
     throw Exception(message);
   }

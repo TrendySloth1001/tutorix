@@ -8,8 +8,7 @@ class SecuritySessionsScreen extends StatefulWidget {
   const SecuritySessionsScreen({super.key});
 
   @override
-  State<SecuritySessionsScreen> createState() =>
-      _SecuritySessionsScreenState();
+  State<SecuritySessionsScreen> createState() => _SecuritySessionsScreenState();
 }
 
 class _SecuritySessionsScreenState extends State<SecuritySessionsScreen> {
@@ -29,9 +28,9 @@ class _SecuritySessionsScreenState extends State<SecuritySessionsScreen> {
       _sessions = await _userService.getSessions();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load sessions: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load sessions: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -65,17 +64,18 @@ class _SecuritySessionsScreenState extends State<SecuritySessionsScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _sessions.isEmpty
-              ? _EmptyState()
-              : RefreshIndicator(
-                  onRefresh: _loadSessions,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 16),
-                    itemCount: _sessions.length,
-                    itemBuilder: (_, i) =>
-                        _SessionTile(session: _sessions[i]),
-                  ),
+          ? _EmptyState()
+          : RefreshIndicator(
+              onRefresh: _loadSessions,
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 16,
                 ),
+                itemCount: _sessions.length,
+                itemBuilder: (_, i) => _SessionTile(session: _sessions[i]),
+              ),
+            ),
     );
   }
 }
@@ -90,12 +90,13 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.shield_outlined,
-              size: 80,
-              color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+          Icon(
+            Icons.shield_outlined,
+            size: 80,
+            color: theme.colorScheme.primary.withValues(alpha: 0.3),
+          ),
           const SizedBox(height: 16),
-          Text('No session history found',
-              style: theme.textTheme.titleMedium),
+          Text('No session history found', style: theme.textTheme.titleMedium),
         ],
       ),
     );
@@ -110,10 +111,10 @@ class _SessionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final deviceInfo = _parseDevice(session.userAgent);
-    final dateStr =
-        DateFormat('MMM dd, yyyy').format(session.createdAt.toLocal());
-    final timeStr =
-        DateFormat('hh:mm a').format(session.createdAt.toLocal());
+    final dateStr = DateFormat(
+      'MMM dd, yyyy',
+    ).format(session.createdAt.toLocal());
+    final timeStr = DateFormat('hh:mm a').format(session.createdAt.toLocal());
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
@@ -141,8 +142,7 @@ class _SessionTile extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.primary
-                        .withValues(alpha: 0.08),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.08),
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
@@ -161,10 +161,11 @@ class _SessionTile extends StatelessWidget {
                     ),
                   ),
                 ),
-                Icon(Icons.verified_user_rounded,
-                    size: 16,
-                    color: theme.colorScheme.primary
-                        .withValues(alpha: 0.4)),
+                Icon(
+                  Icons.verified_user_rounded,
+                  size: 16,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -172,8 +173,7 @@ class _SessionTile extends StatelessWidget {
               text: TextSpan(
                 style: theme.textTheme.bodyMedium?.copyWith(
                   height: 1.6,
-                  color: theme.colorScheme.onSurface
-                      .withValues(alpha: 0.8),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.8),
                 ),
                 children: [
                   const TextSpan(text: 'You logged in from '),
@@ -195,14 +195,12 @@ class _SessionTile extends StatelessWidget {
                   const TextSpan(text: ' on '),
                   TextSpan(
                     text: dateStr,
-                    style:
-                        const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const TextSpan(text: ' at '),
                   TextSpan(
                     text: timeStr,
-                    style:
-                        const TextStyle(fontWeight: FontWeight.bold),
+                    style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   const TextSpan(text: '.'),
                 ],

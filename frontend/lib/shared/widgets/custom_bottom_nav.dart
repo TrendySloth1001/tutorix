@@ -19,19 +19,16 @@ class CustomBottomNav extends StatelessWidget {
         color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color:
-                theme.colorScheme.primary.withValues(alpha: 0.08),
+            color: theme.colorScheme.primary.withValues(alpha: 0.08),
             blurRadius: 20,
             offset: const Offset(0, -8),
           ),
         ],
-        borderRadius:
-            const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: SafeArea(
         child: Padding(
-          padding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
@@ -79,8 +76,7 @@ class _NavItem extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
-        padding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
               ? theme.colorScheme.tertiary.withValues(alpha: 0.3)
@@ -93,8 +89,7 @@ class _NavItem extends StatelessWidget {
               icon,
               color: isSelected
                   ? theme.colorScheme.primary
-                  : theme.colorScheme.secondary
-                      .withValues(alpha: 0.5),
+                  : theme.colorScheme.secondary.withValues(alpha: 0.5),
             ),
             if (isSelected) ...[
               const SizedBox(width: 8),

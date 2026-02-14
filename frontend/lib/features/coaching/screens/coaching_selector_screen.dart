@@ -20,8 +20,7 @@ class CoachingSelectorScreen extends StatefulWidget {
   });
 
   @override
-  State<CoachingSelectorScreen> createState() =>
-      _CoachingSelectorScreenState();
+  State<CoachingSelectorScreen> createState() => _CoachingSelectorScreenState();
 }
 
 class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
@@ -41,9 +40,9 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
       _coachings = await _coachingService.getMyCoachings();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load coachings: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load coachings: $e')));
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -67,10 +66,8 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (_) => CoachingDashboardScreen(
-          coaching: coaching,
-          user: widget.user,
-        ),
+        builder: (_) =>
+            CoachingDashboardScreen(coaching: coaching, user: widget.user),
       ),
     );
   }
@@ -116,23 +113,21 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: theme.colorScheme.primary
-                        .withValues(alpha: 0.1),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     width: 1,
                   ),
                 ),
                 child: CircleAvatar(
                   radius: 16,
-                  backgroundColor: theme.colorScheme.tertiary
-                      .withValues(alpha: 0.2),
+                  backgroundColor: theme.colorScheme.tertiary.withValues(
+                    alpha: 0.2,
+                  ),
                   backgroundImage: widget.user.picture != null
                       ? NetworkImage(widget.user.picture!)
                       : null,
                   child: widget.user.picture == null
                       ? Text(
-                          widget.user.name
-                                  ?.substring(0, 1)
-                                  .toUpperCase() ??
+                          widget.user.name?.substring(0, 1).toUpperCase() ??
                               'U',
                           style: theme.textTheme.labelLarge?.copyWith(
                             color: theme.colorScheme.primary,
@@ -151,27 +146,25 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : _coachings.isEmpty
-              ? _EmptyState(onGetStarted: _navigateToCreate)
-              : RefreshIndicator(
-                  onRefresh: _loadCoachings,
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    itemCount: _coachings.length,
-                    itemBuilder: (_, i) => CoachingCard(
-                      coaching: _coachings[i],
-                      onTap: () =>
-                          _navigateToCoaching(_coachings[i]),
-                    ),
-                  ),
+          ? _EmptyState(onGetStarted: _navigateToCreate)
+          : RefreshIndicator(
+              onRefresh: _loadCoachings,
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                itemCount: _coachings.length,
+                itemBuilder: (_, i) => CoachingCard(
+                  coaching: _coachings[i],
+                  onTap: () => _navigateToCoaching(_coachings[i]),
                 ),
+              ),
+            ),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _navigateToCreate,
         icon: const Icon(Icons.add_rounded),
         label: const Text('Launch Institute'),
         elevation: 0,
         highlightElevation: 0,
-        shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }
@@ -193,26 +186,28 @@ class _EmptyState extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: theme.colorScheme.tertiary
-                    .withValues(alpha: 0.1),
+                color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.school_outlined,
-                  size: 80,
-                  color: theme.colorScheme.primary
-                      .withValues(alpha: 0.3)),
+              child: Icon(
+                Icons.school_outlined,
+                size: 80,
+                color: theme.colorScheme.primary.withValues(alpha: 0.3),
+              ),
             ),
             const SizedBox(height: 32),
-            Text('No Institutes Yet',
-                style: theme.textTheme.headlineSmall
-                    ?.copyWith(fontWeight: FontWeight.bold)),
+            Text(
+              'No Institutes Yet',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
             const SizedBox(height: 12),
             Text(
               'Create your first coaching institute to start managing your academic programs.',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodyLarge?.copyWith(
-                color: theme.colorScheme.secondary
-                    .withValues(alpha: 0.6),
+                color: theme.colorScheme.secondary.withValues(alpha: 0.6),
                 height: 1.5,
               ),
             ),
@@ -223,9 +218,12 @@ class _EmptyState extends StatelessWidget {
               label: const Text('Get Started Now'),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 32, vertical: 16),
+                  horizontal: 32,
+                  vertical: 16,
+                ),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16)),
+                  borderRadius: BorderRadius.circular(16),
+                ),
               ),
             ),
           ],

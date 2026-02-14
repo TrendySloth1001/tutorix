@@ -55,10 +55,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
           );
         }
 
-        return LoginScreen(
-          onLogin: _auth.signIn,
-          isLoading: _auth.isLoading,
-        );
+        return LoginScreen(onLogin: _auth.signIn, isLoading: _auth.isLoading);
       },
     );
   }

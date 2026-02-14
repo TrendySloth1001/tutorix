@@ -127,8 +127,7 @@ class _WelcomeHeader extends StatelessWidget {
             width: 56,
             height: 56,
             decoration: BoxDecoration(
-              color:
-                  theme.colorScheme.tertiary.withValues(alpha: 0.2),
+              color: theme.colorScheme.tertiary.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(14),
               image: coaching.logo != null
                   ? DecorationImage(
@@ -138,8 +137,7 @@ class _WelcomeHeader extends StatelessWidget {
                   : null,
             ),
             child: coaching.logo == null
-                ? Icon(Icons.school_rounded,
-                    color: theme.colorScheme.primary)
+                ? Icon(Icons.school_rounded, color: theme.colorScheme.primary)
                 : null,
           ),
         ),
@@ -151,8 +149,7 @@ class _WelcomeHeader extends StatelessWidget {
               Text(
                 'Internal Dashboard',
                 style: theme.textTheme.labelMedium?.copyWith(
-                  color: theme.colorScheme.secondary
-                      .withValues(alpha: 0.6),
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.6),
                   letterSpacing: 1.2,
                   fontWeight: FontWeight.bold,
                 ),

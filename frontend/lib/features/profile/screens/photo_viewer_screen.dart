@@ -9,11 +9,7 @@ class PhotoViewerScreen extends StatefulWidget {
   final UserModel user;
   final ValueChanged<UserModel>? onUserUpdated;
 
-  const PhotoViewerScreen({
-    super.key,
-    required this.user,
-    this.onUserUpdated,
-  });
+  const PhotoViewerScreen({super.key, required this.user, this.onUserUpdated});
 
   @override
   State<PhotoViewerScreen> createState() => _PhotoViewerScreenState();
@@ -56,9 +52,9 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to update avatar: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to update avatar: $e')));
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -79,9 +75,9 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to remove avatar: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to remove avatar: $e')));
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -139,24 +135,24 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
             child: _isUploading
                 ? const CircularProgressIndicator(color: Colors.white)
                 : _currentUser.picture != null
-                    ? Image.network(
-                        _currentUser.picture!,
-                        fit: BoxFit.contain,
-                        width: double.infinity,
-                        height: double.infinity,
-                        loadingBuilder: (_, child, progress) =>
-                            progress == null
-                                ? child
-                                : const Center(
-                                    child: CircularProgressIndicator(
-                                        color: Colors.white),
-                                  ),
-                      )
-                    : const Icon(
-                        Icons.person_rounded,
-                        size: 200,
-                        color: Colors.white24,
-                      ),
+                ? Image.network(
+                    _currentUser.picture!,
+                    fit: BoxFit.contain,
+                    width: double.infinity,
+                    height: double.infinity,
+                    loadingBuilder: (_, child, progress) => progress == null
+                        ? child
+                        : const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          ),
+                  )
+                : const Icon(
+                    Icons.person_rounded,
+                    size: 200,
+                    color: Colors.white24,
+                  ),
           ),
         ),
       ),
@@ -192,8 +188,9 @@ class _PhotoOptionsSheet extends StatelessWidget {
         children: [
           Text(
             'Profile Photo',
-            style: theme.textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 24),
           ListTile(

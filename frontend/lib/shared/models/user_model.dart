@@ -41,9 +41,9 @@ class UserModel {
         isParent: json['isParent'] as bool? ?? false,
         isWard: json['isWard'] as bool? ?? false,
         onboardingComplete: json['onboardingComplete'] as bool? ?? false,
-        ownedCoachings: (json['ownedCoachings'] as List<dynamic>?)
-                ?.map(
-                    (e) => CoachingModel.fromJson(e as Map<String, dynamic>))
+        ownedCoachings:
+            (json['ownedCoachings'] as List<dynamic>?)
+                ?.map((e) => CoachingModel.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             [],
       );
@@ -55,18 +55,18 @@ class UserModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'email': email,
-        'name': name,
-        'phone': phone,
-        'picture': picture,
-        'isAdmin': isAdmin,
-        'isTeacher': isTeacher,
-        'isParent': isParent,
-        'isWard': isWard,
-        'onboardingComplete': onboardingComplete,
-        'ownedCoachings': ownedCoachings.map((e) => e.toJson()).toList(),
-      };
+    'id': id,
+    'email': email,
+    'name': name,
+    'phone': phone,
+    'picture': picture,
+    'isAdmin': isAdmin,
+    'isTeacher': isTeacher,
+    'isParent': isParent,
+    'isWard': isWard,
+    'onboardingComplete': onboardingComplete,
+    'ownedCoachings': ownedCoachings.map((e) => e.toJson()).toList(),
+  };
 
   UserModel copyWith({
     String? id,

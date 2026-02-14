@@ -29,11 +29,9 @@ class DeviceInfoHelper {
               '${android.manufacturer} ${android.model} (Android ${android.version.release})';
         case TargetPlatform.iOS:
           final ios = await plugin.iosInfo;
-          description =
-              '${ios.name} ${ios.model} (iOS ${ios.systemVersion})';
+          description = '${ios.name} ${ios.model} (iOS ${ios.systemVersion})';
         default:
-          description =
-              'Tutorix-${defaultTargetPlatform.name} ($osVersion)';
+          description = 'Tutorix-${defaultTargetPlatform.name} ($osVersion)';
       }
     } catch (e) {
       debugPrint('DeviceInfoHelper plugin error (using fallback): $e');

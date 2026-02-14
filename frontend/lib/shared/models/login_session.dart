@@ -24,10 +24,10 @@ class LoginSession {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'userId': userId,
-        'ip': ip,
-        'userAgent': userAgent,
-        'createdAt': createdAt.toIso8601String(),
-      };
+    'id': id,
+    'userId': userId,
+    'ip': ip,
+    'userAgent': userAgent,
+    'createdAt': createdAt.toIso8601String(),
+  };
 }

@@ -72,13 +72,11 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
   Widget _buildBody() {
     if (widget.user.isAdmin) {
       return switch (_selectedIndex) {
-        0 => AdminDashboardView(
-            coaching: widget.coaching, user: widget.user),
+        0 => AdminDashboardView(coaching: widget.coaching, user: widget.user),
         1 => const MembersView(),
         2 => const ClassesView(),
         3 => SettingsView(coaching: widget.coaching),
-        _ => AdminDashboardView(
-            coaching: widget.coaching, user: widget.user),
+        _ => AdminDashboardView(coaching: widget.coaching, user: widget.user),
       };
     }
     return _StudentPlaceholder();
@@ -120,10 +118,10 @@ class _BottomNav extends StatelessWidget {
           child: Theme(
             data: theme.copyWith(
               navigationBarTheme: NavigationBarThemeData(
-                indicatorColor:
-                    theme.colorScheme.tertiary.withValues(alpha: 0.3),
-                labelTextStyle:
-                    WidgetStateProperty.resolveWith((states) {
+                indicatorColor: theme.colorScheme.tertiary.withValues(
+                  alpha: 0.3,
+                ),
+                labelTextStyle: WidgetStateProperty.resolveWith((states) {
                   if (states.contains(WidgetState.selected)) {
                     return theme.textTheme.labelSmall?.copyWith(
                       color: color,
@@ -131,8 +129,7 @@ class _BottomNav extends StatelessWidget {
                     );
                   }
                   return theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.secondary
-                        .withValues(alpha: 0.5),
+                    color: theme.colorScheme.secondary.withValues(alpha: 0.5),
                   );
                 }),
               ),
@@ -153,52 +150,48 @@ class _BottomNav extends StatelessWidget {
   }
 
   List<NavigationDestination> _adminDestinations(Color c) => [
-        NavigationDestination(
-          icon: Icon(Icons.dashboard_outlined,
-              color: c.withValues(alpha: 0.5)),
-          selectedIcon: Icon(Icons.dashboard_rounded, color: c),
-          label: 'Overview',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.people_outline_rounded,
-              color: c.withValues(alpha: 0.5)),
-          selectedIcon: Icon(Icons.people_rounded, color: c),
-          label: 'Members',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.class_outlined,
-              color: c.withValues(alpha: 0.5)),
-          selectedIcon: Icon(Icons.class_rounded, color: c),
-          label: 'Classes',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.settings_outlined,
-              color: c.withValues(alpha: 0.5)),
-          selectedIcon: Icon(Icons.settings_rounded, color: c),
-          label: 'Settings',
-        ),
-      ];
+    NavigationDestination(
+      icon: Icon(Icons.dashboard_outlined, color: c.withValues(alpha: 0.5)),
+      selectedIcon: Icon(Icons.dashboard_rounded, color: c),
+      label: 'Overview',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.people_outline_rounded, color: c.withValues(alpha: 0.5)),
+      selectedIcon: Icon(Icons.people_rounded, color: c),
+      label: 'Members',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.class_outlined, color: c.withValues(alpha: 0.5)),
+      selectedIcon: Icon(Icons.class_rounded, color: c),
+      label: 'Classes',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.settings_outlined, color: c.withValues(alpha: 0.5)),
+      selectedIcon: Icon(Icons.settings_rounded, color: c),
+      label: 'Settings',
+    ),
+  ];
 
   List<NavigationDestination> _defaultDestinations(Color c) => [
-        NavigationDestination(
-          icon: Icon(Icons.home_outlined,
-              color: c.withValues(alpha: 0.5)),
-          selectedIcon: Icon(Icons.home_rounded, color: c),
-          label: 'Home',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.calendar_today_outlined,
-              color: c.withValues(alpha: 0.5)),
-          selectedIcon: Icon(Icons.calendar_today_rounded, color: c),
-          label: 'Schedule',
-        ),
-        NavigationDestination(
-          icon: Icon(Icons.notifications_outlined,
-              color: c.withValues(alpha: 0.5)),
-          selectedIcon: Icon(Icons.notifications_rounded, color: c),
-          label: 'Alerts',
-        ),
-      ];
+    NavigationDestination(
+      icon: Icon(Icons.home_outlined, color: c.withValues(alpha: 0.5)),
+      selectedIcon: Icon(Icons.home_rounded, color: c),
+      label: 'Home',
+    ),
+    NavigationDestination(
+      icon: Icon(
+        Icons.calendar_today_outlined,
+        color: c.withValues(alpha: 0.5),
+      ),
+      selectedIcon: Icon(Icons.calendar_today_rounded, color: c),
+      label: 'Schedule',
+    ),
+    NavigationDestination(
+      icon: Icon(Icons.notifications_outlined, color: c.withValues(alpha: 0.5)),
+      selectedIcon: Icon(Icons.notifications_rounded, color: c),
+      label: 'Alerts',
+    ),
+  ];
 }
 
 class _StudentPlaceholder extends StatelessWidget {
@@ -209,21 +202,23 @@ class _StudentPlaceholder extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.construction_rounded,
-              size: 80,
-              color: theme.colorScheme.primary.withValues(alpha: 0.3)),
+          Icon(
+            Icons.construction_rounded,
+            size: 80,
+            color: theme.colorScheme.primary.withValues(alpha: 0.3),
+          ),
           const SizedBox(height: 16),
           Text(
             'Student Portal Coming Soon',
-            style: theme.textTheme.titleLarge
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           Text(
             'We are fine-tuning the experience for you.',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.secondary
-                  .withValues(alpha: 0.6),
+              color: theme.colorScheme.secondary.withValues(alpha: 0.6),
             ),
           ),
         ],

@@ -24,8 +24,9 @@ class ClassesView extends StatelessWidget {
             children: [
               Text(
                 'Active Batches',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               TextButton.icon(
                 onPressed: () {},
@@ -81,8 +82,7 @@ class _ClassTile extends StatelessWidget {
         leading: Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color:
-                theme.colorScheme.tertiary.withValues(alpha: 0.2),
+            color: theme.colorScheme.tertiary.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Icon(
@@ -90,8 +90,7 @@ class _ClassTile extends StatelessWidget {
             color: theme.colorScheme.primary,
           ),
         ),
-        title: Text(name,
-            style: const TextStyle(fontWeight: FontWeight.bold)),
+        title: Text(name, style: const TextStyle(fontWeight: FontWeight.bold)),
         subtitle: Text('$batch • $time'),
         trailing: const Icon(Icons.chevron_right_rounded),
       ),

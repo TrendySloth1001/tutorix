@@ -5,8 +5,7 @@
 class ApiConstants {
   ApiConstants._();
 
-  static const String baseUrl =
-      'https://qjhcp0ph-3010.inc1.devtunnels.ms';
+  static const String baseUrl = 'https://qjhcp0ph-3010.inc1.devtunnels.ms';
 
   // Auth
   static const String googleAuth = '$baseUrl/auth/google';

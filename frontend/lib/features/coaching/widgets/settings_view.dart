@@ -31,19 +31,20 @@ class SettingsView extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.red.withValues(alpha: 0.05),
             borderRadius: BorderRadius.circular(20),
-            border:
-                Border.all(color: Colors.red.withValues(alpha: 0.1)),
+            border: Border.all(color: Colors.red.withValues(alpha: 0.1)),
           ),
           child: ListTile(
-            leading: const Icon(Icons.delete_forever_rounded,
-                color: Colors.red),
+            leading: const Icon(
+              Icons.delete_forever_rounded,
+              color: Colors.red,
+            ),
             title: const Text(
               'Offboard Coaching',
-              style: TextStyle(
-                  color: Colors.red, fontWeight: FontWeight.bold),
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
             ),
             subtitle: const Text(
-                'Completely remove this institute and its data'),
+              'Completely remove this institute and its data',
+            ),
             onTap: () {},
             contentPadding: EdgeInsets.zero,
           ),

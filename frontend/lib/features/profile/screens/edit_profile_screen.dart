@@ -56,8 +56,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           SnackBar(
             content: const Text('Profile updated successfully'),
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             backgroundColor: Theme.of(context).colorScheme.primary,
           ),
         );
@@ -69,8 +70,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           SnackBar(
             content: Text('Failed to update profile: $e'),
             behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+            ),
             backgroundColor: Colors.redAccent,
           ),
         );
@@ -89,8 +91,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       appBar: AppBar(
         title: Text(
           'Edit Profile',
-          style:
-              theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -112,26 +115,23 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
-                        color:
-                            theme.colorScheme.primary.withValues(alpha: 0.1),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
                         width: 2,
                       ),
                     ),
                     child: CircleAvatar(
                       radius: 50,
-                      backgroundColor:
-                          theme.colorScheme.tertiary.withValues(alpha: 0.2),
+                      backgroundColor: theme.colorScheme.tertiary.withValues(
+                        alpha: 0.2,
+                      ),
                       backgroundImage: widget.user.picture != null
                           ? NetworkImage(widget.user.picture!)
                           : null,
                       child: widget.user.picture == null
                           ? Text(
-                              widget.user.name
-                                      ?.substring(0, 1)
-                                      .toUpperCase() ??
+                              widget.user.name?.substring(0, 1).toUpperCase() ??
                                   'U',
-                              style:
-                                  theme.textTheme.displayMedium?.copyWith(
+                              style: theme.textTheme.displayMedium?.copyWith(
                                 color: theme.colorScheme.primary,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -148,10 +148,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 controller: _nameController,
                 label: 'Full Name',
                 icon: Icons.person_rounded,
-                validator: (value) =>
-                    (value == null || value.trim().isEmpty)
-                        ? 'Please enter your name'
-                        : null,
+                validator: (value) => (value == null || value.trim().isEmpty)
+                    ? 'Please enter your name'
+                    : null,
               ),
               const SizedBox(height: 20),
 
@@ -169,8 +168,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 initialValue: widget.user.email,
                 readOnly: true,
                 style: theme.textTheme.bodyLarge?.copyWith(
-                  color:
-                      theme.colorScheme.secondary.withValues(alpha: 0.5),
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.5),
                 ),
                 decoration: InputDecoration(
                   labelText: 'Email Address (Verified)',
@@ -179,8 +177,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     color: theme.colorScheme.secondary.withValues(alpha: 0.4),
                   ),
                   filled: true,
-                  fillColor:
-                      theme.colorScheme.tertiary.withValues(alpha: 0.02),
+                  fillColor: theme.colorScheme.tertiary.withValues(alpha: 0.02),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(20),
                     borderSide: BorderSide.none,
@@ -211,7 +208,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     : const Text(
                         'Update Profile',
                         style: TextStyle(
-                            fontSize: 16, fontWeight: FontWeight.bold),
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
               ),
               const SizedBox(height: 24),
@@ -245,8 +244,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(20),
-          borderSide:
-              BorderSide(color: theme.colorScheme.primary, width: 1.5),
+          borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
         ),
       ),
       validator: validator,
