@@ -24,8 +24,7 @@ class CoachingCoverCard extends StatelessWidget {
     final hasLogo = coaching.logo != null && coaching.logo!.isNotEmpty;
     final hasCover =
         coaching.coverImage != null && coaching.coverImage!.isNotEmpty;
-    final hasTagline =
-        coaching.tagline != null && coaching.tagline!.isNotEmpty;
+    final hasTagline = coaching.tagline != null && coaching.tagline!.isNotEmpty;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -135,7 +134,9 @@ class CoachingCoverCard extends StatelessWidget {
                                   letterSpacing: -0.3,
                                   shadows: [
                                     Shadow(
-                                      color: Colors.black.withValues(alpha: 0.5),
+                                      color: Colors.black.withValues(
+                                        alpha: 0.5,
+                                      ),
                                       blurRadius: 6,
                                     ),
                                   ],
@@ -225,7 +226,7 @@ class CoachingCoverCard extends StatelessWidget {
   Widget _buildRoleBadge() {
     final displayRole = role ?? coaching.myRole;
     final roleIsOwner = isOwner && displayRole == null;
-    
+
     String label;
     Color bgColor;
     Color textColor;
@@ -326,18 +327,11 @@ class CoachingCoverCard extends StatelessWidget {
     );
   }
 
-  Widget _buildStat({
-    required IconData icon,
-    required String value,
-  }) {
+  Widget _buildStat({required IconData icon, required String value}) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(
-          icon,
-          size: 13,
-          color: Colors.white.withValues(alpha: 0.75),
-        ),
+        Icon(icon, size: 13, color: Colors.white.withValues(alpha: 0.75)),
         const SizedBox(width: 3),
         Text(
           value,

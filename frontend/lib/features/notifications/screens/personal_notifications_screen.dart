@@ -1,7 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+
+import '../../auth/controllers/auth_controller.dart';
 import '../../../shared/models/notification_model.dart';
+import '../../../shared/services/invitation_service.dart';
 import '../../../shared/services/notification_service.dart';
+import '../../../shared/widgets/accept_invite_sheet.dart';
+import '../../../shared/widgets/invitation_card.dart';
 
 class PersonalNotificationsScreen extends StatefulWidget {
   const PersonalNotificationsScreen({super.key});
@@ -14,7 +20,11 @@ class PersonalNotificationsScreen extends StatefulWidget {
 class _PersonalNotificationsScreenState
     extends State<PersonalNotificationsScreen> {
   final _notificationService = NotificationService();
-  List<NotificationModel> _notifications = [];
+  final _invitationService = InvitationService();
+  final Set<String> _responding = {};
+
+  List<dynamic> _items =
+      []; // Combined list of NotificationModel and Invitation Maps
   bool _isLoading = true;
   String? _error;
   int _unreadCount = 0;
@@ -22,21 +32,58 @@ class _PersonalNotificationsScreenState
   @override
   void initState() {
     super.initState();
-    _load();
+    // Defer loading until context is available for AuthController
+    Future.microtask(_load);
   }
 
   Future<void> _load() async {
+    if (!mounted) return;
+    final userId = context.read<AuthController>().user?.id;
+    if (userId == null) {
+      // Should likely not happen if protected
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      final result = await _notificationService.getUserNotifications();
-      final list = (result['notifications'] as List)
+      // 1. Fetch Notifications
+      final notifResult = await _notificationService.getUserNotifications();
+      final notifications = (notifResult['notifications'] as List)
           .map((e) => NotificationModel.fromJson(e))
           .toList();
-      setState(() {
-        _notifications = list;
-        _unreadCount = result['unreadCount'] ?? 0;
-        _isLoading = false;
+
+      // 2. Fetch Invitations
+      final invitationsData = await _invitationService.getMyInvitations();
+      // Ensure it's a list of maps
+      final invitations = List<Map<String, dynamic>>.from(invitationsData);
+
+      // 3. Combine and Sort
+      final combined = <dynamic>[...notifications, ...invitations];
+      combined.sort((a, b) {
+        DateTime dateA;
+        if (a is NotificationModel) {
+          dateA = a.createdAt;
+        } else {
+          dateA = DateTime.tryParse(a['createdAt'] ?? '') ?? DateTime.now();
+        }
+
+        DateTime dateB;
+        if (b is NotificationModel) {
+          dateB = b.createdAt;
+        } else {
+          dateB = DateTime.tryParse(b['createdAt'] ?? '') ?? DateTime.now();
+        }
+
+        return dateB.compareTo(dateA); // Descending
       });
+
+      if (mounted) {
+        setState(() {
+          _items = combined;
+          _unreadCount = (notifResult['unreadCount'] ?? 0) + invitations.length;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       if (mounted) {
         setState(() {
@@ -52,9 +99,11 @@ class _PersonalNotificationsScreenState
     try {
       await _notificationService.markAsRead(notification.id);
       setState(() {
-        _notifications = _notifications.map((n) {
-          if (n.id == notification.id) return n.copyWith(read: true);
-          return n;
+        _items = _items.map((item) {
+          if (item is NotificationModel && item.id == notification.id) {
+            return item.copyWith(read: true);
+          }
+          return item;
         }).toList();
         _unreadCount = (_unreadCount - 1).clamp(0, 999);
       });
@@ -66,10 +115,15 @@ class _PersonalNotificationsScreenState
   Future<void> _archive(String id) async {
     try {
       // Optimistically remove from UI first
-      final wasUnread =
-          _notifications.firstWhere((n) => n.id == id).read == false;
+      bool wasUnread = false;
       setState(() {
-        _notifications.removeWhere((n) => n.id == id);
+        _items.removeWhere((item) {
+          if (item is NotificationModel && item.id == id) {
+            if (!item.read) wasUnread = true;
+            return true;
+          }
+          return false;
+        });
         if (wasUnread) _unreadCount = (_unreadCount - 1).clamp(0, 999);
       });
 
@@ -77,8 +131,7 @@ class _PersonalNotificationsScreenState
       await _notificationService.archiveNotification(id);
     } catch (e) {
       if (mounted) {
-        // Reload on failure to get accurate state
-        _load();
+        _load(); // Reload on failure
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to archive: $e'),
@@ -86,6 +139,59 @@ class _PersonalNotificationsScreenState
           ),
         );
       }
+    }
+  }
+
+  Future<void> _respond(
+    String id,
+    bool accept, {
+    Map<String, dynamic>? invitation,
+  }) async {
+    // If accepting, show confirmation sheet first
+    if (accept && invitation != null) {
+      final coaching = invitation['coaching'] as Map<String, dynamic>?;
+      final role = invitation['role'] as String? ?? 'STUDENT';
+      final existingMemberships =
+          ((invitation['existingMemberships'] as List<dynamic>?) ?? [])
+              .cast<Map<String, dynamic>>();
+
+      final confirmed = await showAcceptInviteSheet(
+        context: context,
+        coachingName: coaching?['name'] ?? 'this coaching',
+        role: role,
+        existingMemberships: existingMemberships,
+      );
+      if (confirmed != true) return;
+    }
+
+    setState(() => _responding.add(id));
+    try {
+      await _invitationService.respondToInvitation(id, accept);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(accept ? 'Invitation accepted!' : 'Declined.'),
+            backgroundColor: accept ? Colors.green : Colors.grey,
+          ),
+        );
+        // Refresh list to remove the processed invitation
+        _load();
+        // Also refresh global auth state to update pending count badge
+        if (mounted) {
+          context.read<AuthController>().refreshInvitations();
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(e.toString().replaceFirst('Exception: ', '')),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _responding.remove(id));
     }
   }
 
@@ -184,7 +290,7 @@ class _PersonalNotificationsScreenState
                 ],
               ),
             )
-          : _notifications.isEmpty
+          : _items.isEmpty
           ? Center(
               child: Padding(
                 padding: const EdgeInsets.all(40),
@@ -228,10 +334,33 @@ class _PersonalNotificationsScreenState
               onRefresh: _load,
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(vertical: 8),
-                itemCount: _notifications.length,
+                itemCount: _items.length,
                 separatorBuilder: (_, __) => const Divider(height: 1),
                 itemBuilder: (context, index) {
-                  final n = _notifications[index];
+                  final item = _items[index];
+
+                  // 1. Check if Invitation
+                  if (item is Map<String, dynamic>) {
+                    // It's an invitation
+                    final id = item['id'] as String;
+                    final isResponding = _responding.contains(id);
+
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      child: InvitationCard(
+                        invitation: item,
+                        isResponding: isResponding,
+                        onAccept: () => _respond(id, true, invitation: item),
+                        onDecline: () => _respond(id, false),
+                      ),
+                    );
+                  }
+
+                  // 2. Otherwise it's a NotificationModel
+                  final n = item as NotificationModel;
                   final iconData = _getIconForType(n.type);
                   final iconColor = _getColorForType(n.type, theme);
 

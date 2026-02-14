@@ -115,15 +115,15 @@ export class InvitationService {
                 },
                 select: { id: true, role: true, status: true },
             });
-            
+
             if (existing) {
                 console.log('Found existing invitation:', existing);
-                
+
                 // If it's PENDING and replacePending is false, block
                 if (existing.status === 'PENDING' && !data.replacePending) {
                     throw new Error('An invitation for this user already exists. Please cancel the existing invitation first.');
                 }
-                
+
                 // Reuse the existing invitation - update it back to PENDING
                 console.log('Reusing existing invitation, updating to PENDING');
                 const updated = await prisma.invitation.update({
@@ -154,15 +154,15 @@ export class InvitationService {
                 },
                 select: { id: true, status: true },
             });
-            
+
             if (existing) {
                 console.log('Found existing ward invitation:', existing);
-                
+
                 // If it's PENDING and replacePending is false, block
                 if (existing.status === 'PENDING' && !data.replacePending) {
                     throw new Error('An invitation for this ward already exists. Please cancel the existing invitation first.');
                 }
-                
+
                 // Reuse the existing invitation - update it back to PENDING
                 console.log('Reusing existing ward invitation, updating to PENDING');
                 const updated = await prisma.invitation.update({
@@ -282,7 +282,7 @@ export class InvitationService {
                 ],
             },
             include: {
-                coaching: { select: { id: true, name: true, logo: true, slug: true } },
+                coaching: { select: { id: true, name: true, logo: true, coverImage: true, slug: true } },
                 ward: { select: { id: true, name: true, picture: true } },
                 invitedBy: { select: { id: true, name: true, picture: true } },
             },

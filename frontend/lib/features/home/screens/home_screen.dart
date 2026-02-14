@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../../auth/controllers/auth_controller.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/services/notification_service.dart';
 import '../../coaching/models/coaching_model.dart';
@@ -37,9 +39,13 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadNotificationCount() async {
     try {
       final result = await _notificationService.getUserNotifications(limit: 1);
+      final pendingInvites = context
+          .read<AuthController>()
+          .pendingInvitations
+          .length;
       if (mounted) {
         setState(() {
-          _unreadNotifications = result['unreadCount'] ?? 0;
+          _unreadNotifications = (result['unreadCount'] ?? 0) + pendingInvites;
         });
       }
     } catch (_) {
