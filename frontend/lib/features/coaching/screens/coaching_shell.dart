@@ -45,7 +45,7 @@ class _CoachingShellState extends State<CoachingShell> {
         coaching: _coaching,
         onMembersTap: () => setState(() => _selectedIndex = 1),
       ),
-      CoachingMembersScreen(coaching: _coaching),
+      CoachingMembersScreen(coaching: _coaching, user: widget.user),
       CoachingProfileScreen(
         coaching: _coaching,
         user: widget.user,

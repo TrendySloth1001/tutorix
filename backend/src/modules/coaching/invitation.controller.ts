@@ -1,7 +1,27 @@
 import type { Request, Response } from 'express';
 import { InvitationService } from './invitation.service.js';
+import prisma from '../../infra/prisma.js';
 
 const invitationService = new InvitationService();
+
+/**
+ * Check if user has permission to invite (owner, admin, or teacher)
+ */
+async function canUserInvite(userId: string, coachingId: string): Promise<boolean> {
+    // Check if user is owner
+    const coaching = await prisma.coaching.findUnique({
+        where: { id: coachingId },
+        select: { ownerId: true },
+    });
+    if (coaching?.ownerId === userId) return true;
+
+    // Check if user is admin or teacher in this coaching
+    const membership = await prisma.coachingMember.findUnique({
+        where: { coachingId_userId: { coachingId, userId } },
+        select: { role: true },
+    });
+    return membership?.role === 'ADMIN' || membership?.role === 'TEACHER';
+}
 
 export class InvitationController {
     /**
@@ -51,6 +71,12 @@ export class InvitationController {
 
             if (!role) {
                 return res.status(400).json({ error: 'Role is required' });
+            }
+
+            // Check if user has permission to invite (owner, admin, or teacher only)
+            const hasPermission = await canUserInvite(invitedById, coachingId);
+            if (!hasPermission) {
+                return res.status(403).json({ error: 'Only owners, admins, and teachers can send invitations' });
             }
 
             // Must have at least one target identifier
