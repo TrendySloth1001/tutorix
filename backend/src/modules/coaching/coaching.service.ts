@@ -49,6 +49,11 @@ export class CoachingService {
                         picture: true,
                     },
                 },
+                address: true,
+                branches: {
+                    where: { isActive: true },
+                    orderBy: { createdAt: 'asc' },
+                },
             },
         });
     }
@@ -65,6 +70,11 @@ export class CoachingService {
                         picture: true,
                     },
                 },
+                address: true,
+                branches: {
+                    where: { isActive: true },
+                    orderBy: { createdAt: 'asc' },
+                },
             },
         });
     }
@@ -79,6 +89,11 @@ export class CoachingService {
                 },
                 members: {
                     select: { role: true },
+                },
+                address: true,
+                branches: {
+                    where: { isActive: true },
+                    orderBy: { createdAt: 'asc' },
                 },
             },
         });
@@ -122,6 +137,11 @@ export class CoachingService {
                         members: {
                             select: { role: true },
                         },
+                        address: true,
+                        branches: {
+                            where: { isActive: true },
+                            orderBy: { createdAt: 'asc' },
+                        },
                     },
                 },
             },
@@ -156,6 +176,8 @@ export class CoachingService {
                     teacherCount: roleCounts['TEACHER'] || 0,
                     studentCount: roleCounts['STUDENT'] || 0,
                     myRole: m.role,
+                    address: coaching.address,
+                    branches: coaching.branches,
                 };
             });
     }

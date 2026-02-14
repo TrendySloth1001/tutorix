@@ -53,9 +53,14 @@ class CoachingService {
     String? description,
     String? logo,
   }) async {
+    final body = <String, dynamic>{};
+    if (name != null) body['name'] = name;
+    if (description != null) body['description'] = description;
+    if (logo != null) body['logo'] = logo;
+    
     final data = await _api.patchAuthenticated(
       ApiConstants.coachingById(id),
-      body: {'name': ?name, 'description': ?description, 'logo': ?logo},
+      body: body,
     );
     return CoachingModel.fromJson(data['coaching']);
   }
