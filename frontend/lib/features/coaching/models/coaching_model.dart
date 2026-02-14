@@ -6,6 +6,7 @@ class CoachingModel {
   final String slug;
   final String? description;
   final String? logo;
+  final String? coverImage;
   final String status;
   final String ownerId;
   final DateTime? createdAt;
@@ -46,6 +47,7 @@ class CoachingModel {
     required this.slug,
     this.description,
     this.logo,
+    this.coverImage,
     this.status = 'active',
     required this.ownerId,
     this.createdAt,
@@ -82,6 +84,7 @@ class CoachingModel {
       slug: json['slug'] as String,
       description: json['description'] as String?,
       logo: json['logo'] as String?,
+      coverImage: json['coverImage'] as String?,
       status: json['status'] as String? ?? 'active',
       ownerId: json['ownerId'] as String,
       createdAt: json['createdAt'] != null
@@ -128,6 +131,7 @@ class CoachingModel {
     'slug': slug,
     'description': description,
     'logo': logo,
+    'coverImage': coverImage,
     'status': status,
     'ownerId': ownerId,
     'createdAt': createdAt?.toIso8601String(),

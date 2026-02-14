@@ -84,6 +84,7 @@ model Coaching {
   slug        String  @unique
   description String?
   logo        String?
+  coverImage  String? // Cover image for profile header
   status      String  @default("active") // active, suspended
 
   // Extended profile info

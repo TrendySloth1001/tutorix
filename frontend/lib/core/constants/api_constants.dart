@@ -19,6 +19,7 @@ class ApiConstants {
   // Upload
   static const String uploadAvatar = '$baseUrl/upload/avatar';
   static const String uploadLogo = '$baseUrl/upload/logo';
+  static const String uploadCover = '$baseUrl/upload/cover';
 
   // Coaching
   static const String coaching = '$baseUrl/coaching';

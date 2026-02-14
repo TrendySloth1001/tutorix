@@ -11,6 +11,7 @@ export interface UpdateCoachingDto {
     name?: string;
     description?: string;
     logo?: string;
+    coverImage?: string;
     status?: string;
 }
 

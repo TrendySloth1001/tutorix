@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../shared/models/user_model.dart';
 import '../models/coaching_model.dart';
@@ -31,6 +32,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       CoachingOnboardingService();
   final ImagePicker _picker = ImagePicker();
   bool _isUploadingLogo = false;
+  bool _isUploadingCover = false;
   bool _isLoading = false;
 
   late CoachingModel _coaching;
@@ -345,6 +347,81 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     }
   }
 
+  Future<void> _changeCover() async {
+    final source = await showModalBottomSheet<ImageSource>(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade300,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                'Update Cover Image',
+                style: Theme.of(
+                  ctx,
+                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: _OptionTile(
+                      icon: Icons.camera_alt_rounded,
+                      label: 'Camera',
+                      onTap: () => Navigator.pop(ctx, ImageSource.camera),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: _OptionTile(
+                      icon: Icons.photo_library_rounded,
+                      label: 'Gallery',
+                      onTap: () => Navigator.pop(ctx, ImageSource.gallery),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (source == null) return;
+
+    final picked = await _picker.pickImage(
+      source: source,
+      maxWidth: 1920,
+      maxHeight: 1080,
+      imageQuality: 85,
+    );
+    if (picked == null) return;
+
+    setState(() => _isUploadingCover = true);
+    try {
+      final url = await _coachingService.uploadCover(picked.path);
+      await _coachingService.updateCoaching(id: _coaching.id, coverImage: url);
+      await _refreshCoaching();
+      if (mounted) _showSuccess('Cover updated');
+    } catch (e) {
+      if (mounted) _showError('Upload failed');
+    } finally {
+      if (mounted) setState(() => _isUploadingCover = false);
+    }
+  }
+
   void _openUpdateScreen({int step = 0}) async {
     await Navigator.push(
       context,
@@ -368,116 +445,188 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final topPadding = MediaQuery.of(context).padding.top;
+    final colors = theme.colorScheme;
 
-    return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      body: Stack(
-        children: [
-          RefreshIndicator(
-            onRefresh: _refreshCoaching,
-            child: CustomScrollView(
-              slivers: [
-                // App Bar with back button
-                SliverToBoxAdapter(child: _buildTopBar(theme)),
+    // Cover extends all the way to About section
+    const double expandedHeight = 480.0;
 
-                // Profile Content
-                SliverPadding(
-                  padding: const EdgeInsets.only(bottom: 100),
-                  sliver: SliverList(
-                    delegate: SliverChildListDelegate([
-                      _buildProfileHeader(theme),
-                      if (_isOwner && !_coaching.onboardingComplete)
-                        _buildSetupPrompt(theme),
-                      _buildSection(
-                        theme,
-                        title: 'About',
-                        onEdit: _isOwner ? _editAbout : null,
-                        child: _buildAboutContent(theme),
-                      ),
-                      _buildSection(
-                        theme,
-                        title: 'Contact Information',
-                        child: _buildContactContent(theme),
-                      ),
-                      if (_coaching.address != null || _isOwner)
-                        _buildSection(
-                          theme,
-                          title: 'Location',
-                          onEdit: _isOwner
-                              ? () => _openUpdateScreen(step: 2)
-                              : null,
-                          child: _buildLocationContent(theme),
-                        ),
-                      if (_coaching.address != null &&
-                          (_coaching.address!.workingDays.isNotEmpty ||
-                              _coaching.address!.openingTime != null))
-                        _buildSection(
-                          theme,
-                          title: 'Working Hours',
-                          child: _buildTimingContent(theme),
-                        ),
-                      if (_coaching.branches.isNotEmpty)
-                        _buildSection(
-                          theme,
-                          title: 'Branches',
-                          child: _buildBranchesContent(theme),
-                        ),
-                      _buildSection(
-                        theme,
-                        title: 'Information',
-                        child: _buildInfoContent(theme),
-                      ),
-                    ]),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          if (_isLoading)
-            Container(
-              color: Colors.black26,
-              child: const Center(child: CircularProgressIndicator()),
-            ),
-        ],
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      // Light icons (white) for status bar on dark/image backgrounds
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
       ),
-    );
-  }
-
-  Widget _buildTopBar(ThemeData theme) {
-    return SafeArea(
-      bottom: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-        child: Row(
+      child: Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        body: Stack(
           children: [
-            // Back Button - Carded style with shadow
+            RefreshIndicator(
+              onRefresh: _refreshCoaching,
+              edgeOffset: expandedHeight,
+              child: CustomScrollView(
+                slivers: [
+                  // ─── SCROLLING COVER with all profile info inside ───
+                  SliverAppBar(
+                    expandedHeight: expandedHeight,
+                    pinned: false,
+                    floating: false,
+                    stretch: true,
+                    backgroundColor: Colors.transparent,
+                    automaticallyImplyLeading: false,
+                    flexibleSpace: FlexibleSpaceBar(
+                      stretchModes: const [StretchMode.zoomBackground],
+                      background: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          // Cover image or placeholder
+                          if (_coaching.coverImage != null)
+                            Image.network(
+                              _coaching.coverImage!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, __, ___) =>
+                                  _buildCoverPlaceholder(colors),
+                            )
+                          else
+                            _buildCoverPlaceholder(colors),
 
-            // Verified badge
-            if (_coaching.isVerified)
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
-                decoration: BoxDecoration(
-                  color: Colors.blue.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(Icons.verified_rounded, size: 16, color: Colors.blue),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Verified',
-                      style: TextStyle(
-                        color: Colors.blue,
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
+                          // Gradient overlay for text readability
+                          Container(
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                begin: Alignment.topCenter,
+                                end: Alignment.bottomCenter,
+                                colors: [
+                                  Colors.black.withValues(alpha: 0.35),
+                                  Colors.black.withValues(alpha: 0.1),
+                                  Colors.transparent,
+                                  Colors.black.withValues(alpha: 0.25),
+                                  colors.surface.withValues(alpha: 0.9),
+                                  colors.surface,
+                                ],
+                                stops: const [0.0, 0.12, 0.3, 0.55, 0.88, 1.0],
+                              ),
+                            ),
+                          ),
+
+                          // Upload indicator
+                          if (_isUploadingCover)
+                            Container(
+                              color: Colors.black45,
+                              child: const Center(
+                                child: CircularProgressIndicator(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+
+                          // ─── PROFILE INFO INSIDE COVER ───
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            child: _buildProfileInfoOverlay(theme),
+                          ),
+                        ],
                       ),
                     ),
-                  ],
+                  ),
+
+                  // ─── CONTENT SECTIONS (About starts here) ───
+                  SliverPadding(
+                    padding: const EdgeInsets.only(bottom: 100),
+                    sliver: SliverList(
+                      delegate: SliverChildListDelegate([
+                        if (_isOwner && !_coaching.onboardingComplete)
+                          _buildSetupPrompt(theme),
+                        _buildSection(
+                          theme,
+                          title: 'About',
+                          onEdit: _isOwner ? _editAbout : null,
+                          child: _buildAboutContent(theme),
+                        ),
+                        _buildSection(
+                          theme,
+                          title: 'Contact Information',
+                          child: _buildContactContent(theme),
+                        ),
+                        if (_coaching.address != null || _isOwner)
+                          _buildSection(
+                            theme,
+                            title: 'Location',
+                            onEdit: _isOwner
+                                ? () => _openUpdateScreen(step: 2)
+                                : null,
+                            child: _buildLocationContent(theme),
+                          ),
+                        if (_coaching.address != null &&
+                            (_coaching.address!.workingDays.isNotEmpty ||
+                                _coaching.address!.openingTime != null))
+                          _buildSection(
+                            theme,
+                            title: 'Working Hours',
+                            child: _buildTimingContent(theme),
+                          ),
+                        if (_coaching.branches.isNotEmpty)
+                          _buildSection(
+                            theme,
+                            title: 'Branches',
+                            child: _buildBranchesContent(theme),
+                          ),
+                        _buildSection(
+                          theme,
+                          title: 'Information',
+                          child: _buildInfoContent(theme),
+                        ),
+                      ]),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // ─── FIXED CAMERA BUTTON (always visible) ───
+            if (_isOwner)
+              Positioned(
+                top: topPadding + 8,
+                right: 16,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.35),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.2),
+                        blurRadius: 8,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _changeCover,
+                      borderRadius: BorderRadius.circular(12),
+                      child: const Padding(
+                        padding: EdgeInsets.all(10),
+                        child: Icon(
+                          Icons.camera_alt_rounded,
+                          color: Colors.white,
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
+              ),
+
+            if (_isLoading)
+              Container(
+                color: Colors.black26,
+                child: const Center(child: CircularProgressIndicator()),
               ),
           ],
         ),
@@ -485,53 +634,397 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     );
   }
 
-  Widget _buildProfileHeader(ThemeData theme) {
+  Widget _buildTopBar(ThemeData theme, double topPadding) {
     final colors = theme.colorScheme;
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
+      padding: EdgeInsets.fromLTRB(16, topPadding + 8, 16, 0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          // Back button
+          if (widget.onBack != null)
+            Material(
+              elevation: 2,
+              shadowColor: Colors.black38,
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(12),
+              child: InkWell(
+                onTap: widget.onBack,
+                borderRadius: BorderRadius.circular(12),
+                child: Padding(
+                  padding: const EdgeInsets.all(10),
+                  child: Icon(Icons.arrow_back_rounded, size: 22),
+                ),
+              ),
+            )
+          else
+            const SizedBox(width: 44),
+
+          Row(
+            children: [
+              // Verified badge
+              if (_coaching.isVerified)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.9),
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.verified_rounded,
+                        size: 14,
+                        color: Colors.blue,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Verified',
+                        style: TextStyle(
+                          color: Colors.blue,
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              const SizedBox(width: 8),
+
+              // Edit cover button (owner only)
+              if (_isOwner && !_isUploadingCover)
+                Material(
+                  elevation: 2,
+                  shadowColor: Colors.black38,
+                  color: colors.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  child: InkWell(
+                    onTap: _changeCover,
+                    borderRadius: BorderRadius.circular(12),
+                    child: Padding(
+                      padding: const EdgeInsets.all(10),
+                      child: Icon(
+                        Icons.camera_alt_rounded,
+                        size: 20,
+                        color: colors.primary,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProfileInfoOverlay(ThemeData theme) {
+    final colors = theme.colorScheme;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, 16),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         children: [
           // Logo
           GestureDetector(
             onTap: _isOwner && !_isUploadingLogo ? _changeLogo : null,
-            child: Stack(
-              children: [
-                Container(
-                  width: 88,
-                  height: 88,
-                  decoration: BoxDecoration(
-                    color: colors.primary.withValues(alpha: 0.08),
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: colors.primary.withValues(alpha: 0.15),
-                      width: 3,
-                    ),
+            child: Container(
+              width: 96,
+              height: 96,
+              decoration: BoxDecoration(
+                color: colors.surface,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: colors.surface, width: 4),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 16,
+                    offset: const Offset(0, 6),
                   ),
-                  child: ClipOval(
+                ],
+              ),
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(16),
                     child: _coaching.logo != null
                         ? Image.network(
                             _coaching.logo!,
+                            width: 88,
+                            height: 88,
                             fit: BoxFit.cover,
-                            errorBuilder: (context, error, stack) =>
+                            errorBuilder: (_, __, ___) =>
                                 _buildLogoPlaceholder(colors),
                           )
                         : _buildLogoPlaceholder(colors),
                   ),
+                  if (_isUploadingLogo)
+                    Positioned.fill(
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.black45,
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: const Center(
+                          child: SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  if (_isOwner && !_isUploadingLogo)
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: colors.primary,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: colors.surface, width: 2),
+                        ),
+                        child: Icon(
+                          Icons.camera_alt_rounded,
+                          size: 11,
+                          color: colors.onPrimary,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Name with Edit Button - on frosted glass container
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: colors.surface.withValues(alpha: 0.85),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: colors.onSurface.withValues(alpha: 0.08),
+              ),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Flexible(
+                  child: Text(
+                    _coaching.name,
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: -0.3,
+                    ),
+                    textAlign: TextAlign.center,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (_isOwner) ...[
+                  const SizedBox(width: 8),
+                  Material(
+                    color: colors.primary.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(8),
+                    child: InkWell(
+                      onTap: () => _openUpdateScreen(step: 0),
+                      borderRadius: BorderRadius.circular(8),
+                      child: Padding(
+                        padding: const EdgeInsets.all(5),
+                        child: Icon(
+                          Icons.edit_rounded,
+                          size: 16,
+                          color: colors.primary,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+
+          // Tagline
+          if (_coaching.tagline != null && _coaching.tagline!.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            GestureDetector(
+              onTap: _isOwner ? _editTagline : null,
+              child: Text(
+                _coaching.tagline!,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  color: colors.onSurface.withValues(alpha: 0.7),
+                  fontStyle: FontStyle.italic,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ] else if (_isOwner) ...[
+            const SizedBox(height: 6),
+            GestureDetector(
+              onTap: _editTagline,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(Icons.add, size: 14, color: colors.primary),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Add tagline',
+                    style: TextStyle(
+                      color: colors.primary,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          // Category & Status Badges
+          const SizedBox(height: 10),
+          Wrap(
+            alignment: WrapAlignment.center,
+            spacing: 6,
+            runSpacing: 6,
+            children: [
+              if (_coaching.category != null)
+                _buildBadge(
+                  _coaching.category!,
+                  colors.primary.withValues(alpha: 0.12),
+                  colors.primary,
+                ),
+              _buildBadge(
+                '@${_coaching.slug}',
+                colors.onSurface.withValues(alpha: 0.08),
+                colors.onSurface.withValues(alpha: 0.6),
+              ),
+              _buildStatusBadge(),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBadge(String text, Color bgColor, Color textColor) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Text(
+        text,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildStatusBadge() {
+    final isActive = _coaching.status == 'active';
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(
+        color: isActive
+            ? Colors.green.withValues(alpha: 0.12)
+            : Colors.red.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 5,
+            height: 5,
+            decoration: BoxDecoration(
+              color: isActive ? Colors.green : Colors.red,
+              shape: BoxShape.circle,
+            ),
+          ),
+          const SizedBox(width: 5),
+          Text(
+            isActive ? 'Active' : 'Inactive',
+            style: TextStyle(
+              color: isActive ? Colors.green : Colors.red,
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeroSection(ThemeData theme) {
+    final colors = theme.colorScheme;
+
+    return Column(
+      children: [
+        const SizedBox(height: 24),
+
+        // Logo
+        GestureDetector(
+          onTap: _isOwner && !_isUploadingLogo ? _changeLogo : null,
+          child: Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              color: colors.surface,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: colors.surface, width: 4),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.15),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: _coaching.logo != null
+                      ? Image.network(
+                          _coaching.logo!,
+                          width: 92,
+                          height: 92,
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, __, ___) =>
+                              _buildLogoPlaceholder(colors),
+                        )
+                      : _buildLogoPlaceholder(colors),
                 ),
                 if (_isUploadingLogo)
                   Positioned.fill(
                     child: Container(
                       decoration: BoxDecoration(
                         color: Colors.black45,
-                        shape: BoxShape.circle,
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: const Center(
                         child: SizedBox(
-                          width: 24,
-                          height: 24,
+                          width: 20,
+                          height: 20,
                           child: CircularProgressIndicator(
-                            strokeWidth: 2.5,
+                            strokeWidth: 2,
                             color: Colors.white,
                           ),
                         ),
@@ -543,7 +1036,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                     bottom: 0,
                     right: 0,
                     child: Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(4),
                       decoration: BoxDecoration(
                         color: colors.primary,
                         shape: BoxShape.circle,
@@ -551,7 +1044,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                       ),
                       child: Icon(
                         Icons.camera_alt_rounded,
-                        size: 14,
+                        size: 12,
                         color: colors.onPrimary,
                       ),
                     ),
@@ -559,10 +1052,14 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+        ),
 
-          // Name with Edit Button
-          Row(
+        const SizedBox(height: 16),
+
+        // Name with Edit Button
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Flexible(
@@ -598,11 +1095,14 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
               ],
             ],
           ),
+        ),
 
-          // Tagline
-          const SizedBox(height: 6),
-          if (_coaching.tagline != null && _coaching.tagline!.isNotEmpty)
-            GestureDetector(
+        // Tagline
+        const SizedBox(height: 6),
+        if (_coaching.tagline != null && _coaching.tagline!.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: GestureDetector(
               onTap: _isOwner ? _editTagline : null,
               child: Text(
                 _coaching.tagline!,
@@ -612,30 +1112,33 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                 ),
                 textAlign: TextAlign.center,
               ),
-            )
-          else if (_isOwner)
-            GestureDetector(
-              onTap: _editTagline,
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(Icons.add, size: 16, color: colors.primary),
-                  const SizedBox(width: 4),
-                  Text(
-                    'Add tagline',
-                    style: TextStyle(
-                      color: colors.primary,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
             ),
+          )
+        else if (_isOwner)
+          GestureDetector(
+            onTap: _editTagline,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.add, size: 16, color: colors.primary),
+                const SizedBox(width: 4),
+                Text(
+                  'Add tagline',
+                  style: TextStyle(
+                    color: colors.primary,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
 
-          // Category & Slug Row
-          const SizedBox(height: 14),
-          Wrap(
+        // Category & Slug Row
+        const SizedBox(height: 14),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20),
+          child: Wrap(
             alignment: WrapAlignment.center,
             spacing: 8,
             runSpacing: 8,
@@ -716,7 +1219,48 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
               ),
             ],
           ),
-        ],
+        ),
+
+        const SizedBox(height: 24),
+      ],
+    );
+  }
+
+  Widget _buildCoverPlaceholder(ColorScheme colors) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colors.primary.withValues(alpha: 0.3),
+            colors.primary.withValues(alpha: 0.1),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.image_rounded,
+              size: 48,
+              color: colors.primary.withValues(alpha: 0.4),
+            ),
+            if (_isOwner)
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  'Add Cover Image',
+                  style: TextStyle(
+                    color: colors.primary.withValues(alpha: 0.6),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

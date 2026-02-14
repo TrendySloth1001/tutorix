@@ -52,11 +52,13 @@ class CoachingService {
     String? name,
     String? description,
     String? logo,
+    String? coverImage,
   }) async {
     final body = <String, dynamic>{};
     if (name != null) body['name'] = name;
     if (description != null) body['description'] = description;
     if (logo != null) body['logo'] = logo;
+    if (coverImage != null) body['coverImage'] = coverImage;
 
     final data = await _api.patchAuthenticated(
       ApiConstants.coachingById(id),
@@ -83,6 +85,16 @@ class CoachingService {
   Future<String> uploadLogo(String filePath) async {
     final data = await _api.uploadFile(
       ApiConstants.uploadLogo,
+      fieldName: 'file',
+      filePath: filePath,
+    );
+    return data['url'] as String;
+  }
+
+  /// POST /upload/cover — upload coaching cover image, returns URL.
+  Future<String> uploadCover(String filePath) async {
+    final data = await _api.uploadFile(
+      ApiConstants.uploadCover,
       fieldName: 'file',
       filePath: filePath,
     );

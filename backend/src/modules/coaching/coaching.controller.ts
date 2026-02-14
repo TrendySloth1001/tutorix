@@ -138,12 +138,13 @@ export class CoachingController {
             }
 
             const id = req.params.id as string;
-            const { name, description, logo, status } = req.body;
+            const { name, description, logo, coverImage, status } = req.body;
 
             const coaching = await coachingService.update(id, userId, {
                 name,
                 description,
                 logo,
+                coverImage,
                 status,
             });
 
