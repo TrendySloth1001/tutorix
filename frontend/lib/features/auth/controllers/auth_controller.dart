@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../shared/models/user_model.dart';
-import '../../../shared/models/ward_model.dart';
 import '../../../shared/services/invitation_service.dart';
 import '../services/auth_service.dart';
 import '../../profile/services/user_service.dart';
@@ -15,28 +14,18 @@ class AuthController extends ChangeNotifier {
   final InvitationService _invitationService = InvitationService();
 
   UserModel? _user;
-  WardModel? _activeWard;
-  bool _isProfileSelected = false;
   bool _isLoading = false;
   bool _isInitialized = false;
   List<Map<String, dynamic>> _pendingInvitations = [];
   bool _invitationsChecked = false;
 
   UserModel? get user => _user;
-  WardModel? get activeWard => _activeWard;
-  bool get isProfileSelected => _isProfileSelected;
   bool get isLoading => _isLoading;
   bool get isAuthenticated => _user != null;
   bool get isInitialized => _isInitialized;
   List<Map<String, dynamic>> get pendingInvitations => _pendingInvitations;
   bool get hasPendingInvitations =>
       _invitationsChecked && _pendingInvitations.isNotEmpty;
-
-  void selectWard(WardModel? ward) {
-    _activeWard = ward;
-    _isProfileSelected = true;
-    notifyListeners();
-  }
 
   /// Called once on app start to restore a previous session.
   Future<void> initialize() async {

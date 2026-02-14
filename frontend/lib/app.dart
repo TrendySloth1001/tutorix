@@ -4,7 +4,6 @@ import 'core/theme/app_theme.dart';
 import 'features/auth/controllers/auth_controller.dart';
 import 'features/auth/screens/login_screen.dart';
 import 'features/profile/screens/pending_invitations_screen.dart';
-import 'features/profile/screens/ward_selection_screen.dart';
 import 'shared/widgets/main_wrapper.dart';
 
 /// Top-level material app — theme, auth guard, and root navigation.
@@ -23,7 +22,7 @@ class TutorixApp extends StatelessWidget {
 }
 
 /// Listens to [AuthController] and swaps between the login, invitations,
-/// ward selection, and main UI.
+/// and main UI.
 class AuthWrapper extends StatelessWidget {
   const AuthWrapper({super.key});
 
@@ -32,9 +31,7 @@ class AuthWrapper extends StatelessWidget {
     final authController = context.watch<AuthController>();
 
     if (!authController.isInitialized) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     if (authController.isAuthenticated) {
@@ -43,12 +40,6 @@ class AuthWrapper extends StatelessWidget {
       // Show pending invitations first (after signup/login)
       if (authController.hasPendingInvitations) {
         return const PendingInvitationsScreen();
-      }
-
-      // Force ward selection if user is a hybrid (Parent + Ward) or has wards
-      if ((user.isParent || user.isWard) &&
-          !authController.isProfileSelected) {
-        return const WardSelectionScreen();
       }
 
       return MainWrapper(

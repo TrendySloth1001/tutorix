@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../../../shared/models/user_model.dart';
-import '../../auth/controllers/auth_controller.dart';
 import '../../coaching/models/coaching_model.dart';
-import '../../coaching/screens/coaching_dashboard_screen.dart';
 import '../../coaching/screens/create_coaching_screen.dart';
 import '../../coaching/services/coaching_service.dart';
 import '../../coaching/widgets/coaching_card.dart';
@@ -50,32 +47,17 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _navigateToCoaching(CoachingModel coaching) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (_) =>
-            CoachingDashboardScreen(coaching: coaching, user: widget.user),
-      ),
-    );
+    // TODO: implement coaching detail screen
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final authController = context.watch<AuthController>();
-    final activeWard = authController.activeWard;
-    // Use ward's profile when viewing as a ward
-    final user = activeWard != null
-        ? widget.user.copyWith(
-            name: activeWard.name,
-            picture: activeWard.picture,
-          )
-        : widget.user;
 
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          _HomeHeader(user: user),
+          _HomeHeader(user: widget.user),
           if (_isLoading)
             const SliverFillRemaining(
               child: Center(child: CircularProgressIndicator()),

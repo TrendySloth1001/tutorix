@@ -72,10 +72,7 @@ class InvitationService {
   }
 
   /// Cancel an invitation (admin action).
-  Future<void> cancelInvitation(
-    String coachingId,
-    String invitationId,
-  ) async {
+  Future<void> cancelInvitation(String coachingId, String invitationId) async {
     await _api.deleteAuthenticated(
       ApiConstants.cancelInvitation(coachingId, invitationId),
     );
