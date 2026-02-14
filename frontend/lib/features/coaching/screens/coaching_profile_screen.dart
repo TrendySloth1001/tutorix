@@ -296,7 +296,10 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: $e'), backgroundColor: Colors.red),
+          SnackBar(
+            content: Text('Upload failed: $e'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     } finally {
@@ -455,14 +458,19 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
               children: [
                 CircleAvatar(
                   radius: 48,
-                  backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  backgroundImage:
-                      _coaching.logo != null ? NetworkImage(_coaching.logo!) : null,
+                  backgroundColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.1,
+                  ),
+                  backgroundImage: _coaching.logo != null
+                      ? NetworkImage(_coaching.logo!)
+                      : null,
                   child: _coaching.logo == null
                       ? Icon(
                           Icons.school_rounded,
                           size: 40,
-                          color: theme.colorScheme.primary.withValues(alpha: 0.4),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.4,
+                          ),
                         )
                       : null,
                 ),
@@ -570,7 +578,10 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
             children: [
               if (_coaching.category != null)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(12),
@@ -614,14 +625,17 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                       ? Icons.check_circle
                       : Icons.pause_circle,
                   size: 14,
-                  color: _coaching.status == 'active' ? Colors.green : Colors.red,
+                  color: _coaching.status == 'active'
+                      ? Colors.green
+                      : Colors.red,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   _coaching.status == 'active' ? 'Active' : 'Suspended',
                   style: TextStyle(
-                    color:
-                        _coaching.status == 'active' ? Colors.green : Colors.red,
+                    color: _coaching.status == 'active'
+                        ? Colors.green
+                        : Colors.red,
                     fontSize: 12,
                     fontWeight: FontWeight.w500,
                   ),
@@ -697,7 +711,11 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(theme, 'About', onEdit: _isOwner ? _editAbout : null),
+        _buildSectionHeader(
+          theme,
+          'About',
+          onEdit: _isOwner ? _editAbout : null,
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: _coaching.aboutUs != null && _coaching.aboutUs!.isNotEmpty
@@ -764,7 +782,11 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildSectionHeader(theme, 'Location', onEdit: _isOwner ? _editAddress : null),
+        _buildSectionHeader(
+          theme,
+          'Location',
+          onEdit: _isOwner ? _editAddress : null,
+        ),
         Padding(
           padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
           child: addr != null
@@ -777,13 +799,19 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                         fontWeight: FontWeight.w500,
                       ),
                     ),
-                    if (addr.addressLine2 != null && addr.addressLine2!.isNotEmpty)
-                      Text(addr.addressLine2!, style: theme.textTheme.bodyMedium),
+                    if (addr.addressLine2 != null &&
+                        addr.addressLine2!.isNotEmpty)
+                      Text(
+                        addr.addressLine2!,
+                        style: theme.textTheme.bodyMedium,
+                      ),
                     if (addr.landmark != null && addr.landmark!.isNotEmpty)
                       Text(
                         'Near: ${addr.landmark}',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
+                          ),
                         ),
                       ),
                     const SizedBox(height: 4),
@@ -795,7 +823,11 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Icon(Icons.gps_fixed, size: 14, color: Colors.green),
+                          const Icon(
+                            Icons.gps_fixed,
+                            size: 14,
+                            color: Colors.green,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             'GPS location saved',
@@ -837,7 +869,11 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
               if (addr.openingTime != null || addr.closingTime != null)
                 Row(
                   children: [
-                    Icon(Icons.schedule, size: 16, color: theme.colorScheme.primary),
+                    Icon(
+                      Icons.schedule,
+                      size: 16,
+                      color: theme.colorScheme.primary,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       '${addr.openingTime ?? '--:--'} - ${addr.closingTime ?? '--:--'}',
@@ -852,30 +888,36 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                 Wrap(
                   spacing: 6,
                   runSpacing: 6,
-                  children: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'].map((day) {
-                    final isActive = addr.workingDays.contains(day);
-                    return Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: isActive
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.onSurface.withValues(alpha: 0.06),
-                        shape: BoxShape.circle,
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        day.substring(0, 1),
-                        style: TextStyle(
-                          color: isActive
-                              ? theme.colorScheme.onPrimary
-                              : theme.colorScheme.onSurface.withValues(alpha: 0.35),
-                          fontWeight: FontWeight.w600,
-                          fontSize: 12,
-                        ),
-                      ),
-                    );
-                  }).toList(),
+                  children: ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN']
+                      .map((day) {
+                        final isActive = addr.workingDays.contains(day);
+                        return Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: isActive
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.06,
+                                  ),
+                            shape: BoxShape.circle,
+                          ),
+                          alignment: Alignment.center,
+                          child: Text(
+                            day.substring(0, 1),
+                            style: TextStyle(
+                              color: isActive
+                                  ? theme.colorScheme.onPrimary
+                                  : theme.colorScheme.onSurface.withValues(
+                                      alpha: 0.35,
+                                    ),
+                              fontWeight: FontWeight.w600,
+                              fontSize: 12,
+                            ),
+                          ),
+                        );
+                      })
+                      .toList(),
                 ),
               ],
             ],
@@ -919,7 +961,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                           Text(
                             branch.fullAddress,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
                           ),
                         ],
@@ -941,7 +985,11 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildSectionHeader(theme, 'General'),
-        _buildSimpleInfoRow(theme, 'Founded', _coaching.foundedYear?.toString() ?? 'Not specified'),
+        _buildSimpleInfoRow(
+          theme,
+          'Founded',
+          _coaching.foundedYear?.toString() ?? 'Not specified',
+        ),
         _buildSimpleInfoRow(
           theme,
           'Created',
@@ -956,7 +1004,11 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     );
   }
 
-  Widget _buildSectionHeader(ThemeData theme, String title, {VoidCallback? onEdit}) {
+  Widget _buildSectionHeader(
+    ThemeData theme,
+    String title, {
+    VoidCallback? onEdit,
+  }) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
       child: Row(
@@ -1000,7 +1052,11 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
           children: [
-            Icon(icon, size: 20, color: theme.colorScheme.primary.withValues(alpha: 0.7)),
+            Icon(
+              icon,
+              size: 20,
+              color: theme.colorScheme.primary.withValues(alpha: 0.7),
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -1017,7 +1073,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                     hasValue ? value : 'Not added',
                     style: TextStyle(
                       fontSize: 14,
-                      fontWeight: hasValue ? FontWeight.w500 : FontWeight.normal,
+                      fontWeight: hasValue
+                          ? FontWeight.w500
+                          : FontWeight.normal,
                       color: hasValue
                           ? theme.colorScheme.onSurface
                           : theme.colorScheme.onSurface.withValues(alpha: 0.35),
@@ -1067,8 +1125,18 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
 
   String _formatDate(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${months[dt.month - 1]} ${dt.day}, ${dt.year}';
   }

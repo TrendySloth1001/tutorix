@@ -57,7 +57,7 @@ class CoachingService {
     if (name != null) body['name'] = name;
     if (description != null) body['description'] = description;
     if (logo != null) body['logo'] = logo;
-    
+
     final data = await _api.patchAuthenticated(
       ApiConstants.coachingById(id),
       body: body,
