@@ -53,7 +53,7 @@ class CoachingOnboardingScreen extends StatefulWidget {
 
 class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
   final _service = CoachingOnboardingService();
-  final _pageController = PageController();
+  late final PageController _pageController;
 
   // Controllers
   final _nameController = TextEditingController();
@@ -94,6 +94,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
   void initState() {
     super.initState();
     _currentStep = widget.initialStep;
+    _pageController = PageController(initialPage: widget.initialStep);
     _loadMasters();
     _initFromExisting();
   }
@@ -128,13 +129,6 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
       }
 
       _branches.addAll(c.branches);
-
-      // Jump to the initial step after frame is built
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (_pageController.hasClients && widget.initialStep > 0) {
-          _pageController.jumpToPage(widget.initialStep);
-        }
-      });
     }
   }
 
