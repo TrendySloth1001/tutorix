@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../../features/coaching/models/coaching_model.dart';
+import 'ward_model.dart';
 
 class UserModel {
   final String id;
@@ -13,6 +14,7 @@ class UserModel {
   final bool isWard;
   final bool onboardingComplete;
   final List<CoachingModel> ownedCoachings;
+  final List<WardModel> wards;
 
   const UserModel({
     required this.id,
@@ -26,6 +28,7 @@ class UserModel {
     this.isWard = false,
     this.onboardingComplete = false,
     this.ownedCoachings = const [],
+    this.wards = const [],
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -44,6 +47,11 @@ class UserModel {
         ownedCoachings:
             (json['ownedCoachings'] as List<dynamic>?)
                 ?.map((e) => CoachingModel.fromJson(e as Map<String, dynamic>))
+                .toList() ??
+            [],
+        wards:
+            (json['wards'] as List<dynamic>?)
+                ?.map((e) => WardModel.fromJson(e as Map<String, dynamic>))
                 .toList() ??
             [],
       );
@@ -66,6 +74,7 @@ class UserModel {
     'isWard': isWard,
     'onboardingComplete': onboardingComplete,
     'ownedCoachings': ownedCoachings.map((e) => e.toJson()).toList(),
+    'wards': wards.map((e) => e.toJson()).toList(),
   };
 
   UserModel copyWith({
@@ -80,6 +89,7 @@ class UserModel {
     bool? isWard,
     bool? onboardingComplete,
     List<CoachingModel>? ownedCoachings,
+    List<WardModel>? wards,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -93,6 +103,7 @@ class UserModel {
       isWard: isWard ?? this.isWard,
       onboardingComplete: onboardingComplete ?? this.onboardingComplete,
       ownedCoachings: ownedCoachings ?? this.ownedCoachings,
+      wards: wards ?? this.wards,
     );
   }
 

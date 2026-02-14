@@ -17,6 +17,7 @@ export class UserService {
             where: { id },
             include: {
                 ownedCoachings: true,
+                wards: true,
             },
         });
     }
@@ -26,6 +27,7 @@ export class UserService {
             where: { email },
             include: {
                 ownedCoachings: true,
+                wards: true,
             },
         });
     }
@@ -36,6 +38,7 @@ export class UserService {
             data,
             include: {
                 ownedCoachings: true,
+                wards: true,
             },
         });
     }

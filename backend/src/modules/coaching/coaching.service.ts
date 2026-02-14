@@ -150,6 +150,84 @@ export class CoachingService {
         };
     }
 
+    async getMembers(coachingId: string) {
+        const members = await prisma.coachingMember.findMany({
+            where: { coachingId },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        name: true,
+                        email: true,
+                        picture: true,
+                        isParent: true,
+                        wards: {
+                            select: {
+                                id: true,
+                                name: true,
+                                picture: true,
+                            },
+                        },
+                    },
+                },
+                ward: {
+                    select: {
+                        id: true,
+                        name: true,
+                        picture: true,
+                        parentId: true,
+                        parent: {
+                            select: {
+                                id: true,
+                                name: true,
+                                email: true,
+                                picture: true,
+                            },
+                        },
+                    },
+                },
+            },
+            orderBy: { createdAt: 'asc' },
+        });
+        return members;
+    }
+
+    async addWardMember(coachingId: string, parentUserId: string, wardName: string) {
+        // Create the ward under the parent and enrol as STUDENT in one transaction
+        const [ward] = await prisma.$transaction(async (tx) => {
+            // Ensure parent exists
+            const parent = await tx.user.findUnique({ where: { id: parentUserId } });
+            if (!parent) throw new Error('Parent user not found');
+
+            // Create ward
+            const newWard = await tx.ward.create({
+                data: { name: wardName, parentId: parentUserId },
+            });
+
+            // Set parent flag if not already
+            if (!parent.isParent) {
+                await tx.user.update({
+                    where: { id: parentUserId },
+                    data: { isParent: true },
+                });
+            }
+
+            // Enrol ward as STUDENT member
+            await tx.coachingMember.create({
+                data: {
+                    coachingId,
+                    wardId: newWard.id,
+                    role: 'STUDENT',
+                    status: 'active',
+                },
+            });
+
+            return [newWard];
+        });
+
+        return ward;
+    }
+
     async isSlugAvailable(slug: string): Promise<boolean> {
         const existing = await prisma.coaching.findUnique({
             where: { slug },

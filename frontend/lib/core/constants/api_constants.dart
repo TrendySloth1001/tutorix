@@ -25,6 +25,21 @@ class ApiConstants {
   static String coachingById(String id) => '$baseUrl/coaching/$id';
   static String checkSlug(String slug) => '$baseUrl/coaching/check-slug/$slug';
 
+  // Coaching Invitations
+  static String inviteLookup(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/invite/lookup';
+  static String inviteSend(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/invite';
+  static String coachingInvitations(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/invitations';
+  static String cancelInvitation(String coachingId, String invitationId) =>
+      '$baseUrl/coaching/$coachingId/invitations/$invitationId';
+
+  // User Invitations
+  static const String userInvitations = '$baseUrl/user/invitations';
+  static String respondInvitation(String invitationId) =>
+      '$baseUrl/user/invitations/$invitationId/respond';
+
   // Google
   static const String googleClientId =
       '299795936862-s70dge4e1k99b3db0faqss8qrcrjj12b.apps.googleusercontent.com';
