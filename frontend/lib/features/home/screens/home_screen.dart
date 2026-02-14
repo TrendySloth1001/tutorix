@@ -6,6 +6,7 @@ import '../../coaching/screens/coaching_onboarding_screen.dart';
 import '../../coaching/screens/coaching_shell.dart';
 import '../../coaching/services/coaching_service.dart';
 import '../../coaching/widgets/coaching_card.dart';
+import '../../coaching/widgets/coaching_cover_card.dart';
 import '../../notifications/screens/personal_notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -128,24 +129,17 @@ class _HomeScreenState extends State<HomeScreen> {
                         count: _myCoachings.length,
                         icon: Icons.school_rounded,
                       ),
+                      const SizedBox(height: 4),
                       ...List.generate(_myCoachings.length, (i) {
                         final coaching = _myCoachings[i];
-                        return Column(
-                          children: [
-                            CoachingCard(
-                              coaching: coaching,
-                              onTap: () => _navigateToCoaching(coaching),
-                            ),
-                            if (i < _myCoachings.length - 1)
-                              Divider(
-                                height: 1,
-                                indent: 86,
-                                endIndent: 20,
-                                color: theme.colorScheme.secondary.withValues(
-                                  alpha: 0.12,
-                                ),
-                              ),
-                          ],
+                        return Padding(
+                          padding: EdgeInsets.only(
+                            bottom: i < _myCoachings.length - 1 ? 12 : 0,
+                          ),
+                          child: CoachingCoverCard(
+                            coaching: coaching,
+                            onTap: () => _navigateToCoaching(coaching),
+                          ),
                         );
                       }),
                     ],
