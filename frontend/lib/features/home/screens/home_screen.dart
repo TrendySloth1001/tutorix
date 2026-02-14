@@ -139,7 +139,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 height: 1,
                                 indent: 86,
                                 endIndent: 20,
-                                color: theme.colorScheme.secondary.withValues(alpha: 0.12),
+                                color: theme.colorScheme.secondary.withValues(
+                                  alpha: 0.12,
+                                ),
                               ),
                           ],
                         );
@@ -148,8 +150,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                     // Joined section
                     if (_joinedCoachings.isNotEmpty) ...[
-                      if (_myCoachings.isNotEmpty)
-                        const SizedBox(height: 24),
+                      if (_myCoachings.isNotEmpty) const SizedBox(height: 24),
                       _SectionHeader(
                         title: 'Joined',
                         count: _joinedCoachings.length,
@@ -169,7 +170,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                 height: 1,
                                 indent: 86,
                                 endIndent: 20,
-                                color: theme.colorScheme.secondary.withValues(alpha: 0.12),
+                                color: theme.colorScheme.secondary.withValues(
+                                  alpha: 0.12,
+                                ),
                               ),
                           ],
                         );

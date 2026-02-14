@@ -35,7 +35,7 @@ class CoachingCard extends StatelessWidget {
                   width: 52,
                   height: 52,
                   decoration: BoxDecoration(
-                    color: isJoined 
+                    color: isJoined
                         ? _getRoleColor(coaching.myRole).withValues(alpha: 0.08)
                         : theme.colorScheme.primary.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
@@ -90,32 +90,42 @@ class CoachingCard extends StatelessWidget {
                           Icon(
                             Icons.person_outline_rounded,
                             size: 13,
-                            color: theme.colorScheme.secondary.withValues(alpha: 0.5),
+                            color: theme.colorScheme.secondary.withValues(
+                              alpha: 0.5,
+                            ),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             'by ${coaching.ownerName ?? 'Unknown'}',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.secondary.withValues(alpha: 0.7),
+                              color: theme.colorScheme.secondary.withValues(
+                                alpha: 0.7,
+                              ),
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                           Text(
                             '  •  ',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.secondary.withValues(alpha: 0.3),
+                              color: theme.colorScheme.secondary.withValues(
+                                alpha: 0.3,
+                              ),
                             ),
                           ),
                           Icon(
                             Icons.people_outline_rounded,
                             size: 13,
-                            color: theme.colorScheme.secondary.withValues(alpha: 0.5),
+                            color: theme.colorScheme.secondary.withValues(
+                              alpha: 0.5,
+                            ),
                           ),
                           const SizedBox(width: 3),
                           Text(
                             '${coaching.memberCount}',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.secondary.withValues(alpha: 0.6),
+                              color: theme.colorScheme.secondary.withValues(
+                                alpha: 0.6,
+                              ),
                             ),
                           ),
                         ],
@@ -126,13 +136,17 @@ class CoachingCard extends StatelessWidget {
                           Icon(
                             Icons.people_outline_rounded,
                             size: 14,
-                            color: theme.colorScheme.secondary.withValues(alpha: 0.6),
+                            color: theme.colorScheme.secondary.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                           const SizedBox(width: 4),
                           Text(
                             '${coaching.memberCount} members',
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.secondary.withValues(alpha: 0.7),
+                              color: theme.colorScheme.secondary.withValues(
+                                alpha: 0.7,
+                              ),
                             ),
                           ),
                           if (coaching.description != null &&
@@ -140,7 +154,9 @@ class CoachingCard extends StatelessWidget {
                             Text(
                               '  •  ',
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.secondary.withValues(alpha: 0.4),
+                                color: theme.colorScheme.secondary.withValues(
+                                  alpha: 0.4,
+                                ),
                               ),
                             ),
                             Expanded(
@@ -149,7 +165,9 @@ class CoachingCard extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.secondary.withValues(alpha: 0.6),
+                                  color: theme.colorScheme.secondary.withValues(
+                                    alpha: 0.6,
+                                  ),
                                 ),
                               ),
                             ),
@@ -191,7 +209,9 @@ class CoachingCard extends StatelessWidget {
         .map((e) => e.isNotEmpty ? e[0].toUpperCase() : '')
         .join();
 
-    final color = isJoined ? _getRoleColor(coaching.myRole) : theme.colorScheme.primary;
+    final color = isJoined
+        ? _getRoleColor(coaching.myRole)
+        : theme.colorScheme.primary;
 
     return Center(
       child: Text(

@@ -8,16 +8,16 @@ class CoachingModel {
   final String ownerId;
   final DateTime? createdAt;
   final DateTime? updatedAt;
-  
+
   // Owner info (optional)
   final String? ownerName;
   final String? ownerPicture;
-  
+
   // Stats (optional - may not be present on all endpoints)
   final int memberCount;
   final int teacherCount;
   final int studentCount;
-  
+
   // User's role in this coaching (for joined coachings)
   final String? myRole;
 
