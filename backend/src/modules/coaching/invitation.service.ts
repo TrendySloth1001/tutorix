@@ -14,11 +14,10 @@ export interface CreateInvitationDto {
 
 export class InvitationService {
     /**
-     * Lookup a user by phone or email.
-     * Returns the user profile with their wards if found.
+     * Lookup a user by phone or email, scoped to a specific coaching.
+     * Respects user privacy settings — bypasses them if user is already in this coaching.
      */
-    async lookupByContact(contact: string) {
-        // Try email first, then phone
+    async lookupByContact(contact: string, coachingId: string) {
         const user = await prisma.user.findFirst({
             where: {
                 OR: [
@@ -32,10 +31,9 @@ export class InvitationService {
                 email: true,
                 phone: true,
                 picture: true,
-                isAdmin: true,
-                isTeacher: true,
-                isParent: true,
-                isWard: true,
+                showEmailInSearch: true,
+                showPhoneInSearch: true,
+                showWardsInSearch: true,
                 wards: {
                     select: {
                         id: true,
@@ -46,7 +44,57 @@ export class InvitationService {
             },
         });
 
-        return user;
+        if (!user) return null;
+
+        // Check memberships in THIS coaching
+        const memberships = await prisma.coachingMember.findMany({
+            where: { coachingId, userId: user.id },
+            select: { role: true, status: true },
+        });
+        const isMember = memberships.length > 0;
+
+        // If already a member of this coaching → full access, bypass privacy
+        const bypassPrivacy = isMember;
+
+        // Ward enrollment in THIS coaching
+        const wardIds = user.wards.map(w => w.id);
+        const wardMemberships = wardIds.length > 0
+            ? await prisma.coachingMember.findMany({
+                where: { coachingId, wardId: { in: wardIds } },
+                select: { wardId: true, role: true, status: true },
+            })
+            : [];
+        const wardMap = new Map(
+            wardMemberships.map(wm => [wm.wardId, { role: wm.role, status: wm.status }])
+        );
+
+        // Apply privacy: name & picture always shown
+        const showEmail = bypassPrivacy || user.showEmailInSearch;
+        const showPhone = bypassPrivacy || user.showPhoneInSearch;
+        const showWards = bypassPrivacy || user.showWardsInSearch;
+
+        return {
+            id: user.id,
+            name: user.name,
+            email: showEmail ? user.email : null,
+            phone: showPhone ? user.phone : null,
+            picture: user.picture,
+            existingRoles: memberships.map(m => m.role),
+            isMember,
+            wards: showWards
+                ? user.wards.map(w => ({
+                    ...w,
+                    isEnrolled: wardMap.has(w.id),
+                    enrolledRole: wardMap.get(w.id)?.role ?? null,
+                }))
+                : [],
+            // Tell the frontend what's hidden so it can show hints
+            privacy: {
+                emailHidden: !showEmail,
+                phoneHidden: !showPhone,
+                wardsHidden: !showWards,
+            },
+        };
     }
 
     /**

@@ -13,6 +13,9 @@ class UserModel {
   final bool isParent;
   final bool isWard;
   final bool onboardingComplete;
+  final bool showEmailInSearch;
+  final bool showPhoneInSearch;
+  final bool showWardsInSearch;
   final List<CoachingModel> ownedCoachings;
   final List<WardModel> wards;
 
@@ -27,6 +30,9 @@ class UserModel {
     this.isParent = false,
     this.isWard = false,
     this.onboardingComplete = false,
+    this.showEmailInSearch = true,
+    this.showPhoneInSearch = true,
+    this.showWardsInSearch = false,
     this.ownedCoachings = const [],
     this.wards = const [],
   });
@@ -44,6 +50,9 @@ class UserModel {
         isParent: json['isParent'] as bool? ?? false,
         isWard: json['isWard'] as bool? ?? false,
         onboardingComplete: json['onboardingComplete'] as bool? ?? false,
+        showEmailInSearch: json['showEmailInSearch'] as bool? ?? true,
+        showPhoneInSearch: json['showPhoneInSearch'] as bool? ?? true,
+        showWardsInSearch: json['showWardsInSearch'] as bool? ?? false,
         ownedCoachings:
             (json['ownedCoachings'] as List<dynamic>?)
                 ?.map((e) => CoachingModel.fromJson(e as Map<String, dynamic>))
@@ -73,6 +82,9 @@ class UserModel {
     'isParent': isParent,
     'isWard': isWard,
     'onboardingComplete': onboardingComplete,
+    'showEmailInSearch': showEmailInSearch,
+    'showPhoneInSearch': showPhoneInSearch,
+    'showWardsInSearch': showWardsInSearch,
     'ownedCoachings': ownedCoachings.map((e) => e.toJson()).toList(),
     'wards': wards.map((e) => e.toJson()).toList(),
   };
@@ -88,6 +100,9 @@ class UserModel {
     bool? isParent,
     bool? isWard,
     bool? onboardingComplete,
+    bool? showEmailInSearch,
+    bool? showPhoneInSearch,
+    bool? showWardsInSearch,
     List<CoachingModel>? ownedCoachings,
     List<WardModel>? wards,
   }) {
@@ -102,6 +117,9 @@ class UserModel {
       isParent: isParent ?? this.isParent,
       isWard: isWard ?? this.isWard,
       onboardingComplete: onboardingComplete ?? this.onboardingComplete,
+      showEmailInSearch: showEmailInSearch ?? this.showEmailInSearch,
+      showPhoneInSearch: showPhoneInSearch ?? this.showPhoneInSearch,
+      showWardsInSearch: showWardsInSearch ?? this.showWardsInSearch,
       ownedCoachings: ownedCoachings ?? this.ownedCoachings,
       wards: wards ?? this.wards,
     );

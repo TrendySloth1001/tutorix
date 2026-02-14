@@ -10,12 +10,13 @@ export class InvitationController {
      */
     async lookup(req: Request, res: Response) {
         try {
+            const coachingId = req.params.id as string;
             const { contact } = req.body;
             if (!contact) {
                 return res.status(400).json({ error: 'Contact (phone or email) is required' });
             }
 
-            const user = await invitationService.lookupByContact(contact);
+            const user = await invitationService.lookupByContact(contact, coachingId);
 
             if (user) {
                 return res.json({ found: true, user });

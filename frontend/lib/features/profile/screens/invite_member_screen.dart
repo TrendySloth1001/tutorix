@@ -602,6 +602,17 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
 
     final user = _lookupResult!['user'] as Map<String, dynamic>;
     final wards = (user['wards'] as List<dynamic>?) ?? [];
+    final privacy = (user['privacy'] as Map<String, dynamic>?) ?? {};
+
+    // Build subtitle: show email if available, else phone, else 'Contact hidden'
+    String subtitle;
+    if (user['email'] != null && (user['email'] as String).isNotEmpty) {
+      subtitle = user['email'] as String;
+    } else if (user['phone'] != null && (user['phone'] as String).isNotEmpty) {
+      subtitle = user['phone'] as String;
+    } else {
+      subtitle = 'Contact info hidden';
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,7 +641,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
         const SizedBox(height: 10),
         _PersonCard(
           name: user['name'] ?? 'Unknown',
-          subtitle: user['email'] ?? '',
+          subtitle: subtitle,
           picture: user['picture'] as String?,
           icon: Icons.person_rounded,
           selected: _selectedUserId == user['id'] && _selectedWardId == null,
@@ -641,10 +652,27 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
             _selectedUserId = user['id'] as String;
             _selectedWardId = null;
             _selectedName = user['name'] as String?;
-            if (user['isTeacher'] == true) _selectedRole = 'TEACHER';
+            final roles = (user['existingRoles'] as List<dynamic>?) ?? [];
+            if (roles.contains('TEACHER')) _selectedRole = 'TEACHER';
           }),
         ),
-        if (wards.isNotEmpty) ...[
+        if (privacy['wardsHidden'] == true) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(Icons.visibility_off_rounded, size: 14, color: faint),
+              const SizedBox(width: 6),
+              Text(
+                'Student profiles hidden by user',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: faint,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        ] else if (wards.isNotEmpty) ...[
           const SizedBox(height: 12),
           Text(
             'STUDENT PROFILES',
@@ -662,10 +690,15 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
               padding: const EdgeInsets.only(bottom: 6),
               child: _PersonCard(
                 name: ward['name'] ?? 'Unknown',
-                subtitle: 'Student profile',
+                subtitle: ward['isEnrolled'] == true
+                    ? 'Already enrolled as ${ward['enrolledRole'] ?? 'student'}'
+                    : 'Student profile',
                 picture: ward['picture'] as String?,
                 icon: Icons.child_care_rounded,
                 selected: _selectedWardId == ward['id'],
+                badges: ward['isEnrolled'] == true
+                    ? [_badge('Enrolled', const Color(0xFF2E7D32))]
+                    : null,
                 onSurface: onSurface,
                 faint: faint,
                 onTap: () => setState(() {
@@ -684,12 +717,27 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
 
   List<Widget> _buildBadges(Map<String, dynamic> user) {
     final b = <Widget>[];
-    if (user['isAdmin'] == true)
-      b.add(_badge('Admin', const Color(0xFF6A1B9A)));
-    if (user['isTeacher'] == true)
-      b.add(_badge('Teacher', const Color(0xFF1565C0)));
-    if (user['isParent'] == true)
-      b.add(_badge('Parent', const Color(0xFF2E7D32)));
+    // Show coaching-scoped roles from existingRoles array
+    final roles = (user['existingRoles'] as List<dynamic>?) ?? [];
+    for (final role in roles) {
+      switch (role) {
+        case 'ADMIN':
+          b.add(_badge('Admin', const Color(0xFF6A1B9A)));
+          break;
+        case 'TEACHER':
+          b.add(_badge('Teacher', const Color(0xFF1565C0)));
+          break;
+        case 'STUDENT':
+          b.add(_badge('Student', const Color(0xFF2E7D32)));
+          break;
+        case 'PARENT':
+          b.add(_badge('Parent', const Color(0xFFE65100)));
+          break;
+      }
+    }
+    if (user['isMember'] == true && b.isEmpty) {
+      b.add(_badge('Member', const Color(0xFF455A64)));
+    }
     return b;
   }
 

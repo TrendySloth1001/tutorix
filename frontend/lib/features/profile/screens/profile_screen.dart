@@ -194,12 +194,79 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () {},
               ),
 
+              const SizedBox(height: 28),
+
+              // ── Search Privacy ───────────────────────────────
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Search Privacy',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Control what others see when they search for you to send an invite',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.secondary.withValues(alpha: 0.6),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              _PrivacyToggle(
+                icon: Icons.email_outlined,
+                title: 'Show email',
+                value: user.showEmailInSearch,
+                onChanged: (v) => _updatePrivacy(showEmailInSearch: v),
+              ),
+              _PrivacyToggle(
+                icon: Icons.phone_outlined,
+                title: 'Show phone number',
+                value: user.showPhoneInSearch,
+                onChanged: (v) => _updatePrivacy(showPhoneInSearch: v),
+              ),
+              _PrivacyToggle(
+                icon: Icons.child_care_rounded,
+                title: 'Show student profiles',
+                value: user.showWardsInSearch,
+                onChanged: (v) => _updatePrivacy(showWardsInSearch: v),
+              ),
+
               const SizedBox(height: 40),
             ],
           ),
         ),
       ),
     );
+  }
+
+  Future<void> _updatePrivacy({
+    bool? showEmailInSearch,
+    bool? showPhoneInSearch,
+    bool? showWardsInSearch,
+  }) async {
+    try {
+      final userService = UserService();
+      final updated = await userService.updatePrivacy(
+        showEmailInSearch: showEmailInSearch,
+        showPhoneInSearch: showPhoneInSearch,
+        showWardsInSearch: showWardsInSearch,
+      );
+      if (updated != null && mounted) {
+        widget.onUserUpdated?.call(updated);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to update privacy: $e')));
+      }
+    }
   }
 
   void _navigateTo(Widget screen) {
@@ -423,6 +490,51 @@ class _PhotoOptionsSheet extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 16),
+        ],
+      ),
+    );
+  }
+}
+
+class _PrivacyToggle extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _PrivacyToggle({
+    required this.icon,
+    required this.title,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        children: [
+          Icon(
+            icon,
+            size: 20,
+            color: theme.colorScheme.secondary.withValues(alpha: 0.6),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              title,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Switch.adaptive(
+            value: value,
+            onChanged: onChanged,
+            activeColor: theme.colorScheme.primary,
+          ),
         ],
       ),
     );

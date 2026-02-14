@@ -47,6 +47,17 @@ export class UserController {
                 updateData.picture = req.body.picture;
             }
 
+            // Privacy settings for invite search
+            if (typeof req.body.showEmailInSearch === 'boolean') {
+                updateData.showEmailInSearch = req.body.showEmailInSearch;
+            }
+            if (typeof req.body.showPhoneInSearch === 'boolean') {
+                updateData.showPhoneInSearch = req.body.showPhoneInSearch;
+            }
+            if (typeof req.body.showWardsInSearch === 'boolean') {
+                updateData.showWardsInSearch = req.body.showWardsInSearch;
+            }
+
             const user = await userService.update(userId, updateData);
 
             res.json({ user });

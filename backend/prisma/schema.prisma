@@ -13,44 +13,52 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  phone     String?
-  picture   String?
-  googleId  String   @unique
+  id       String  @id @default(uuid())
+  email    String  @unique
+  name     String?
+  phone    String?
+  picture  String?
+  googleId String  @unique
 
   // Role flags - a user can have multiple roles
-  isAdmin   Boolean  @default(false)
-  isTeacher Boolean  @default(false)
-  isParent  Boolean  @default(false)
-  isWard    Boolean  @default(false)
+  isAdmin   Boolean @default(false)
+  isTeacher Boolean @default(false)
+  isParent  Boolean @default(false)
+  isWard    Boolean @default(false)
 
   // Onboarding status
   onboardingComplete Boolean @default(false)
+
+  // Privacy: what's visible when searched for invite
+  showEmailInSearch Boolean @default(true)
+  showPhoneInSearch Boolean @default(true)
+  showWardsInSearch Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   // Relations
-  ownedCoachings     Coaching[]      @relation("CoachingOwner")
-  sessions           LoginSession[]
-  wards              Ward[]          @relation("UserWards")
-  memberships        CoachingMember[]
-  receivedInvitations Invitation[]   @relation("UserInvitations")
-  sentInvitations     Invitation[]   @relation("SentInvitations")
+  ownedCoachings      Coaching[]       @relation("CoachingOwner")
+  sessions            LoginSession[]
+  wards               Ward[]           @relation("UserWards")
+  memberships         CoachingMember[]
+  receivedInvitations Invitation[]     @relation("UserInvitations")
+  sentInvitations     Invitation[]     @relation("SentInvitations")
 }
 
 model Ward {
-  id        String   @id @default(uuid())
-  name      String
-  picture   String?
-  parentId  String
-  parent    User     @relation("UserWards", fields: [parentId], references: [id], onDelete: Cascade)
-  
+  id       String    @id @default(uuid())
+  name     String
+  picture  String?
+  dob      DateTime?
+  school   String?
+  class    String?   @map("class")
+  parentId String
+  parent   User      @relation("UserWards", fields: [parentId], references: [id], onDelete: Cascade)
+
   enrollments CoachingMember[]
   invitations Invitation[]     @relation("WardInvitations")
-  
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -69,22 +77,22 @@ model LoginSession {
 }
 
 model Coaching {
-  id          String   @id @default(uuid())
+  id          String  @id @default(uuid())
   name        String
-  slug        String   @unique
+  slug        String  @unique
   description String?
   logo        String?
-  status      String   @default("active") // active, suspended
+  status      String  @default("active") // active, suspended
 
   // Owner relation
-  ownerId     String
-  owner       User     @relation("CoachingOwner", fields: [ownerId], references: [id])
+  ownerId String
+  owner   User   @relation("CoachingOwner", fields: [ownerId], references: [id])
 
   members     CoachingMember[]
   invitations Invitation[]
 
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([ownerId])
 }
@@ -93,20 +101,20 @@ model CoachingMember {
   id         String   @id @default(uuid())
   coachingId String
   coaching   Coaching @relation(fields: [coachingId], references: [id], onDelete: Cascade)
-  
-  role       String   @default("STUDENT") // ADMIN, TEACHER, STUDENT
-  
+
+  role String @default("STUDENT") // ADMIN, TEACHER, STUDENT
+
   // Link to either a main User (for staff) or a Ward (for students)
-  userId     String?
-  user       User?    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  wardId     String?
-  ward       Ward?    @relation(fields: [wardId], references: [id], onDelete: Cascade)
-  
-  status     String   @default("active") // active, pending, suspended
-  
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  userId String?
+  user   User?   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  wardId String?
+  ward   Ward?   @relation(fields: [wardId], references: [id], onDelete: Cascade)
+
+  status String @default("active") // active, pending, suspended
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([coachingId, userId])
   @@unique([coachingId, wardId])
@@ -116,31 +124,31 @@ model CoachingMember {
 }
 
 model Invitation {
-  id          String   @id @default(uuid())
-  coachingId  String
-  coaching    Coaching @relation(fields: [coachingId], references: [id], onDelete: Cascade)
-  
-  role        String   // TEACHER, PARENT, STUDENT
-  
+  id         String   @id @default(uuid())
+  coachingId String
+  coaching   Coaching @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+
+  role String // TEACHER, PARENT, STUDENT
+
   // Target: resolved user/ward
-  userId      String?
-  user        User?    @relation("UserInvitations", fields: [userId], references: [id])
-  wardId      String?
-  ward        Ward?    @relation("WardInvitations", fields: [wardId], references: [id])
-  
+  userId String?
+  user   User?   @relation("UserInvitations", fields: [userId], references: [id])
+  wardId String?
+  ward   Ward?   @relation("WardInvitations", fields: [wardId], references: [id])
+
   // Unresolved contact (user not yet on platform)
   invitePhone String?
   inviteEmail String?
   inviteName  String?
-  
-  status      String   @default("PENDING") // PENDING, ACCEPTED, DECLINED, EXPIRED
-  
+
+  status String @default("PENDING") // PENDING, ACCEPTED, DECLINED, EXPIRED
+
   invitedById String
-  invitedBy   User     @relation("SentInvitations", fields: [invitedById], references: [id])
-  
-  message     String?
-  
-  createdAt   DateTime @default(now())
+  invitedBy   User   @relation("SentInvitations", fields: [invitedById], references: [id])
+
+  message String?
+
+  createdAt   DateTime  @default(now())
   expiresAt   DateTime?
   respondedAt DateTime?
 

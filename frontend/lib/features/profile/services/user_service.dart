@@ -40,6 +40,26 @@ class UserService {
     return user;
   }
 
+  /// PATCH /user/me — update privacy settings
+  Future<UserModel?> updatePrivacy({
+    bool? showEmailInSearch,
+    bool? showPhoneInSearch,
+    bool? showWardsInSearch,
+  }) async {
+    final body = <String, dynamic>{};
+    if (showEmailInSearch != null)
+      body['showEmailInSearch'] = showEmailInSearch;
+    if (showPhoneInSearch != null)
+      body['showPhoneInSearch'] = showPhoneInSearch;
+    if (showWardsInSearch != null)
+      body['showWardsInSearch'] = showWardsInSearch;
+
+    final data = await _api.patchAuthenticated(ApiConstants.userMe, body: body);
+    final user = UserModel.fromJson(data['user']);
+    await _storage.cacheUserProfile(user.toJson());
+    return user;
+  }
+
   /// PATCH /user/me/roles
   Future<UserModel?> updateRoles({
     bool? isAdmin,
