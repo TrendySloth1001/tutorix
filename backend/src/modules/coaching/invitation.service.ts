@@ -10,6 +10,7 @@ export interface CreateInvitationDto {
     inviteName?: string;
     message?: string;
     invitedById: string;
+    replacePending?: boolean; // If true, cancel existing pending invitation
 }
 
 export class InvitationService {
@@ -103,18 +104,49 @@ export class InvitationService {
      * If only phone/email is provided, it's an unresolved (pending signup) invitation.
      */
     async createInvitation(data: CreateInvitationDto) {
-        // Check for existing invitation
+        console.log('==========================================');
+        console.log('CREATE INVITATION CALLED');
+        console.log('==========================================');
+        console.log('Input data:', JSON.stringify(data, null, 2));
+
+        // Check for ANY existing invitation (not just PENDING) due to unique constraint
         if (data.userId) {
             const existing = await prisma.invitation.findFirst({
                 where: {
                     coachingId: data.coachingId,
                     userId: data.userId,
                     role: data.role,
-                    status: 'PENDING',
                 },
+                select: { id: true, role: true, status: true },
             });
+            
             if (existing) {
-                throw new Error('An invitation for this user with this role already exists');
+                console.log('Found existing invitation:', existing);
+                
+                // If it's PENDING and replacePending is false, block
+                if (existing.status === 'PENDING' && !data.replacePending) {
+                    throw new Error('An invitation for this user already exists. Please cancel the existing invitation first.');
+                }
+                
+                // Reuse the existing invitation - update it back to PENDING
+                console.log('Reusing existing invitation, updating to PENDING');
+                const updated = await prisma.invitation.update({
+                    where: { id: existing.id },
+                    data: {
+                        status: 'PENDING',
+                        respondedAt: null,
+                        message: data.message ?? null,
+                        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    },
+                    include: {
+                        coaching: { select: { id: true, name: true, logo: true } },
+                        user: { select: { id: true, name: true, picture: true } },
+                        ward: { select: { id: true, name: true, picture: true } },
+                        invitedBy: { select: { id: true, name: true, picture: true } },
+                    },
+                });
+                console.log('Invitation updated successfully:', updated.id);
+                return updated;
             }
         }
 
@@ -123,24 +155,57 @@ export class InvitationService {
                 where: {
                     coachingId: data.coachingId,
                     wardId: data.wardId,
-                    status: 'PENDING',
                 },
+                select: { id: true, status: true },
             });
+            
             if (existing) {
-                throw new Error('An invitation for this ward already exists');
+                console.log('Found existing ward invitation:', existing);
+                
+                // If it's PENDING and replacePending is false, block
+                if (existing.status === 'PENDING' && !data.replacePending) {
+                    throw new Error('An invitation for this ward already exists. Please cancel the existing invitation first.');
+                }
+                
+                // Reuse the existing invitation - update it back to PENDING
+                console.log('Reusing existing ward invitation, updating to PENDING');
+                const updated = await prisma.invitation.update({
+                    where: { id: existing.id },
+                    data: {
+                        status: 'PENDING',
+                        role: data.role,
+                        respondedAt: null,
+                        message: data.message ?? null,
+                        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                    },
+                    include: {
+                        coaching: { select: { id: true, name: true, logo: true } },
+                        user: { select: { id: true, name: true, picture: true } },
+                        ward: { select: { id: true, name: true, picture: true } },
+                        invitedBy: { select: { id: true, name: true, picture: true } },
+                    },
+                });
+                console.log('Ward invitation updated successfully:', updated.id);
+                return updated;
             }
         }
 
-        // Check if already a member
+        // Check if currently a member (block if they're already in the coaching)
         if (data.userId) {
             const existingMember = await prisma.coachingMember.findFirst({
                 where: {
                     coachingId: data.coachingId,
                     userId: data.userId,
                 },
+                select: { id: true, role: true, status: true },
             });
             if (existingMember) {
-                throw new Error('This user is already a member of this coaching');
+                console.error('Invitation blocked: User is already a member', {
+                    coachingId: data.coachingId,
+                    userId: data.userId,
+                    memberData: existingMember,
+                });
+                throw new Error(`This user is already a member of this coaching (role: ${existingMember.role}, status: ${existingMember.status})`);
             }
         }
 
@@ -150,9 +215,15 @@ export class InvitationService {
                     coachingId: data.coachingId,
                     wardId: data.wardId,
                 },
+                select: { id: true, role: true, status: true },
             });
             if (existingMember) {
-                throw new Error('This ward is already enrolled in this coaching');
+                console.error('Invitation blocked: Ward is already enrolled', {
+                    coachingId: data.coachingId,
+                    wardId: data.wardId,
+                    memberData: existingMember,
+                });
+                throw new Error(`This ward is already enrolled in this coaching (role: ${existingMember.role}, status: ${existingMember.status})`);
             }
         }
 
@@ -195,6 +266,7 @@ export class InvitationService {
 
     /**
      * Get pending invitations for a user (and their wards).
+     * Also includes user's existing coaching memberships for confirmation UX.
      */
     async getMyInvitations(userId: string) {
         // Get user's ward IDs
@@ -204,7 +276,8 @@ export class InvitationService {
         });
         const wardIds = wards.map(w => w.id);
 
-        return prisma.invitation.findMany({
+        // Fetch pending invitations
+        const invitations = await prisma.invitation.findMany({
             where: {
                 status: 'PENDING',
                 OR: [
@@ -219,6 +292,25 @@ export class InvitationService {
             },
             orderBy: { createdAt: 'desc' },
         });
+
+        // Fetch user's existing active coaching memberships
+        const existingMemberships = await prisma.coachingMember.findMany({
+            where: { userId, status: 'active' },
+            select: {
+                role: true,
+                coaching: { select: { id: true, name: true } },
+            },
+        });
+
+        // Attach existingMemberships to each invitation
+        return invitations.map(inv => ({
+            ...inv,
+            existingMemberships: existingMemberships.map(m => ({
+                coachingId: m.coaching.id,
+                coachingName: m.coaching.name,
+                role: m.role,
+            })),
+        }));
     }
 
     /**
@@ -251,19 +343,29 @@ export class InvitationService {
         if (accept) {
             // Accept: create CoachingMember and update invitation
             return prisma.$transaction(async (tx) => {
-                // Create membership
-                await tx.coachingMember.create({
-                    data: {
-                        coachingId: invitation.coachingId,
-                        role: invitation.role,
-                        userId: invitation.userId,
-                        wardId: invitation.wardId,
-                        status: 'active',
-                    },
-                });
-
-                // Update role flags on user if needed
                 if (invitation.userId) {
+                    // Fetch existing active memberships to notify them
+                    const existingMemberships = await tx.coachingMember.findMany({
+                        where: {
+                            userId: invitation.userId,
+                            status: 'active',
+                            coachingId: { not: invitation.coachingId }, // Don't notify the one passing invitation
+                        },
+                        include: { coaching: { select: { name: true } } },
+                    });
+
+                    // Create membership
+                    await tx.coachingMember.create({
+                        data: {
+                            coachingId: invitation.coachingId,
+                            role: invitation.role,
+                            userId: invitation.userId,
+                            wardId: invitation.wardId,
+                            status: 'active',
+                        },
+                    });
+
+                    // Update role flags on user if needed
                     const roleUpdate: Record<string, boolean> = {};
                     if (invitation.role === 'TEACHER') roleUpdate.isTeacher = true;
                     if (invitation.role === 'ADMIN') roleUpdate.isAdmin = true;
@@ -275,6 +377,39 @@ export class InvitationService {
                             data: roleUpdate,
                         });
                     }
+
+                    // Create notifications for existing coachings
+                    if (existingMemberships.length > 0) {
+                        const userName = (await tx.user.findUnique({
+                            where: { id: invitation.userId },
+                            select: { name: true },
+                        }))?.name || 'A member';
+
+                        for (const membership of existingMemberships) {
+                            await tx.notification.create({
+                                data: {
+                                    coachingId: membership.coachingId,
+                                    type: 'MEMBER_JOINED_ANOTHER_COACHING',
+                                    title: 'Member joined another coaching',
+                                    message: `${userName} has joined another coaching`,
+                                    data: {
+                                        userId: invitation.userId,
+                                        memberId: membership.id,
+                                    },
+                                },
+                            });
+                        }
+                    }
+                } else {
+                    // Ward invitation acceptance (no user notification logic for now, or similar if needed)
+                    await tx.coachingMember.create({
+                        data: {
+                            coachingId: invitation.coachingId,
+                            role: invitation.role,
+                            wardId: invitation.wardId,
+                            status: 'active',
+                        },
+                    });
                 }
 
                 // Mark invitation as accepted

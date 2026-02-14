@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../shared/services/invitation_service.dart';
+import '../../../shared/widgets/accept_invite_sheet.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -30,7 +31,28 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     if (mounted) setState(() => _loading = false);
   }
 
-  Future<void> _respond(String id, bool accept) async {
+  Future<void> _respond(
+    String id,
+    bool accept, {
+    Map<String, dynamic>? invitation,
+  }) async {
+    // If accepting, show confirmation sheet first
+    if (accept && invitation != null) {
+      final coaching = invitation['coaching'] as Map<String, dynamic>?;
+      final role = invitation['role'] as String? ?? 'STUDENT';
+      final existingMemberships =
+          ((invitation['existingMemberships'] as List<dynamic>?) ?? [])
+              .cast<Map<String, dynamic>>();
+
+      final confirmed = await showAcceptInviteSheet(
+        context: context,
+        coachingName: coaching?['name'] ?? 'this coaching',
+        role: role,
+        existingMemberships: existingMemberships,
+      );
+      if (confirmed != true) return;
+    }
+
     setState(() => _responding.add(id));
     try {
       await _invitationService.respondToInvitation(id, accept);
@@ -42,7 +64,6 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
         );
         _load();
-        // Also refresh controller state so badge updates
         context.read<AuthController>().refreshInvitations();
       }
     } catch (e) {
@@ -211,7 +232,9 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: FilledButton(
-                  onPressed: busy ? null : () => _respond(id, true),
+                  onPressed: busy
+                      ? null
+                      : () => _respond(id, true, invitation: inv),
                   style: FilledButton.styleFrom(
                     visualDensity: VisualDensity.compact,
                   ),

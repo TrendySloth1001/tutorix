@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../shared/services/invitation_service.dart';
+import '../../../shared/widgets/accept_invite_sheet.dart';
 
 class MyInvitationsScreen extends StatefulWidget {
   const MyInvitationsScreen({super.key});
@@ -34,7 +35,28 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
     }
   }
 
-  Future<void> _respondToInvitation(String invitationId, bool accept) async {
+  Future<void> _respondToInvitation(
+    String invitationId,
+    bool accept, {
+    Map<String, dynamic>? invitation,
+  }) async {
+    // If accepting, show confirmation sheet first
+    if (accept && invitation != null) {
+      final coaching = invitation['coaching'] as Map<String, dynamic>?;
+      final role = invitation['role'] as String? ?? 'STUDENT';
+      final existingMemberships =
+          ((invitation['existingMemberships'] as List<dynamic>?) ?? [])
+              .cast<Map<String, dynamic>>();
+
+      final confirmed = await showAcceptInviteSheet(
+        context: context,
+        coachingName: coaching?['name'] ?? 'this coaching',
+        role: role,
+        existingMemberships: existingMemberships,
+      );
+      if (confirmed != true) return;
+    }
+
     try {
       await _invitationService.respondToInvitation(invitationId, accept);
       if (mounted) {
@@ -237,7 +259,8 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: FilledButton(
-                    onPressed: () => _respondToInvitation(id, true),
+                    onPressed: () =>
+                        _respondToInvitation(id, true, invitation: invitation),
                     child: const Text('Accept'),
                   ),
                 ),

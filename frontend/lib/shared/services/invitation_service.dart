@@ -18,6 +18,7 @@ class InvitationService {
   }
 
   /// Send an invitation to join a coaching.
+  /// If replacePending is true, automatically cancels any existing pending invitation.
   Future<Map<String, dynamic>> sendInvitation({
     required String coachingId,
     required String role,
@@ -27,8 +28,12 @@ class InvitationService {
     String? inviteEmail,
     String? inviteName,
     String? message,
+    bool replacePending = true, // Auto-replace existing pending invitations
   }) async {
-    final body = <String, dynamic>{'role': role};
+    final body = <String, dynamic>{
+      'role': role,
+      'replacePending': replacePending,
+    };
     if (userId != null) body['userId'] = userId;
     if (wardId != null) body['wardId'] = wardId;
     if (invitePhone != null) body['invitePhone'] = invitePhone;
@@ -47,7 +52,7 @@ class InvitationService {
   Future<List<Map<String, dynamic>>> getCoachingInvitations(
     String coachingId,
   ) async {
-    final data = await _api.getAuthenticated(
+    final data = await _api.getAuthenticatedRaw(
       ApiConstants.coachingInvitations(coachingId),
     );
     return (data as List<dynamic>).cast<Map<String, dynamic>>();
@@ -55,7 +60,7 @@ class InvitationService {
 
   /// Get pending invitations for the current user.
   Future<List<Map<String, dynamic>>> getMyInvitations() async {
-    final data = await _api.getAuthenticated(ApiConstants.userInvitations);
+    final data = await _api.getAuthenticatedRaw(ApiConstants.userInvitations);
     return (data as List<dynamic>).cast<Map<String, dynamic>>();
   }
 

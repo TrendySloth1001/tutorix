@@ -30,6 +30,11 @@ router.post('/:id/members/ward', authMiddleware, coachingController.addWard.bind
 router.delete('/:id/members/:memberId', authMiddleware, coachingController.removeMember.bind(coachingController));
 router.patch('/:id/members/:memberId', authMiddleware, coachingController.updateMemberRole.bind(coachingController));
 
+// Notifications routes (protected)
+import { NotificationController } from '../notification/notification.controller.js';
+const notificationController = new NotificationController();
+router.get('/:id/notifications', authMiddleware, notificationController.getCoachingNotifications.bind(notificationController));
+
 // Dynamic route last
 router.get('/:id', coachingController.getById.bind(coachingController));
 

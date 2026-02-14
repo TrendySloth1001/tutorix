@@ -3,6 +3,8 @@ import '../models/coaching_model.dart';
 import '../models/member_model.dart';
 import '../models/invitation_model.dart';
 import '../services/member_service.dart';
+import 'coaching_notifications_screen.dart'; // Import the new screen (same directory)
+import '../../../shared/services/notification_service.dart'; // Correct path
 
 /// Coaching dashboard — compact, data-driven overview.
 class CoachingDashboardScreen extends StatefulWidget {
@@ -22,9 +24,11 @@ class CoachingDashboardScreen extends StatefulWidget {
 
 class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
   final MemberService _memberService = MemberService();
+  final NotificationService _notificationService = NotificationService();
 
   List<MemberModel> _members = [];
   List<InvitationModel> _invitations = [];
+  int _unreadNotifications = 0;
   bool _isLoading = true;
 
   @override
@@ -39,11 +43,28 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
       final results = await Future.wait([
         _memberService.getMembers(widget.coaching.id),
         _memberService.getInvitations(widget.coaching.id),
+        _notificationService.getCoachingNotifications(
+          widget.coaching.id,
+          limit: 1,
+        ), // Fetch fetching metadata for unread count
       ]);
       _members = results[0] as List<MemberModel>;
       _invitations = results[1] as List<InvitationModel>;
+      _unreadNotifications =
+          (results[2] as Map<String, dynamic>)['unreadCount'] ?? 0;
     } catch (_) {}
     if (mounted) setState(() => _isLoading = false);
+  }
+
+  void _onNotificationTap() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) =>
+            CoachingNotificationsScreen(coachingId: widget.coaching.id),
+      ),
+    );
+    _loadData(); // Refresh on return to update badge
   }
 
   int _countRole(String role) => _members.where((m) => m.role == role).length;
@@ -69,7 +90,12 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
           children: [
             // ── Safe area + coaching header ──
             SizedBox(height: MediaQuery.of(context).padding.top + 16),
-            _Header(coaching: c, memberCount: _members.length),
+            _Header(
+              coaching: c,
+              memberCount: _members.length,
+              unreadNotifications: _unreadNotifications,
+              onNotificationTap: _onNotificationTap,
+            ),
 
             const SizedBox(height: 20),
 
@@ -158,7 +184,15 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
 class _Header extends StatelessWidget {
   final CoachingModel coaching;
   final int memberCount;
-  const _Header({required this.coaching, required this.memberCount});
+  final int unreadNotifications;
+  final VoidCallback onNotificationTap;
+
+  const _Header({
+    required this.coaching,
+    required this.memberCount,
+    required this.unreadNotifications,
+    required this.onNotificationTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -206,6 +240,30 @@ class _Header extends StatelessWidget {
               ),
             ],
           ),
+        ),
+        Stack(
+          children: [
+            IconButton(
+              onPressed: onNotificationTap,
+              icon: Icon(
+                Icons.notifications_outlined,
+                color: theme.colorScheme.onSurface,
+              ),
+            ),
+            if (unreadNotifications > 0)
+              Positioned(
+                right: 8,
+                top: 8,
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.red,
+                    shape: BoxShape.circle,
+                  ),
+                  constraints: const BoxConstraints(minWidth: 8, minHeight: 8),
+                ),
+              ),
+          ],
         ),
       ],
     );

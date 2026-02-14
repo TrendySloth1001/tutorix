@@ -72,12 +72,7 @@ class MemberUser {
   final String? email;
   final String? picture;
 
-  const MemberUser({
-    required this.id,
-    this.name,
-    this.email,
-    this.picture,
-  });
+  const MemberUser({required this.id, this.name, this.email, this.picture});
 
   factory MemberUser.fromJson(Map<String, dynamic> json) {
     return MemberUser(

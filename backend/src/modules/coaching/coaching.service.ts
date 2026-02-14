@@ -230,19 +230,120 @@ export class CoachingService {
 
     /**
      * Remove a member from a coaching.
+     * Sends notification to removed user and deletes member record.
      */
     async removeMember(coachingId: string, memberId: string) {
         const member = await prisma.coachingMember.findFirst({
             where: { id: memberId, coachingId },
+            include: {
+                user: { select: { id: true, name: true } },
+                ward: { select: { id: true, name: true, parentId: true } },
+                coaching: { select: { name: true } },
+            },
         });
 
         if (!member) {
             throw new Error('Member not found in this coaching');
         }
 
-        return prisma.coachingMember.delete({
-            where: { id: memberId },
+        console.log('Removing member:', {
+            memberId,
+            coachingId,
+            userId: member.userId,
+            wardId: member.wardId,
+            role: member.role,
         });
+
+        // Delete member and create notification in transaction
+        await prisma.$transaction(async (tx) => {
+            // Delete ALL member records for this user/ward in this coaching
+            // (should be only one, but this ensures complete cleanup)
+            let deletedCount = 0;
+            if (member.userId) {
+                const result = await tx.coachingMember.deleteMany({
+                    where: {
+                        coachingId,
+                        userId: member.userId,
+                    },
+                });
+                deletedCount = result.count;
+                console.log(`Deleted ${deletedCount} member record(s) for userId: ${member.userId}`);
+            } else if (member.wardId) {
+                const result = await tx.coachingMember.deleteMany({
+                    where: {
+                        coachingId,
+                        wardId: member.wardId,
+                    },
+                });
+                deletedCount = result.count;
+                console.log(`Deleted ${deletedCount} member record(s) for wardId: ${member.wardId}`);
+            }
+
+            // Cancel any pending invitations for this user/ward to allow re-invitation
+            if (member.userId) {
+                await tx.invitation.updateMany({
+                    where: {
+                        coachingId,
+                        userId: member.userId,
+                        status: 'PENDING',
+                    },
+                    data: {
+                        status: 'EXPIRED',
+                        respondedAt: new Date(),
+                    },
+                });
+            } else if (member.wardId) {
+                await tx.invitation.updateMany({
+                    where: {
+                        coachingId,
+                        wardId: member.wardId,
+                        status: 'PENDING',
+                    },
+                    data: {
+                        status: 'EXPIRED',
+                        respondedAt: new Date(),
+                    },
+                });
+            }
+
+            // Send notification to removed user
+            // For direct user members (teachers/admins)
+            if (member.userId) {
+                await tx.notification.create({
+                    data: {
+                        userId: member.userId,
+                        type: 'REMOVED_FROM_COACHING',
+                        title: 'Enrollment Change Notice',
+                        message: `There has been a change to your enrollment in ${member.coaching.name}. For more details, please contact the coaching administration.`,
+                        data: {
+                            coachingId,
+                            coachingName: member.coaching.name,
+                            removedAt: new Date().toISOString(),
+                        },
+                    },
+                });
+            }
+            // For ward members (students) - notify parent
+            else if (member.wardId && member.ward) {
+                await tx.notification.create({
+                    data: {
+                        userId: member.ward.parentId,
+                        type: 'WARD_REMOVED_FROM_COACHING',
+                        title: 'Ward Enrollment Change Notice',
+                        message: `${member.ward.name} is no longer enrolled at ${member.coaching.name}.If you have any questions, please contact the coaching administration.`,
+                        data: {
+                            coachingId,
+                            coachingName: member.coaching.name,
+                            wardId: member.wardId,
+                            wardName: member.ward.name,
+                            removedAt: new Date().toISOString(),
+                        },
+                    },
+                });
+            }
+        });
+
+        return { success: true };
     }
 
     /**

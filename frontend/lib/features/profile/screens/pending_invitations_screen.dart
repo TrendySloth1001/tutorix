@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../shared/services/invitation_service.dart';
+import '../../../shared/widgets/accept_invite_sheet.dart';
 
 class PendingInvitationsScreen extends StatefulWidget {
   const PendingInvitationsScreen({super.key});
@@ -15,7 +16,28 @@ class _PendingInvitationsScreenState extends State<PendingInvitationsScreen> {
   final _invitationService = InvitationService();
   final Set<String> _responding = {};
 
-  Future<void> _respond(String id, bool accept) async {
+  Future<void> _respond(
+    String id,
+    bool accept, {
+    Map<String, dynamic>? invitation,
+  }) async {
+    // If accepting, show confirmation sheet first
+    if (accept && invitation != null) {
+      final coaching = invitation['coaching'] as Map<String, dynamic>?;
+      final role = invitation['role'] as String? ?? 'STUDENT';
+      final existingMemberships =
+          ((invitation['existingMemberships'] as List<dynamic>?) ?? [])
+              .cast<Map<String, dynamic>>();
+
+      final confirmed = await showAcceptInviteSheet(
+        context: context,
+        coachingName: coaching?['name'] ?? 'this coaching',
+        role: role,
+        existingMemberships: existingMemberships,
+      );
+      if (confirmed != true) return;
+    }
+
     setState(() => _responding.add(id));
     try {
       await _invitationService.respondToInvitation(id, accept);
@@ -26,7 +48,6 @@ class _PendingInvitationsScreenState extends State<PendingInvitationsScreen> {
             backgroundColor: accept ? Colors.green : Colors.grey,
           ),
         );
-        // Refresh the list in controller
         await context.read<AuthController>().refreshInvitations();
       }
     } catch (e) {
@@ -231,7 +252,9 @@ class _PendingInvitationsScreenState extends State<PendingInvitationsScreen> {
               const SizedBox(width: 12),
               Expanded(
                 child: FilledButton(
-                  onPressed: isResponding ? null : () => _respond(id, true),
+                  onPressed: isResponding
+                      ? null
+                      : () => _respond(id, true, invitation: inv),
                   child: isResponding
                       ? const SizedBox(
                           width: 18,

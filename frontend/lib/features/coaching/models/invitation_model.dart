@@ -93,12 +93,7 @@ class InvitationUser {
   final String? email;
   final String? picture;
 
-  const InvitationUser({
-    required this.id,
-    this.name,
-    this.email,
-    this.picture,
-  });
+  const InvitationUser({required this.id, this.name, this.email, this.picture});
 
   factory InvitationUser.fromJson(Map<String, dynamic> json) {
     return InvitationUser(
@@ -115,11 +110,7 @@ class InvitationWard {
   final String name;
   final String? picture;
 
-  const InvitationWard({
-    required this.id,
-    required this.name,
-    this.picture,
-  });
+  const InvitationWard({required this.id, required this.name, this.picture});
 
   factory InvitationWard.fromJson(Map<String, dynamic> json) {
     return InvitationWard(

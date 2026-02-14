@@ -36,7 +36,18 @@ export class InvitationController {
         try {
             const coachingId = req.params.id as string;
             const invitedById = (req as any).user.id;
-            const { role, userId, wardId, invitePhone, inviteEmail, inviteName, message } = req.body;
+            const { role, userId, wardId, invitePhone, inviteEmail, inviteName, message, replacePending } = req.body;
+
+            console.log('Creating invitation:', {
+                coachingId,
+                role,
+                userId,
+                wardId,
+                invitePhone,
+                inviteEmail,
+                replacePending,
+                invitedById,
+            });
 
             if (!role) {
                 return res.status(400).json({ error: 'Role is required' });
@@ -57,10 +68,13 @@ export class InvitationController {
                 inviteName,
                 message,
                 invitedById,
+                replacePending: replacePending === true, // Ensure boolean
             });
 
+            console.log('Invitation created successfully:', invitation.id);
             return res.status(201).json(invitation);
         } catch (error: any) {
+            console.error('Failed to create invitation:', error.message);
             return res.status(400).json({ error: error.message });
         }
     }

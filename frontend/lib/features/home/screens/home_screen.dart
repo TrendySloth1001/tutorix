@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import '../../../shared/models/user_model.dart';
+import '../../../shared/services/notification_service.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../../coaching/screens/coaching_shell.dart';
 import '../../coaching/screens/create_coaching_screen.dart';
 import '../../coaching/services/coaching_service.dart';
 import '../../coaching/widgets/coaching_card.dart';
+import '../../notifications/screens/personal_notifications_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final UserModel user;
@@ -18,13 +20,29 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final CoachingService _coachingService = CoachingService();
+  final NotificationService _notificationService = NotificationService();
   List<CoachingModel> _coachings = [];
   bool _isLoading = true;
+  int _unreadNotifications = 0;
 
   @override
   void initState() {
     super.initState();
     _loadCoachings();
+    _loadNotificationCount();
+  }
+
+  Future<void> _loadNotificationCount() async {
+    try {
+      final result = await _notificationService.getUserNotifications(limit: 1);
+      if (mounted) {
+        setState(() {
+          _unreadNotifications = result['unreadCount'] ?? 0;
+        });
+      }
+    } catch (_) {
+      // Silent fail
+    }
   }
 
   Future<void> _loadCoachings() async {
@@ -60,6 +78,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  void _navigateToNotifications() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => const PersonalNotificationsScreen(),
+      ),
+    );
+    // Refresh notification count when returning
+    _loadNotificationCount();
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -67,7 +96,11 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: CustomScrollView(
         slivers: [
-          _HomeHeader(user: widget.user),
+          _HomeHeader(
+            user: widget.user,
+            unreadCount: _unreadNotifications,
+            onNotificationTap: _navigateToNotifications,
+          ),
           if (_isLoading)
             const SliverFillRemaining(
               child: Center(child: CircularProgressIndicator()),
@@ -119,7 +152,14 @@ class _HomeScreenState extends State<HomeScreen> {
 
 class _HomeHeader extends StatelessWidget {
   final UserModel user;
-  const _HomeHeader({required this.user});
+  final int unreadCount;
+  final VoidCallback onNotificationTap;
+  
+  const _HomeHeader({
+    required this.user,
+    required this.unreadCount,
+    required this.onNotificationTap,
+  });
 
   String get _greeting {
     final h = DateTime.now().hour;
@@ -183,10 +223,39 @@ class _HomeHeader extends StatelessWidget {
                   ],
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.notifications_none_rounded),
-                onPressed: () {},
-                color: theme.colorScheme.primary,
+              Stack(
+                children: [
+                  IconButton(
+                    icon: const Icon(Icons.notifications_none_rounded),
+                    onPressed: onNotificationTap,
+                    color: theme.colorScheme.primary,
+                  ),
+                  if (unreadCount > 0)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        constraints: const BoxConstraints(
+                          minWidth: 16,
+                          minHeight: 16,
+                        ),
+                        child: Text(
+                          unreadCount > 99 ? '99+' : '$unreadCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ),
+                ],
               ),
             ],
           ),
