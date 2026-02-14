@@ -81,9 +81,7 @@ class _HomeScreenState extends State<HomeScreen> {
   void _navigateToNotifications() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => const PersonalNotificationsScreen(),
-      ),
+      MaterialPageRoute(builder: (_) => const PersonalNotificationsScreen()),
     );
     // Refresh notification count when returning
     _loadNotificationCount();
@@ -154,7 +152,7 @@ class _HomeHeader extends StatelessWidget {
   final UserModel user;
   final int unreadCount;
   final VoidCallback onNotificationTap;
-  
+
   const _HomeHeader({
     required this.user,
     required this.unreadCount,

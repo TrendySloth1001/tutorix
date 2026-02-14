@@ -128,7 +128,10 @@ class ApiClient {
     }
 
     // Check both 'message' and 'error' fields (backend uses both)
-    final message = data['message'] ?? data['error'] ?? 'Request failed (${response.statusCode})';
+    final message =
+        data['message'] ??
+        data['error'] ??
+        'Request failed (${response.statusCode})';
     debugPrint('ApiClient error ${response.statusCode}: $message');
     debugPrint('Full response: ${response.body}');
     throw Exception(message);

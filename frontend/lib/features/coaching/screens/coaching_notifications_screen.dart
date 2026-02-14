@@ -73,7 +73,7 @@ class _CoachingNotificationsScreenState
       setState(() {
         _notifications.removeWhere((n) => n.id == id);
       });
-      
+
       // Then delete from backend
       await _allowNotifications.deleteNotification(id);
     } catch (e) {
@@ -92,7 +92,7 @@ class _CoachingNotificationsScreenState
 
   Future<void> _removeMember(String memberId, String notificationId) async {
     final theme = Theme.of(context);
-    
+
     // Show bottom sheet with options
     final action = await showModalBottomSheet<String>(
       context: context,
@@ -111,15 +111,13 @@ class _CoachingNotificationsScreenState
               height: 4,
               margin: const EdgeInsets.only(bottom: 20),
               decoration: BoxDecoration(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.3,
+                ),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Icon(
-              Icons.warning_amber_rounded,
-              size: 48,
-              color: Colors.orange,
-            ),
+            Icon(Icons.warning_amber_rounded, size: 48, color: Colors.orange),
             const SizedBox(height: 16),
             Text(
               'Member in Another Coaching',
@@ -179,10 +177,12 @@ class _CoachingNotificationsScreenState
         if (mounted) {
           // Delete the notification immediately from UI
           await _delete(notificationId);
-          
+
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
-              content: Text('Member removed successfully. They have been notified.'),
+              content: Text(
+                'Member removed successfully. They have been notified.',
+              ),
               backgroundColor: Colors.green,
               duration: Duration(seconds: 3),
             ),
@@ -330,7 +330,9 @@ class _CoachingNotificationsScreenState
                     ),
                   ],
                 ),
-                if (isJoinAlert && n.data != null && n.data!['memberId'] != null) ...[
+                if (isJoinAlert &&
+                    n.data != null &&
+                    n.data!['memberId'] != null) ...[
                   const SizedBox(height: 12),
                   Padding(
                     padding: const EdgeInsets.only(left: 44),
