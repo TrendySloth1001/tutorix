@@ -374,6 +374,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                         onRefresh: _loadData,
                         emptyIcon: Icons.groups_outlined,
                         emptyText: 'No members yet',
+                        canManage: _canInvite,
                       ),
                       _MemberListView(
                         members: _filter('TEACHER'),
@@ -381,6 +382,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                         onRefresh: _loadData,
                         emptyIcon: Icons.school_outlined,
                         emptyText: 'No teachers yet',
+                        canManage: _canInvite,
                       ),
                       _InviteListView(
                         invites: _pending,
@@ -461,6 +463,7 @@ class _MemberListView extends StatelessWidget {
   final Future<void> Function() onRefresh;
   final IconData emptyIcon;
   final String emptyText;
+  final bool canManage;
 
   const _MemberListView({
     required this.members,
@@ -468,6 +471,7 @@ class _MemberListView extends StatelessWidget {
     required this.onRefresh,
     required this.emptyIcon,
     required this.emptyText,
+    required this.canManage,
   });
 
   @override
@@ -482,6 +486,7 @@ class _MemberListView extends StatelessWidget {
         itemBuilder: (_, i) => _MemberRow(
           member: members[i],
           onRemove: () => onRemove(members[i]),
+          canRemove: canManage,
         ),
       ),
     );
@@ -491,7 +496,13 @@ class _MemberListView extends StatelessWidget {
 class _MemberRow extends StatelessWidget {
   final MemberModel member;
   final VoidCallback onRemove;
-  const _MemberRow({required this.member, required this.onRemove});
+  final bool canRemove;
+
+  const _MemberRow({
+    required this.member,
+    required this.onRemove,
+    required this.canRemove,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -548,8 +559,6 @@ class _MemberRow extends StatelessWidget {
                       ),
                       fontSize: 11,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
                   ),
               ],
             ),
@@ -560,45 +569,49 @@ class _MemberRow extends StatelessWidget {
           const SizedBox(width: 4),
 
           // Options
-          SizedBox(
-            width: 28,
-            height: 28,
-            child: PopupMenuButton<String>(
-              padding: EdgeInsets.zero,
-              iconSize: 18,
-              icon: Icon(
-                Icons.more_vert_rounded,
-                color: theme.colorScheme.secondary.withValues(alpha: 0.35),
-                size: 18,
-              ),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(10),
-              ),
-              onSelected: (v) {
-                if (v == 'remove') onRemove();
-              },
-              itemBuilder: (_) => [
-                const PopupMenuItem(
-                  value: 'remove',
-                  height: 40,
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.person_remove_rounded,
-                        color: Colors.redAccent,
-                        size: 18,
-                      ),
-                      SizedBox(width: 8),
-                      Text(
-                        'Remove',
-                        style: TextStyle(color: Colors.redAccent, fontSize: 13),
-                      ),
-                    ],
-                  ),
+          if (canRemove)
+            SizedBox(
+              width: 28,
+              height: 28,
+              child: PopupMenuButton<String>(
+                padding: EdgeInsets.zero,
+                iconSize: 18,
+                icon: Icon(
+                  Icons.more_vert_rounded,
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.35),
+                  size: 18,
                 ),
-              ],
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                onSelected: (v) {
+                  if (v == 'remove') onRemove();
+                },
+                itemBuilder: (_) => [
+                  const PopupMenuItem(
+                    value: 'remove',
+                    height: 40,
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.person_remove_rounded,
+                          color: Colors.redAccent,
+                          size: 18,
+                        ),
+                        SizedBox(width: 8),
+                        Text(
+                          'Remove',
+                          style: TextStyle(
+                            color: Colors.redAccent,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -606,9 +619,9 @@ class _MemberRow extends StatelessWidget {
 
   Widget _roleBadge(String role) {
     final (Color c, String l) = switch (role) {
-      'ADMIN' => (const Color(0xFF6B5B95), 'Admin'),
-      'TEACHER' => (const Color(0xFF4A90A4), 'Teacher'),
-      _ => (const Color(0xFF5B8C5A), 'Student'),
+      'ADMIN' => (const Color(0xFF6B5B95), 'A'),
+      'TEACHER' => (const Color(0xFF4A90A4), 'T'),
+      _ => (const Color(0xFF5B8C5A), 'S'),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -752,9 +765,9 @@ class _InviteRow extends StatelessWidget {
 
   Widget _roleBadge(String role) {
     final (Color c, String l) = switch (role) {
-      'ADMIN' => (const Color(0xFF6B5B95), 'Admin'),
-      'TEACHER' => (const Color(0xFF4A90A4), 'Teacher'),
-      _ => (const Color(0xFF5B8C5A), 'Student'),
+      'ADMIN' => (const Color(0xFF6B5B95), 'A'),
+      'TEACHER' => (const Color(0xFF4A90A4), 'T'),
+      _ => (const Color(0xFF5B8C5A), 'S'),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),

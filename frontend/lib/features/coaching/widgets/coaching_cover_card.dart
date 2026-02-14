@@ -233,22 +233,22 @@ class CoachingCoverCard extends StatelessWidget {
     IconData icon;
 
     if (roleIsOwner) {
-      label = 'Owner';
+      label = 'O';
       bgColor = Colors.amber.shade400;
       textColor = Colors.amber.shade900;
       icon = Icons.star_rounded;
     } else if (displayRole == 'TEACHER') {
-      label = 'Teacher';
+      label = 'T';
       bgColor = Colors.blue.shade400;
       textColor = Colors.blue.shade900;
       icon = Icons.school_rounded;
     } else if (displayRole == 'STUDENT') {
-      label = 'Student';
+      label = 'S';
       bgColor = Colors.orange.shade400;
       textColor = Colors.orange.shade900;
       icon = Icons.person_rounded;
     } else {
-      label = 'Owner';
+      label = 'O';
       bgColor = Colors.amber.shade400;
       textColor = Colors.amber.shade900;
       icon = Icons.star_rounded;
