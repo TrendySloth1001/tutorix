@@ -1049,8 +1049,9 @@ class _NoteCard extends StatelessWidget {
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.55),
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.55,
+                                ),
                                 height: 1.4,
                                 fontSize: 13,
                               ),
@@ -1071,8 +1072,9 @@ class _NoteCard extends StatelessWidget {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.04),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.04,
+                              ),
                               borderRadius: BorderRadius.circular(6),
                             ),
                             child: Text(
@@ -1080,8 +1082,9 @@ class _NoteCard extends StatelessWidget {
                               style: theme.textTheme.bodySmall?.copyWith(
                                 fontSize: 11,
                                 fontWeight: FontWeight.w500,
-                                color: theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.45),
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.45,
+                                ),
                               ),
                             ),
                           ),
@@ -1183,8 +1186,9 @@ class _NoteCard extends StatelessWidget {
                                 maxLines: 1,
                                 overflow: TextOverflow.ellipsis,
                                 style: theme.textTheme.bodySmall?.copyWith(
-                                  color: theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.7),
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.7,
+                                  ),
                                   fontWeight: FontWeight.w500,
                                   fontSize: 13,
                                 ),
@@ -1205,10 +1209,11 @@ class _NoteCard extends StatelessWidget {
                     children: [
                       // Show first 2 attachments
                       ...note.attachments.take(2).map((a) {
-                        final ac = _typeConfig[a.fileType] ??
+                        final ac =
+                            _typeConfig[a.fileType] ??
                             (
                               Icons.attach_file_rounded,
-                              theme.colorScheme.primary
+                              theme.colorScheme.primary,
                             );
                         return Container(
                           padding: const EdgeInsets.symmetric(
@@ -1229,7 +1234,9 @@ class _NoteCard extends StatelessWidget {
                               Icon(ac.$1, size: 16, color: ac.$2),
                               const SizedBox(width: 6),
                               ConstrainedBox(
-                                constraints: const BoxConstraints(maxWidth: 180),
+                                constraints: const BoxConstraints(
+                                  maxWidth: 180,
+                                ),
                                 child: Text(
                                   a.fileName ?? a.fileType.toUpperCase(),
                                   maxLines: 1,
@@ -1262,12 +1269,14 @@ class _NoteCard extends StatelessWidget {
                             vertical: 7,
                           ),
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.06),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.06,
+                            ),
                             borderRadius: BorderRadius.circular(10),
                             border: Border.all(
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.1),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.1,
+                              ),
                               width: 1,
                             ),
                           ),
@@ -1277,8 +1286,9 @@ class _NoteCard extends StatelessWidget {
                               Icon(
                                 Icons.more_horiz_rounded,
                                 size: 16,
-                                color: theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.5),
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.5,
+                                ),
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -1286,8 +1296,9 @@ class _NoteCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.5),
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.5,
+                                  ),
                                 ),
                               ),
                             ],
