@@ -424,8 +424,6 @@ class _EnhancedPdfViewerState extends State<_EnhancedPdfViewer> {
                 onPrevious: () => _searchResult?.previousInstance(),
               ),
             ),
-
-
         ],
       ),
       // Page counter
@@ -842,9 +840,7 @@ class _PageJumpDialog extends StatelessWidget {
         decoration: InputDecoration(
           hintText: 'Page number (1-$totalPages)',
           filled: true,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
         autofocus: true,
       ),
