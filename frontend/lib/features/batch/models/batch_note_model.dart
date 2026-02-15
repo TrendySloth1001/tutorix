@@ -129,11 +129,7 @@ class NoteBatchInfo {
   final String name;
   final String? subject;
 
-  const NoteBatchInfo({
-    required this.id,
-    required this.name,
-    this.subject,
-  });
+  const NoteBatchInfo({required this.id, required this.name, this.subject});
 
   factory NoteBatchInfo.fromJson(Map<String, dynamic> json) {
     return NoteBatchInfo(

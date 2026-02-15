@@ -52,35 +52,42 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
     setState(() => _isLoading = true);
     try {
       // Load data with individual error handling to prevent one failure from blocking others
-      final membersResult = await _memberService.getMembers(widget.coaching.id).catchError((e) {
-        print('ERROR loading members: $e');
-        return <MemberModel>[];
-      });
-      
-      final invitationsResult = await _memberService.getInvitations(widget.coaching.id).catchError((e) {
-        print('ERROR loading invitations: $e');
-        return <InvitationModel>[];
-      });
-      
-      final notificationsResult = await _notificationService.getCoachingNotifications(
-        widget.coaching.id,
-        limit: 1,
-      ).catchError((e) {
-        print('ERROR loading notifications: $e');
-        return {'unreadCount': 0};
-      });
-      
-      final notesResult = await _batchService.getRecentNotes(widget.coaching.id).catchError((e) {
-        print('ERROR loading recent notes: $e');
-        return <BatchNoteModel>[];
-      });
-      
+      final membersResult = await _memberService
+          .getMembers(widget.coaching.id)
+          .catchError((e) {
+            print('ERROR loading members: $e');
+            return <MemberModel>[];
+          });
+
+      final invitationsResult = await _memberService
+          .getInvitations(widget.coaching.id)
+          .catchError((e) {
+            print('ERROR loading invitations: $e');
+            return <InvitationModel>[];
+          });
+
+      final notificationsResult = await _notificationService
+          .getCoachingNotifications(widget.coaching.id, limit: 1)
+          .catchError((e) {
+            print('ERROR loading notifications: $e');
+            return {'unreadCount': 0};
+          });
+
+      final notesResult = await _batchService
+          .getRecentNotes(widget.coaching.id)
+          .catchError((e) {
+            print('ERROR loading recent notes: $e');
+            return <BatchNoteModel>[];
+          });
+
       _members = membersResult;
       _invitations = invitationsResult;
       _unreadNotifications = notificationsResult['unreadCount'] ?? 0;
       _recentNotes = notesResult;
-      
-      print('DEBUG: Dashboard loaded - Members: ${_members.length}, Notes: ${_recentNotes.length}');
+
+      print(
+        'DEBUG: Dashboard loaded - Members: ${_members.length}, Notes: ${_recentNotes.length}',
+      );
     } catch (e) {
       print('FATAL ERROR loading dashboard data: $e');
     }
@@ -101,9 +108,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
   void _navigateToNote(BatchNoteModel note) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => NoteDetailScreen(note: note),
-      ),
+      MaterialPageRoute(builder: (_) => NoteDetailScreen(note: note)),
     );
   }
 
@@ -113,7 +118,8 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
       _invitations.where((i) => i.isPending).toList();
 
   // Role helpers
-  bool get _isOwner => widget.user != null && widget.coaching.isOwner(widget.user!.id);
+  bool get _isOwner =>
+      widget.user != null && widget.coaching.isOwner(widget.user!.id);
   String? get _myRole => widget.coaching.myRole;
   bool get _isStudent => _myRole == 'STUDENT';
   bool get _isAdmin => _myRole == 'ADMIN';
@@ -152,7 +158,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
               ],
             ),
           ),
-          
+
           // ── Scrollable Content ──
           Expanded(
             child: RefreshIndicator(
@@ -160,168 +166,190 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                 children: [
-
-            // ── Role badge (for students/teachers) ──
-            if (!_canManageMembers && _myRole != null) ...[
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.3),
-                  ),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Icon(
-                      _isStudent ? Icons.school_rounded : Icons.person_rounded,
-                      size: 16,
-                      color: theme.colorScheme.primary,
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      _myRole!,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.primary,
-                        fontWeight: FontWeight.w700,
+                  // ── Role badge (for students/teachers) ──
+                  if (!_canManageMembers && _myRole != null) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
                       ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer.withValues(
+                          alpha: 0.5,
+                        ),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.3,
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            _isStudent
+                                ? Icons.school_rounded
+                                : Icons.person_rounded,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            _myRole!,
+                            style: theme.textTheme.labelMedium?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
+                  // ── Stat chips (only for admins/owners) ──
+                  if (_canManageMembers) ...[
+                    _StatChipRow(
+                      teachers: _countRole('TEACHER'),
+                      students: _countRole('STUDENT'),
+                      admins: _countRole('ADMIN'),
+                      pending: _pending.length,
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+
+                  // ── Quick action (only for admins/owners) ──
+                  if (_canManageMembers) ...[
+                    _QuickAction(
+                      icon: Icons.person_add_alt_1_rounded,
+                      label: 'Invite Members',
+                      onTap: widget.onMembersTap,
                     ),
                   ],
-                ),
-              ),
-              const SizedBox(height: 20),
-            ],
 
-            // ── Stat chips (only for admins/owners) ──
-            if (_canManageMembers) ...[
-              _StatChipRow(
-                teachers: _countRole('TEACHER'),
-                students: _countRole('STUDENT'),
-                admins: _countRole('ADMIN'),
-                pending: _pending.length,
-              ),
-              const SizedBox(height: 24),
-            ],
-
-            // ── Quick action (only for admins/owners) ──
-            if (_canManageMembers) ...[
-              _QuickAction(
-                icon: Icons.person_add_alt_1_rounded,
-                label: 'Invite Members',
-                onTap: widget.onMembersTap,
-              ),
-            ],
-
-            // ── Recent Notes (priority for students) ──
-            if (_recentNotes.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              _SectionHeader(
-                title: _isStudent ? 'Latest Notes' : 'Recent Notes',
-                icon: Icons.sticky_note_2_outlined,
-              ),
-              const SizedBox(height: 8),
-              _RecentNotesSection(
-                notes: _recentNotes,
-                onNoteTap: _navigateToNote,
-              ),
-            ],
-
-            // ── Recent Members (only for admins/owners) ──
-            if (_canManageMembers && _members.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              _SectionHeader(
-                title: 'Recent Members',
-                trailing: _members.length > 5 ? 'See all' : null,
-                onTrailingTap: widget.onMembersTap,
-              ),
-              const SizedBox(height: 8),
-              ..._members.take(5).map((m) => _CompactMemberTile(member: m)),
-            ],
-
-            // ── Pending Invitations (only for admins/owners) ──
-            if (_canManageMembers && _pending.isNotEmpty) ...[
-              const SizedBox(height: 24),
-              _SectionHeader(title: 'Pending Invitations'),
-              const SizedBox(height: 8),
-              ..._pending.take(5).map((i) => _CompactInviteTile(invite: i)),
-            ],
-
-            // ── Student/Teacher Empty state ──
-            if (!_canManageMembers && _recentNotes.isEmpty) ...[
-              const SizedBox(height: 60),
-              Center(
-                child: Column(
-                  children: [
-                    Icon(
-                      _isStudent ? Icons.wb_sunny_outlined : Icons.edit_note_outlined,
-                      size: 56,
-                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      _isStudent ? 'All Caught Up! 🎉' : 'No Recent Activity',
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.7,
-                        ),
-                        fontWeight: FontWeight.w600,
-                      ),
+                  // ── Recent Notes (priority for students) ──
+                  if (_recentNotes.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(
+                      title: _isStudent ? 'Latest Notes' : 'Recent Notes',
+                      icon: Icons.sticky_note_2_outlined,
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      _isStudent
-                          ? 'Today is free - nothing new from your teachers in the last 7 days.\nEnjoy your time!'
-                          : 'Create notes in your batches to see them here',
-                      textAlign: TextAlign.center,
-                      style: theme.textTheme.bodyMedium?.copyWith(
-                        color: theme.colorScheme.secondary.withValues(
-                          alpha: 0.5,
-                        ),
-                        height: 1.5,
-                      ),
+                    _RecentNotesSection(
+                      notes: _recentNotes,
+                      onNoteTap: _navigateToNote,
                     ),
                   ],
-                ),
-              ),
-            ],
 
-            // ── Admin Empty state ──
-            if (_canManageMembers && _members.isEmpty && _pending.isEmpty) ...[
-              const SizedBox(height: 60),
-              Center(
-                child: Column(
-                  children: [
-                    Icon(
-                      Icons.group_add_rounded,
-                      size: 48,
-                      color: theme.colorScheme.primary.withValues(alpha: 0.2),
+                  // ── Recent Members (only for admins/owners) ──
+                  if (_canManageMembers && _members.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(
+                      title: 'Recent Members',
+                      trailing: _members.length > 5 ? 'See all' : null,
+                      onTrailingTap: widget.onMembersTap,
                     ),
-                    const SizedBox(height: 12),
-                    Text(
-                      'No members yet',
-                      style: theme.textTheme.bodyLarge?.copyWith(
-                        color: theme.colorScheme.secondary.withValues(
-                          alpha: 0.5,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Invite teachers and students to get started',
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.secondary.withValues(
-                          alpha: 0.4,
-                        ),
+                    const SizedBox(height: 8),
+                    ..._members
+                        .take(5)
+                        .map((m) => _CompactMemberTile(member: m)),
+                  ],
+
+                  // ── Pending Invitations (only for admins/owners) ──
+                  if (_canManageMembers && _pending.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(title: 'Pending Invitations'),
+                    const SizedBox(height: 8),
+                    ..._pending
+                        .take(5)
+                        .map((i) => _CompactInviteTile(invite: i)),
+                  ],
+
+                  // ── Student/Teacher Empty state ──
+                  if (!_canManageMembers && _recentNotes.isEmpty) ...[
+                    const SizedBox(height: 60),
+                    Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            _isStudent
+                                ? Icons.wb_sunny_outlined
+                                : Icons.edit_note_outlined,
+                            size: 56,
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.2,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            _isStudent
+                                ? 'All Caught Up! 🎉'
+                                : 'No Recent Activity',
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.7,
+                              ),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _isStudent
+                                ? 'Today is free - nothing new from your teachers in the last 7 days.\nEnjoy your time!'
+                                : 'Create notes in your batches to see them here',
+                            textAlign: TextAlign.center,
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.secondary.withValues(
+                                alpha: 0.5,
+                              ),
+                              height: 1.5,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                ),
+
+                  // ── Admin Empty state ──
+                  if (_canManageMembers &&
+                      _members.isEmpty &&
+                      _pending.isEmpty) ...[
+                    const SizedBox(height: 60),
+                    Center(
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.group_add_rounded,
+                            size: 48,
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.2,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No members yet',
+                            style: theme.textTheme.bodyLarge?.copyWith(
+                              color: theme.colorScheme.secondary.withValues(
+                                alpha: 0.5,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Invite teachers and students to get started',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.secondary.withValues(
+                                alpha: 0.4,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ],
               ),
-            ],
-          ],
-        ),
             ),
           ),
         ],
@@ -774,28 +802,31 @@ class _RecentNotesSection extends StatelessWidget {
   final List<BatchNoteModel> notes;
   final ValueChanged<BatchNoteModel> onNoteTap;
 
-  const _RecentNotesSection({
-    required this.notes,
-    required this.onNoteTap,
-  });
+  const _RecentNotesSection({required this.notes, required this.onNoteTap});
 
   Map<String, List<BatchNoteModel>> _groupNotesByDate() {
     final grouped = <String, List<BatchNoteModel>>{};
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
-    
+
     print('DEBUG: Current date - Today: $today, Yesterday: $yesterday');
-    
+
     for (final note in notes) {
       if (note.createdAt == null) continue;
-      
+
       // Convert to local time and extract date only
       final noteDate = note.createdAt!.toLocal();
-      final noteDateOnly = DateTime(noteDate.year, noteDate.month, noteDate.day);
-      
-      print('DEBUG: Note "${note.title}" - Created: ${note.createdAt} (UTC), Local: $noteDate, Date only: $noteDateOnly');
-      
+      final noteDateOnly = DateTime(
+        noteDate.year,
+        noteDate.month,
+        noteDate.day,
+      );
+
+      print(
+        'DEBUG: Note "${note.title}" - Created: ${note.createdAt} (UTC), Local: $noteDate, Date only: $noteDateOnly',
+      );
+
       String dateKey;
       if (noteDateOnly.isAtSameMomentAs(today)) {
         dateKey = 'Today';
@@ -807,11 +838,11 @@ class _RecentNotesSection extends StatelessWidget {
         dateKey = DateFormat('MMM dd, yyyy').format(noteDate);
         print('DEBUG: Classified as $dateKey');
       }
-      
+
       grouped.putIfAbsent(dateKey, () => []);
       grouped[dateKey]!.add(note);
     }
-    
+
     print('DEBUG: Final groups: ${grouped.keys.toList()}');
     return grouped;
   }
@@ -820,7 +851,7 @@ class _RecentNotesSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final groupedNotes = _groupNotesByDate();
-    
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: groupedNotes.entries.map((entry) {
@@ -843,7 +874,9 @@ class _RecentNotesSection extends StatelessWidget {
                     child: Text(
                       entry.key,
                       style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.5,
+                        ),
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
                       ),
@@ -859,10 +892,9 @@ class _RecentNotesSection extends StatelessWidget {
               ),
             ),
             // Notes for this date
-            ...entry.value.map((note) => _NoteCard(
-              note: note,
-              onTap: () => onNoteTap(note),
-            )),
+            ...entry.value.map(
+              (note) => _NoteCard(note: note, onTap: () => onNoteTap(note)),
+            ),
           ],
         );
       }).toList(),
@@ -874,10 +906,7 @@ class _NoteCard extends StatelessWidget {
   final BatchNoteModel note;
   final VoidCallback onTap;
 
-  const _NoteCard({
-    required this.note,
-    required this.onTap,
-  });
+  const _NoteCard({required this.note, required this.onTap});
 
   static const _typeConfig = {
     'pdf': (Icons.picture_as_pdf_rounded, Color(0xFFE53935)),
@@ -978,7 +1007,9 @@ class _NoteCard extends StatelessWidget {
                                 Icon(
                                   Icons.class_outlined,
                                   size: 14,
-                                  color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                                  color: theme.colorScheme.primary.withValues(
+                                    alpha: 0.6,
+                                  ),
                                 ),
                                 const SizedBox(width: 6),
                                 Expanded(
