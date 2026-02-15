@@ -5,6 +5,7 @@ import '../widgets/coaching_bottom_nav.dart';
 import 'coaching_dashboard_screen.dart';
 import 'coaching_members_screen.dart';
 import 'coaching_profile_screen.dart';
+import '../../batch/screens/batches_list_screen.dart';
 
 /// Root shell for a coaching — holds the [CoachingBottomNav] and swaps
 /// between Dashboard, Members, and Profile screens via an [IndexedStack].
@@ -47,6 +48,7 @@ class _CoachingShellState extends State<CoachingShell> {
         onBack: () => Navigator.pop(context),
       ),
       CoachingMembersScreen(coaching: _coaching, user: widget.user),
+      BatchesListScreen(coaching: _coaching, user: widget.user),
       CoachingProfileScreen(
         coaching: _coaching,
         user: widget.user,

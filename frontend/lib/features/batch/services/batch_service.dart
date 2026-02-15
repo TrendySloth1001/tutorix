@@ -1,0 +1,229 @@
+import '../../../core/constants/api_constants.dart';
+import '../../../shared/services/api_client.dart';
+import '../models/batch_model.dart';
+import '../models/batch_member_model.dart';
+import '../models/batch_note_model.dart';
+import '../models/batch_notice_model.dart';
+
+class BatchService {
+  final ApiClient _api = ApiClient.instance;
+
+  // ── CRUD ──────────────────────────────────────────────────────────
+
+  /// POST /coaching/:coachingId/batches
+  Future<BatchModel> createBatch(
+    String coachingId, {
+    required String name,
+    String? subject,
+    String? description,
+    String? startTime,
+    String? endTime,
+    List<String>? days,
+    int? maxStudents,
+  }) async {
+    final body = <String, dynamic>{'name': name};
+    if (subject != null) body['subject'] = subject;
+    if (description != null) body['description'] = description;
+    if (startTime != null) body['startTime'] = startTime;
+    if (endTime != null) body['endTime'] = endTime;
+    if (days != null) body['days'] = days;
+    if (maxStudents != null) body['maxStudents'] = maxStudents;
+
+    final data = await _api.postAuthenticated(
+      ApiConstants.batches(coachingId),
+      body: body,
+    );
+    return BatchModel.fromJson(data['batch'] as Map<String, dynamic>);
+  }
+
+  /// GET /coaching/:coachingId/batches
+  Future<List<BatchModel>> listBatches(String coachingId,
+      {String? status}) async {
+    var url = ApiConstants.batches(coachingId);
+    if (status != null) url += '?status=$status';
+    final data = await _api.getAuthenticated(url);
+    final list = data['batches'] as List<dynamic>;
+    return list
+        .map((e) => BatchModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// GET /coaching/:coachingId/batches/my
+  Future<List<BatchModel>> getMyBatches(String coachingId) async {
+    final data =
+        await _api.getAuthenticated(ApiConstants.myBatches(coachingId));
+    final list = data['batches'] as List<dynamic>;
+    return list
+        .map((e) => BatchModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// GET /coaching/:coachingId/batches/:batchId
+  Future<BatchModel> getBatchById(String coachingId, String batchId) async {
+    final data = await _api.getAuthenticated(
+      ApiConstants.batchById(coachingId, batchId),
+    );
+    return BatchModel.fromJson(data['batch'] as Map<String, dynamic>);
+  }
+
+  /// PATCH /coaching/:coachingId/batches/:batchId
+  Future<BatchModel> updateBatch(
+    String coachingId,
+    String batchId, {
+    String? name,
+    String? subject,
+    String? description,
+    String? startTime,
+    String? endTime,
+    List<String>? days,
+    int? maxStudents,
+    String? status,
+  }) async {
+    final body = <String, dynamic>{};
+    if (name != null) body['name'] = name;
+    if (subject != null) body['subject'] = subject;
+    if (description != null) body['description'] = description;
+    if (startTime != null) body['startTime'] = startTime;
+    if (endTime != null) body['endTime'] = endTime;
+    if (days != null) body['days'] = days;
+    if (maxStudents != null) body['maxStudents'] = maxStudents;
+    if (status != null) body['status'] = status;
+
+    final data = await _api.patchAuthenticated(
+      ApiConstants.batchById(coachingId, batchId),
+      body: body,
+    );
+    return BatchModel.fromJson(data['batch'] as Map<String, dynamic>);
+  }
+
+  /// DELETE /coaching/:coachingId/batches/:batchId
+  Future<bool> deleteBatch(String coachingId, String batchId) =>
+      _api.deleteAuthenticated(ApiConstants.batchById(coachingId, batchId));
+
+  // ── Members ───────────────────────────────────────────────────────
+
+  /// POST /coaching/:coachingId/batches/:batchId/members
+  Future<List<BatchMemberModel>> addMembers(
+    String coachingId,
+    String batchId, {
+    required List<String> memberIds,
+    String role = 'STUDENT',
+  }) async {
+    final data = await _api.postAuthenticated(
+      ApiConstants.batchMembers(coachingId, batchId),
+      body: {'memberIds': memberIds, 'role': role},
+    );
+    final list = data['members'] as List<dynamic>;
+    return list
+        .map((e) => BatchMemberModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// GET /coaching/:coachingId/batches/:batchId/members
+  Future<List<BatchMemberModel>> getMembers(
+      String coachingId, String batchId) async {
+    final data = await _api.getAuthenticated(
+      ApiConstants.batchMembers(coachingId, batchId),
+    );
+    final list = data['members'] as List<dynamic>;
+    return list
+        .map((e) => BatchMemberModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// GET /coaching/:coachingId/batches/:batchId/members/available?role=...
+  Future<List<dynamic>> getAvailableMembers(
+      String coachingId, String batchId,
+      {String? role}) async {
+    var url = ApiConstants.batchAvailableMembers(coachingId, batchId);
+    if (role != null) url += '?role=$role';
+    final data = await _api.getAuthenticated(url);
+    return data['members'] as List<dynamic>;
+  }
+
+  /// DELETE /coaching/:coachingId/batches/:batchId/members/:batchMemberId
+  Future<bool> removeMember(
+          String coachingId, String batchId, String batchMemberId) =>
+      _api.deleteAuthenticated(
+        ApiConstants.removeBatchMember(coachingId, batchId, batchMemberId),
+      );
+
+  // ── Notes ─────────────────────────────────────────────────────────
+
+  /// POST /coaching/:coachingId/batches/:batchId/notes
+  Future<BatchNoteModel> createNote(
+    String coachingId,
+    String batchId, {
+    required String title,
+    String? description,
+    required String fileUrl,
+    String fileType = 'pdf',
+    String? fileName,
+  }) async {
+    final data = await _api.postAuthenticated(
+      ApiConstants.batchNotes(coachingId, batchId),
+      body: {
+        'title': title,
+        'description': description,
+        'fileUrl': fileUrl,
+        'fileType': fileType,
+        'fileName': fileName,
+      },
+    );
+    return BatchNoteModel.fromJson(data['note'] as Map<String, dynamic>);
+  }
+
+  /// GET /coaching/:coachingId/batches/:batchId/notes
+  Future<List<BatchNoteModel>> listNotes(
+      String coachingId, String batchId) async {
+    final data = await _api.getAuthenticated(
+      ApiConstants.batchNotes(coachingId, batchId),
+    );
+    final list = data['notes'] as List<dynamic>;
+    return list
+        .map((e) => BatchNoteModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// DELETE /coaching/:coachingId/batches/:batchId/notes/:noteId
+  Future<bool> deleteNote(String coachingId, String batchId, String noteId) =>
+      _api.deleteAuthenticated(
+        ApiConstants.deleteBatchNote(coachingId, batchId, noteId),
+      );
+
+  // ── Notices ───────────────────────────────────────────────────────
+
+  /// POST /coaching/:coachingId/batches/:batchId/notices
+  Future<BatchNoticeModel> createNotice(
+    String coachingId,
+    String batchId, {
+    required String title,
+    required String message,
+    String priority = 'normal',
+  }) async {
+    final data = await _api.postAuthenticated(
+      ApiConstants.batchNotices(coachingId, batchId),
+      body: {'title': title, 'message': message, 'priority': priority},
+    );
+    return BatchNoticeModel.fromJson(data['notice'] as Map<String, dynamic>);
+  }
+
+  /// GET /coaching/:coachingId/batches/:batchId/notices
+  Future<List<BatchNoticeModel>> listNotices(
+      String coachingId, String batchId) async {
+    final data = await _api.getAuthenticated(
+      ApiConstants.batchNotices(coachingId, batchId),
+    );
+    final list = data['notices'] as List<dynamic>;
+    return list
+        .map((e) => BatchNoticeModel.fromJson(e as Map<String, dynamic>))
+        .toList();
+  }
+
+  /// DELETE /coaching/:coachingId/batches/:batchId/notices/:noticeId
+  Future<bool> deleteNotice(
+          String coachingId, String batchId, String noticeId) =>
+      _api.deleteAuthenticated(
+        ApiConstants.deleteBatchNotice(coachingId, batchId, noticeId),
+      );
+}

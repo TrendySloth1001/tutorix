@@ -17,6 +17,7 @@ class CoachingBottomNav extends StatelessWidget {
   static const _items = [
     _NavDef(icon: Icons.dashboard_rounded, label: 'Dashboard'),
     _NavDef(icon: Icons.people_rounded, label: 'Members'),
+    _NavDef(icon: Icons.group_work_rounded, label: 'Batches'),
     _NavDef(icon: Icons.school_rounded, label: 'Profile'),
   ];
 

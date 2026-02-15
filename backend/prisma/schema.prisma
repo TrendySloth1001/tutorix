@@ -46,6 +46,8 @@ model User {
   sentInvitations     Invitation[]      @relation("SentInvitations")
   notifications       Notification[]    @relation("UserNotifications")
   academicProfile     AcademicProfile?
+  uploadedNotes       BatchNote[]       @relation("NoteUploader")
+  sentNotices         BatchNotice[]     @relation("NoticeSender")
 }
 
 model Ward {
@@ -121,6 +123,7 @@ model Coaching {
   notifications Notification[]
   address       CoachingAddress?
   branches      CoachingBranch[]
+  batches       Batch[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -201,6 +204,9 @@ model CoachingMember {
   ward   Ward?   @relation(fields: [wardId], references: [id], onDelete: Cascade)
 
   status String @default("active") // active, pending, suspended
+
+  // Batch memberships
+  batchMembers BatchMember[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -298,4 +304,92 @@ model AcademicProfile {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+}
+
+// ─── Batch Management ────────────────────────────────────────────────
+
+model Batch {
+  id         String   @id @default(uuid())
+  coachingId String
+  coaching   Coaching @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+
+  name        String
+  subject     String?
+  description String?
+
+  // Schedule
+  startTime String?  // e.g. "09:00"
+  endTime   String?  // e.g. "10:30"
+  days      String[] @default([]) // ["MON", "TUE", "WED"]
+
+  // Capacity
+  maxStudents Int @default(0) // 0 = unlimited
+
+  status String @default("active") // active, archived
+
+  // Relations
+  members BatchMember[]
+  notes   BatchNote[]
+  notices BatchNotice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([coachingId])
+}
+
+model BatchMember {
+  id      String @id @default(uuid())
+  batchId String
+  batch   Batch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  memberId String
+  member   CoachingMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  role String @default("STUDENT") // TEACHER, STUDENT
+
+  createdAt DateTime @default(now())
+
+  @@unique([batchId, memberId])
+  @@index([batchId])
+  @@index([memberId])
+}
+
+model BatchNote {
+  id      String @id @default(uuid())
+  batchId String
+  batch   Batch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  fileUrl     String
+  fileType    String  @default("pdf") // pdf, image, doc, video, link
+  fileName    String?
+
+  uploadedById String
+  uploadedBy   User   @relation("NoteUploader", fields: [uploadedById], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([batchId])
+  @@index([uploadedById])
+}
+
+model BatchNotice {
+  id      String @id @default(uuid())
+  batchId String
+  batch   Batch  @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  title    String
+  message  String
+  priority String @default("normal") // low, normal, high, urgent
+
+  sentById String
+  sentBy   User   @relation("NoticeSender", fields: [sentById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([batchId])
+  @@index([sentById])
 }

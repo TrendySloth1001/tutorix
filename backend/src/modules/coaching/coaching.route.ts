@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { CoachingController } from './coaching.controller.js';
 import { InvitationController } from './invitation.controller.js';
 import { authMiddleware } from '../../shared/middleware/auth.middleware.js';
+import batchRoutes from '../batch/batch.route.js';
 
 const router = Router();
 const coachingController = new CoachingController();
@@ -45,6 +46,9 @@ router.patch('/:id/members/:memberId', authMiddleware, coachingController.update
 import { NotificationController } from '../notification/notification.controller.js';
 const notificationController = new NotificationController();
 router.get('/:id/notifications', authMiddleware, notificationController.getCoachingNotifications.bind(notificationController));
+
+// Batch management routes (nested)
+router.use('/:coachingId/batches', batchRoutes);
 
 // Dynamic route last
 router.get('/:id', coachingController.getById.bind(coachingController));

@@ -73,6 +73,31 @@ class ApiConstants {
   static const String academicOnboardingStatus =
       '$baseUrl/academic/onboarding-status';
 
+  // Batches
+  static String batches(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/batches';
+  static String batchById(String coachingId, String batchId) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId';
+  static String myBatches(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/batches/my';
+  static String batchMembers(String coachingId, String batchId) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/members';
+  static String batchAvailableMembers(String coachingId, String batchId) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/members/available';
+  static String removeBatchMember(
+          String coachingId, String batchId, String batchMemberId) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/members/$batchMemberId';
+  static String batchNotes(String coachingId, String batchId) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/notes';
+  static String deleteBatchNote(
+          String coachingId, String batchId, String noteId) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/notes/$noteId';
+  static String batchNotices(String coachingId, String batchId) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/notices';
+  static String deleteBatchNotice(
+          String coachingId, String batchId, String noticeId) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/notices/$noticeId';
+
   // Google
   static const String googleClientId =
       '299795936862-s70dge4e1k99b3db0faqss8qrcrjj12b.apps.googleusercontent.com';
