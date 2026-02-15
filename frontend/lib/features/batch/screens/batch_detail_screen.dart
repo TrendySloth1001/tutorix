@@ -1208,7 +1208,8 @@ class _NoteCard extends StatelessWidget {
                     children: [
                       // Show first 2 attachments with descriptions in reading flow
                       ...note.attachments.take(2).expand((a) {
-                        final ac = _typeConfig[a.fileType] ??
+                        final ac =
+                            _typeConfig[a.fileType] ??
                             (
                               Icons.attach_file_rounded,
                               theme.colorScheme.primary,
@@ -1261,12 +1262,14 @@ class _NoteCard extends StatelessWidget {
                             ),
                           ),
                           // Description directly below if exists
-                          if (a.description != null && a.description!.isNotEmpty)
+                          if (a.description != null &&
+                              a.description!.isNotEmpty)
                             Padding(
                               padding: const EdgeInsets.only(bottom: 8),
                               child: _DescriptionCard(
                                 description: a.description!,
-                                fileName: a.fileName ?? a.fileType.toUpperCase(),
+                                fileName:
+                                    a.fileName ?? a.fileType.toUpperCase(),
                                 theme: theme,
                               ),
                             ),
@@ -1868,7 +1871,8 @@ class _DescriptionCardState extends State<_DescriptionCard> {
 
   @override
   Widget build(BuildContext context) {
-    final needsExpansion = widget.description.length > 80 ||
+    final needsExpansion =
+        widget.description.length > 80 ||
         widget.description.split('\n').length > 2;
 
     return GestureDetector(
@@ -1878,8 +1882,9 @@ class _DescriptionCardState extends State<_DescriptionCard> {
       child: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: widget.theme.colorScheme.surfaceContainerHighest
-              .withValues(alpha: 0.4),
+          color: widget.theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.4,
+          ),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: widget.theme.colorScheme.outline.withValues(alpha: 0.2),
@@ -1895,7 +1900,9 @@ class _DescriptionCardState extends State<_DescriptionCard> {
                   width: 3,
                   height: 16,
                   decoration: BoxDecoration(
-                    color: widget.theme.colorScheme.primary.withValues(alpha: 0.4),
+                    color: widget.theme.colorScheme.primary.withValues(
+                      alpha: 0.4,
+                    ),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1903,8 +1910,9 @@ class _DescriptionCardState extends State<_DescriptionCard> {
                 Icon(
                   Icons.description_outlined,
                   size: 13,
-                  color: widget.theme.colorScheme.primary
-                      .withValues(alpha: 0.7),
+                  color: widget.theme.colorScheme.primary.withValues(
+                    alpha: 0.7,
+                  ),
                 ),
                 const SizedBox(width: 6),
                 Expanded(
@@ -1913,8 +1921,9 @@ class _DescriptionCardState extends State<_DescriptionCard> {
                     style: widget.theme.textTheme.bodySmall?.copyWith(
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
-                      color: widget.theme.colorScheme.onSurface
-                          .withValues(alpha: 0.6),
+                      color: widget.theme.colorScheme.onSurface.withValues(
+                        alpha: 0.6,
+                      ),
                     ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -1936,8 +1945,9 @@ class _DescriptionCardState extends State<_DescriptionCard> {
               widget.description,
               style: widget.theme.textTheme.bodySmall?.copyWith(
                 fontSize: 12,
-                color: widget.theme.colorScheme.onSurface
-                    .withValues(alpha: 0.75),
+                color: widget.theme.colorScheme.onSurface.withValues(
+                  alpha: 0.75,
+                ),
                 fontStyle: FontStyle.italic,
                 height: 1.4,
               ),

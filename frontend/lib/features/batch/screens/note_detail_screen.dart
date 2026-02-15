@@ -117,20 +117,22 @@ class NoteDetailScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 12),
                     // Each attachment followed by its description (reading flow)
-                    ...note.attachments.expand((a) => [
-                      _AttachmentCard(
-                        attachment: a,
-                        theme: theme,
-                        onTap: () => _openFile(context, a),
-                      ),
-                      // Description directly below if exists
-                      if (a.description != null && a.description!.isNotEmpty)
-                        _DescriptionTrailCard(
-                          description: a.description!,
-                          fileName: a.fileName ?? 'Unnamed file',
+                    ...note.attachments.expand(
+                      (a) => [
+                        _AttachmentCard(
+                          attachment: a,
                           theme: theme,
+                          onTap: () => _openFile(context, a),
                         ),
-                    ]),
+                        // Description directly below if exists
+                        if (a.description != null && a.description!.isNotEmpty)
+                          _DescriptionTrailCard(
+                            description: a.description!,
+                            fileName: a.fileName ?? 'Unnamed file',
+                            theme: theme,
+                          ),
+                      ],
+                    ),
                   ],
 
                   if (!hasFiles &&
@@ -672,7 +674,8 @@ class _DescriptionTrailCardState extends State<_DescriptionTrailCard> {
   @override
   Widget build(BuildContext context) {
     final colors = widget.theme.colorScheme;
-    final needsExpansion = widget.description.length > 100 ||
+    final needsExpansion =
+        widget.description.length > 100 ||
         widget.description.split('\n').length > 2;
 
     return Padding(
@@ -686,9 +689,7 @@ class _DescriptionTrailCardState extends State<_DescriptionTrailCard> {
           decoration: BoxDecoration(
             color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(14),
-            border: Border.all(
-              color: colors.outline.withValues(alpha: 0.2),
-            ),
+            border: Border.all(color: colors.outline.withValues(alpha: 0.2)),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,

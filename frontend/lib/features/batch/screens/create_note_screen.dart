@@ -100,10 +100,12 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
       setState(() {
         for (final f in result.files) {
           if (!_pickedFiles.any((e) => e.file.path == f.path)) {
-            _pickedFiles.add(_FileWithDescription(
-              file: f,
-              descriptionController: TextEditingController(),
-            ));
+            _pickedFiles.add(
+              _FileWithDescription(
+                file: f,
+                descriptionController: TextEditingController(),
+              ),
+            );
           }
         }
       });
@@ -157,7 +159,8 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
           final files = uploadResult['files'] as List<dynamic>;
           attachments = List.generate(files.length, (i) {
             final m = files[i] as Map<String, dynamic>;
-            final description = _pickedFiles[i].descriptionController.text.trim();
+            final description = _pickedFiles[i].descriptionController.text
+                .trim();
             return {
               'url': m['url'],
               'fileName': m['fileName'],
@@ -587,7 +590,8 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final config = _typeConfig[widget.fileType] ??
+    final config =
+        _typeConfig[widget.fileType] ??
         (Icons.attach_file_rounded, theme.colorScheme.primary);
     final color = config.$2;
 
@@ -596,10 +600,7 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: color.withValues(alpha: 0.15),
-          width: 1.5,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.15), width: 1.5),
       ),
       child: Column(
         children: [
@@ -637,8 +638,9 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
                           _formattedSize,
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontSize: 12,
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.5),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.5,
+                            ),
                           ),
                         ),
                       ],
@@ -686,17 +688,13 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Divider(
-                    color: color.withValues(alpha: 0.15),
-                    height: 1,
-                  ),
+                  Divider(color: color.withValues(alpha: 0.15), height: 1),
                   const SizedBox(height: 12),
                   Text(
                     'Description (optional)',
                     style: theme.textTheme.labelSmall?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color:
-                          theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -706,8 +704,9 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
                       hintText: 'e.g., Solutions for exercises 1-10',
                       hintStyle: TextStyle(
                         fontSize: 13,
-                        color:
-                            theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.3,
+                        ),
                       ),
                       filled: true,
                       fillColor: theme.colorScheme.surface,
