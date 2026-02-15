@@ -82,6 +82,8 @@ class ApiConstants {
       '$baseUrl/coaching/$coachingId/batches/$batchId';
   static String myBatches(String coachingId) =>
       '$baseUrl/coaching/$coachingId/batches/my';
+  static String recentNotes(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/batches/recent-notes';
   static String batchStorage(String coachingId) =>
       '$baseUrl/coaching/$coachingId/batches/storage';
   static String batchMembers(String coachingId, String batchId) =>

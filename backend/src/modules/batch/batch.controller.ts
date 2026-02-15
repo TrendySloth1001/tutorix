@@ -325,6 +325,17 @@ export class BatchController {
         }
     }
 
+    async getRecentNotes(req: Request, res: Response) {
+        try {
+            const coachingId = req.params.coachingId as string;
+            const userId = (req as any).user?.id as string;
+            const notes = await batchService.getRecentNotes(userId, coachingId);
+            res.json({ notes });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
     // ── Private helpers ───────────────────────────────────────────────
 
     private async verifyCoachingAdmin(coachingId: string, userId: string) {

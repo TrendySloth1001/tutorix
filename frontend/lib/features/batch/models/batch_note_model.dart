@@ -7,6 +7,7 @@ class BatchNoteModel {
   final List<NoteAttachment> attachments;
   final String uploadedById;
   final NoteUploader? uploadedBy;
+  final NoteBatchInfo? batch;
   final DateTime? createdAt;
   final DateTime? updatedAt;
 
@@ -18,6 +19,7 @@ class BatchNoteModel {
     this.attachments = const [],
     required this.uploadedById,
     this.uploadedBy,
+    this.batch,
     this.createdAt,
     this.updatedAt,
   });
@@ -37,6 +39,9 @@ class BatchNoteModel {
       uploadedById: json['uploadedById'] as String? ?? '',
       uploadedBy: json['uploadedBy'] != null
           ? NoteUploader.fromJson(json['uploadedBy'] as Map<String, dynamic>)
+          : null,
+      batch: json['batch'] != null
+          ? NoteBatchInfo.fromJson(json['batch'] as Map<String, dynamic>)
           : null,
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
@@ -115,6 +120,26 @@ class NoteUploader {
       id: json['id'] as String,
       name: json['name'] as String?,
       picture: json['picture'] as String?,
+    );
+  }
+}
+
+class NoteBatchInfo {
+  final String id;
+  final String name;
+  final String? subject;
+
+  const NoteBatchInfo({
+    required this.id,
+    required this.name,
+    this.subject,
+  });
+
+  factory NoteBatchInfo.fromJson(Map<String, dynamic> json) {
+    return NoteBatchInfo(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      subject: json['subject'] as String?,
     );
   }
 }

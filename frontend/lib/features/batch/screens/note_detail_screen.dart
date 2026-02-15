@@ -263,7 +263,7 @@ class _HeroHeader extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              // Large file type icon
+              // Large note icon
               Container(
                 padding: const EdgeInsets.all(18),
                 decoration: BoxDecoration(
@@ -274,10 +274,7 @@ class _HeroHeader extends StatelessWidget {
                   ),
                 ),
                 child: Icon(
-                  note.attachments.isNotEmpty
-                      ? (_typeConfig[note.attachments.first.fileType]?.$1 ??
-                            Icons.note_outlined)
-                      : Icons.note_outlined,
+                  Icons.sticky_note_2_outlined,
                   size: 32,
                   color: primaryColor,
                 ),

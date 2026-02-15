@@ -174,6 +174,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           );
                         }),
                       ],
+
                     ],
                   ),
                 ),
@@ -185,9 +186,6 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: _navigateToCreate,
         icon: const Icon(Icons.add_rounded),
         label: const Text('Create Coaching'),
-        elevation: 0,
-        highlightElevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       ),
     );
   }

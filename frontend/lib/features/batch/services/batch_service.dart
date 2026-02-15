@@ -220,6 +220,24 @@ class BatchService {
         .toList();
   }
 
+  /// GET /coaching/:coachingId/batches/recent-notes
+  Future<List<BatchNoteModel>> getRecentNotes(String coachingId) async {
+    try {
+      final data = await _api.getAuthenticated(
+        ApiConstants.recentNotes(coachingId),
+      );
+      print('DEBUG: Recent notes API response: $data');
+      final list = data['notes'] as List<dynamic>;
+      print('DEBUG: Parsed ${list.length} notes');
+      return list
+          .map((e) => BatchNoteModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } catch (e) {
+      print('ERROR in getRecentNotes: $e');
+      return [];
+    }
+  }
+
   /// DELETE /coaching/:coachingId/batches/:batchId/notes/:noteId
   Future<bool> deleteNote(String coachingId, String batchId, String noteId) =>
       _api.deleteAuthenticated(

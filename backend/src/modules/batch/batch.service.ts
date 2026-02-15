@@ -236,6 +236,77 @@ export class BatchService {
         });
     }
 
+    async getRecentNotes(userId: string, coachingId: string) {
+        console.log(`[getRecentNotes] userId: ${userId}, coachingId: ${coachingId}`);
+        
+        // Get user's wards (students managed by this user)
+        const userWards = await prisma.ward.findMany({
+            where: { parentId: userId },
+            select: { id: true },
+        });
+        const wardIds = userWards.map((w) => w.id);
+        console.log(`[getRecentNotes] Found ${userWards.length} wards for user`);
+
+        // Get coaching members for both:
+        // 1. Direct user membership (teachers/admins)
+        // 2. Ward membership (students)
+        const whereConditions: any[] = [{ userId }];
+        if (wardIds.length > 0) {
+            whereConditions.push({ wardId: { in: wardIds } });
+        }
+        
+        const coachingMembers = await prisma.coachingMember.findMany({
+            where: {
+                coachingId,
+                OR: whereConditions,
+            },
+            select: { id: true },
+        });
+
+        const memberIds = coachingMembers.map((m) => m.id);
+        console.log(`[getRecentNotes] Found ${coachingMembers.length} coaching members`);
+
+        if (memberIds.length === 0) {
+            console.log(`[getRecentNotes] No coaching members found, returning empty array`);
+            return [];
+        }
+
+        // Get batches where these members are enrolled
+        const userBatches = await prisma.batchMember.findMany({
+            where: { memberId: { in: memberIds } },
+            select: { batchId: true },
+        });
+
+        const batchIds = userBatches.map((b) => b.batchId);
+        console.log(`[getRecentNotes] Found ${userBatches.length} batch enrollments, batchIds:`, batchIds);
+
+        if (batchIds.length === 0) {
+            console.log(`[getRecentNotes] No batches found, returning empty array`);
+            return [];
+        }
+
+        // Get notes from last 7 days (increased from 2 days)
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+        console.log(`[getRecentNotes] Looking for notes after:`, sevenDaysAgo);
+
+        const notes = await prisma.batchNote.findMany({
+            where: {
+                batchId: { in: batchIds },
+                createdAt: { gte: sevenDaysAgo },
+            },
+            include: {
+                uploadedBy: { select: { id: true, name: true, picture: true } },
+                attachments: { orderBy: { createdAt: 'asc' } },
+                batch: { select: { id: true, name: true, subject: true } },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+        
+        console.log(`[getRecentNotes] Found ${notes.length} notes`);
+        return notes;
+    }
+
     async deleteNote(noteId: string) {
         // Attachments cascade-delete via Prisma relation
         return prisma.batchNote.delete({ where: { id: noteId } });
