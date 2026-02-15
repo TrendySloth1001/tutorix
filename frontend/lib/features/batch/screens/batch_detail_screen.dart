@@ -1094,7 +1094,8 @@ class _NoteCard extends StatelessWidget {
                 spacing: 6,
                 runSpacing: 6,
                 children: note.attachments.map((a) {
-                  final ac = _typeConfig[a.fileType] ??
+                  final ac =
+                      _typeConfig[a.fileType] ??
                       (Icons.attach_file_rounded, theme.colorScheme.primary);
                   return Container(
                     padding: const EdgeInsets.symmetric(
@@ -1104,9 +1105,7 @@ class _NoteCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: ac.$2.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: ac.$2.withValues(alpha: 0.1),
-                      ),
+                      border: Border.all(color: ac.$2.withValues(alpha: 0.1)),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,

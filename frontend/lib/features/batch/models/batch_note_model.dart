@@ -29,9 +29,9 @@ class BatchNoteModel {
       batchId: json['batchId'] as String? ?? '',
       title: json['title'] as String,
       description: json['description'] as String?,
-      attachments: rawAttachments
-              ?.map((e) =>
-                  NoteAttachment.fromJson(e as Map<String, dynamic>))
+      attachments:
+          rawAttachments
+              ?.map((e) => NoteAttachment.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       uploadedById: json['uploadedById'] as String? ?? '',

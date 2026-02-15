@@ -29,11 +29,7 @@ class CoachingOnboardingService {
   }) async {
     final data = await _api.postAuthenticated(
       ApiConstants.coaching,
-      body: {
-        'name': name,
-        'description': ?description,
-        'logo': ?logo,
-      },
+      body: {'name': name, 'description': ?description, 'logo': ?logo},
     );
     return CoachingModel.fromJson(data['coaching']);
   }

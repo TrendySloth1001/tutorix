@@ -21,9 +21,7 @@ class BatchService {
 
   /// Upload multiple note files in one request.
   /// Returns { files: [...], totalSize: int }.
-  Future<Map<String, dynamic>> uploadNoteFiles(
-    List<String> filePaths,
-  ) async {
+  Future<Map<String, dynamic>> uploadNoteFiles(List<String> filePaths) async {
     return await _api.uploadFiles(
       ApiConstants.uploadNotes,
       fieldName: 'files',
@@ -33,9 +31,7 @@ class BatchService {
 
   /// GET /coaching/:coachingId/batches/storage
   Future<Map<String, dynamic>> getStorageUsage(String coachingId) async {
-    return await _api.getAuthenticated(
-      ApiConstants.batchStorage(coachingId),
-    );
+    return await _api.getAuthenticated(ApiConstants.batchStorage(coachingId));
   }
 
   // ── CRUD ──────────────────────────────────────────────────────────
