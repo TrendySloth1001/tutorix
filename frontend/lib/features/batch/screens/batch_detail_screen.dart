@@ -10,6 +10,7 @@ import 'create_batch_screen.dart';
 import 'add_batch_members_screen.dart';
 import 'create_note_screen.dart';
 import 'create_notice_screen.dart';
+import 'note_detail_screen.dart';
 
 /// Full batch detail — overview, members, notes, notices via TabBar.
 /// Premium design with layered header, rich cards, and polished interactions.
@@ -906,6 +907,18 @@ class _NotesTab extends StatelessWidget {
               note: n,
               canDelete: isTeacher,
               onDelete: () => onDelete(n),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => NoteDetailScreen(
+                      note: n,
+                      canDelete: isTeacher,
+                      onDelete: () => onDelete(n),
+                    ),
+                  ),
+                );
+              },
             ),
           ),
       ],
@@ -917,10 +930,12 @@ class _NoteCard extends StatelessWidget {
   final BatchNoteModel note;
   final bool canDelete;
   final VoidCallback onDelete;
+  final VoidCallback? onTap;
   const _NoteCard({
     required this.note,
     required this.canDelete,
     required this.onDelete,
+    this.onTap,
   });
 
   static const _typeConfig = {
@@ -946,7 +961,9 @@ class _NoteCard extends StatelessWidget {
     final (icon, color) = _primaryType(theme);
     final hasFiles = note.attachments.isNotEmpty;
 
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
@@ -1142,6 +1159,7 @@ class _NoteCard extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 }

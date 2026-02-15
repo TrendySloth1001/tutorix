@@ -77,19 +77,8 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
       type: FileType.custom,
       allowMultiple: true,
       allowedExtensions: [
-        'pdf',
-        'doc',
-        'docx',
-        'xls',
-        'xlsx',
-        'ppt',
-        'pptx',
-        'txt',
-        'png',
-        'jpg',
-        'jpeg',
-        'gif',
-        'webp',
+        'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt',
+        'png', 'jpg', 'jpeg', 'gif', 'webp',
       ],
       withData: false,
     );
@@ -108,9 +97,11 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     setState(() => _pickedFiles.removeAt(index));
   }
 
-  int get _totalPickedSize => _pickedFiles.fold(0, (sum, f) => sum + f.size);
+  int get _totalPickedSize =>
+      _pickedFiles.fold(0, (sum, f) => sum + f.size);
 
-  bool get _exceedsStorage => (_storageUsed + _totalPickedSize) > _storageLimit;
+  bool get _exceedsStorage =>
+      (_storageUsed + _totalPickedSize) > _storageLimit;
 
   String _fileTypeFromExtension(String name) {
     final ext = name.split('.').last.toLowerCase();
@@ -125,9 +116,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_exceedsStorage) {
-      _showError(
-        'Not enough storage space. Remove some files or free up space.',
-      );
+      _showError('Not enough storage space. Remove some files or free up space.');
       return;
     }
 
@@ -319,8 +308,8 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     final barColor = exceeds
         ? Colors.red.shade400
         : ratio > 0.8
-        ? Colors.orange.shade400
-        : theme.colorScheme.primary;
+            ? Colors.orange.shade400
+            : theme.colorScheme.primary;
 
     return Container(
       padding: const EdgeInsets.all(14),
@@ -364,9 +353,8 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
             child: LinearProgressIndicator(
               value: ratio,
               minHeight: 6,
-              backgroundColor: theme.colorScheme.onSurface.withValues(
-                alpha: 0.06,
-              ),
+              backgroundColor:
+                  theme.colorScheme.onSurface.withValues(alpha: 0.06),
               valueColor: AlwaysStoppedAnimation(barColor),
             ),
           ),
@@ -440,17 +428,15 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                       Container(
                         padding: const EdgeInsets.all(14),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.08,
-                          ),
+                          color: theme.colorScheme.primary
+                              .withValues(alpha: 0.08),
                           shape: BoxShape.circle,
                         ),
                         child: Icon(
                           Icons.attach_file_rounded,
                           size: 28,
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.6,
-                          ),
+                          color: theme.colorScheme.primary
+                              .withValues(alpha: 0.6),
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -458,18 +444,16 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                         'Tap to add files',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.7,
-                          ),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.7),
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         'PDF, DOC, XLS, PPT, Images — up to 15 MB each',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.35,
-                          ),
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.35),
                           fontSize: 11,
                         ),
                       ),
@@ -562,8 +546,7 @@ class _FileChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final config =
-        _typeConfig[fileType] ??
+    final config = _typeConfig[fileType] ??
         (Icons.attach_file_rounded, theme.colorScheme.primary);
     final color = config.$2;
 
@@ -595,7 +578,8 @@ class _FileChip extends StatelessWidget {
                   _formattedSize,
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontSize: 11,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    color: theme.colorScheme.onSurface
+                        .withValues(alpha: 0.4),
                   ),
                 ),
               ],
