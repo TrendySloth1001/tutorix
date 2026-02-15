@@ -111,6 +111,8 @@ export class CoachingService {
 
             return {
                 ...coaching,
+                storageUsed: Number(coaching.storageUsed),
+                storageLimit: Number(coaching.storageLimit),
                 memberCount: coaching._count.members,
                 teacherCount: roleCounts['TEACHER'] || 0,
                 studentCount: roleCounts['STUDENT'] || 0,

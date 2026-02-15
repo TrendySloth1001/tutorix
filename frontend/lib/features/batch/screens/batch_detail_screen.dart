@@ -887,8 +887,8 @@ class _NotesTab extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(bottom: 20),
             child: _ActionButton(
-              icon: Icons.upload_file_rounded,
-              label: 'Upload Note',
+              icon: Icons.note_add_rounded,
+              label: 'Share Note',
               onTap: onAdd,
             ),
           ),
@@ -930,14 +930,21 @@ class _NoteCard extends StatelessWidget {
     'link': (Icons.link_rounded, Color(0xFF00897B)),
   };
 
+  (IconData, Color) _primaryType(ThemeData theme) {
+    if (note.attachments.isEmpty) {
+      return (Icons.note_outlined, theme.colorScheme.primary);
+    }
+    // Use the first attachment type for the main icon
+    final first = note.attachments.first.fileType;
+    return _typeConfig[first] ??
+        (Icons.attach_file_rounded, theme.colorScheme.primary);
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final config =
-        _typeConfig[note.fileType] ??
-        (Icons.attach_file_rounded, theme.colorScheme.primary);
-    final icon = config.$1;
-    final color = config.$2;
+    final (icon, color) = _primaryType(theme);
+    final hasFiles = note.attachments.isNotEmpty;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
@@ -957,108 +964,182 @@ class _NoteCard extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
-        child: Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // File type icon with gradient bg
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [
-                    color.withValues(alpha: 0.15),
-                    color.withValues(alpha: 0.05),
-                  ],
-                ),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(icon, color: color, size: 22),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    note.title,
-                    style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  if (note.description != null) ...[
-                    const SizedBox(height: 2),
-                    Text(
-                      note.description!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.5,
-                        ),
-                      ),
-                    ),
-                  ],
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      // File type badge
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: color.withValues(alpha: 0.08),
-                          borderRadius: BorderRadius.circular(6),
-                        ),
-                        child: Text(
-                          note.fileType.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 9,
-                            fontWeight: FontWeight.w700,
-                            color: color,
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ),
-                      if (note.uploadedBy != null) ...[
-                        const SizedBox(width: 8),
-                        Text(
-                          note.uploadedBy!.name ?? '',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w500,
-                            fontSize: 11,
-                          ),
-                        ),
+            // ── Header row
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        color.withValues(alpha: 0.15),
+                        color.withValues(alpha: 0.05),
                       ],
-                      if (note.createdAt != null) ...[
-                        const SizedBox(width: 8),
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Icon(icon, color: color, size: 22),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        note.title,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      if (note.description != null) ...[
+                        const SizedBox(height: 2),
                         Text(
-                          _timeAgo(note.createdAt!),
+                          note.description!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            fontSize: 11,
                             color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.3,
+                              alpha: 0.5,
                             ),
                           ),
                         ),
                       ],
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          // Attachment count badge
+                          if (hasFiles) ...[
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 7,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: color.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.attach_file_rounded,
+                                    size: 10,
+                                    color: color,
+                                  ),
+                                  const SizedBox(width: 3),
+                                  Text(
+                                    '${note.attachments.length}',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w700,
+                                      color: color,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                          ],
+                          if (note.uploadedBy != null) ...[
+                            Flexible(
+                              child: Text(
+                                note.uploadedBy!.name ?? '',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.primary,
+                                  fontWeight: FontWeight.w500,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                          ],
+                          if (note.createdAt != null) ...[
+                            const SizedBox(width: 8),
+                            Text(
+                              _timeAgo(note.createdAt!),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontSize: 11,
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            if (canDelete)
-              IconButton(
-                icon: Icon(
-                  Icons.delete_outline_rounded,
-                  size: 18,
-                  color: Colors.red.withValues(alpha: 0.5),
                 ),
-                onPressed: onDelete,
+                if (canDelete)
+                  IconButton(
+                    icon: Icon(
+                      Icons.delete_outline_rounded,
+                      size: 18,
+                      color: Colors.red.withValues(alpha: 0.5),
+                    ),
+                    onPressed: onDelete,
+                  ),
+              ],
+            ),
+            // ── Attachment chips
+            if (hasFiles) ...[
+              const SizedBox(height: 10),
+              Wrap(
+                spacing: 6,
+                runSpacing: 6,
+                children: note.attachments.map((a) {
+                  final ac = _typeConfig[a.fileType] ??
+                      (Icons.attach_file_rounded, theme.colorScheme.primary);
+                  return Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: ac.$2.withValues(alpha: 0.06),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: ac.$2.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(ac.$1, size: 13, color: ac.$2),
+                        const SizedBox(width: 4),
+                        ConstrainedBox(
+                          constraints: const BoxConstraints(maxWidth: 120),
+                          child: Text(
+                            a.fileName ?? a.fileType.toUpperCase(),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w600,
+                              color: ac.$2,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          a.formattedSize,
+                          style: TextStyle(
+                            fontSize: 9,
+                            color: ac.$2.withValues(alpha: 0.7),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }).toList(),
               ),
+            ],
           ],
         ),
       ),

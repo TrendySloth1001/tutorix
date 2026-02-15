@@ -276,7 +276,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
                   ? TweenAnimationBuilder<double>(
                       tween: Tween(begin: 0, end: 1),
                       duration: const Duration(milliseconds: 300),
-                      builder: (_, value, __) => FractionallySizedBox(
+                      builder: (_, value, _) => FractionallySizedBox(
                         alignment: Alignment.centerLeft,
                         widthFactor: value,
                         child: Container(

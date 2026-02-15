@@ -10,12 +10,31 @@ class BatchService {
 
   // ── File Upload ───────────────────────────────────────────────────
 
-  /// Upload a note file to the server, returns the URL and metadata.
+  /// Upload a single note file, returns the URL and metadata.
   Future<Map<String, dynamic>> uploadNoteFile(String filePath) async {
     return await _api.uploadFile(
       ApiConstants.uploadNote,
       fieldName: 'file',
       filePath: filePath,
+    );
+  }
+
+  /// Upload multiple note files in one request.
+  /// Returns { files: [...], totalSize: int }.
+  Future<Map<String, dynamic>> uploadNoteFiles(
+    List<String> filePaths,
+  ) async {
+    return await _api.uploadFiles(
+      ApiConstants.uploadNotes,
+      fieldName: 'files',
+      filePaths: filePaths,
+    );
+  }
+
+  /// GET /coaching/:coachingId/batches/storage
+  Future<Map<String, dynamic>> getStorageUsage(String coachingId) async {
+    return await _api.getAuthenticated(
+      ApiConstants.batchStorage(coachingId),
     );
   }
 
@@ -176,14 +195,13 @@ class BatchService {
     String batchId, {
     required String title,
     String? description,
-    String? fileUrl,
-    String fileType = 'pdf',
-    String? fileName,
+    List<Map<String, dynamic>>? attachments,
   }) async {
-    final body = <String, dynamic>{'title': title, 'fileType': fileType};
+    final body = <String, dynamic>{'title': title};
     if (description != null) body['description'] = description;
-    if (fileUrl != null && fileUrl.isNotEmpty) body['fileUrl'] = fileUrl;
-    if (fileName != null) body['fileName'] = fileName;
+    if (attachments != null && attachments.isNotEmpty) {
+      body['attachments'] = attachments;
+    }
 
     final data = await _api.postAuthenticated(
       ApiConstants.batchNotes(coachingId, batchId),

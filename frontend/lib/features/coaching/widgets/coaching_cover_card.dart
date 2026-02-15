@@ -57,7 +57,7 @@ class CoachingCoverCard extends StatelessWidget {
                     Image.network(
                       coaching.coverImage!,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) =>
+                      errorBuilder: (_, _, _) =>
                           _buildPlaceholderBackground(colors),
                     )
                   else
@@ -111,7 +111,7 @@ class CoachingCoverCard extends StatelessWidget {
                                   child: Image.network(
                                     coaching.logo!,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) =>
+                                    errorBuilder: (_, _, _) =>
                                         _buildLogoPlaceholder(theme),
                                   ),
                                 )

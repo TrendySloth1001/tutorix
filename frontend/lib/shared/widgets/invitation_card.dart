@@ -75,7 +75,7 @@ class InvitationCard extends StatelessWidget {
                             ? Image.network(
                                 coverImage,
                                 fit: BoxFit.cover,
-                                errorBuilder: (_, __, ___) =>
+                                errorBuilder: (_, _, _) =>
                                     _buildPlaceholderPattern(theme),
                               )
                             : _buildPlaceholderPattern(theme),

@@ -711,7 +711,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
           _buildSectionTitle('Founded Year', Icons.calendar_today_outlined),
           const SizedBox(height: 12),
           DropdownButtonFormField<int>(
-            value: _foundedYear,
+            initialValue: _foundedYear,
             decoration: InputDecoration(
               hintText: 'Select year',
               border: OutlineInputBorder(
@@ -948,7 +948,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
     if (_masters == null) return const SizedBox();
 
     return DropdownButtonFormField<String>(
-      value: _selectedState,
+      initialValue: _selectedState,
       decoration: InputDecoration(
         hintText: 'Select State',
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
@@ -1704,7 +1704,7 @@ class _AddBranchSheetState extends State<_AddBranchSheet> {
             ),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
-              value: _selectedState,
+              initialValue: _selectedState,
               decoration: InputDecoration(
                 labelText: 'State',
                 border: OutlineInputBorder(

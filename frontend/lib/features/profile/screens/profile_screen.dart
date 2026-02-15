@@ -777,7 +777,7 @@ class _PrivacyToggle extends StatelessWidget {
           Switch.adaptive(
             value: value,
             onChanged: onChanged,
-            activeColor: theme.colorScheme.primary,
+            activeTrackColor: theme.colorScheme.primary,
           ),
         ],
       ),

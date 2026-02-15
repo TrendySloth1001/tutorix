@@ -171,6 +171,7 @@ export class BatchController {
     async createNote(req: Request, res: Response) {
         try {
             const batchId = req.params.batchId as string;
+            const coachingId = req.params.coachingId as string;
             const userId = (req as any).user?.id as string;
 
             // Teachers + admins can upload notes
@@ -179,14 +180,33 @@ export class BatchController {
                 return res.status(403).json({ message: 'Only teachers/admins can upload notes' });
             }
 
-            const { title, description, fileUrl, fileType, fileName } = req.body;
-            if (!title || !fileUrl) {
-                return res.status(400).json({ message: 'Title and fileUrl are required' });
+            const { title, description, attachments } = req.body;
+            if (!title) {
+                return res.status(400).json({ message: 'Title is required' });
+            }
+
+            // Check storage quota before creating
+            const totalSize = (attachments || []).reduce((s: number, a: any) => s + (a.fileSize || 0), 0);
+            if (totalSize > 0) {
+                const usage = await batchService.getStorageUsage(coachingId);
+                if (usage.used + totalSize > usage.limit) {
+                    return res.status(413).json({
+                        message: 'Storage limit exceeded',
+                        used: usage.used,
+                        limit: usage.limit,
+                    });
+                }
             }
 
             const note = await batchService.createNote(batchId, userId, {
-                title, description, fileUrl, fileType, fileName,
+                title, description, attachments,
             });
+
+            // Update storage counter
+            if (totalSize > 0) {
+                await batchService.addStorageUsage(coachingId, totalSize);
+            }
+
             res.status(201).json({ note });
         } catch (error: any) {
             res.status(500).json({ message: error.message });
@@ -206,6 +226,7 @@ export class BatchController {
     async deleteNote(req: Request, res: Response) {
         try {
             const batchId = req.params.batchId as string;
+            const coachingId = req.params.coachingId as string;
             const noteId = req.params.noteId as string;
             const userId = (req as any).user?.id as string;
 
@@ -214,8 +235,24 @@ export class BatchController {
                 return res.status(403).json({ message: 'Only teachers/admins can delete notes' });
             }
 
+            // Subtract storage before deleting
+            const bytes = await batchService.getNoteAttachmentsSize(noteId);
             await batchService.deleteNote(noteId);
+            if (bytes > 0) {
+                await batchService.subtractStorageUsage(coachingId, bytes);
+            }
+
             res.json({ success: true });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    async getStorage(req: Request, res: Response) {
+        try {
+            const coachingId = req.params.coachingId as string;
+            const usage = await batchService.getStorageUsage(coachingId);
+            res.json(usage);
         } catch (error: any) {
             res.status(500).json({ message: error.message });
         }

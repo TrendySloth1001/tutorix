@@ -197,18 +197,29 @@ export class BatchService {
     async createNote(batchId: string, uploadedById: string, data: {
         title: string;
         description?: string;
-        fileUrl: string;
-        fileType?: string;
-        fileName?: string;
+        attachments?: { url: string; fileName?: string; fileType?: string; fileSize?: number; mimeType?: string }[];
     }) {
+        const { attachments, ...noteData } = data;
         return prisma.batchNote.create({
             data: {
                 batchId,
                 uploadedById,
-                ...data,
+                ...noteData,
+                ...(attachments && attachments.length > 0 ? {
+                    attachments: {
+                        create: attachments.map(a => ({
+                            url: a.url,
+                            fileName: a.fileName ?? null,
+                            fileType: a.fileType || 'pdf',
+                            fileSize: a.fileSize || 0,
+                            mimeType: a.mimeType ?? null,
+                        })),
+                    },
+                } : {}),
             },
             include: {
                 uploadedBy: { select: { id: true, name: true, picture: true } },
+                attachments: { orderBy: { createdAt: 'asc' } },
             },
         });
     }
@@ -218,13 +229,56 @@ export class BatchService {
             where: { batchId },
             include: {
                 uploadedBy: { select: { id: true, name: true, picture: true } },
+                attachments: { orderBy: { createdAt: 'asc' } },
             },
             orderBy: { createdAt: 'desc' },
         });
     }
 
     async deleteNote(noteId: string) {
+        // Attachments cascade-delete via Prisma relation
         return prisma.batchNote.delete({ where: { id: noteId } });
+    }
+
+    // ── Storage tracking ──────────────────────────────────────────────
+
+    /** Add bytes to coaching storage counter */
+    async addStorageUsage(coachingId: string, bytes: number) {
+        return prisma.coaching.update({
+            where: { id: coachingId },
+            data: { storageUsed: { increment: bytes } },
+            select: { storageUsed: true, storageLimit: true },
+        });
+    }
+
+    /** Subtract bytes from coaching storage counter */
+    async subtractStorageUsage(coachingId: string, bytes: number) {
+        return prisma.coaching.update({
+            where: { id: coachingId },
+            data: { storageUsed: { decrement: bytes } },
+            select: { storageUsed: true, storageLimit: true },
+        });
+    }
+
+    /** Get current storage usage for a coaching */
+    async getStorageUsage(coachingId: string) {
+        const coaching = await prisma.coaching.findUnique({
+            where: { id: coachingId },
+            select: { storageUsed: true, storageLimit: true },
+        });
+        return {
+            used: Number(coaching?.storageUsed ?? 0),
+            limit: Number(coaching?.storageLimit ?? 524288000),
+        };
+    }
+
+    /** Get total bytes of attachments for a note (for deletion) */
+    async getNoteAttachmentsSize(noteId: string): Promise<number> {
+        const attachments = await prisma.noteAttachment.findMany({
+            where: { noteId },
+            select: { fileSize: true },
+        });
+        return attachments.reduce((sum, a) => sum + a.fileSize, 0);
     }
 
     // ── Notices (Announcements) ───────────────────────────────────────

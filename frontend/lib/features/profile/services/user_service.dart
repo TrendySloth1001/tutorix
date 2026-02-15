@@ -47,12 +47,15 @@ class UserService {
     bool? showWardsInSearch,
   }) async {
     final body = <String, dynamic>{};
-    if (showEmailInSearch != null)
+    if (showEmailInSearch != null) {
       body['showEmailInSearch'] = showEmailInSearch;
-    if (showPhoneInSearch != null)
+    }
+    if (showPhoneInSearch != null) {
       body['showPhoneInSearch'] = showPhoneInSearch;
-    if (showWardsInSearch != null)
+    }
+    if (showWardsInSearch != null) {
       body['showWardsInSearch'] = showWardsInSearch;
+    }
 
     final data = await _api.patchAuthenticated(ApiConstants.userMe, body: body);
     final user = UserModel.fromJson(data['user']);

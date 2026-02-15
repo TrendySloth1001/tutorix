@@ -49,6 +49,24 @@ export class UploadService {
         return { url, fileName: file.originalname, size: file.size, mimeType: file.mimetype };
     }
 
+    /** Upload multiple note files at once */
+    async uploadNoteFiles(files: Express.Multer.File[]) {
+        const results = await Promise.all(
+            files.map(async (file) => {
+                const ext = file.originalname.split('.').pop() || 'bin';
+                const fileName = `note-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+                const url = await storageService.uploadFile(
+                    storageService.buckets.BATCH_NOTES,
+                    fileName,
+                    file.buffer,
+                    file.mimetype
+                );
+                return { url, fileName: file.originalname, size: file.size, mimeType: file.mimetype };
+            })
+        );
+        return results;
+    }
+
     async getAssetStream(bucket: string, key: string) {
         return await storageService.getStream(bucket, key);
     }

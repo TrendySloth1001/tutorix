@@ -46,7 +46,7 @@ class CoachingCard extends StatelessWidget {
                           child: Image.network(
                             coaching.logo!,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
+                            errorBuilder: (_, _, _) =>
                                 _buildAvatarPlaceholder(theme, isJoined),
                           ),
                         )

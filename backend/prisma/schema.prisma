@@ -113,6 +113,10 @@ model Coaching {
   verificationDocs   String[] @default([])
   onboardingComplete Boolean @default(false)
 
+  // Storage quota (bytes)
+  storageUsed  BigInt @default(0)
+  storageLimit BigInt @default(524288000) // 500 MB default
+
   // Owner relation
   ownerId String
   owner   User   @relation("CoachingOwner", fields: [ownerId], references: [id])
@@ -362,18 +366,34 @@ model BatchNote {
 
   title       String
   description String?
-  fileUrl     String
-  fileType    String  @default("pdf") // pdf, image, doc, video, link
-  fileName    String?
 
   uploadedById String
   uploadedBy   User   @relation("NoteUploader", fields: [uploadedById], references: [id])
+
+  // Attachments (files + links)
+  attachments NoteAttachment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([batchId])
   @@index([uploadedById])
+}
+
+model NoteAttachment {
+  id     String    @id @default(uuid())
+  noteId String
+  note   BatchNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
+
+  url      String
+  fileName String?
+  fileType String  @default("pdf") // pdf, image, doc, link
+  fileSize Int     @default(0) // bytes
+  mimeType String?
+
+  createdAt DateTime @default(now())
+
+  @@index([noteId])
 }
 
 model BatchNotice {

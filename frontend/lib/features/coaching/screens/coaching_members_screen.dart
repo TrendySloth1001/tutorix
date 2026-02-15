@@ -482,7 +482,7 @@ class _MemberListView extends StatelessWidget {
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 100),
         itemCount: members.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 4),
+        separatorBuilder: (_, _) => const SizedBox(height: 4),
         itemBuilder: (_, i) => _MemberRow(
           member: members[i],
           onRemove: () => onRemove(members[i]),
@@ -663,7 +663,7 @@ class _InviteListView extends StatelessWidget {
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(20, 4, 20, 100),
         itemCount: invites.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 4),
+        separatorBuilder: (_, _) => const SizedBox(height: 4),
         itemBuilder: (_, i) => _InviteRow(
           invite: invites[i],
           onCancel: () => onCancel(invites[i]),

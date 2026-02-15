@@ -38,15 +38,14 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> _loadNotificationCount() async {
     try {
       final result = await _notificationService.getUserNotifications(limit: 1);
+      if (!mounted) return;
       final pendingInvites = context
           .read<AuthController>()
           .pendingInvitations
           .length;
-      if (mounted) {
-        setState(() {
-          _unreadNotifications = (result['unreadCount'] ?? 0) + pendingInvites;
-        });
-      }
+      setState(() {
+        _unreadNotifications = (result['unreadCount'] ?? 0) + pendingInvites;
+      });
     } catch (_) {
       // Silent fail
     }

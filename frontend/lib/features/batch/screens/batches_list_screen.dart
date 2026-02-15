@@ -259,7 +259,7 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                       itemCount: _batches.length,
-                      separatorBuilder: (_, __) => const SizedBox(height: 14),
+                      separatorBuilder: (_, _) => const SizedBox(height: 14),
                       itemBuilder: (context, i) => _BatchCard(
                         batch: _batches[i],
                         onTap: () => _openBatchDetail(_batches[i]),

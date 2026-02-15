@@ -177,7 +177,9 @@ class _CoachingNotificationsScreenState
         if (mounted) {
           // Archive the notification immediately from UI
           await _archive(notificationId);
+        }
 
+        if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text(
@@ -202,6 +204,8 @@ class _CoachingNotificationsScreenState
       // Archive notification immediately when user dismisses
       if (mounted) {
         await _archive(notificationId);
+      }
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Notification dismissed'),
@@ -225,7 +229,7 @@ class _CoachingNotificationsScreenState
           : ListView.separated(
               padding: const EdgeInsets.all(16),
               itemCount: _notifications.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => const SizedBox(height: 12),
               itemBuilder: (context, index) {
                 final n = _notifications[index];
                 return _buildNotificationItem(n);

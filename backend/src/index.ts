@@ -2,6 +2,12 @@ import express from 'express';
 import * as corsNamespace from 'cors';
 const cors = (corsNamespace as any).default || corsNamespace;
 import dotenv from 'dotenv';
+
+// BigInt JSON serialization — Prisma returns BigInt for large numeric fields.
+// Without this, JSON.stringify throws "Do not know how to serialize a BigInt".
+(BigInt.prototype as any).toJSON = function () {
+  return Number(this);
+};
 import authRoutes from './modules/auth/auth.route.js';
 import userRoutes from './modules/user/user.route.js';
 import coachingRoutes from './modules/coaching/coaching.route.js';

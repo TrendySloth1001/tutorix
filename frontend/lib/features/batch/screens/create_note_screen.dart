@@ -3,8 +3,7 @@ import 'package:flutter/material.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../services/batch_service.dart';
 
-/// Screen to create a new note (file upload or link) in a batch.
-/// No video option. URL is optional — user can upload a file instead.
+/// Screen to create a new note with multiple file attachments.
 class CreateNoteScreen extends StatefulWidget {
   final CoachingModel coaching;
   final String batchId;
@@ -26,25 +25,18 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
 
   final _titleCtrl = TextEditingController();
   final _descCtrl = TextEditingController();
-  final _urlCtrl = TextEditingController();
-  String _fileType = 'pdf';
   bool _isSaving = false;
-  bool _isUploading = false;
 
-  // File picker state
-  PlatformFile? _pickedFile;
-  String? _uploadedUrl;
-  String? _uploadedFileName;
+  // Multi-file state
+  final List<PlatformFile> _pickedFiles = [];
+
+  // Storage
+  int _storageUsed = 0;
+  int _storageLimit = 524288000; // 500 MB default
+  bool _storageLoaded = false;
 
   late AnimationController _animCtrl;
   late Animation<double> _fadeAnim;
-
-  static const _fileTypes = [
-    ('pdf', 'PDF', Icons.picture_as_pdf_rounded, Color(0xFFE53935)),
-    ('doc', 'Document', Icons.description_rounded, Color(0xFF1E88E5)),
-    ('image', 'Image', Icons.image_rounded, Color(0xFF8E24AA)),
-    ('link', 'Link', Icons.link_rounded, Color(0xFF00897B)),
-  ];
 
   @override
   void initState() {
@@ -55,6 +47,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     );
     _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
     _animCtrl.forward();
+    _loadStorage();
   }
 
   @override
@@ -62,72 +55,100 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     _animCtrl.dispose();
     _titleCtrl.dispose();
     _descCtrl.dispose();
-    _urlCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _pickFile() async {
+  Future<void> _loadStorage() async {
+    try {
+      final data = await _batchService.getStorageUsage(widget.coaching.id);
+      if (!mounted) return;
+      setState(() {
+        _storageUsed = (data['used'] as num?)?.toInt() ?? 0;
+        _storageLimit = (data['limit'] as num?)?.toInt() ?? 524288000;
+        _storageLoaded = true;
+      });
+    } catch (_) {
+      if (mounted) setState(() => _storageLoaded = true);
+    }
+  }
+
+  Future<void> _pickFiles() async {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.custom,
+      allowMultiple: true,
       allowedExtensions: [
-        'pdf',
-        'doc',
-        'docx',
-        'xls',
-        'xlsx',
-        'ppt',
-        'pptx',
-        'txt',
-        'png',
-        'jpg',
-        'jpeg',
-        'gif',
-        'webp',
+        'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt',
+        'png', 'jpg', 'jpeg', 'gif', 'webp',
       ],
       withData: false,
     );
     if (result != null && result.files.isNotEmpty) {
       setState(() {
-        _pickedFile = result.files.first;
-        _uploadedUrl = null;
+        for (final f in result.files) {
+          if (!_pickedFiles.any((e) => e.path == f.path)) {
+            _pickedFiles.add(f);
+          }
+        }
       });
     }
   }
 
-  Future<void> _uploadFile() async {
-    if (_pickedFile?.path == null) return;
-    setState(() => _isUploading = true);
-    try {
-      final result = await _batchService.uploadNoteFile(_pickedFile!.path!);
-      setState(() {
-        _uploadedUrl = result['url'] as String?;
-        _uploadedFileName = result['fileName'] as String? ?? _pickedFile!.name;
-      });
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Upload failed: $e'),
-            backgroundColor: Colors.red.shade700,
-          ),
-        );
-      }
+  void _removeFile(int index) {
+    setState(() => _pickedFiles.removeAt(index));
+  }
+
+  int get _totalPickedSize =>
+      _pickedFiles.fold(0, (sum, f) => sum + f.size);
+
+  bool get _exceedsStorage =>
+      (_storageUsed + _totalPickedSize) > _storageLimit;
+
+  String _fileTypeFromExtension(String name) {
+    final ext = name.split('.').last.toLowerCase();
+    if (ext == 'pdf') return 'pdf';
+    if (['png', 'jpg', 'jpeg', 'gif', 'webp'].contains(ext)) return 'image';
+    if (['doc', 'docx', 'txt', 'ppt', 'pptx', 'xls', 'xlsx'].contains(ext)) {
+      return 'doc';
     }
-    if (mounted) setState(() => _isUploading = false);
+    return 'pdf';
   }
 
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
-
-    // Determine the URL: uploaded file URL or manual URL
-    String? finalUrl = _uploadedUrl;
-    if (finalUrl == null || finalUrl.isEmpty) {
-      finalUrl = _urlCtrl.text.trim().isEmpty ? null : _urlCtrl.text.trim();
+    if (_exceedsStorage) {
+      _showError('Not enough storage space. Remove some files or free up space.');
+      return;
     }
 
     setState(() => _isSaving = true);
 
     try {
+      List<Map<String, dynamic>>? attachments;
+
+      if (_pickedFiles.isNotEmpty) {
+        final paths = _pickedFiles
+            .where((f) => f.path != null)
+            .map((f) => f.path!)
+            .toList();
+
+        if (paths.isNotEmpty) {
+          final uploadResult = await _batchService.uploadNoteFiles(paths);
+          final files = uploadResult['files'] as List<dynamic>;
+          attachments = files.map<Map<String, dynamic>>((f) {
+            final m = f as Map<String, dynamic>;
+            return {
+              'url': m['url'],
+              'fileName': m['fileName'],
+              'fileSize': m['size'] ?? 0,
+              'mimeType': m['mimeType'],
+              'fileType': _fileTypeFromExtension(
+                (m['fileName'] as String?) ?? 'file.pdf',
+              ),
+            };
+          }).toList();
+        }
+      }
+
       await _batchService.createNote(
         widget.coaching.id,
         widget.batchId,
@@ -135,25 +156,34 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
         description: _descCtrl.text.trim().isEmpty
             ? null
             : _descCtrl.text.trim(),
-        fileUrl: finalUrl,
-        fileType: _fileType,
-        fileName: _uploadedFileName ?? _pickedFile?.name,
+        attachments: attachments,
       );
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed: $e')));
-      }
+      _showError('$e');
     }
     if (mounted) setState(() => _isSaving = false);
   }
 
-  String _formatFileSize(int bytes) {
+  void _showError(String msg) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(msg),
+        backgroundColor: Colors.red.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
+
+  String _formatBytes(int bytes) {
     if (bytes < 1024) return '$bytes B';
     if (bytes < 1024 * 1024) return '${(bytes / 1024).toStringAsFixed(1)} KB';
-    return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    if (bytes < 1024 * 1024 * 1024) {
+      return '${(bytes / (1024 * 1024)).toStringAsFixed(1)} MB';
+    }
+    return '${(bytes / (1024 * 1024 * 1024)).toStringAsFixed(1)} GB';
   }
 
   @override
@@ -163,7 +193,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Upload Note'),
+        title: const Text('Share Note'),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.transparent,
@@ -177,6 +207,12 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ── Storage indicator
+                if (_storageLoaded) ...[
+                  _buildStorageBar(theme),
+                  const SizedBox(height: 22),
+                ],
+
                 // ── Title
                 _FieldLabel('Title', isRequired: true),
                 const SizedBox(height: 8),
@@ -207,130 +243,10 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                 ),
                 const SizedBox(height: 24),
 
-                // ── File type selector
-                _FieldLabel('File Type'),
+                // ── Attachments area
+                _FieldLabel('Attachments'),
                 const SizedBox(height: 10),
-                Row(
-                  children: _fileTypes.map((t) {
-                    final selected = _fileType == t.$1;
-                    return Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 3),
-                        child: GestureDetector(
-                          onTap: () => setState(() => _fileType = t.$1),
-                          child: AnimatedContainer(
-                            duration: const Duration(milliseconds: 200),
-                            curve: Curves.easeOut,
-                            padding: const EdgeInsets.symmetric(vertical: 14),
-                            decoration: BoxDecoration(
-                              color: selected
-                                  ? t.$4.withValues(alpha: 0.12)
-                                  : theme.colorScheme.surfaceContainerLowest,
-                              borderRadius: BorderRadius.circular(14),
-                              border: selected
-                                  ? Border.all(
-                                      color: t.$4.withValues(alpha: 0.4),
-                                      width: 1.5,
-                                    )
-                                  : Border.all(
-                                      color: theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.06),
-                                    ),
-                              boxShadow: selected
-                                  ? [
-                                      BoxShadow(
-                                        color: t.$4.withValues(alpha: 0.15),
-                                        blurRadius: 8,
-                                        offset: const Offset(0, 2),
-                                      ),
-                                    ]
-                                  : null,
-                            ),
-                            child: Column(
-                              children: [
-                                Icon(
-                                  t.$3,
-                                  size: 20,
-                                  color: selected
-                                      ? t.$4
-                                      : theme.colorScheme.onSurface.withValues(
-                                          alpha: 0.35,
-                                        ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  t.$2,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: selected
-                                        ? FontWeight.w600
-                                        : FontWeight.w400,
-                                    color: selected
-                                        ? t.$4
-                                        : theme.colorScheme.onSurface
-                                              .withValues(alpha: 0.5),
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    );
-                  }).toList(),
-                ),
-                const SizedBox(height: 28),
-
-                // ── File upload section (only for non-link types)
-                if (_fileType != 'link') ...[
-                  _FieldLabel('Upload File'),
-                  const SizedBox(height: 10),
-                  _buildFileUploadArea(theme),
-                  const SizedBox(height: 16),
-                  // Divider with "or"
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Divider(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.1,
-                          ),
-                        ),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text(
-                          'or paste a link',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.35,
-                            ),
-                          ),
-                        ),
-                      ),
-                      Expanded(
-                        child: Divider(
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.1,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                ],
-
-                // ── URL field (always shown, never required)
-                _FieldLabel(_fileType == 'link' ? 'URL' : 'File URL'),
-                const SizedBox(height: 8),
-                TextFormField(
-                  controller: _urlCtrl,
-                  decoration: _inputDeco(
-                    'https://... (optional)',
-                    Icons.link_rounded,
-                  ),
-                  keyboardType: TextInputType.url,
-                ),
+                _buildAttachmentsArea(theme),
                 const SizedBox(height: 36),
 
                 // ── Save button
@@ -354,14 +270,16 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                               color: Colors.white,
                             ),
                           )
-                        : const Row(
+                        : Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.upload_rounded, size: 20),
-                              SizedBox(width: 8),
+                              const Icon(Icons.send_rounded, size: 18),
+                              const SizedBox(width: 8),
                               Text(
-                                'Upload Note',
-                                style: TextStyle(
+                                _pickedFiles.isEmpty
+                                    ? 'Share Note'
+                                    : 'Share with ${_pickedFiles.length} file${_pickedFiles.length == 1 ? '' : 's'}',
+                                style: const TextStyle(
                                   fontWeight: FontWeight.w600,
                                   fontSize: 15,
                                 ),
@@ -378,173 +296,190 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     );
   }
 
-  Widget _buildFileUploadArea(ThemeData theme) {
-    if (_pickedFile != null) {
-      // ── File selected / uploaded state
-      final isUploaded = _uploadedUrl != null;
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isUploaded
-              ? Colors.green.withValues(alpha: 0.06)
-              : theme.colorScheme.primary.withValues(alpha: 0.05),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isUploaded
-                ? Colors.green.withValues(alpha: 0.25)
-                : theme.colorScheme.primary.withValues(alpha: 0.15),
-          ),
+  // ── Storage bar ────────────────────────────────────────────────────
+
+  Widget _buildStorageBar(ThemeData theme) {
+    final usedAfter = _storageUsed + _totalPickedSize;
+    final ratio = _storageLimit > 0
+        ? (usedAfter / _storageLimit).clamp(0.0, 1.0)
+        : 0.0;
+    final exceeds = _exceedsStorage;
+
+    final barColor = exceeds
+        ? Colors.red.shade400
+        : ratio > 0.8
+            ? Colors.orange.shade400
+            : theme.colorScheme.primary;
+
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: exceeds
+              ? Colors.red.withValues(alpha: 0.2)
+              : theme.colorScheme.onSurface.withValues(alpha: 0.06),
         ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: isUploaded
-                        ? Colors.green.withValues(alpha: 0.1)
-                        : theme.colorScheme.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Icon(
-                    isUploaded
-                        ? Icons.check_circle_rounded
-                        : Icons.insert_drive_file_rounded,
-                    size: 24,
-                    color: isUploaded
-                        ? Colors.green
-                        : theme.colorScheme.primary,
-                  ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.cloud_outlined, size: 16, color: barColor),
+              const SizedBox(width: 6),
+              Text(
+                'Storage',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+              ),
+              const Spacer(),
+              Text(
+                '${_formatBytes(usedAfter)} / ${_formatBytes(_storageLimit)}',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: barColor,
+                  fontSize: 11,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(4),
+            child: LinearProgressIndicator(
+              value: ratio,
+              minHeight: 6,
+              backgroundColor:
+                  theme.colorScheme.onSurface.withValues(alpha: 0.06),
+              valueColor: AlwaysStoppedAnimation(barColor),
+            ),
+          ),
+          if (_totalPickedSize > 0) ...[
+            const SizedBox(height: 6),
+            Text(
+              '${_formatBytes(_totalPickedSize)} will be used by new files',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontSize: 11,
+                color: exceeds
+                    ? Colors.red.shade600
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+            ),
+          ],
+          if (exceeds)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Text(
+                'Not enough space — remove some files',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 11,
+                  color: Colors.red.shade600,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ── Attachments area ───────────────────────────────────────────────
+
+  Widget _buildAttachmentsArea(ThemeData theme) {
+    return Column(
+      children: [
+        if (_pickedFiles.isNotEmpty) ...[
+          ...List.generate(_pickedFiles.length, (i) {
+            final f = _pickedFiles[i];
+            return _FileChip(
+              name: f.name,
+              size: f.size,
+              fileType: _fileTypeFromExtension(f.name),
+              onRemove: () => _removeFile(i),
+            );
+          }),
+          const SizedBox(height: 12),
+        ],
+
+        GestureDetector(
+          onTap: _pickFiles,
+          child: Container(
+            width: double.infinity,
+            padding: EdgeInsets.symmetric(
+              vertical: _pickedFiles.isEmpty ? 36 : 16,
+              horizontal: 24,
+            ),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
+                width: 1.5,
+                strokeAlign: BorderSide.strokeAlignInside,
+              ),
+            ),
+            child: _pickedFiles.isEmpty
+                ? Column(
                     children: [
+                      Container(
+                        padding: const EdgeInsets.all(14),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary
+                              .withValues(alpha: 0.08),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.attach_file_rounded,
+                          size: 28,
+                          color: theme.colorScheme.primary
+                              .withValues(alpha: 0.6),
+                        ),
+                      ),
+                      const SizedBox(height: 14),
                       Text(
-                        _pickedFile!.name,
+                        'Tap to add files',
                         style: theme.textTheme.bodyMedium?.copyWith(
                           fontWeight: FontWeight.w600,
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.7),
                         ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
-                        isUploaded
-                            ? 'Uploaded successfully'
-                            : _formatFileSize(_pickedFile!.size),
+                        'PDF, DOC, XLS, PPT, Images — up to 15 MB each',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: isUploaded
-                              ? Colors.green.shade700
-                              : theme.colorScheme.onSurface.withValues(
-                                  alpha: 0.5,
-                                ),
-                          fontWeight: isUploaded
-                              ? FontWeight.w500
-                              : FontWeight.w400,
+                          color: theme.colorScheme.onSurface
+                              .withValues(alpha: 0.35),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  )
+                : Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.add_rounded,
+                        size: 18,
+                        color: theme.colorScheme.primary,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Add more files',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w600,
                         ),
                       ),
                     ],
                   ),
-                ),
-                IconButton(
-                  onPressed: () {
-                    setState(() {
-                      _pickedFile = null;
-                      _uploadedUrl = null;
-                      _uploadedFileName = null;
-                    });
-                  },
-                  icon: Icon(
-                    Icons.close_rounded,
-                    size: 20,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                  ),
-                ),
-              ],
-            ),
-            if (!isUploaded) ...[
-              const SizedBox(height: 12),
-              SizedBox(
-                width: double.infinity,
-                child: _isUploading
-                    ? const Center(
-                        child: Padding(
-                          padding: EdgeInsets.all(8),
-                          child: SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(strokeWidth: 2.5),
-                          ),
-                        ),
-                      )
-                    : OutlinedButton.icon(
-                        onPressed: _uploadFile,
-                        icon: const Icon(Icons.cloud_upload_rounded, size: 18),
-                        label: const Text('Upload to Server'),
-                        style: OutlinedButton.styleFrom(
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-              ),
-            ],
-          ],
-        ),
-      );
-    }
-
-    // ── Dropzone-style empty state
-    return GestureDetector(
-      onTap: _pickFile,
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 24),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
-            width: 1.5,
-            strokeAlign: BorderSide.strokeAlignInside,
           ),
         ),
-        child: Column(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(14),
-              decoration: BoxDecoration(
-                color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.cloud_upload_outlined,
-                size: 28,
-                color: theme.colorScheme.primary.withValues(alpha: 0.6),
-              ),
-            ),
-            const SizedBox(height: 14),
-            Text(
-              'Tap to choose a file',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'PDF, DOC, XLS, PPT, Images — up to 15 MB',
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ),
-      ),
+      ],
     );
   }
 
@@ -577,6 +512,92 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
         ),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    );
+  }
+}
+
+// ── File chip ────────────────────────────────────────────────────────
+
+class _FileChip extends StatelessWidget {
+  final String name;
+  final int size;
+  final String fileType;
+  final VoidCallback onRemove;
+
+  const _FileChip({
+    required this.name,
+    required this.size,
+    required this.fileType,
+    required this.onRemove,
+  });
+
+  static const _typeConfig = {
+    'pdf': (Icons.picture_as_pdf_rounded, Color(0xFFE53935)),
+    'image': (Icons.image_rounded, Color(0xFF8E24AA)),
+    'doc': (Icons.description_rounded, Color(0xFF1E88E5)),
+  };
+
+  String get _formattedSize {
+    if (size < 1024) return '$size B';
+    if (size < 1024 * 1024) return '${(size / 1024).toStringAsFixed(1)} KB';
+    return '${(size / (1024 * 1024)).toStringAsFixed(1)} MB';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final config = _typeConfig[fileType] ??
+        (Icons.attach_file_rounded, theme.colorScheme.primary);
+    final color = config.$2;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withValues(alpha: 0.12)),
+      ),
+      child: Row(
+        children: [
+          Icon(config.$1, size: 20, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  _formattedSize,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurface
+                        .withValues(alpha: 0.4),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          GestureDetector(
+            onTap: onRemove,
+            child: Padding(
+              padding: const EdgeInsets.all(4),
+              child: Icon(
+                Icons.close_rounded,
+                size: 16,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

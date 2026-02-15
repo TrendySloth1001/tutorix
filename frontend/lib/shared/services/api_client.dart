@@ -100,7 +100,7 @@ class ApiClient {
     return response.statusCode == 200;
   }
 
-  /// Authenticated multipart POST (file upload).
+  /// Authenticated multipart POST (single file upload).
   Future<Map<String, dynamic>> uploadFile(
     String url, {
     required String fieldName,
@@ -112,6 +112,27 @@ class ApiClient {
     final request = http.MultipartRequest('POST', Uri.parse(url))
       ..headers['Authorization'] = 'Bearer $token'
       ..files.add(await http.MultipartFile.fromPath(fieldName, filePath));
+
+    final streamed = await request.send();
+    final response = await http.Response.fromStream(streamed);
+    return _handleResponse(response);
+  }
+
+  /// Authenticated multipart POST (multiple files upload).
+  Future<Map<String, dynamic>> uploadFiles(
+    String url, {
+    required String fieldName,
+    required List<String> filePaths,
+  }) async {
+    final token = await _storage.getToken();
+    if (token == null) throw Exception('Not authenticated');
+
+    final request = http.MultipartRequest('POST', Uri.parse(url))
+      ..headers['Authorization'] = 'Bearer $token';
+
+    for (final path in filePaths) {
+      request.files.add(await http.MultipartFile.fromPath(fieldName, path));
+    }
 
     final streamed = await request.send();
     final response = await http.Response.fromStream(streamed);

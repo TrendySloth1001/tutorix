@@ -12,6 +12,7 @@ const ctrl = new BatchController();
 router.post('/', authMiddleware, ctrl.create.bind(ctrl));
 router.get('/', authMiddleware, ctrl.list.bind(ctrl));
 router.get('/my', authMiddleware, ctrl.getMyBatches.bind(ctrl));
+router.get('/storage', authMiddleware, ctrl.getStorage.bind(ctrl)); // Storage usage
 router.get('/:batchId', authMiddleware, ctrl.getById.bind(ctrl));
 router.patch('/:batchId', authMiddleware, ctrl.update.bind(ctrl));
 router.delete('/:batchId', authMiddleware, ctrl.delete.bind(ctrl));

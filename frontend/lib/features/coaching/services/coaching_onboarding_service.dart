@@ -31,8 +31,8 @@ class CoachingOnboardingService {
       ApiConstants.coaching,
       body: {
         'name': name,
-        if (description != null) 'description': description,
-        if (logo != null) 'logo': logo,
+        'description': ?description,
+        'logo': ?logo,
       },
     );
     return CoachingModel.fromJson(data['coaching']);

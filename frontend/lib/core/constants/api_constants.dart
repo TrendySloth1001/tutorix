@@ -21,6 +21,7 @@ class ApiConstants {
   static const String uploadLogo = '$baseUrl/upload/logo';
   static const String uploadCover = '$baseUrl/upload/cover';
   static const String uploadNote = '$baseUrl/upload/note';
+  static const String uploadNotes = '$baseUrl/upload/notes';
 
   // Coaching
   static const String coaching = '$baseUrl/coaching';
@@ -81,6 +82,8 @@ class ApiConstants {
       '$baseUrl/coaching/$coachingId/batches/$batchId';
   static String myBatches(String coachingId) =>
       '$baseUrl/coaching/$coachingId/batches/my';
+  static String batchStorage(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/batches/storage';
   static String batchMembers(String coachingId, String batchId) =>
       '$baseUrl/coaching/$coachingId/batches/$batchId/members';
   static String batchAvailableMembers(String coachingId, String batchId) =>

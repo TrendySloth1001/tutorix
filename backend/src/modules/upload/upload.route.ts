@@ -79,6 +79,20 @@ router.post('/note', authMiddleware, uploadLarge.single('file'), async (req, res
     }
 });
 
+// POST /upload/notes - Upload multiple note files (up to 15MB each, max 10 files)
+router.post('/notes', authMiddleware, uploadLarge.array('files', 10), async (req, res) => {
+    try {
+        const files = req.files as Express.Multer.File[];
+        if (!files || files.length === 0) {
+            return res.status(400).json({ message: 'No files uploaded' });
+        }
+        const results = await uploadService.uploadNoteFiles(files);
+        res.json({ files: results, totalSize: results.reduce((s, f) => s + f.size, 0) });
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
 // GET /upload/assets/:bucket/:key - Proxy assets from MinIO
 router.get('/assets/:bucket/:key', async (req, res) => {
     try {
