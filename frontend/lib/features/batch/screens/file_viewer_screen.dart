@@ -4,15 +4,16 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:open_filex/open_filex.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:pdfx/pdfx.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../models/batch_note_model.dart';
 
-/// Viewer screen for file attachments.
+/// Enhanced file viewer for documents and images.
 /// - Images: full-screen zoomable preview
-/// - PDFs: downloaded & rendered in-app with flutter_pdfview
-/// - Other docs: download → try open with device app → fallback to browser
+/// - PDFs: rich in-app viewer with search, text selection, bookmarks
+/// - Office docs (DOCX, PPTX, XLSX): Download and open with device apps
 class FileViewerScreen extends StatelessWidget {
   final NoteAttachment attachment;
 
@@ -27,7 +28,7 @@ class FileViewerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (_isImage) return _ImageViewer(attachment: attachment);
-    if (_isPdf) return _PdfViewer(attachment: attachment);
+    if (_isPdf) return _EnhancedPdfViewer(attachment: attachment);
     return _DocumentViewer(attachment: attachment);
   }
 }
@@ -246,122 +247,68 @@ class _ImageViewerState extends State<_ImageViewer>
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// ── PDF VIEWER — download & render in-app
+// ── ENHANCED PDF VIEWER — Syncfusion with search, bookmarks, text selection
 // ═══════════════════════════════════════════════════════════════════════════
 
-class _PdfViewer extends StatefulWidget {
+class _EnhancedPdfViewer extends StatefulWidget {
   final NoteAttachment attachment;
-  const _PdfViewer({required this.attachment});
+  const _EnhancedPdfViewer({required this.attachment});
 
   @override
-  State<_PdfViewer> createState() => _PdfViewerState();
+  State<_EnhancedPdfViewer> createState() => _EnhancedPdfViewerState();
 }
 
-class _PdfViewerState extends State<_PdfViewer> {
-  String? _localPath;
-  double _downloadProgress = 0;
-  String? _error;
-  PdfDocument? _pdfDocument;
-  PdfControllerPinch? _pdfController;
-  int _totalPages = 0;
+class _EnhancedPdfViewerState extends State<_EnhancedPdfViewer> {
+  final PdfViewerController _pdfController = PdfViewerController();
+  final TextEditingController _searchCtrl = TextEditingController();
+  bool _showSearch = false;
+  PdfTextSearchResult? _searchResult;
   int _currentPage = 1;
-
-  @override
-  void initState() {
-    super.initState();
-    _downloadAndLoadPdf();
-  }
+  int _totalPages = 0;
 
   @override
   void dispose() {
-    _pdfDocument?.close();
-    _pdfController?.dispose();
+    _pdfController.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _downloadAndLoadPdf() async {
+  void _toggleSearch() {
+    setState(() {
+      _showSearch = !_showSearch;
+      if (!_showSearch) {
+        _searchResult?.clear();
+        _searchCtrl.clear();
+      }
+    });
+  }
+
+  void _performSearch(String query) {
+    if (query.isEmpty) {
+      _searchResult?.clear();
+      return;
+    }
+    _searchResult = _pdfController.searchText(query);
+    _searchResult?.addListener(() {
+      if (mounted) setState(() {});
+    });
+  }
+
+  Future<void> _sharePdf() async {
     try {
       final dir = await getTemporaryDirectory();
       final safeName = (widget.attachment.fileName ?? 'document.pdf')
           .replaceAll(RegExp(r'[^\w.\-]'), '_');
       final file = File('${dir.path}/$safeName');
 
-      debugPrint('🔍 PDF download starting: ${widget.attachment.url}');
-      debugPrint('📁 Target path: ${file.path}');
-
-      // Download if not cached
-      if (!file.existsSync() || file.lengthSync() == 0) {
-        final request = http.Request('GET', Uri.parse(widget.attachment.url));
-        final response = await http.Client().send(request);
-
-        if (response.statusCode != 200) {
-          throw Exception('Download failed (${response.statusCode})');
-        }
-
-        final totalBytes = response.contentLength ?? 0;
-        final bytes = <int>[];
-        int received = 0;
-
-        await for (final chunk in response.stream) {
-          bytes.addAll(chunk);
-          received += chunk.length;
-          if (totalBytes > 0 && mounted) {
-            setState(() => _downloadProgress = received / totalBytes);
-          }
-        }
-
-        if (bytes.isEmpty) {
-          throw Exception('Downloaded file is empty');
-        }
-
-        await file.writeAsBytes(bytes);
-        debugPrint('✅ PDF downloaded: ${file.lengthSync()} bytes');
-      } else {
-        debugPrint('✅ Using cached PDF (${file.lengthSync()} bytes)');
+      if (!file.existsSync()) {
+        final response = await http.get(Uri.parse(widget.attachment.url));
+        await file.writeAsBytes(response.bodyBytes);
       }
 
-      if (!mounted) return;
-
-      // Load PDF document
-      debugPrint('📚 Opening PDF document...');
-      final document = await PdfDocument.openFile(file.path);
-
-      if (!mounted) {
-        document.close();
-        return;
-      }
-
-      final pageCount = document.pagesCount;
-      debugPrint('✅ PDF loaded: $pageCount pages');
-
-      setState(() {
-        _localPath = file.path;
-        _pdfDocument = document;
-        _totalPages = pageCount;
-        _pdfController = PdfControllerPinch(
-          document: PdfDocument.openFile(file.path),
-        );
-      });
+      await Share.shareXFiles([XFile(file.path)]);
     } catch (e) {
-      debugPrint('❌ PDF error: $e');
-      if (mounted) {
-        setState(() => _error = 'Failed to load PDF: $e');
-      }
-    }
-  }
-
-  Future<void> _openExternally() async {
-    if (_localPath != null) {
-      final result = await OpenFilex.open(_localPath!);
-      if (result.type == ResultType.done) return;
-    }
-    final uri = Uri.parse(widget.attachment.url);
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open file externally')),
-      );
+      debugPrint('❌ Share error: $e');
     }
   }
 
@@ -371,7 +318,7 @@ class _PdfViewerState extends State<_PdfViewer> {
     final colors = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: colors.surface,
+      backgroundColor: Colors.grey.shade200,
       appBar: AppBar(
         title: Text(
           widget.attachment.fileName ?? 'PDF',
@@ -379,127 +326,168 @@ class _PdfViewerState extends State<_PdfViewer> {
           overflow: TextOverflow.ellipsis,
         ),
         centerTitle: true,
-        backgroundColor: Colors.transparent,
+        backgroundColor: colors.surface,
         elevation: 0,
         actions: [
-          if (_pdfController != null)
+          IconButton(
+            onPressed: _toggleSearch,
+            icon: Icon(_showSearch ? Icons.search_off : Icons.search),
+            tooltip: 'Search',
+          ),
+          if (_totalPages > 0)
             IconButton(
-              onPressed: _openExternally,
-              icon: const Icon(Icons.open_in_new_rounded),
-              tooltip: 'Open externally',
-            ),
-        ],
-      ),
-      body: _buildBody(theme, colors),
-      bottomNavigationBar: _pdfController != null && _totalPages > 0
-          ? Container(
-              padding: EdgeInsets.fromLTRB(
-                16,
-                10,
-                16,
-                MediaQuery.of(context).padding.bottom > 0
-                    ? MediaQuery.of(context).padding.bottom
-                    : 14,
-              ),
-              decoration: BoxDecoration(
-                color: colors.surface,
-                border: Border(
-                  top: BorderSide(
-                    color: colors.onSurface.withValues(alpha: 0.06),
+              onPressed: () {
+                showDialog<void>(
+                  context: context,
+                  builder: (context) => _PageJumpDialog(
+                    controller: _pdfController,
+                    currentPage: _currentPage,
+                    totalPages: _totalPages,
                   ),
+                );
+              },
+              icon: const Icon(Icons.grid_view_rounded),
+              tooltip: 'Jump to page',
+            ),
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded),
+            onSelected: (value) async {
+              switch (value) {
+                case 'share':
+                  await _sharePdf();
+                  break;
+                case 'open':
+                  final uri = Uri.parse(widget.attachment.url);
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri, mode: LaunchMode.externalApplication);
+                  }
+                  break;
+              }
+            },
+            itemBuilder: (context) => [
+              const PopupMenuItem(
+                value: 'share',
+                child: Row(
+                  children: [
+                    Icon(Icons.share_rounded, size: 20),
+                    SizedBox(width: 12),
+                    Text('Share'),
+                  ],
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.picture_as_pdf_rounded,
-                    size: 16,
-                    color: const Color(0xFFE53935).withValues(alpha: 0.6),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(
-                    'Page $_currentPage of $_totalPages',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      fontWeight: FontWeight.w600,
-                      color: colors.onSurface.withValues(alpha: 0.5),
-                    ),
-                  ),
-                ],
+              const PopupMenuItem(
+                value: 'open',
+                child: Row(
+                  children: [
+                    Icon(Icons.open_in_new_rounded, size: 20),
+                    SizedBox(width: 12),
+                    Text('Open externally'),
+                  ],
+                ),
               ),
-            )
-          : null,
-    );
-  }
+            ],
+          ),
+        ],
+      ),
+      body: Stack(
+        children: [
+          // PDF Viewer
+          SfPdfViewer.network(
+            widget.attachment.url,
+            controller: _pdfController,
+            canShowScrollHead: true,
+            canShowScrollStatus: true,
+            canShowPaginationDialog: true,
+            enableDoubleTapZooming: true,
+            enableTextSelection: true,
+            onDocumentLoaded: (details) {
+              setState(() => _totalPages = details.document.pages.count);
+              debugPrint('✅ PDF loaded: $_totalPages pages');
+            },
+            onPageChanged: (details) {
+              setState(() => _currentPage = details.newPageNumber);
+            },
+          ),
 
-  Widget _buildBody(ThemeData theme, ColorScheme colors) {
-    // ── Error state
-    if (_error != null) {
-      return _ErrorView(
-        error: _error!,
-        onRetry: () {
-          setState(() {
-            _error = null;
-            _downloadProgress = 0;
-            _pdfDocument?.close();
-            _pdfDocument = null;
-            _pdfController = null;
-          });
-          _downloadAndLoadPdf();
-        },
-        onOpenExternal: _openExternally,
-      );
-    }
+          // Search overlay
+          if (_showSearch)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: _SearchBar(
+                controller: _searchCtrl,
+                searchResult: _searchResult,
+                onSearch: _performSearch,
+                onClose: _toggleSearch,
+                onNext: () => _searchResult?.nextInstance(),
+                onPrevious: () => _searchResult?.previousInstance(),
+              ),
+            ),
 
-    // ── Loading state
-    if (_pdfController == null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+
+        ],
+      ),
+      // Page counter
+      bottomNavigationBar: Container(
+        padding: EdgeInsets.fromLTRB(
+          16,
+          10,
+          16,
+          MediaQuery.of(context).padding.bottom > 0
+              ? MediaQuery.of(context).padding.bottom
+              : 14,
+        ),
+        decoration: BoxDecoration(
+          color: colors.surface,
+          border: Border(
+            top: BorderSide(color: colors.onSurface.withValues(alpha: 0.06)),
+          ),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            SizedBox(
-              width: 64,
-              height: 64,
-              child: CircularProgressIndicator(
-                value: _downloadProgress > 0 ? _downloadProgress : null,
-                strokeWidth: 3,
-                color: const Color(0xFFE53935),
-                backgroundColor: colors.onSurface.withValues(alpha: 0.06),
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.picture_as_pdf_rounded,
+                  size: 16,
+                  color: const Color(0xFFE53935).withValues(alpha: 0.6),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Page $_currentPage${_totalPages > 0 ? ' of $_totalPages' : ''}',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: colors.onSurface.withValues(alpha: 0.5),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 20),
-            Text(
-              _downloadProgress > 0
-                  ? 'Downloading… ${(_downloadProgress * 100).toInt()}%'
-                  : 'Loading PDF…',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colors.onSurface.withValues(alpha: 0.5),
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 6),
-            Text(
-              widget.attachment.formattedSize,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurface.withValues(alpha: 0.3),
-              ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                IconButton(
+                  onPressed: _currentPage > 1
+                      ? () => _pdfController.previousPage()
+                      : null,
+                  icon: const Icon(Icons.chevron_left_rounded),
+                  iconSize: 20,
+                  visualDensity: VisualDensity.compact,
+                ),
+                IconButton(
+                  onPressed: _currentPage < _totalPages
+                      ? () => _pdfController.nextPage()
+                      : null,
+                  icon: const Icon(Icons.chevron_right_rounded),
+                  iconSize: 20,
+                  visualDensity: VisualDensity.compact,
+                ),
+              ],
             ),
           ],
         ),
-      );
-    }
-
-    // ── PDF viewer
-    return Container(
-      color: Colors.grey.shade200,
-      child: PdfViewPinch(
-        controller: _pdfController!,
-        padding: 8,
-        onPageChanged: (page) {
-          if (mounted) {
-            setState(() => _currentPage = page);
-          }
-        },
       ),
     );
   }
@@ -725,81 +713,157 @@ class _DocumentViewerState extends State<_DocumentViewer> {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// ── ERROR VIEW (shared by PDF viewer)
+// ── PDF SEARCH BAR
 // ═══════════════════════════════════════════════════════════════════════════
 
-class _ErrorView extends StatelessWidget {
-  final String error;
-  final VoidCallback onRetry;
-  final VoidCallback onOpenExternal;
+class _SearchBar extends StatelessWidget {
+  final TextEditingController controller;
+  final PdfTextSearchResult? searchResult;
+  final Function(String) onSearch;
+  final VoidCallback onClose;
+  final VoidCallback onNext;
+  final VoidCallback onPrevious;
 
-  const _ErrorView({
-    required this.error,
-    required this.onRetry,
-    required this.onOpenExternal,
+  const _SearchBar({
+    required this.controller,
+    required this.searchResult,
+    required this.onSearch,
+    required this.onClose,
+    required this.onNext,
+    required this.onPrevious,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final hasResults = searchResult?.hasResult ?? false;
 
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(32),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: colors.surface,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: SafeArea(
+        bottom: false,
+        child: Row(
           children: [
-            Icon(
-              Icons.error_outline_rounded,
-              size: 48,
-              color: Colors.red.withValues(alpha: 0.4),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'Unable to display PDF',
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              error,
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: colors.onSurface.withValues(alpha: 0.5),
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                OutlinedButton.icon(
-                  onPressed: onRetry,
-                  icon: const Icon(Icons.refresh_rounded, size: 18),
-                  label: const Text('Retry'),
-                  style: OutlinedButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Search in PDF',
+                  prefixIcon: const Icon(Icons.search, size: 20),
+                  suffixIcon: controller.text.isNotEmpty
+                      ? IconButton(
+                          onPressed: () {
+                            controller.clear();
+                            onSearch('');
+                          },
+                          icon: const Icon(Icons.clear, size: 20),
+                        )
+                      : null,
+                  filled: true,
+                  fillColor: colors.surfaceContainerLowest,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 12,
                   ),
                 ),
-                const SizedBox(width: 12),
-                FilledButton.icon(
-                  onPressed: onOpenExternal,
-                  icon: const Icon(Icons.open_in_new_rounded, size: 18),
-                  label: const Text('Open externally'),
-                  style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
+                onChanged: onSearch,
+              ),
+            ),
+            if (hasResults) ...[
+              const SizedBox(width: 8),
+              Text(
+                '${searchResult!.currentInstanceIndex}/${searchResult!.totalInstanceCount}',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: colors.onSurface.withValues(alpha: 0.5),
                 ),
-              ],
+              ),
+              IconButton(
+                onPressed: onPrevious,
+                icon: const Icon(Icons.keyboard_arrow_up_rounded),
+                visualDensity: VisualDensity.compact,
+              ),
+              IconButton(
+                onPressed: onNext,
+                icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                visualDensity: VisualDensity.compact,
+              ),
+            ],
+            IconButton(
+              onPressed: onClose,
+              icon: const Icon(Icons.close_rounded),
             ),
           ],
         ),
       ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── PAGE JUMP DIALOG
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _PageJumpDialog extends StatelessWidget {
+  final PdfViewerController controller;
+  final int currentPage;
+  final int totalPages;
+
+  const _PageJumpDialog({
+    required this.controller,
+    required this.currentPage,
+    required this.totalPages,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final textCtrl = TextEditingController(text: currentPage.toString());
+
+    return AlertDialog(
+      title: const Text('Jump to Page'),
+      content: TextField(
+        controller: textCtrl,
+        keyboardType: TextInputType.number,
+        decoration: InputDecoration(
+          hintText: 'Page number (1-$totalPages)',
+          filled: true,
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        autofocus: true,
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        FilledButton(
+          onPressed: () {
+            final page = int.tryParse(textCtrl.text);
+            if (page != null && page >= 1 && page <= totalPages) {
+              controller.jumpToPage(page);
+              Navigator.pop(context);
+            }
+          },
+          child: const Text('Go'),
+        ),
+      ],
     );
   }
 }
