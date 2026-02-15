@@ -116,13 +116,21 @@ class NoteDetailScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-                    ...note.attachments.map(
-                      (a) => _AttachmentCard(
+                    // Each attachment followed by its description (reading flow)
+                    ...note.attachments.expand((a) => [
+                      _AttachmentCard(
                         attachment: a,
                         theme: theme,
                         onTap: () => _openFile(context, a),
                       ),
-                    ),
+                      // Description directly below if exists
+                      if (a.description != null && a.description!.isNotEmpty)
+                        _DescriptionTrailCard(
+                          description: a.description!,
+                          fileName: a.fileName ?? 'Unnamed file',
+                          theme: theme,
+                        ),
+                    ]),
                   ],
 
                   if (!hasFiles &&
@@ -633,6 +641,113 @@ class _CircleActionButton extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(8),
           child: Icon(icon, size: 20, color: color),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── DESCRIPTION TRAIL CARD
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _DescriptionTrailCard extends StatefulWidget {
+  final String description;
+  final String fileName;
+  final ThemeData theme;
+
+  const _DescriptionTrailCard({
+    required this.description,
+    required this.fileName,
+    required this.theme,
+  });
+
+  @override
+  State<_DescriptionTrailCard> createState() => _DescriptionTrailCardState();
+}
+
+class _DescriptionTrailCardState extends State<_DescriptionTrailCard> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = widget.theme.colorScheme;
+    final needsExpansion = widget.description.length > 100 ||
+        widget.description.split('\n').length > 2;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 4),
+      child: GestureDetector(
+        onTap: needsExpansion
+            ? () => setState(() => _isExpanded = !_isExpanded)
+            : null,
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: colors.surfaceContainerHighest.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: colors.outline.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // File reference with trail indicator
+              Row(
+                children: [
+                  Container(
+                    width: 3,
+                    height: 20,
+                    decoration: BoxDecoration(
+                      color: colors.primary.withValues(alpha: 0.4),
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.description_outlined,
+                    size: 14,
+                    color: colors.primary.withValues(alpha: 0.7),
+                  ),
+                  const SizedBox(width: 6),
+                  Expanded(
+                    child: Text(
+                      widget.fileName,
+                      style: widget.theme.textTheme.bodySmall?.copyWith(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: colors.onSurface.withValues(alpha: 0.6),
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  if (needsExpansion)
+                    Icon(
+                      _isExpanded
+                          ? Icons.keyboard_arrow_up_rounded
+                          : Icons.keyboard_arrow_down_rounded,
+                      size: 18,
+                      color: colors.primary,
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              // Description text
+              Text(
+                widget.description,
+                style: widget.theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 13,
+                  color: colors.onSurface.withValues(alpha: 0.75),
+                  fontStyle: FontStyle.italic,
+                  height: 1.5,
+                ),
+                maxLines: _isExpanded ? null : 2,
+                overflow: _isExpanded ? null : TextOverflow.ellipsis,
+              ),
+            ],
+          ),
         ),
       ),
     );

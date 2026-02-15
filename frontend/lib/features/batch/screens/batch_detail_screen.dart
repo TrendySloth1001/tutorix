@@ -1203,63 +1203,74 @@ class _NoteCard extends StatelessWidget {
                 // ── Attachment chips (show max 2, then "...more")
                 if (hasFiles) ...[
                   const SizedBox(height: 14),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Show first 2 attachments
-                      ...note.attachments.take(2).map((a) {
-                        final ac =
-                            _typeConfig[a.fileType] ??
+                      // Show first 2 attachments with descriptions in reading flow
+                      ...note.attachments.take(2).expand((a) {
+                        final ac = _typeConfig[a.fileType] ??
                             (
                               Icons.attach_file_rounded,
                               theme.colorScheme.primary,
                             );
-                        return Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 7,
-                          ),
-                          decoration: BoxDecoration(
-                            color: ac.$2.withValues(alpha: 0.08),
-                            borderRadius: BorderRadius.circular(10),
-                            border: Border.all(
-                              color: ac.$2.withValues(alpha: 0.15),
-                              width: 1,
+                        return [
+                          // Attachment chip
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 7,
+                              ),
+                              decoration: BoxDecoration(
+                                color: ac.$2.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(10),
+                                border: Border.all(
+                                  color: ac.$2.withValues(alpha: 0.15),
+                                  width: 1,
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(ac.$1, size: 16, color: ac.$2),
+                                  const SizedBox(width: 6),
+                                  Flexible(
+                                    child: Text(
+                                      a.fileName ?? a.fileType.toUpperCase(),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: ac.$2.withValues(alpha: 0.9),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    a.formattedSize,
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                      color: ac.$2.withValues(alpha: 0.6),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(ac.$1, size: 16, color: ac.$2),
-                              const SizedBox(width: 6),
-                              ConstrainedBox(
-                                constraints: const BoxConstraints(
-                                  maxWidth: 180,
-                                ),
-                                child: Text(
-                                  a.fileName ?? a.fileType.toUpperCase(),
-                                  maxLines: 1,
-                                  overflow: TextOverflow.ellipsis,
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    fontWeight: FontWeight.w600,
-                                    color: ac.$2.withValues(alpha: 0.9),
-                                  ),
-                                ),
+                          // Description directly below if exists
+                          if (a.description != null && a.description!.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: _DescriptionCard(
+                                description: a.description!,
+                                fileName: a.fileName ?? a.fileType.toUpperCase(),
+                                theme: theme,
                               ),
-                              const SizedBox(width: 6),
-                              Text(
-                                a.formattedSize,
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  color: ac.$2.withValues(alpha: 0.6),
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
+                            ),
+                        ];
                       }),
                       // Show "...more" if there are more than 2
                       if (note.attachments.length > 2)
@@ -1826,6 +1837,113 @@ class _EmptySection extends StatelessWidget {
                 ),
               ),
             ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── DESCRIPTION CARD WIDGET
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _DescriptionCard extends StatefulWidget {
+  final String description;
+  final String fileName;
+  final ThemeData theme;
+
+  const _DescriptionCard({
+    required this.description,
+    required this.fileName,
+    required this.theme,
+  });
+
+  @override
+  State<_DescriptionCard> createState() => _DescriptionCardState();
+}
+
+class _DescriptionCardState extends State<_DescriptionCard> {
+  bool _isExpanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final needsExpansion = widget.description.length > 80 ||
+        widget.description.split('\n').length > 2;
+
+    return GestureDetector(
+      onTap: needsExpansion
+          ? () => setState(() => _isExpanded = !_isExpanded)
+          : null,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: widget.theme.colorScheme.surfaceContainerHighest
+              .withValues(alpha: 0.4),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: widget.theme.colorScheme.outline.withValues(alpha: 0.2),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // File reference with trail indicator
+            Row(
+              children: [
+                Container(
+                  width: 3,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: widget.theme.colorScheme.primary.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Icon(
+                  Icons.description_outlined,
+                  size: 13,
+                  color: widget.theme.colorScheme.primary
+                      .withValues(alpha: 0.7),
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    widget.fileName,
+                    style: widget.theme.textTheme.bodySmall?.copyWith(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                      color: widget.theme.colorScheme.onSurface
+                          .withValues(alpha: 0.6),
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                if (needsExpansion)
+                  Icon(
+                    _isExpanded
+                        ? Icons.keyboard_arrow_up_rounded
+                        : Icons.keyboard_arrow_down_rounded,
+                    size: 16,
+                    color: widget.theme.colorScheme.primary,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            // Description text
+            Text(
+              widget.description,
+              style: widget.theme.textTheme.bodySmall?.copyWith(
+                fontSize: 12,
+                color: widget.theme.colorScheme.onSurface
+                    .withValues(alpha: 0.75),
+                fontStyle: FontStyle.italic,
+                height: 1.4,
+              ),
+              maxLines: _isExpanded ? null : 2,
+              overflow: _isExpanded ? null : TextOverflow.ellipsis,
+            ),
           ],
         ),
       ),

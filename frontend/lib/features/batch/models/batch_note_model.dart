@@ -58,6 +58,7 @@ class NoteAttachment {
   final String id;
   final String url;
   final String? fileName;
+  final String? description;
   final String fileType;
   final int fileSize;
   final String? mimeType;
@@ -66,6 +67,7 @@ class NoteAttachment {
     required this.id,
     required this.url,
     this.fileName,
+    this.description,
     this.fileType = 'pdf',
     this.fileSize = 0,
     this.mimeType,
@@ -76,6 +78,7 @@ class NoteAttachment {
       id: json['id'] as String,
       url: json['url'] as String,
       fileName: json['fileName'] as String?,
+      description: json['description'] as String?,
       fileType: json['fileType'] as String? ?? 'pdf',
       fileSize: json['fileSize'] as int? ?? 0,
       mimeType: json['mimeType'] as String?,

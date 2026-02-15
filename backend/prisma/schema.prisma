@@ -385,11 +385,12 @@ model NoteAttachment {
   noteId String
   note   BatchNote @relation(fields: [noteId], references: [id], onDelete: Cascade)
 
-  url      String
-  fileName String?
-  fileType String  @default("pdf") // pdf, image, doc, link
-  fileSize Int     @default(0) // bytes
-  mimeType String?
+  url         String
+  fileName    String?
+  description String? // optional description for this specific attachment
+  fileType    String  @default("pdf") // pdf, image, doc, link
+  fileSize    Int     @default(0) // bytes
+  mimeType    String?
 
   createdAt DateTime @default(now())
 

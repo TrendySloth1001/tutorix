@@ -27,8 +27,8 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
   final _descCtrl = TextEditingController();
   bool _isSaving = false;
 
-  // Multi-file state
-  final List<PlatformFile> _pickedFiles = [];
+  // Multi-file state with descriptions
+  final List<_FileWithDescription> _pickedFiles = [];
 
   // Storage
   int _storageUsed = 0;
@@ -55,6 +55,9 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     _animCtrl.dispose();
     _titleCtrl.dispose();
     _descCtrl.dispose();
+    for (final f in _pickedFiles) {
+      f.descriptionController.dispose();
+    }
     super.dispose();
   }
 
@@ -96,8 +99,11 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     if (result != null && result.files.isNotEmpty) {
       setState(() {
         for (final f in result.files) {
-          if (!_pickedFiles.any((e) => e.path == f.path)) {
-            _pickedFiles.add(f);
+          if (!_pickedFiles.any((e) => e.file.path == f.path)) {
+            _pickedFiles.add(_FileWithDescription(
+              file: f,
+              descriptionController: TextEditingController(),
+            ));
           }
         }
       });
@@ -105,10 +111,14 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
   }
 
   void _removeFile(int index) {
-    setState(() => _pickedFiles.removeAt(index));
+    setState(() {
+      _pickedFiles[index].descriptionController.dispose();
+      _pickedFiles.removeAt(index);
+    });
   }
 
-  int get _totalPickedSize => _pickedFiles.fold(0, (sum, f) => sum + f.size);
+  int get _totalPickedSize =>
+      _pickedFiles.fold(0, (sum, f) => sum + f.file.size);
 
   bool get _exceedsStorage => (_storageUsed + _totalPickedSize) > _storageLimit;
 
@@ -138,25 +148,27 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
 
       if (_pickedFiles.isNotEmpty) {
         final paths = _pickedFiles
-            .where((f) => f.path != null)
-            .map((f) => f.path!)
+            .where((f) => f.file.path != null)
+            .map((f) => f.file.path!)
             .toList();
 
         if (paths.isNotEmpty) {
           final uploadResult = await _batchService.uploadNoteFiles(paths);
           final files = uploadResult['files'] as List<dynamic>;
-          attachments = files.map<Map<String, dynamic>>((f) {
-            final m = f as Map<String, dynamic>;
+          attachments = List.generate(files.length, (i) {
+            final m = files[i] as Map<String, dynamic>;
+            final description = _pickedFiles[i].descriptionController.text.trim();
             return {
               'url': m['url'],
               'fileName': m['fileName'],
+              'description': description.isEmpty ? null : description,
               'fileSize': m['size'] ?? 0,
               'mimeType': m['mimeType'],
               'fileType': _fileTypeFromExtension(
                 (m['fileName'] as String?) ?? 'file.pdf',
               ),
             };
-          }).toList();
+          });
         }
       }
 
@@ -406,11 +418,12 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
       children: [
         if (_pickedFiles.isNotEmpty) ...[
           ...List.generate(_pickedFiles.length, (i) {
-            final f = _pickedFiles[i];
-            return _FileChip(
-              name: f.name,
-              size: f.size,
-              fileType: _fileTypeFromExtension(f.name),
+            final fileWithDesc = _pickedFiles[i];
+            return _FileCardWithDescription(
+              name: fileWithDesc.file.name,
+              size: fileWithDesc.file.size,
+              fileType: _fileTypeFromExtension(fileWithDesc.file.name),
+              descriptionController: fileWithDesc.descriptionController,
               onRemove: () => _removeFile(i),
             );
           }),
@@ -532,20 +545,30 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
   }
 }
 
-// ── File chip ────────────────────────────────────────────────────────
+// ── File card with description ──────────────────────────────────────
 
-class _FileChip extends StatelessWidget {
+class _FileCardWithDescription extends StatefulWidget {
   final String name;
   final int size;
   final String fileType;
+  final TextEditingController descriptionController;
   final VoidCallback onRemove;
 
-  const _FileChip({
+  const _FileCardWithDescription({
     required this.name,
     required this.size,
     required this.fileType,
+    required this.descriptionController,
     required this.onRemove,
   });
+
+  @override
+  State<_FileCardWithDescription> createState() =>
+      _FileCardWithDescriptionState();
+}
+
+class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
+  bool _isExpanded = false;
 
   static const _typeConfig = {
     'pdf': (Icons.picture_as_pdf_rounded, Color(0xFFE53935)),
@@ -554,68 +577,187 @@ class _FileChip extends StatelessWidget {
   };
 
   String get _formattedSize {
-    if (size < 1024) return '$size B';
-    if (size < 1024 * 1024) return '${(size / 1024).toStringAsFixed(1)} KB';
-    return '${(size / (1024 * 1024)).toStringAsFixed(1)} MB';
+    if (widget.size < 1024) return '${widget.size} B';
+    if (widget.size < 1024 * 1024) {
+      return '${(widget.size / 1024).toStringAsFixed(1)} KB';
+    }
+    return '${(widget.size / (1024 * 1024)).toStringAsFixed(1)} MB';
   }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final config =
-        _typeConfig[fileType] ??
+    final config = _typeConfig[widget.fileType] ??
         (Icons.attach_file_rounded, theme.colorScheme.primary);
     final color = config.$2;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withValues(alpha: 0.12)),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: color.withValues(alpha: 0.15),
+          width: 1.5,
+        ),
       ),
-      child: Row(
+      child: Column(
         children: [
-          Icon(config.$1, size: 20, color: color),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  _formattedSize,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontSize: 11,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          GestureDetector(
-            onTap: onRemove,
+          // File header
+          InkWell(
+            onTap: () => setState(() => _isExpanded = !_isExpanded),
+            borderRadius: BorderRadius.circular(16),
             child: Padding(
-              padding: const EdgeInsets.all(4),
-              child: Icon(
-                Icons.close_rounded,
-                size: 16,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+              padding: const EdgeInsets.all(14),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Icon(config.$1, size: 22, color: color),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          _formattedSize,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontSize: 12,
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  // Expand/collapse button
+                  IconButton(
+                    onPressed: () => setState(() => _isExpanded = !_isExpanded),
+                    icon: Icon(
+                      _isExpanded
+                          ? Icons.expand_less_rounded
+                          : Icons.expand_more_rounded,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                    constraints: const BoxConstraints(
+                      minWidth: 40,
+                      minHeight: 40,
+                    ),
+                    padding: EdgeInsets.zero,
+                  ),
+                  // Remove button
+                  GestureDetector(
+                    onTap: widget.onRemove,
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.red.withValues(alpha: 0.08),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.close_rounded,
+                        size: 18,
+                        color: Colors.red.shade600,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
           ),
+          // Description field (expandable)
+          if (_isExpanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Divider(
+                    color: color.withValues(alpha: 0.15),
+                    height: 1,
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Description (optional)',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      color:
+                          theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: widget.descriptionController,
+                    decoration: InputDecoration(
+                      hintText: 'e.g., Solutions for exercises 1-10',
+                      hintStyle: TextStyle(
+                        fontSize: 13,
+                        color:
+                            theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                      ),
+                      filled: true,
+                      fillColor: theme.colorScheme.surface,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: color.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: color.withValues(alpha: 0.2),
+                        ),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(
+                          color: color.withValues(alpha: 0.5),
+                          width: 1.5,
+                        ),
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 12,
+                      ),
+                    ),
+                    maxLines: 2,
+                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 13),
+                    textCapitalization: TextCapitalization.sentences,
+                  ),
+                ],
+              ),
+            ),
         ],
       ),
     );
   }
+}
+
+// ── File with description wrapper ────────────────────────────────────
+
+class _FileWithDescription {
+  final PlatformFile file;
+  final TextEditingController descriptionController;
+
+  _FileWithDescription({
+    required this.file,
+    required this.descriptionController,
+  });
 }
 
 // ── Field label ──────────────────────────────────────────────────────

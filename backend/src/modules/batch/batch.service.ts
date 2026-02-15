@@ -197,7 +197,7 @@ export class BatchService {
     async createNote(batchId: string, uploadedById: string, data: {
         title: string;
         description?: string;
-        attachments?: { url: string; fileName?: string; fileType?: string; fileSize?: number; mimeType?: string }[];
+        attachments?: { url: string; fileName?: string; description?: string; fileType?: string; fileSize?: number; mimeType?: string }[];
     }) {
         const { attachments, ...noteData } = data;
         return prisma.batchNote.create({
@@ -210,6 +210,7 @@ export class BatchService {
                         create: attachments.map(a => ({
                             url: a.url,
                             fileName: a.fileName ?? null,
+                            description: a.description ?? null,
                             fileType: a.fileType || 'pdf',
                             fileSize: a.fileSize || 0,
                             mimeType: a.mimeType ?? null,
