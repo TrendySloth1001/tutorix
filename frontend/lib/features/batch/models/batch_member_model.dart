@@ -100,11 +100,7 @@ class BatchMemberWard {
   final String name;
   final String? picture;
 
-  const BatchMemberWard({
-    required this.id,
-    required this.name,
-    this.picture,
-  });
+  const BatchMemberWard({required this.id, required this.name, this.picture});
 
   factory BatchMemberWard.fromJson(Map<String, dynamic> json) {
     return BatchMemberWard(

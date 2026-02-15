@@ -80,9 +80,9 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       _notices = results[3] as List<BatchNoticeModel>;
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load: $e')));
       }
     }
     if (mounted) setState(() => _isLoading = false);
@@ -109,15 +109,16 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       builder: (ctx) => AlertDialog(
         title: const Text('Delete Batch?'),
         content: const Text(
-            'This will permanently delete this batch, all members, notes, and notices.'),
+          'This will permanently delete this batch, all members, notes, and notices.',
+        ),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child:
-                const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -129,9 +130,9 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
       }
     }
   }
@@ -149,9 +150,9 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       _loadAll();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed: $e')));
       }
     }
   }
@@ -180,12 +181,12 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
         content: Text('Remove ${m.displayName} from this batch?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child:
-                const Text('Remove', style: TextStyle(color: Colors.red)),
+            child: const Text('Remove', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -194,14 +195,17 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
 
     try {
       await _batchService.removeMember(
-          widget.coaching.id, widget.batchId, m.id);
+        widget.coaching.id,
+        widget.batchId,
+        m.id,
+      );
       _changed = true;
       _loadAll();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to remove: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to remove: $e')));
       }
     }
   }
@@ -230,12 +234,12 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
         content: Text('Delete "${note.title}"?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child:
-                const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -244,14 +248,17 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
 
     try {
       await _batchService.deleteNote(
-          widget.coaching.id, widget.batchId, note.id);
+        widget.coaching.id,
+        widget.batchId,
+        note.id,
+      );
       _changed = true;
       _loadAll();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
       }
     }
   }
@@ -280,12 +287,12 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
         content: Text('Delete "${notice.title}"?'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child:
-                const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -294,14 +301,17 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
 
     try {
       await _batchService.deleteNotice(
-          widget.coaching.id, widget.batchId, notice.id);
+        widget.coaching.id,
+        widget.batchId,
+        notice.id,
+      );
       _changed = true;
       _loadAll();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to delete: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
       }
     }
   }
@@ -354,16 +364,21 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
                     },
                     itemBuilder: (_) => [
                       const PopupMenuItem(
-                          value: 'edit', child: Text('Edit Batch')),
+                        value: 'edit',
+                        child: Text('Edit Batch'),
+                      ),
                       PopupMenuItem(
                         value: 'archive',
-                        child:
-                            Text(b.isActive ? 'Archive Batch' : 'Reactivate'),
+                        child: Text(
+                          b.isActive ? 'Archive Batch' : 'Reactivate',
+                        ),
                       ),
                       const PopupMenuItem(
                         value: 'delete',
-                        child:
-                            Text('Delete', style: TextStyle(color: Colors.red)),
+                        child: Text(
+                          'Delete',
+                          style: TextStyle(color: Colors.red),
+                        ),
                       ),
                     ],
                   ),
@@ -394,7 +409,9 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
                           if (b.subject != null)
                             Container(
                               padding: const EdgeInsets.symmetric(
-                                  horizontal: 10, vertical: 4),
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
                               decoration: BoxDecoration(
                                 color: Colors.white.withValues(alpha: 0.2),
                                 borderRadius: BorderRadius.circular(8),
@@ -402,20 +419,27 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
                               child: Text(
                                 b.subject!,
                                 style: const TextStyle(
-                                    color: Colors.white, fontSize: 12),
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                ),
                               ),
                             ),
                           if (b.days.isNotEmpty || b.startTime != null) ...[
                             const SizedBox(height: 6),
                             Row(
                               children: [
-                                const Icon(Icons.schedule_rounded,
-                                    size: 14, color: Colors.white70),
+                                const Icon(
+                                  Icons.schedule_rounded,
+                                  size: 14,
+                                  color: Colors.white70,
+                                ),
                                 const SizedBox(width: 4),
                                 Text(
                                   b.scheduleText,
                                   style: const TextStyle(
-                                      color: Colors.white70, fontSize: 12),
+                                    color: Colors.white70,
+                                    fontSize: 12,
+                                  ),
                                 ),
                               ],
                             ),
@@ -430,7 +454,9 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
                 controller: _tabCtrl,
                 indicatorSize: TabBarIndicatorSize.label,
                 labelStyle: const TextStyle(
-                    fontWeight: FontWeight.w600, fontSize: 13),
+                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                ),
                 tabs: [
                   Tab(text: 'Overview'),
                   Tab(text: 'Members (${_members.length})'),
@@ -482,10 +508,8 @@ class _OverviewTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final teachers =
-        members.where((m) => m.role == 'TEACHER').toList();
-    final students =
-        members.where((m) => m.role == 'STUDENT').toList();
+    final teachers = members.where((m) => m.role == 'TEACHER').toList();
+    final students = members.where((m) => m.role == 'STUDENT').toList();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
@@ -519,9 +543,12 @@ class _OverviewTab extends StatelessWidget {
 
         // ── Description
         if (batch.description != null && batch.description!.isNotEmpty) ...[
-          Text('About',
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w600)),
+          Text(
+            'About',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 8),
           Text(
             batch.description!,
@@ -539,9 +566,11 @@ class _OverviewTab extends StatelessWidget {
           icon: Icons.calendar_today_rounded,
           children: [
             if (batch.days.isNotEmpty)
-              _DetailRow('Days', batch.days.map(BatchModel.shortDay).join(', ')),
-            if (batch.startTime != null)
-              _DetailRow('Start', batch.startTime!),
+              _DetailRow(
+                'Days',
+                batch.days.map(BatchModel.shortDay).join(', '),
+              ),
+            if (batch.startTime != null) _DetailRow('Start', batch.startTime!),
             if (batch.endTime != null) _DetailRow('End', batch.endTime!),
           ],
         ),
@@ -564,9 +593,12 @@ class _OverviewTab extends StatelessWidget {
 
         // ── Teachers list
         if (teachers.isNotEmpty) ...[
-          Text('Teachers',
-              style: theme.textTheme.titleSmall
-                  ?.copyWith(fontWeight: FontWeight.w600)),
+          Text(
+            'Teachers',
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 8),
           ...teachers.map((t) => _MemberTile(member: t)),
         ],
@@ -580,11 +612,12 @@ class _OverviewStat extends StatelessWidget {
   final String label;
   final String value;
   final Color color;
-  const _OverviewStat(
-      {required this.icon,
-      required this.label,
-      required this.value,
-      required this.color});
+  const _OverviewStat({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -600,13 +633,18 @@ class _OverviewStat extends StatelessWidget {
           children: [
             Icon(icon, color: color, size: 22),
             const SizedBox(height: 8),
-            Text(value,
-                style: theme.textTheme.titleLarge
-                    ?.copyWith(fontWeight: FontWeight.bold)),
-            Text(label,
-                style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface
-                        .withValues(alpha: 0.5))),
+            Text(
+              value,
+              style: theme.textTheme.titleLarge?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            Text(
+              label,
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
+            ),
           ],
         ),
       ),
@@ -618,8 +656,11 @@ class _DetailCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final List<Widget> children;
-  const _DetailCard(
-      {required this.title, required this.icon, required this.children});
+  const _DetailCard({
+    required this.title,
+    required this.icon,
+    required this.children,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -635,14 +676,18 @@ class _DetailCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon,
-                  size: 18,
-                  color:
-                      theme.colorScheme.onSurface.withValues(alpha: 0.5)),
+              Icon(
+                icon,
+                size: 18,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+              ),
               const SizedBox(width: 8),
-              Text(title,
-                  style: theme.textTheme.titleSmall
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                title,
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 12),
@@ -666,13 +711,18 @@ class _DetailRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurface
-                      .withValues(alpha: 0.5))),
-          Text(value,
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w500)),
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            ),
+          ),
+          Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w500,
+            ),
+          ),
         ],
       ),
     );
@@ -698,10 +748,8 @@ class _MembersTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final teachers =
-        members.where((m) => m.role == 'TEACHER').toList();
-    final students =
-        members.where((m) => m.role == 'STUDENT').toList();
+    final teachers = members.where((m) => m.role == 'TEACHER').toList();
+    final students = members.where((m) => m.role == 'STUDENT').toList();
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
@@ -724,10 +772,12 @@ class _MembersTab extends StatelessWidget {
         if (teachers.isNotEmpty) ...[
           _SectionHeader('Teachers (${teachers.length})'),
           const SizedBox(height: 8),
-          ...teachers
-              .map((m) => _MemberTile(
-                  member: m,
-                  onRemove: isAdmin ? () => onRemove(m) : null)),
+          ...teachers.map(
+            (m) => _MemberTile(
+              member: m,
+              onRemove: isAdmin ? () => onRemove(m) : null,
+            ),
+          ),
           const SizedBox(height: 16),
         ],
         _SectionHeader('Students (${students.length})'),
@@ -739,16 +789,18 @@ class _MembersTab extends StatelessWidget {
               child: Text(
                 'No students yet',
                 style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface
-                      .withValues(alpha: 0.4),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
               ),
             ),
           )
         else
-          ...students.map((m) => _MemberTile(
+          ...students.map(
+            (m) => _MemberTile(
               member: m,
-              onRemove: isAdmin ? () => onRemove(m) : null)),
+              onRemove: isAdmin ? () => onRemove(m) : null,
+            ),
+          ),
       ],
     );
   }
@@ -763,12 +815,9 @@ class _SectionHeader extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context)
-                .colorScheme
-                .onSurface
-                .withValues(alpha: 0.6),
-          ),
+        fontWeight: FontWeight.w600,
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
+      ),
     );
   }
 }
@@ -804,20 +853,24 @@ class _MemberTile extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(member.displayName,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w500)),
+                Text(
+                  member.displayName,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
                 if (member.subtitle.isNotEmpty)
-                  Text(member.subtitle,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.5))),
+                  Text(
+                    member.subtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
               ],
             ),
           ),
           Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
             decoration: BoxDecoration(
               color: member.role == 'TEACHER'
                   ? Colors.teal.withValues(alpha: 0.1)
@@ -837,9 +890,11 @@ class _MemberTile extends StatelessWidget {
           ),
           if (onRemove != null)
             IconButton(
-              icon: Icon(Icons.close_rounded,
-                  size: 18,
-                  color: Colors.red.withValues(alpha: 0.6)),
+              icon: Icon(
+                Icons.close_rounded,
+                size: 18,
+                color: Colors.red.withValues(alpha: 0.6),
+              ),
               onPressed: onRemove,
             ),
         ],
@@ -890,11 +945,13 @@ class _NotesTab extends StatelessWidget {
             text: 'No notes uploaded yet',
           )
         else
-          ...notes.map((n) => _NoteCard(
-                note: n,
-                canDelete: isTeacher,
-                onDelete: () => onDelete(n),
-              )),
+          ...notes.map(
+            (n) => _NoteCard(
+              note: n,
+              canDelete: isTeacher,
+              onDelete: () => onDelete(n),
+            ),
+          ),
       ],
     );
   }
@@ -904,8 +961,11 @@ class _NoteCard extends StatelessWidget {
   final BatchNoteModel note;
   final bool canDelete;
   final VoidCallback onDelete;
-  const _NoteCard(
-      {required this.note, required this.canDelete, required this.onDelete});
+  const _NoteCard({
+    required this.note,
+    required this.canDelete,
+    required this.onDelete,
+  });
 
   IconData get _fileIcon {
     switch (note.fileType) {
@@ -967,16 +1027,21 @@ class _NoteCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(note.title,
-                    style: theme.textTheme.bodyMedium
-                        ?.copyWith(fontWeight: FontWeight.w600)),
+                Text(
+                  note.title,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
                 if (note.description != null)
-                  Text(note.description!,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.5))),
+                  Text(
+                    note.description!,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                  ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
@@ -995,8 +1060,9 @@ class _NoteCard extends StatelessWidget {
                         _timeAgo(note.createdAt!),
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontSize: 11,
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.35),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.35,
+                          ),
                         ),
                       ),
                     ],
@@ -1007,8 +1073,11 @@ class _NoteCard extends StatelessWidget {
           ),
           if (canDelete)
             IconButton(
-              icon: Icon(Icons.delete_outline_rounded,
-                  size: 18, color: Colors.red.withValues(alpha: 0.6)),
+              icon: Icon(
+                Icons.delete_outline_rounded,
+                size: 18,
+                color: Colors.red.withValues(alpha: 0.6),
+              ),
               onPressed: onDelete,
             ),
         ],
@@ -1054,16 +1123,15 @@ class _NoticesTab extends StatelessWidget {
             ),
           ),
         if (notices.isEmpty)
-          _EmptySection(
-            icon: Icons.campaign_outlined,
-            text: 'No notices yet',
-          )
+          _EmptySection(icon: Icons.campaign_outlined, text: 'No notices yet')
         else
-          ...notices.map((n) => _NoticeCard(
-                notice: n,
-                canDelete: isTeacher,
-                onDelete: () => onDelete(n),
-              )),
+          ...notices.map(
+            (n) => _NoticeCard(
+              notice: n,
+              canDelete: isTeacher,
+              onDelete: () => onDelete(n),
+            ),
+          ),
       ],
     );
   }
@@ -1073,10 +1141,11 @@ class _NoticeCard extends StatelessWidget {
   final BatchNoticeModel notice;
   final bool canDelete;
   final VoidCallback onDelete;
-  const _NoticeCard(
-      {required this.notice,
-      required this.canDelete,
-      required this.onDelete});
+  const _NoticeCard({
+    required this.notice,
+    required this.canDelete,
+    required this.onDelete,
+  });
 
   Color _priorityColor() {
     switch (notice.priority) {
@@ -1113,7 +1182,9 @@ class _NoticeCard extends StatelessWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
@@ -1133,15 +1204,18 @@ class _NoticeCard extends StatelessWidget {
                     _timeAgo(notice.createdAt!),
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 11,
-                      color: theme.colorScheme.onSurface
-                          .withValues(alpha: 0.35),
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.35,
+                      ),
                     ),
                   ),
                 if (canDelete)
                   IconButton(
-                    icon: Icon(Icons.delete_outline_rounded,
-                        size: 16,
-                        color: Colors.red.withValues(alpha: 0.5)),
+                    icon: Icon(
+                      Icons.delete_outline_rounded,
+                      size: 16,
+                      color: Colors.red.withValues(alpha: 0.5),
+                    ),
                     onPressed: onDelete,
                     constraints: const BoxConstraints(),
                     padding: const EdgeInsets.only(left: 8),
@@ -1149,15 +1223,17 @@ class _NoticeCard extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            Text(notice.title,
-                style: theme.textTheme.titleSmall
-                    ?.copyWith(fontWeight: FontWeight.w600)),
+            Text(
+              notice.title,
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
             const SizedBox(height: 4),
             Text(
               notice.message,
               style: theme.textTheme.bodySmall?.copyWith(
-                color:
-                    theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                 height: 1.5,
               ),
             ),
@@ -1183,8 +1259,7 @@ class _NoticeCard extends StatelessWidget {
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.w500,
                       fontSize: 11,
-                      color: theme.colorScheme.onSurface
-                          .withValues(alpha: 0.5),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                 ],
@@ -1214,15 +1289,18 @@ class _EmptySection extends StatelessWidget {
       child: Center(
         child: Column(
           children: [
-            Icon(icon,
-                size: 48,
-                color:
-                    theme.colorScheme.onSurface.withValues(alpha: 0.15)),
+            Icon(
+              icon,
+              size: 48,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
+            ),
             const SizedBox(height: 12),
-            Text(text,
-                style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface
-                        .withValues(alpha: 0.4))),
+            Text(
+              text,
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+            ),
           ],
         ),
       ),

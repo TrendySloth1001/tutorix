@@ -54,8 +54,9 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
         widget.coaching.id,
         widget.batchId,
         title: _titleCtrl.text.trim(),
-        description:
-            _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+        description: _descCtrl.text.trim().isEmpty
+            ? null
+            : _descCtrl.text.trim(),
         fileUrl: _urlCtrl.text.trim(),
         fileType: _fileType,
         fileName: _fileNameCtrl.text.trim().isEmpty
@@ -65,9 +66,9 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed: $e')));
       }
     }
     if (mounted) setState(() => _isSaving = false);
@@ -93,9 +94,12 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Title
-              Text('Title *',
-                  style: theme.textTheme.labelLarge
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'Title *',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _titleCtrl,
@@ -107,9 +111,12 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
               const SizedBox(height: 20),
 
               // ── Description
-              Text('Description',
-                  style: theme.textTheme.labelLarge
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'Description',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _descCtrl,
@@ -120,9 +127,12 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
               const SizedBox(height: 20),
 
               // ── File type
-              Text('File Type',
-                  style: theme.textTheme.labelLarge
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'File Type',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 10),
               Wrap(
                 spacing: 8,
@@ -134,8 +144,9 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
                     label: Text(t.$2),
                     selected: selected,
                     onSelected: (_) => setState(() => _fileType = t.$1),
-                    selectedColor: theme.colorScheme.primary
-                        .withValues(alpha: 0.15),
+                    selectedColor: theme.colorScheme.primary.withValues(
+                      alpha: 0.15,
+                    ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
                     ),
@@ -145,9 +156,12 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
               const SizedBox(height: 20),
 
               // ── File URL
-              Text('File URL *',
-                  style: theme.textTheme.labelLarge
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'File URL *',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _urlCtrl,
@@ -159,9 +173,12 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
               const SizedBox(height: 20),
 
               // ── File name
-              Text('File Name',
-                  style: theme.textTheme.labelLarge
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'File Name',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _fileNameCtrl,
@@ -185,7 +202,9 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
                           width: 22,
                           height: 22,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Text('Upload Note'),
                 ),
@@ -198,14 +217,13 @@ class _CreateNoteScreenState extends State<CreateNoteScreen> {
   }
 
   InputDecoration _input(String hint) => InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surfaceContainerLowest,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      );
+    hintText: hint,
+    filled: true,
+    fillColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide.none,
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+  );
 }

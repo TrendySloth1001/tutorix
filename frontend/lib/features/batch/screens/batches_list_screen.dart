@@ -44,16 +44,18 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
     try {
       if (_isAdmin) {
         final status = _filter == 'all' ? null : _filter;
-        _batches =
-            await _batchService.listBatches(widget.coaching.id, status: status);
+        _batches = await _batchService.listBatches(
+          widget.coaching.id,
+          status: status,
+        );
       } else {
         _batches = await _batchService.getMyBatches(widget.coaching.id);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load batches: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load batches: $e')));
       }
     }
     if (mounted) setState(() => _isLoading = false);
@@ -112,8 +114,9 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                       Text(
                         '${_batches.length} batch${_batches.length == 1 ? '' : 'es'}',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.5),
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.5,
+                          ),
                         ),
                       ),
                     ],
@@ -126,7 +129,9 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                     label: const Text('New'),
                     style: FilledButton.styleFrom(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -152,8 +157,9 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                         setState(() => _filter = f);
                         _loadBatches();
                       },
-                      selectedColor:
-                          theme.colorScheme.primary.withValues(alpha: 0.15),
+                      selectedColor: theme.colorScheme.primary.withValues(
+                        alpha: 0.15,
+                      ),
                       checkmarkColor: theme.colorScheme.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
@@ -170,20 +176,19 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : _batches.isEmpty
-                    ? _EmptyState(isAdmin: _isAdmin, onTap: _openCreateBatch)
-                    : RefreshIndicator(
-                        onRefresh: _loadBatches,
-                        child: ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
-                          itemCount: _batches.length,
-                          separatorBuilder: (_, _) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (context, i) => _BatchCard(
-                            batch: _batches[i],
-                            onTap: () => _openBatchDetail(_batches[i]),
-                          ),
-                        ),
+                ? _EmptyState(isAdmin: _isAdmin, onTap: _openCreateBatch)
+                : RefreshIndicator(
+                    onRefresh: _loadBatches,
+                    child: ListView.separated(
+                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                      itemCount: _batches.length,
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      itemBuilder: (context, i) => _BatchCard(
+                        batch: _batches[i],
+                        onTap: () => _openBatchDetail(_batches[i]),
                       ),
+                    ),
+                  ),
           ),
         ],
       ),
@@ -207,9 +212,11 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.group_work_outlined,
-                size: 64,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.2)),
+            Icon(
+              Icons.group_work_outlined,
+              size: 64,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+            ),
             const SizedBox(height: 16),
             Text(
               isAdmin ? 'No batches yet' : 'No batches assigned',
@@ -270,12 +277,14 @@ class _BatchCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color:
-                          theme.colorScheme.primary.withValues(alpha: 0.1),
+                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Icon(Icons.group_work_rounded,
-                        size: 20, color: theme.colorScheme.primary),
+                    child: Icon(
+                      Icons.group_work_rounded,
+                      size: 20,
+                      color: theme.colorScheme.primary,
+                    ),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -306,20 +315,21 @@ class _BatchCard extends StatelessWidget {
               ),
               const SizedBox(height: 12),
               // ── Schedule
-              if (batch.days.isNotEmpty ||
-                  batch.startTime != null) ...[
+              if (batch.days.isNotEmpty || batch.startTime != null) ...[
                 Row(
                   children: [
-                    Icon(Icons.schedule_rounded,
-                        size: 14,
-                        color: theme.colorScheme.onSurface
-                            .withValues(alpha: 0.4)),
+                    Icon(
+                      Icons.schedule_rounded,
+                      size: 14,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    ),
                     const SizedBox(width: 6),
                     Text(
                       batch.scheduleText,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface
-                            .withValues(alpha: 0.5),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.5,
+                        ),
                       ),
                     ),
                   ],
@@ -369,8 +379,9 @@ class _BatchCard extends StatelessWidget {
                           batch.teacher!.name ?? 'Teacher',
                           style: theme.textTheme.bodySmall?.copyWith(
                             fontWeight: FontWeight.w500,
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.6),
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.6,
+                            ),
                           ),
                         ),
                       ],
@@ -416,17 +427,22 @@ class _StatChip extends StatelessWidget {
   final IconData icon;
   final String label;
   final ThemeData theme;
-  const _StatChip(
-      {required this.icon, required this.label, required this.theme});
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.theme,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon,
-            size: 14,
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+        Icon(
+          icon,
+          size: 14,
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+        ),
         const SizedBox(width: 4),
         Text(
           label,

@@ -48,8 +48,9 @@ class _CreateBatchScreenState extends State<CreateBatchScreen> {
     _nameCtrl = TextEditingController(text: b?.name ?? '');
     _subjectCtrl = TextEditingController(text: b?.subject ?? '');
     _descCtrl = TextEditingController(text: b?.description ?? '');
-    _maxStudentsCtrl =
-        TextEditingController(text: b != null && b.maxStudents > 0 ? '${b.maxStudents}' : '');
+    _maxStudentsCtrl = TextEditingController(
+      text: b != null && b.maxStudents > 0 ? '${b.maxStudents}' : '',
+    );
     if (b != null) {
       _selectedDays.addAll(b.days);
       _startTime = _parseTime(b.startTime);
@@ -109,8 +110,9 @@ class _CreateBatchScreenState extends State<CreateBatchScreen> {
           subject: _subjectCtrl.text.trim().isEmpty
               ? null
               : _subjectCtrl.text.trim(),
-          description:
-              _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+          description: _descCtrl.text.trim().isEmpty
+              ? null
+              : _descCtrl.text.trim(),
           startTime: _formatTime(_startTime),
           endTime: _formatTime(_endTime),
           days: _selectedDays.toList(),
@@ -123,8 +125,9 @@ class _CreateBatchScreenState extends State<CreateBatchScreen> {
           subject: _subjectCtrl.text.trim().isEmpty
               ? null
               : _subjectCtrl.text.trim(),
-          description:
-              _descCtrl.text.trim().isEmpty ? null : _descCtrl.text.trim(),
+          description: _descCtrl.text.trim().isEmpty
+              ? null
+              : _descCtrl.text.trim(),
           startTime: _formatTime(_startTime),
           endTime: _formatTime(_endTime),
           days: _selectedDays.toList(),
@@ -134,9 +137,9 @@ class _CreateBatchScreenState extends State<CreateBatchScreen> {
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to save: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to save: $e')));
       }
     }
     if (mounted) setState(() => _isSaving = false);
@@ -215,8 +218,9 @@ class _CreateBatchScreenState extends State<CreateBatchScreen> {
                         }
                       });
                     },
-                    selectedColor:
-                        theme.colorScheme.primary.withValues(alpha: 0.15),
+                    selectedColor: theme.colorScheme.primary.withValues(
+                      alpha: 0.15,
+                    ),
                     checkmarkColor: theme.colorScheme.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(10),
@@ -253,8 +257,7 @@ class _CreateBatchScreenState extends State<CreateBatchScreen> {
               const SizedBox(height: 6),
               TextFormField(
                 controller: _maxStudentsCtrl,
-                decoration:
-                    _inputDecoration('0 = unlimited'),
+                decoration: _inputDecoration('0 = unlimited'),
                 keyboardType: TextInputType.number,
               ),
               const SizedBox(height: 36),
@@ -314,12 +317,9 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w600,
-            color: Theme.of(context)
-                .colorScheme
-                .onSurface
-                .withValues(alpha: 0.7),
-          ),
+        fontWeight: FontWeight.w600,
+        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
+      ),
     );
   }
 }
@@ -346,9 +346,11 @@ class _TimeTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(Icons.access_time_rounded,
-                size: 18,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.4)),
+            Icon(
+              Icons.access_time_rounded,
+              size: 18,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+            ),
             const SizedBox(width: 8),
             Text(
               time != null ? time!.format(context) : label,

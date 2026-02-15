@@ -53,19 +53,23 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
     try {
       final results = await Future.wait([
         _batchService.getAvailableMembers(
-            widget.coaching.id, widget.batchId,
-            role: 'STUDENT'),
+          widget.coaching.id,
+          widget.batchId,
+          role: 'STUDENT',
+        ),
         _batchService.getAvailableMembers(
-            widget.coaching.id, widget.batchId,
-            role: 'TEACHER'),
+          widget.coaching.id,
+          widget.batchId,
+          role: 'TEACHER',
+        ),
       ]);
       _availableStudents = results[0];
       _availableTeachers = results[1];
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load: $e')));
       }
     }
     if (mounted) setState(() => _isLoading = false);
@@ -94,9 +98,9 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed: $e')));
       }
     }
     if (mounted) setState(() => _isSaving = false);
@@ -155,10 +159,13 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
                           width: 22,
                           height: 22,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : Text(
-                          'Add ${_selectedIds.length} Member${_selectedIds.length == 1 ? '' : 's'}'),
+                          'Add ${_selectedIds.length} Member${_selectedIds.length == 1 ? '' : 's'}',
+                        ),
                 ),
               ),
             )
@@ -185,15 +192,18 @@ class _MemberList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.person_off_outlined,
-                size: 48,
-                color:
-                    theme.colorScheme.onSurface.withValues(alpha: 0.15)),
+            Icon(
+              Icons.person_off_outlined,
+              size: 48,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
+            ),
             const SizedBox(height: 12),
-            Text('No available members',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurface
-                        .withValues(alpha: 0.4))),
+            Text(
+              'No available members',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              ),
+            ),
           ],
         ),
       );
@@ -224,20 +234,23 @@ class _MemberList extends StatelessWidget {
                 ? theme.colorScheme.primary.withValues(alpha: 0.08)
                 : theme.colorScheme.surfaceContainerLowest,
             leading: CircleAvatar(
-              backgroundImage:
-                  picture != null ? NetworkImage(picture) : null,
-              child:
-                  picture == null ? Text(name[0].toUpperCase()) : null,
+              backgroundImage: picture != null ? NetworkImage(picture) : null,
+              child: picture == null ? Text(name[0].toUpperCase()) : null,
             ),
-            title: Text(name,
-                style: const TextStyle(fontWeight: FontWeight.w500)),
+            title: Text(
+              name,
+              style: const TextStyle(fontWeight: FontWeight.w500),
+            ),
             subtitle: email != null ? Text(email) : null,
             trailing: selected
-                ? Icon(Icons.check_circle_rounded,
-                    color: theme.colorScheme.primary)
-                : Icon(Icons.radio_button_unchecked_rounded,
-                    color: theme.colorScheme.onSurface
-                        .withValues(alpha: 0.3)),
+                ? Icon(
+                    Icons.check_circle_rounded,
+                    color: theme.colorScheme.primary,
+                  )
+                : Icon(
+                    Icons.radio_button_unchecked_rounded,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                  ),
             onTap: () => onToggle(id),
           ),
         );

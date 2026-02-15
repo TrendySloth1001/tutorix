@@ -37,8 +37,10 @@ class BatchService {
   }
 
   /// GET /coaching/:coachingId/batches
-  Future<List<BatchModel>> listBatches(String coachingId,
-      {String? status}) async {
+  Future<List<BatchModel>> listBatches(
+    String coachingId, {
+    String? status,
+  }) async {
     var url = ApiConstants.batches(coachingId);
     if (status != null) url += '?status=$status';
     final data = await _api.getAuthenticated(url);
@@ -50,8 +52,9 @@ class BatchService {
 
   /// GET /coaching/:coachingId/batches/my
   Future<List<BatchModel>> getMyBatches(String coachingId) async {
-    final data =
-        await _api.getAuthenticated(ApiConstants.myBatches(coachingId));
+    final data = await _api.getAuthenticated(
+      ApiConstants.myBatches(coachingId),
+    );
     final list = data['batches'] as List<dynamic>;
     return list
         .map((e) => BatchModel.fromJson(e as Map<String, dynamic>))
@@ -121,7 +124,9 @@ class BatchService {
 
   /// GET /coaching/:coachingId/batches/:batchId/members
   Future<List<BatchMemberModel>> getMembers(
-      String coachingId, String batchId) async {
+    String coachingId,
+    String batchId,
+  ) async {
     final data = await _api.getAuthenticated(
       ApiConstants.batchMembers(coachingId, batchId),
     );
@@ -133,8 +138,10 @@ class BatchService {
 
   /// GET /coaching/:coachingId/batches/:batchId/members/available?role=...
   Future<List<dynamic>> getAvailableMembers(
-      String coachingId, String batchId,
-      {String? role}) async {
+    String coachingId,
+    String batchId, {
+    String? role,
+  }) async {
     var url = ApiConstants.batchAvailableMembers(coachingId, batchId);
     if (role != null) url += '?role=$role';
     final data = await _api.getAuthenticated(url);
@@ -143,10 +150,12 @@ class BatchService {
 
   /// DELETE /coaching/:coachingId/batches/:batchId/members/:batchMemberId
   Future<bool> removeMember(
-          String coachingId, String batchId, String batchMemberId) =>
-      _api.deleteAuthenticated(
-        ApiConstants.removeBatchMember(coachingId, batchId, batchMemberId),
-      );
+    String coachingId,
+    String batchId,
+    String batchMemberId,
+  ) => _api.deleteAuthenticated(
+    ApiConstants.removeBatchMember(coachingId, batchId, batchMemberId),
+  );
 
   // ── Notes ─────────────────────────────────────────────────────────
 
@@ -175,7 +184,9 @@ class BatchService {
 
   /// GET /coaching/:coachingId/batches/:batchId/notes
   Future<List<BatchNoteModel>> listNotes(
-      String coachingId, String batchId) async {
+    String coachingId,
+    String batchId,
+  ) async {
     final data = await _api.getAuthenticated(
       ApiConstants.batchNotes(coachingId, batchId),
     );
@@ -210,7 +221,9 @@ class BatchService {
 
   /// GET /coaching/:coachingId/batches/:batchId/notices
   Future<List<BatchNoticeModel>> listNotices(
-      String coachingId, String batchId) async {
+    String coachingId,
+    String batchId,
+  ) async {
     final data = await _api.getAuthenticated(
       ApiConstants.batchNotices(coachingId, batchId),
     );
@@ -222,8 +235,10 @@ class BatchService {
 
   /// DELETE /coaching/:coachingId/batches/:batchId/notices/:noticeId
   Future<bool> deleteNotice(
-          String coachingId, String batchId, String noticeId) =>
-      _api.deleteAuthenticated(
-        ApiConstants.deleteBatchNotice(coachingId, batchId, noticeId),
-      );
+    String coachingId,
+    String batchId,
+    String noticeId,
+  ) => _api.deleteAuthenticated(
+    ApiConstants.deleteBatchNotice(coachingId, batchId, noticeId),
+  );
 }

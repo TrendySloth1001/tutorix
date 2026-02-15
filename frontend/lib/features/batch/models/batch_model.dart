@@ -68,9 +68,8 @@ class BatchModel {
       description: json['description'] as String?,
       startTime: json['startTime'] as String?,
       endTime: json['endTime'] as String?,
-      days: (json['days'] as List<dynamic>?)
-              ?.map((e) => e as String)
-              .toList() ??
+      days:
+          (json['days'] as List<dynamic>?)?.map((e) => e as String).toList() ??
           [],
       maxStudents: json['maxStudents'] as int? ?? 0,
       status: json['status'] as String? ?? 'active',

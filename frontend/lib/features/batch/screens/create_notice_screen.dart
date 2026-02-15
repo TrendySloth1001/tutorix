@@ -55,9 +55,9 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen> {
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed: $e')));
       }
     }
     if (mounted) setState(() => _isSaving = false);
@@ -83,9 +83,12 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // ── Priority
-              Text('Priority',
-                  style: theme.textTheme.labelLarge
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'Priority',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 10),
               Row(
                 children: _priorities.map((p) {
@@ -106,17 +109,21 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen> {
                             border: selected
                                 ? Border.all(
                                     color: p.$3.withValues(alpha: 0.5),
-                                    width: 1.5)
+                                    width: 1.5,
+                                  )
                                 : null,
                           ),
                           child: Column(
                             children: [
-                              Icon(p.$4,
-                                  size: 18,
-                                  color: selected
-                                      ? p.$3
-                                      : theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.3)),
+                              Icon(
+                                p.$4,
+                                size: 18,
+                                color: selected
+                                    ? p.$3
+                                    : theme.colorScheme.onSurface.withValues(
+                                        alpha: 0.3,
+                                      ),
+                              ),
                               const SizedBox(height: 4),
                               Text(
                                 p.$2,
@@ -127,8 +134,9 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen> {
                                       : FontWeight.w400,
                                   color: selected
                                       ? p.$3
-                                      : theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.5),
+                                      : theme.colorScheme.onSurface.withValues(
+                                          alpha: 0.5,
+                                        ),
                                 ),
                               ),
                             ],
@@ -142,9 +150,12 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen> {
               const SizedBox(height: 24),
 
               // ── Title
-              Text('Title *',
-                  style: theme.textTheme.labelLarge
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'Title *',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _titleCtrl,
@@ -156,9 +167,12 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen> {
               const SizedBox(height: 20),
 
               // ── Message
-              Text('Message *',
-                  style: theme.textTheme.labelLarge
-                      ?.copyWith(fontWeight: FontWeight.w600)),
+              Text(
+                'Message *',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _messageCtrl,
@@ -182,7 +196,9 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen> {
                           width: 22,
                           height: 22,
                           child: CircularProgressIndicator(
-                              strokeWidth: 2, color: Colors.white),
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
                         )
                       : const Icon(Icons.send_rounded),
                   label: const Text('Send Notice'),
@@ -201,14 +217,13 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen> {
   }
 
   InputDecoration _input(String hint) => InputDecoration(
-        hintText: hint,
-        filled: true,
-        fillColor: Theme.of(context).colorScheme.surfaceContainerLowest,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
-        ),
-        contentPadding:
-            const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      );
+    hintText: hint,
+    filled: true,
+    fillColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: BorderSide.none,
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+  );
 }

@@ -85,18 +85,24 @@ class ApiConstants {
   static String batchAvailableMembers(String coachingId, String batchId) =>
       '$baseUrl/coaching/$coachingId/batches/$batchId/members/available';
   static String removeBatchMember(
-          String coachingId, String batchId, String batchMemberId) =>
-      '$baseUrl/coaching/$coachingId/batches/$batchId/members/$batchMemberId';
+    String coachingId,
+    String batchId,
+    String batchMemberId,
+  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/members/$batchMemberId';
   static String batchNotes(String coachingId, String batchId) =>
       '$baseUrl/coaching/$coachingId/batches/$batchId/notes';
   static String deleteBatchNote(
-          String coachingId, String batchId, String noteId) =>
-      '$baseUrl/coaching/$coachingId/batches/$batchId/notes/$noteId';
+    String coachingId,
+    String batchId,
+    String noteId,
+  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/notes/$noteId';
   static String batchNotices(String coachingId, String batchId) =>
       '$baseUrl/coaching/$coachingId/batches/$batchId/notices';
   static String deleteBatchNotice(
-          String coachingId, String batchId, String noticeId) =>
-      '$baseUrl/coaching/$coachingId/batches/$batchId/notices/$noticeId';
+    String coachingId,
+    String batchId,
+    String noticeId,
+  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/notices/$noticeId';
 
   // Google
   static const String googleClientId =
