@@ -105,8 +105,7 @@ class NoteDetailScreen extends StatelessWidget {
                   if (hasFiles) ...[
                     _SectionHeader(
                       icon: Icons.attach_file_rounded,
-                      label:
-                          'Attachments (${note.attachments.length})',
+                      label: 'Attachments (${note.attachments.length})',
                       theme: theme,
                       trailing: Text(
                         _formatBytes(note.totalSize),
@@ -143,8 +142,7 @@ class NoteDetailScreen extends StatelessWidget {
                             Text(
                               'This note has no content yet',
                               style: theme.textTheme.bodyMedium?.copyWith(
-                                color:
-                                    colors.onSurface.withValues(alpha: 0.35),
+                                color: colors.onSurface.withValues(alpha: 0.35),
                               ),
                             ),
                           ],
@@ -174,9 +172,7 @@ class NoteDetailScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
             Icon(Icons.warning_amber_rounded, color: Colors.red.shade400),
@@ -199,9 +195,7 @@ class NoteDetailScreen extends StatelessWidget {
               onDelete?.call();
               Navigator.pop(context, true);
             },
-            style: FilledButton.styleFrom(
-              backgroundColor: Colors.red.shade600,
-            ),
+            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
             child: const Text('Delete'),
           ),
         ],
@@ -249,10 +243,7 @@ class _HeroHeader extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            primaryColor.withValues(alpha: 0.15),
-            colors.surface,
-          ],
+          colors: [primaryColor.withValues(alpha: 0.15), colors.surface],
         ),
       ),
       child: SafeArea(
@@ -275,7 +266,7 @@ class _HeroHeader extends StatelessWidget {
                 child: Icon(
                   note.attachments.isNotEmpty
                       ? (_typeConfig[note.attachments.first.fileType]?.$1 ??
-                          Icons.note_outlined)
+                            Icons.note_outlined)
                       : Icons.note_outlined,
                   size: 32,
                   color: primaryColor,
@@ -432,11 +423,7 @@ class _SectionHeader extends StatelessWidget {
     final colors = theme.colorScheme;
     return Row(
       children: [
-        Icon(
-          icon,
-          size: 16,
-          color: colors.onSurface.withValues(alpha: 0.4),
-        ),
+        Icon(icon, size: 16, color: colors.onSurface.withValues(alpha: 0.4)),
         const SizedBox(width: 8),
         Text(
           label,
@@ -446,10 +433,7 @@ class _SectionHeader extends StatelessWidget {
             letterSpacing: 0.2,
           ),
         ),
-        if (trailing != null) ...[
-          const Spacer(),
-          trailing!,
-        ],
+        if (trailing != null) ...[const Spacer(), trailing!],
       ],
     );
   }
@@ -479,7 +463,8 @@ class _AttachmentCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final colors = theme.colorScheme;
-    final config = _typeConfig[attachment.fileType] ??
+    final config =
+        _typeConfig[attachment.fileType] ??
         (Icons.attach_file_rounded, colors.primary, 'File');
     final (icon, color, typeLabel) = config;
     final isImage = attachment.fileType == 'image';
@@ -496,9 +481,7 @@ class _AttachmentCard extends StatelessWidget {
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: color.withValues(alpha: 0.1),
-              ),
+              border: Border.all(color: color.withValues(alpha: 0.1)),
             ),
             child: Row(
               children: [
@@ -509,9 +492,7 @@ class _AttachmentCard extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(14),
-                    border: Border.all(
-                      color: color.withValues(alpha: 0.12),
-                    ),
+                    border: Border.all(color: color.withValues(alpha: 0.12)),
                   ),
                   child: isImage && attachment.url.isNotEmpty
                       ? ClipRRect(
@@ -519,11 +500,8 @@ class _AttachmentCard extends StatelessWidget {
                           child: Image.network(
                             attachment.url,
                             fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Icon(
-                              icon,
-                              color: color,
-                              size: 24,
-                            ),
+                            errorBuilder: (_, _, _) =>
+                                Icon(icon, color: color, size: 24),
                           ),
                         )
                       : Icon(icon, color: color, size: 24),
@@ -586,9 +564,7 @@ class _AttachmentCard extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                   child: Icon(
-                    isImage
-                        ? Icons.zoom_in_rounded
-                        : Icons.open_in_new_rounded,
+                    isImage ? Icons.zoom_in_rounded : Icons.open_in_new_rounded,
                     size: 18,
                     color: color,
                   ),

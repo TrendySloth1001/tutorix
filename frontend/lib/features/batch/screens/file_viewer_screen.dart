@@ -104,7 +104,7 @@ class _ImageViewerState extends State<_ImageViewer>
                     if (progress == null) return child;
                     final pct = progress.expectedTotalBytes != null
                         ? progress.cumulativeBytesLoaded /
-                            progress.expectedTotalBytes!
+                              progress.expectedTotalBytes!
                         : null;
                     return Center(
                       child: Column(
@@ -238,9 +238,9 @@ class _ImageViewerState extends State<_ImageViewer>
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not open file')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Could not open file')));
     }
   }
 }
@@ -325,7 +325,7 @@ class _PdfViewerState extends State<_PdfViewer> {
       // Load PDF document
       debugPrint('📚 Opening PDF document...');
       final document = await PdfDocument.openFile(file.path);
-      
+
       if (!mounted) {
         document.close();
         return;
@@ -532,9 +532,10 @@ class _DocumentViewerState extends State<_DocumentViewer> {
     try {
       // Step 1: Download to temp directory
       final dir = await getTemporaryDirectory();
-      final safeName =
-          (widget.attachment.fileName ?? 'document')
-              .replaceAll(RegExp(r'[^\w.\-]'), '_');
+      final safeName = (widget.attachment.fileName ?? 'document').replaceAll(
+        RegExp(r'[^\w.\-]'),
+        '_',
+      );
       final file = File('${dir.path}/$safeName');
 
       if (!file.existsSync() || file.lengthSync() == 0) {
@@ -581,7 +582,8 @@ class _DocumentViewerState extends State<_DocumentViewer> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
-    final config = _typeConfig[widget.attachment.fileType] ??
+    final config =
+        _typeConfig[widget.attachment.fileType] ??
         (Icons.attach_file_rounded, colors.primary, 'File');
     final (icon, color, typeLabel) = config;
 
