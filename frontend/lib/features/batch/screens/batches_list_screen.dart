@@ -27,7 +27,7 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
 
   List<BatchModel> _batches = [];
   bool _isLoading = true;
-  String _filter = 'all'; // all, active, archived
+  String _filter = 'all';
 
   bool get _isAdmin =>
       widget.coaching.ownerId == widget.user.id ||
@@ -106,16 +106,16 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                       Text(
                         'Batches',
                         style: theme.textTheme.headlineSmall?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: theme.colorScheme.onSurface,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
                         ),
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${_batches.length} batch${_batches.length == 1 ? '' : 'es'}',
+                        '${_batches.length} batch${_batches.length == 1 ? '' : 'es'} · ${widget.coaching.name}',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.5,
+                            alpha: 0.45,
                           ),
                         ),
                       ),
@@ -123,46 +123,123 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                   ),
                 ),
                 if (_isAdmin)
-                  FilledButton.icon(
-                    onPressed: _openCreateBatch,
-                    icon: const Icon(Icons.add_rounded, size: 18),
-                    label: const Text('New'),
-                    style: FilledButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 10,
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          theme.colorScheme.primary,
+                          theme.colorScheme.primary.withValues(alpha: 0.8),
+                        ],
                       ),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(14),
+                      boxShadow: [
+                        BoxShadow(
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.25,
+                          ),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _openCreateBatch,
+                        borderRadius: BorderRadius.circular(14),
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 10,
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.add_rounded,
+                                size: 18,
+                                color: theme.colorScheme.onPrimary,
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                'New',
+                                style: TextStyle(
+                                  color: theme.colorScheme.onPrimary,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ),
               ],
             ),
           ),
-          // ── Filter chips (admin only)
+          // ── Filter pills (admin only)
           if (_isAdmin) ...[
-            const SizedBox(height: 12),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Row(
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 38,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                padding: const EdgeInsets.symmetric(horizontal: 20),
                 children: ['all', 'active', 'archived'].map((f) {
                   final selected = _filter == f;
+                  final label = f[0].toUpperCase() + f.substring(1);
                   return Padding(
                     padding: const EdgeInsets.only(right: 8),
-                    child: FilterChip(
-                      label: Text(f[0].toUpperCase() + f.substring(1)),
-                      selected: selected,
-                      onSelected: (_) {
+                    child: GestureDetector(
+                      onTap: () {
                         setState(() => _filter = f);
                         _loadBatches();
                       },
-                      selectedColor: theme.colorScheme.primary.withValues(
-                        alpha: 0.15,
-                      ),
-                      checkmarkColor: theme.colorScheme.primary,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 18,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: selected
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.surfaceContainerLowest,
+                          borderRadius: BorderRadius.circular(20),
+                          border: selected
+                              ? null
+                              : Border.all(
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.08,
+                                  ),
+                                ),
+                          boxShadow: selected
+                              ? [
+                                  BoxShadow(
+                                    color: theme.colorScheme.primary.withValues(
+                                      alpha: 0.2,
+                                    ),
+                                    blurRadius: 6,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ]
+                              : null,
+                        ),
+                        child: Text(
+                          label,
+                          style: TextStyle(
+                            color: selected
+                                ? theme.colorScheme.onPrimary
+                                : theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.55,
+                                  ),
+                            fontWeight: selected
+                                ? FontWeight.w600
+                                : FontWeight.w500,
+                            fontSize: 13,
+                          ),
+                        ),
                       ),
                     ),
                   );
@@ -170,7 +247,7 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           // ── Content
           Expanded(
             child: _isLoading
@@ -182,10 +259,11 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                       itemCount: _batches.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      separatorBuilder: (_, __) => const SizedBox(height: 14),
                       itemBuilder: (context, i) => _BatchCard(
                         batch: _batches[i],
                         onTap: () => _openBatchDetail(_batches[i]),
+                        index: i,
                       ),
                     ),
                   ),
@@ -212,34 +290,52 @@ class _EmptyState extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.group_work_outlined,
-              size: 64,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.06),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.group_work_outlined,
+                size: 48,
+                color: theme.colorScheme.primary.withValues(alpha: 0.35),
+              ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             Text(
               isAdmin ? 'No batches yet' : 'No batches assigned',
               style: theme.textTheme.titleMedium?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
             const SizedBox(height: 8),
             Text(
               isAdmin
-                  ? 'Create your first batch to get started'
+                  ? 'Create your first batch to organise\nstudents and start teaching'
                   : 'You haven\'t been assigned to any batch yet',
               textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                height: 1.5,
               ),
             ),
             if (isAdmin) ...[
-              const SizedBox(height: 24),
+              const SizedBox(height: 28),
               FilledButton.icon(
                 onPressed: onTap,
-                icon: const Icon(Icons.add_rounded),
+                icon: const Icon(Icons.add_rounded, size: 18),
                 label: const Text('Create Batch'),
+                style: FilledButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 24,
+                    vertical: 14,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                ),
               ),
             ],
           ],
@@ -249,152 +345,142 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
-// ── Batch Card ───────────────────────────────────────────────────────────
+// ── Batch Card — Clean & Themed ──────────────────────────────────────────
 
 class _BatchCard extends StatelessWidget {
   final BatchModel batch;
   final VoidCallback onTap;
-  const _BatchCard({required this.batch, required this.onTap});
+  final int index;
+  const _BatchCard({
+    required this.batch,
+    required this.onTap,
+    required this.index,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Material(
-      color: theme.colorScheme.surfaceContainerLowest,
-      borderRadius: BorderRadius.circular(16),
-      elevation: 0,
-      child: InkWell(
-        onTap: onTap,
+
+    return Container(
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLowest,
         borderRadius: BorderRadius.circular(16),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Title + status
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Icon(
-                      Icons.group_work_rounded,
-                      size: 20,
-                      color: theme.colorScheme.primary,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          batch.name,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.w600,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (batch.subject != null)
-                          Text(
-                            batch.subject!,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.primary,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                      ],
-                    ),
-                  ),
-                  _StatusBadge(status: batch.status),
-                ],
-              ),
-              const SizedBox(height: 12),
-              // ── Schedule
-              if (batch.days.isNotEmpty || batch.startTime != null) ...[
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
+        ),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Name + Status
                 Row(
                   children: [
-                    Icon(
-                      Icons.schedule_rounded,
-                      size: 14,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      batch.scheduleText,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.5,
+                    Expanded(
+                      child: Text(
+                        batch.name,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
                     ),
+                    const SizedBox(width: 8),
+                    _StatusBadge(status: batch.status),
                   ],
                 ),
-                const SizedBox(height: 8),
-              ],
-              // ── Stats row
-              Row(
-                children: [
-                  _StatChip(
-                    icon: Icons.people_outline_rounded,
-                    label: '${batch.memberCount}',
-                    theme: theme,
+
+                // ── Subject
+                if (batch.subject != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    batch.subject!,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  const SizedBox(width: 12),
-                  _StatChip(
-                    icon: Icons.note_outlined,
-                    label: '${batch.noteCount}',
-                    theme: theme,
-                  ),
-                  const SizedBox(width: 12),
-                  _StatChip(
-                    icon: Icons.campaign_outlined,
-                    label: '${batch.noticeCount}',
-                    theme: theme,
-                  ),
-                  const Spacer(),
-                  // Teacher avatar
-                  if (batch.teacher != null)
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        CircleAvatar(
-                          radius: 12,
-                          backgroundImage: batch.teacher!.picture != null
-                              ? NetworkImage(batch.teacher!.picture!)
-                              : null,
-                          child: batch.teacher!.picture == null
-                              ? Text(
-                                  (batch.teacher!.name ?? 'T')[0].toUpperCase(),
-                                  style: const TextStyle(fontSize: 10),
-                                )
-                              : null,
+                ],
+
+                // ── Schedule
+                if (batch.days.isNotEmpty || batch.startTime != null) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.schedule_rounded,
+                        size: 14,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.35,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          batch.teacher!.name ?? 'Teacher',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight: FontWeight.w500,
-                            color: theme.colorScheme.onSurface.withValues(
-                              alpha: 0.6,
-                            ),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        batch.scheduleText,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.5,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
+                  ),
                 ],
-              ),
-            ],
+
+                // ── Teacher
+                if (batch.teacher != null) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 10,
+                        backgroundImage: batch.teacher!.picture != null
+                            ? NetworkImage(batch.teacher!.picture!)
+                            : null,
+                        backgroundColor: theme.colorScheme.primary.withValues(
+                          alpha: 0.1,
+                        ),
+                        child: batch.teacher!.picture == null
+                            ? Text(
+                                (batch.teacher!.name ?? 'T')[0].toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        batch.teacher!.name ?? 'Teacher',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.5,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 }
+
+// ── Status Badge ─────────────────────────────────────────────────────────
 
 class _StatusBadge extends StatelessWidget {
   final String status;
@@ -403,55 +489,33 @@ class _StatusBadge extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isActive = status == 'active';
+    final color = isActive ? const Color(0xFF10B981) : const Color(0xFFF59E0B);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isActive
-            ? Colors.green.withValues(alpha: 0.1)
-            : Colors.orange.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(8),
+        color: color.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Text(
-        isActive ? 'Active' : 'Archived',
-        style: TextStyle(
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-          color: isActive ? Colors.green.shade700 : Colors.orange.shade700,
-        ),
-      ),
-    );
-  }
-}
-
-class _StatChip extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final ThemeData theme;
-  const _StatChip({
-    required this.icon,
-    required this.label,
-    required this.theme,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Icon(
-          icon,
-          size: 14,
-          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: theme.textTheme.bodySmall?.copyWith(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-            fontWeight: FontWeight.w500,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 5,
+            height: 5,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
-        ),
-      ],
+          const SizedBox(width: 5),
+          Text(
+            isActive ? 'Active' : 'Archived',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

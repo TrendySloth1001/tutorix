@@ -8,6 +8,17 @@ import '../models/batch_notice_model.dart';
 class BatchService {
   final ApiClient _api = ApiClient.instance;
 
+  // ── File Upload ───────────────────────────────────────────────────
+
+  /// Upload a note file to the server, returns the URL and metadata.
+  Future<Map<String, dynamic>> uploadNoteFile(String filePath) async {
+    return await _api.uploadFile(
+      ApiConstants.uploadNote,
+      fieldName: 'file',
+      filePath: filePath,
+    );
+  }
+
   // ── CRUD ──────────────────────────────────────────────────────────
 
   /// POST /coaching/:coachingId/batches
@@ -165,19 +176,18 @@ class BatchService {
     String batchId, {
     required String title,
     String? description,
-    required String fileUrl,
+    String? fileUrl,
     String fileType = 'pdf',
     String? fileName,
   }) async {
+    final body = <String, dynamic>{'title': title, 'fileType': fileType};
+    if (description != null) body['description'] = description;
+    if (fileUrl != null && fileUrl.isNotEmpty) body['fileUrl'] = fileUrl;
+    if (fileName != null) body['fileName'] = fileName;
+
     final data = await _api.postAuthenticated(
       ApiConstants.batchNotes(coachingId, batchId),
-      body: {
-        'title': title,
-        'description': description,
-        'fileUrl': fileUrl,
-        'fileType': fileType,
-        'fileName': fileName,
-      },
+      body: body,
     );
     return BatchNoteModel.fromJson(data['note'] as Map<String, dynamic>);
   }

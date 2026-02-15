@@ -4,6 +4,7 @@ export class StorageService {
     private static BUCKETS = {
         AVATARS: 'avatars',
         COACHING_LOGOS: 'coaching-logos',
+        BATCH_NOTES: 'batch-notes',
     };
 
     private bucketsEnsured = false;

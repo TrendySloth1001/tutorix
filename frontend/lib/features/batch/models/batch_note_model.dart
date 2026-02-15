@@ -4,8 +4,8 @@ class BatchNoteModel {
   final String batchId;
   final String title;
   final String? description;
-  final String fileUrl;
-  final String fileType; // pdf, image, doc, video, link
+  final String? fileUrl;
+  final String fileType; // pdf, image, doc, link
   final String? fileName;
   final String uploadedById;
   final NoteUploader? uploadedBy;
@@ -17,7 +17,7 @@ class BatchNoteModel {
     required this.batchId,
     required this.title,
     this.description,
-    required this.fileUrl,
+    this.fileUrl,
     this.fileType = 'pdf',
     this.fileName,
     required this.uploadedById,
@@ -32,7 +32,7 @@ class BatchNoteModel {
       batchId: json['batchId'] as String? ?? '',
       title: json['title'] as String,
       description: json['description'] as String?,
-      fileUrl: json['fileUrl'] as String,
+      fileUrl: json['fileUrl'] as String?,
       fileType: json['fileType'] as String? ?? 'pdf',
       fileName: json['fileName'] as String?,
       uploadedById: json['uploadedById'] as String? ?? '',
@@ -57,8 +57,6 @@ class BatchNoteModel {
         return '🖼️';
       case 'doc':
         return '📝';
-      case 'video':
-        return '🎥';
       case 'link':
         return '🔗';
       default:

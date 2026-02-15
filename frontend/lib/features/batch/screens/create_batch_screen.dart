@@ -3,7 +3,7 @@ import '../../coaching/models/coaching_model.dart';
 import '../models/batch_model.dart';
 import '../services/batch_service.dart';
 
-/// Create or edit a batch — full form with schedule picker + day selector.
+/// Create or edit a batch — premium form with schedule picker + day selector.
 class CreateBatchScreen extends StatefulWidget {
   final CoachingModel coaching;
   final BatchModel? batch; // null = create, non-null = edit
@@ -14,7 +14,8 @@ class CreateBatchScreen extends StatefulWidget {
   State<CreateBatchScreen> createState() => _CreateBatchScreenState();
 }
 
-class _CreateBatchScreenState extends State<CreateBatchScreen> {
+class _CreateBatchScreenState extends State<CreateBatchScreen>
+    with SingleTickerProviderStateMixin {
   final _formKey = GlobalKey<FormState>();
   final BatchService _batchService = BatchService();
 
@@ -28,10 +29,22 @@ class _CreateBatchScreenState extends State<CreateBatchScreen> {
   final Set<String> _selectedDays = {};
   bool _isSaving = false;
 
+  late AnimationController _animCtrl;
+  late Animation<double> _fadeAnim;
+
   bool get _isEdit => widget.batch != null;
 
   static const _allDays = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
   static const _dayLabels = {
+    'MON': 'M',
+    'TUE': 'T',
+    'WED': 'W',
+    'THU': 'T',
+    'FRI': 'F',
+    'SAT': 'S',
+    'SUN': 'S',
+  };
+  static const _dayFull = {
     'MON': 'Mon',
     'TUE': 'Tue',
     'WED': 'Wed',
@@ -56,10 +69,18 @@ class _CreateBatchScreenState extends State<CreateBatchScreen> {
       _startTime = _parseTime(b.startTime);
       _endTime = _parseTime(b.endTime);
     }
+
+    _animCtrl = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+    _fadeAnim = CurvedAnimation(parent: _animCtrl, curve: Curves.easeOut);
+    _animCtrl.forward();
   }
 
   @override
   void dispose() {
+    _animCtrl.dispose();
     _nameCtrl.dispose();
     _subjectCtrl.dispose();
     _descCtrl.dispose();
@@ -152,174 +173,282 @@ class _CreateBatchScreenState extends State<CreateBatchScreen> {
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: Text(_isEdit ? 'Edit Batch' : 'New Batch'),
+        title: Text(
+          _isEdit ? 'Edit Batch' : 'New Batch',
+          style: const TextStyle(fontWeight: FontWeight.w700),
+        ),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.transparent,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // ── Name
-              _SectionLabel('Batch Name *'),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _nameCtrl,
-                decoration: _inputDecoration('e.g. Class 10 Maths Morning'),
-                validator: (v) =>
-                    v == null || v.trim().isEmpty ? 'Name is required' : null,
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 20),
-
-              // ── Subject
-              _SectionLabel('Subject'),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _subjectCtrl,
-                decoration: _inputDecoration('e.g. Mathematics'),
-                textCapitalization: TextCapitalization.words,
-              ),
-              const SizedBox(height: 20),
-
-              // ── Description
-              _SectionLabel('Description'),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _descCtrl,
-                decoration: _inputDecoration('Brief description (optional)'),
-                maxLines: 3,
-                textCapitalization: TextCapitalization.sentences,
-              ),
-              const SizedBox(height: 24),
-
-              // ── Schedule heading
-              _SectionLabel('Schedule'),
-              const SizedBox(height: 10),
-              // Day chips
-              Wrap(
-                spacing: 8,
-                runSpacing: 6,
-                children: _allDays.map((d) {
-                  final selected = _selectedDays.contains(d);
-                  return FilterChip(
-                    label: Text(_dayLabels[d]!),
-                    selected: selected,
-                    onSelected: (v) {
-                      setState(() {
-                        if (v) {
-                          _selectedDays.add(d);
-                        } else {
-                          _selectedDays.remove(d);
-                        }
-                      });
-                    },
-                    selectedColor: theme.colorScheme.primary.withValues(
-                      alpha: 0.15,
-                    ),
-                    checkmarkColor: theme.colorScheme.primary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 14),
-
-              // Time pickers row
-              Row(
-                children: [
-                  Expanded(
-                    child: _TimeTile(
-                      label: 'Start',
-                      time: _startTime,
-                      onTap: () => _pickTime(true),
-                    ),
+      body: FadeTransition(
+        opacity: _fadeAnim,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // ── Name
+                _FieldLabel('Batch Name', isRequired: true),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _nameCtrl,
+                  decoration: _inputDeco(
+                    'e.g. Class 10 Maths Morning',
+                    Icons.layers_rounded,
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: _TimeTile(
-                      label: 'End',
-                      time: _endTime,
-                      onTap: () => _pickTime(false),
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              // ── Max students
-              _SectionLabel('Max Students'),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _maxStudentsCtrl,
-                decoration: _inputDecoration('0 = unlimited'),
-                keyboardType: TextInputType.number,
-              ),
-              const SizedBox(height: 36),
-
-              // ── Save button
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: FilledButton(
-                  onPressed: _isSaving ? null : _save,
-                  style: FilledButton.styleFrom(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                  child: _isSaving
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text(_isEdit ? 'Save Changes' : 'Create Batch'),
+                  validator: (v) =>
+                      v == null || v.trim().isEmpty ? 'Name is required' : null,
+                  textCapitalization: TextCapitalization.words,
                 ),
-              ),
-            ],
+                const SizedBox(height: 22),
+
+                // ── Subject
+                _FieldLabel('Subject'),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _subjectCtrl,
+                  decoration: _inputDeco(
+                    'e.g. Mathematics',
+                    Icons.menu_book_rounded,
+                  ),
+                  textCapitalization: TextCapitalization.words,
+                ),
+                const SizedBox(height: 22),
+
+                // ── Description
+                _FieldLabel('Description'),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _descCtrl,
+                  decoration: _inputDeco(
+                    'Brief description (optional)',
+                    Icons.notes_rounded,
+                  ),
+                  maxLines: 3,
+                  textCapitalization: TextCapitalization.sentences,
+                ),
+                const SizedBox(height: 28),
+
+                // ── Schedule
+                _FieldLabel('Schedule'),
+                const SizedBox(height: 12),
+
+                // Day circle selectors
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: _allDays.map((d) {
+                    final selected = _selectedDays.contains(d);
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          if (selected) {
+                            _selectedDays.remove(d);
+                          } else {
+                            _selectedDays.add(d);
+                          }
+                        });
+                      },
+                      child: Tooltip(
+                        message: _dayFull[d]!,
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          curve: Curves.easeOut,
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: selected
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.surfaceContainerLowest,
+                            border: selected
+                                ? null
+                                : Border.all(
+                                    color: theme.colorScheme.onSurface
+                                        .withValues(alpha: 0.08),
+                                  ),
+                            boxShadow: selected
+                                ? [
+                                    BoxShadow(
+                                      color: theme.colorScheme.primary
+                                          .withValues(alpha: 0.25),
+                                      blurRadius: 6,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ]
+                                : null,
+                          ),
+                          child: Center(
+                            child: Text(
+                              _dayLabels[d]!,
+                              style: TextStyle(
+                                fontWeight: selected
+                                    ? FontWeight.w700
+                                    : FontWeight.w500,
+                                fontSize: 14,
+                                color: selected
+                                    ? theme.colorScheme.onPrimary
+                                    : theme.colorScheme.onSurface.withValues(
+                                        alpha: 0.45,
+                                      ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 18),
+
+                // Time pickers row
+                Row(
+                  children: [
+                    Expanded(
+                      child: _TimeTile(
+                        label: 'Start Time',
+                        time: _startTime,
+                        icon: Icons.play_circle_outline_rounded,
+                        onTap: () => _pickTime(true),
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      child: Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 18,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.2,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: _TimeTile(
+                        label: 'End Time',
+                        time: _endTime,
+                        icon: Icons.stop_circle_outlined,
+                        onTap: () => _pickTime(false),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 28),
+
+                // ── Max students
+                _FieldLabel('Max Students'),
+                const SizedBox(height: 8),
+                TextFormField(
+                  controller: _maxStudentsCtrl,
+                  decoration: _inputDeco(
+                    '0 = unlimited',
+                    Icons.people_outline_rounded,
+                  ),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 40),
+
+                // ── Save button
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: FilledButton(
+                    onPressed: _isSaving ? null : _save,
+                    style: FilledButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      elevation: 0,
+                    ),
+                    child: _isSaving
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.white,
+                            ),
+                          )
+                        : Text(
+                            _isEdit ? 'Save Changes' : 'Create Batch',
+                            style: const TextStyle(
+                              fontWeight: FontWeight.w700,
+                              fontSize: 15,
+                            ),
+                          ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
 
-  InputDecoration _inputDecoration(String hint) {
+  InputDecoration _inputDeco(String hint, IconData icon) {
+    final theme = Theme.of(context);
     return InputDecoration(
       hintText: hint,
+      prefixIcon: Icon(
+        icon,
+        size: 20,
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+      ),
       filled: true,
-      fillColor: Theme.of(context).colorScheme.surfaceContainerLowest,
+      fillColor: theme.colorScheme.surfaceContainerLowest,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(14),
         borderSide: BorderSide.none,
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(14),
+        borderSide: BorderSide(
+          color: theme.colorScheme.primary.withValues(alpha: 0.4),
+          width: 1.5,
+        ),
       ),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
     );
   }
 }
 
-// ── Section label ────────────────────────────────────────────────────────
+// ── Field label ──────────────────────────────────────────────────────
 
-class _SectionLabel extends StatelessWidget {
+class _FieldLabel extends StatelessWidget {
   final String text;
-  const _SectionLabel(this.text);
+  final bool isRequired;
+  const _FieldLabel(this.text, {this.isRequired = false});
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: Theme.of(context).textTheme.labelLarge?.copyWith(
-        fontWeight: FontWeight.w600,
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.7),
-      ),
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Text(
+          text,
+          style: theme.textTheme.labelLarge?.copyWith(
+            fontWeight: FontWeight.w600,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.75),
+            letterSpacing: 0.2,
+          ),
+        ),
+        if (isRequired)
+          Text(
+            ' *',
+            style: TextStyle(
+              color: Colors.red.shade400,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+      ],
     );
   }
 }
@@ -329,36 +458,67 @@ class _SectionLabel extends StatelessWidget {
 class _TimeTile extends StatelessWidget {
   final String label;
   final TimeOfDay? time;
+  final IconData icon;
   final VoidCallback onTap;
-  const _TimeTile({required this.label, this.time, required this.onTap});
+  const _TimeTile({
+    required this.label,
+    this.time,
+    required this.icon,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final hasTime = time != null;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(14),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
         decoration: BoxDecoration(
-          color: theme.colorScheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(12),
+          color: hasTime
+              ? theme.colorScheme.primary.withValues(alpha: 0.06)
+              : theme.colorScheme.surfaceContainerLowest,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: hasTime
+                ? theme.colorScheme.primary.withValues(alpha: 0.15)
+                : theme.colorScheme.onSurface.withValues(alpha: 0.06),
+          ),
         ),
         child: Row(
           children: [
             Icon(
-              Icons.access_time_rounded,
+              icon,
               size: 18,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+              color: hasTime
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.onSurface.withValues(alpha: 0.3),
             ),
-            const SizedBox(width: 8),
-            Text(
-              time != null ? time!.format(context) : label,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: time != null
-                    ? theme.colorScheme.onSurface
-                    : theme.colorScheme.onSurface.withValues(alpha: 0.4),
-              ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  hasTime ? time!.format(context) : '—',
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: hasTime
+                        ? theme.colorScheme.onSurface
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                  ),
+                ),
+              ],
             ),
           ],
         ),

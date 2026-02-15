@@ -11,6 +11,13 @@ const upload = multer({
     },
 });
 
+const uploadLarge = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: 15 * 1024 * 1024, // 15MB limit for notes/assignments
+    },
+});
+
 // POST /upload/avatar - Upload user avatar
 router.post('/avatar', authMiddleware, upload.single('avatar'), async (req, res) => {
     try {
@@ -52,6 +59,20 @@ router.post('/cover', authMiddleware, upload.single('file'), async (req, res) =>
         }
 
         const result = await uploadService.uploadFile(req.file, 'cover');
+        res.json(result);
+    } catch (error: any) {
+        res.status(500).json({ message: error.message });
+    }
+});
+
+// POST /upload/note - Upload a note/assignment file (up to 15MB)
+router.post('/note', authMiddleware, uploadLarge.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ message: 'No file uploaded' });
+        }
+
+        const result = await uploadService.uploadNoteFile(req.file);
         res.json(result);
     } catch (error: any) {
         res.status(500).json({ message: error.message });

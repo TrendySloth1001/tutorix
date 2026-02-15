@@ -3,6 +3,7 @@ import '../../coaching/models/coaching_model.dart';
 import '../services/batch_service.dart';
 
 /// Screen to add coaching members to a batch (teachers or students).
+/// Premium design with polished selection and tab experience.
 class AddBatchMembersScreen extends StatefulWidget {
   final CoachingModel coaching;
   final String batchId;
@@ -113,12 +114,26 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        title: const Text('Add Members'),
+        title: const Text(
+          'Add Members',
+          style: TextStyle(fontWeight: FontWeight.w700),
+        ),
         centerTitle: true,
         elevation: 0,
         backgroundColor: Colors.transparent,
         bottom: TabBar(
           controller: _tabCtrl,
+          indicatorSize: TabBarIndicatorSize.label,
+          indicatorWeight: 3,
+          dividerColor: theme.colorScheme.onSurface.withValues(alpha: 0.06),
+          labelStyle: const TextStyle(
+            fontWeight: FontWeight.w700,
+            fontSize: 13,
+          ),
+          unselectedLabelStyle: const TextStyle(
+            fontWeight: FontWeight.w500,
+            fontSize: 13,
+          ),
           tabs: [
             Tab(text: 'Students (${_availableStudents.length})'),
             Tab(text: 'Teachers (${_availableTeachers.length})'),
@@ -127,45 +142,119 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
       ),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : TabBarView(
-              controller: _tabCtrl,
+          : Column(
               children: [
-                _MemberList(
-                  members: _availableStudents,
-                  selectedIds: _selectedIds,
-                  onToggle: _toggle,
-                ),
-                _MemberList(
-                  members: _availableTeachers,
-                  selectedIds: _selectedIds,
-                  onToggle: _toggle,
+                // Selection count banner
+                if (_selectedIds.isNotEmpty)
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 10,
+                    ),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.06),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.check_circle_rounded,
+                          size: 18,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${_selectedIds.length} selected',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                        const Spacer(),
+                        GestureDetector(
+                          onTap: () => setState(() => _selectedIds.clear()),
+                          child: Text(
+                            'Clear',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontWeight: FontWeight.w500,
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.4,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                Expanded(
+                  child: TabBarView(
+                    controller: _tabCtrl,
+                    children: [
+                      _MemberList(
+                        members: _availableStudents,
+                        selectedIds: _selectedIds,
+                        onToggle: _toggle,
+                      ),
+                      _MemberList(
+                        members: _availableTeachers,
+                        selectedIds: _selectedIds,
+                        onToggle: _toggle,
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
       bottomNavigationBar: _selectedIds.isNotEmpty
           ? SafeArea(
               child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: FilledButton(
-                  onPressed: _isSaving ? null : _save,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 52),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
+                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        theme.colorScheme.primary,
+                        theme.colorScheme.primary.withValues(alpha: 0.85),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(16),
+                    boxShadow: [
+                      BoxShadow(
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.25,
+                        ),
+                        blurRadius: 10,
+                        offset: const Offset(0, 3),
+                      ),
+                    ],
+                  ),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: _isSaving ? null : _save,
+                      borderRadius: BorderRadius.circular(16),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        child: Center(
+                          child: _isSaving
+                              ? const SizedBox(
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : Text(
+                                  'Add ${_selectedIds.length} Member${_selectedIds.length == 1 ? '' : 's'}',
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onPrimary,
+                                    fontWeight: FontWeight.w700,
+                                    fontSize: 15,
+                                  ),
+                                ),
+                        ),
+                      ),
                     ),
                   ),
-                  child: _isSaving
-                      ? const SizedBox(
-                          width: 22,
-                          height: 22,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            color: Colors.white,
-                          ),
-                        )
-                      : Text(
-                          'Add ${_selectedIds.length} Member${_selectedIds.length == 1 ? '' : 's'}',
-                        ),
                 ),
               ),
             )
@@ -192,16 +281,31 @@ class _MemberList extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              Icons.person_off_outlined,
-              size: 48,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.04),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.person_off_outlined,
+                size: 36,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text(
               'No available members',
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'All members have been added to this batch',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
               ),
             ),
           ],
@@ -210,7 +314,7 @@ class _MemberList extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 80),
       itemCount: members.length,
       itemBuilder: (context, i) {
         final m = members[i] as Map<String, dynamic>;
@@ -224,34 +328,99 @@ class _MemberList extends StatelessWidget {
         final email = user?['email'] as String?;
         final selected = selectedIds.contains(id);
 
-        return Container(
-          margin: const EdgeInsets.only(bottom: 6),
-          child: ListTile(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 8),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 200),
+            decoration: BoxDecoration(
+              color: selected
+                  ? theme.colorScheme.primary.withValues(alpha: 0.06)
+                  : theme.colorScheme.surfaceContainerLowest,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: selected
+                    ? theme.colorScheme.primary.withValues(alpha: 0.2)
+                    : theme.colorScheme.onSurface.withValues(alpha: 0.04),
+              ),
             ),
-            tileColor: selected
-                ? theme.colorScheme.primary.withValues(alpha: 0.08)
-                : theme.colorScheme.surfaceContainerLowest,
-            leading: CircleAvatar(
-              backgroundImage: picture != null ? NetworkImage(picture) : null,
-              child: picture == null ? Text(name[0].toUpperCase()) : null,
-            ),
-            title: Text(
-              name,
-              style: const TextStyle(fontWeight: FontWeight.w500),
-            ),
-            subtitle: email != null ? Text(email) : null,
-            trailing: selected
-                ? Icon(
-                    Icons.check_circle_rounded,
-                    color: theme.colorScheme.primary,
-                  )
-                : Icon(
-                    Icons.radio_button_unchecked_rounded,
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+            child: Material(
+              color: Colors.transparent,
+              borderRadius: BorderRadius.circular(16),
+              child: InkWell(
+                onTap: () => onToggle(id),
+                borderRadius: BorderRadius.circular(16),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 14,
+                    vertical: 12,
                   ),
-            onTap: () => onToggle(id),
+                  child: Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 22,
+                        backgroundImage: picture != null
+                            ? NetworkImage(picture)
+                            : null,
+                        backgroundColor: theme.colorScheme.primary.withValues(
+                          alpha: 0.1,
+                        ),
+                        child: picture == null
+                            ? Text(
+                                name[0].toUpperCase(),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              name,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            if (email != null)
+                              Text(
+                                email,
+                                style: theme.textTheme.bodySmall?.copyWith(
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                  fontSize: 11,
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 200),
+                        child: selected
+                            ? Icon(
+                                Icons.check_circle_rounded,
+                                key: const ValueKey('checked'),
+                                color: theme.colorScheme.primary,
+                                size: 24,
+                              )
+                            : Icon(
+                                Icons.radio_button_unchecked_rounded,
+                                key: const ValueKey('unchecked'),
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.2,
+                                ),
+                                size: 24,
+                              ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
           ),
         );
       },

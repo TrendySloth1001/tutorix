@@ -12,6 +12,7 @@ import 'create_note_screen.dart';
 import 'create_notice_screen.dart';
 
 /// Full batch detail — overview, members, notes, notices via TabBar.
+/// Premium design with layered header, rich cards, and polished interactions.
 class BatchDetailScreen extends StatefulWidget {
   final CoachingModel coaching;
   final String batchId;
@@ -46,7 +47,6 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
 
   bool get _isTeacherOrAdmin {
     if (_isAdmin) return true;
-    // Check if user is a teacher in this batch
     return _members.any(
       (m) => m.role == 'TEACHER' && m.user?.id == widget.user.id,
     );
@@ -107,9 +107,10 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Delete Batch?'),
         content: const Text(
-          'This will permanently delete this batch, all members, notes, and notices.',
+          'This will permanently delete this batch, including all members, notes, and notices.',
         ),
         actions: [
           TextButton(
@@ -177,6 +178,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Remove Member?'),
         content: Text('Remove ${m.displayName} from this batch?'),
         actions: [
@@ -230,6 +232,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Delete Note?'),
         content: Text('Delete "${note.title}"?'),
         actions: [
@@ -283,6 +286,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: const Text('Delete Notice?'),
         content: Text('Delete "${notice.title}"?'),
         actions: [
@@ -340,7 +344,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       canPop: true,
       onPopInvokedWithResult: (didPop, _) {
         if (didPop && _changed) {
-          // Already popping with true handled by pop(context, true)
+          // parent will receive true via Navigator.pop
         }
       },
       child: Scaffold(
@@ -348,7 +352,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
         body: NestedScrollView(
           headerSliverBuilder: (context, innerBoxIsScrolled) => [
             SliverAppBar(
-              expandedHeight: 180,
+              expandedHeight: 220,
               floating: false,
               pinned: true,
               leading: BackButton(
@@ -356,38 +360,45 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
               ),
               actions: [
                 if (_isAdmin)
-                  PopupMenuButton<String>(
-                    onSelected: (v) {
-                      if (v == 'edit') _editBatch();
-                      if (v == 'archive') _toggleArchive();
-                      if (v == 'delete') _deleteBatch();
-                    },
-                    itemBuilder: (_) => [
-                      const PopupMenuItem(
-                        value: 'edit',
-                        child: Text('Edit Batch'),
+                  Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: PopupMenuButton<String>(
+                      icon: Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(Icons.more_horiz_rounded, size: 20),
                       ),
-                      PopupMenuItem(
-                        value: 'archive',
-                        child: Text(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      onSelected: (v) {
+                        if (v == 'edit') _editBatch();
+                        if (v == 'archive') _toggleArchive();
+                        if (v == 'delete') _deleteBatch();
+                      },
+                      itemBuilder: (_) => [
+                        _popupItem('edit', 'Edit Batch', Icons.edit_rounded),
+                        _popupItem(
+                          'archive',
                           b.isActive ? 'Archive Batch' : 'Reactivate',
+                          b.isActive
+                              ? Icons.archive_rounded
+                              : Icons.unarchive_rounded,
                         ),
-                      ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Text(
+                        _popupItem(
+                          'delete',
                           'Delete',
-                          style: TextStyle(color: Colors.red),
+                          Icons.delete_rounded,
+                          color: Colors.red,
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
               ],
               flexibleSpace: FlexibleSpaceBar(
-                title: Text(
-                  b.name,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
-                ),
                 background: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -395,70 +406,119 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
                       end: Alignment.bottomRight,
                       colors: [
                         theme.colorScheme.primary,
-                        theme.colorScheme.primary.withValues(alpha: 0.7),
+                        theme.colorScheme.primary.withValues(alpha: 0.75),
+                        theme.colorScheme.secondary.withValues(alpha: 0.6),
                       ],
                     ),
                   ),
-                  child: SafeArea(
-                    child: Padding(
-                      padding: const EdgeInsets.fromLTRB(20, 60, 20, 50),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          if (b.subject != null)
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 4,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withValues(alpha: 0.2),
-                                borderRadius: BorderRadius.circular(8),
-                              ),
-                              child: Text(
-                                b.subject!,
+                  child: Stack(
+                    children: [
+                      // Subtle pattern overlay
+                      Positioned(
+                        right: -30,
+                        top: -30,
+                        child: Container(
+                          width: 160,
+                          height: 160,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.04),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: -20,
+                        bottom: 40,
+                        child: Container(
+                          width: 100,
+                          height: 100,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: Colors.white.withValues(alpha: 0.03),
+                          ),
+                        ),
+                      ),
+                      // Content
+                      SafeArea(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 0, 20, 52),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.end,
+                            children: [
+                              Text(
+                                b.name,
                                 style: const TextStyle(
                                   color: Colors.white,
-                                  fontSize: 12,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: 22,
+                                  letterSpacing: -0.3,
                                 ),
                               ),
-                            ),
-                          if (b.days.isNotEmpty || b.startTime != null) ...[
-                            const SizedBox(height: 6),
-                            Row(
-                              children: [
-                                const Icon(
-                                  Icons.schedule_rounded,
-                                  size: 14,
-                                  color: Colors.white70,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  b.scheduleText,
-                                  style: const TextStyle(
-                                    color: Colors.white70,
-                                    fontSize: 12,
+                              const SizedBox(height: 8),
+                              if (b.subject != null)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 5,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.white.withValues(alpha: 0.15),
+                                    borderRadius: BorderRadius.circular(20),
+                                  ),
+                                  child: Text(
+                                    b.subject!,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
                                   ),
                                 ),
+                              if (b.days.isNotEmpty || b.startTime != null) ...[
+                                const SizedBox(height: 8),
+                                Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.schedule_rounded,
+                                      size: 14,
+                                      color: Colors.white70,
+                                    ),
+                                    const SizedBox(width: 6),
+                                    Text(
+                                      b.scheduleText,
+                                      style: const TextStyle(
+                                        color: Colors.white70,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ],
-                            ),
-                          ],
-                        ],
+                            ],
+                          ),
+                        ),
                       ),
-                    ),
+                    ],
                   ),
                 ),
               ),
               bottom: TabBar(
                 controller: _tabCtrl,
                 indicatorSize: TabBarIndicatorSize.label,
+                dividerColor: Colors.transparent,
+                indicatorWeight: 3,
                 labelStyle: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 12.5,
+                ),
+                unselectedLabelStyle: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 12.5,
                 ),
                 tabs: [
-                  Tab(text: 'Overview'),
+                  const Tab(text: 'Overview'),
                   Tab(text: 'Members (${_members.length})'),
                   Tab(text: 'Notes (${_notes.length})'),
                   Tab(text: 'Notices (${_notices.length})'),
@@ -494,6 +554,27 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       ),
     );
   }
+
+  PopupMenuItem<String> _popupItem(
+    String value,
+    String text,
+    IconData icon, {
+    Color? color,
+  }) {
+    return PopupMenuItem(
+      value: value,
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: color),
+          const SizedBox(width: 10),
+          Text(
+            text,
+            style: TextStyle(color: color, fontWeight: FontWeight.w500),
+          ),
+        ],
+      ),
+    );
+  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -511,95 +592,165 @@ class _OverviewTab extends StatelessWidget {
     final teachers = members.where((m) => m.role == 'TEACHER').toList();
     final students = members.where((m) => m.role == 'STUDENT').toList();
 
+    // Capacity calculation
+    final capacity = batch.maxStudents > 0
+        ? (students.length / batch.maxStudents).clamp(0.0, 1.0)
+        : 0.0;
+
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
       children: [
-        // ── Stats cards
-        Row(
-          children: [
-            _OverviewStat(
-              icon: Icons.people_rounded,
-              label: 'Students',
-              value: '${students.length}',
-              color: Colors.blue,
+        // ── Capacity progress (if maxStudents > 0)
+        if (batch.maxStudents > 0) ...[
+          _GlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.groups_rounded,
+                      size: 18,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Capacity',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    Text(
+                      '${students.length}/${batch.maxStudents}',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(6),
+                  child: LinearProgressIndicator(
+                    value: capacity,
+                    minHeight: 8,
+                    backgroundColor: theme.colorScheme.onSurface.withValues(
+                      alpha: 0.06,
+                    ),
+                    color: capacity > 0.9
+                        ? Colors.red
+                        : capacity > 0.7
+                        ? Colors.orange
+                        : theme.colorScheme.primary,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  capacity >= 1.0
+                      ? 'Batch is full'
+                      : '${((1 - capacity) * batch.maxStudents).round()} spots remaining',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                    fontSize: 11,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 12),
-            _OverviewStat(
-              icon: Icons.school_rounded,
-              label: 'Teachers',
-              value: '${teachers.length}',
-              color: Colors.teal,
-            ),
-            const SizedBox(width: 12),
-            _OverviewStat(
-              icon: Icons.note_rounded,
-              label: 'Notes',
-              value: '${batch.noteCount}',
-              color: Colors.orange,
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
+          ),
+          const SizedBox(height: 14),
+        ],
 
         // ── Description
         if (batch.description != null && batch.description!.isNotEmpty) ...[
-          Text(
-            'About',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
+          _GlassCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 18,
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'About',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 10),
+                Text(
+                  batch.description!,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+                    height: 1.6,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          Text(
-            batch.description!,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
-              height: 1.5,
-            ),
-          ),
-          const SizedBox(height: 20),
+          const SizedBox(height: 14),
         ],
 
-        // ── Schedule details
-        _DetailCard(
-          title: 'Schedule',
-          icon: Icons.calendar_today_rounded,
-          children: [
-            if (batch.days.isNotEmpty)
-              _DetailRow(
-                'Days',
-                batch.days.map(BatchModel.shortDay).join(', '),
+        // ── Schedule card
+        _GlassCard(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Icon(
+                    Icons.calendar_today_rounded,
+                    size: 18,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Schedule',
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
               ),
-            if (batch.startTime != null) _DetailRow('Start', batch.startTime!),
-            if (batch.endTime != null) _DetailRow('End', batch.endTime!),
-          ],
+              const SizedBox(height: 14),
+              if (batch.days.isNotEmpty)
+                _DetailRow(
+                  'Days',
+                  batch.days.map(BatchModel.shortDay).join(', '),
+                ),
+              if (batch.startTime != null)
+                _DetailRow('Start', batch.startTime!),
+              if (batch.endTime != null) _DetailRow('End', batch.endTime!),
+              _DetailRow(
+                'Status',
+                batch.isActive ? 'Active' : 'Archived',
+                valueColor: batch.isActive
+                    ? const Color(0xFF10B981)
+                    : const Color(0xFFF59E0B),
+              ),
+            ],
+          ),
         ),
-        const SizedBox(height: 12),
-
-        // ── Capacity
-        _DetailCard(
-          title: 'Capacity',
-          icon: Icons.groups_rounded,
-          children: [
-            _DetailRow(
-              'Max Students',
-              batch.maxStudents > 0 ? '${batch.maxStudents}' : 'Unlimited',
-            ),
-            _DetailRow('Current', '${students.length} enrolled'),
-            _DetailRow('Status', batch.isActive ? 'Active' : 'Archived'),
-          ],
-        ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 14),
 
         // ── Teachers list
         if (teachers.isNotEmpty) ...[
-          Text(
-            'Teachers',
-            style: theme.textTheme.titleSmall?.copyWith(
-              fontWeight: FontWeight.w600,
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10, top: 4),
+            child: Text(
+              'Teachers',
+              style: theme.textTheme.titleSmall?.copyWith(
+                fontWeight: FontWeight.w700,
+              ),
             ),
           ),
-          const SizedBox(height: 8),
           ...teachers.map((t) => _MemberTile(member: t)),
         ],
       ],
@@ -607,127 +758,36 @@ class _OverviewTab extends StatelessWidget {
   }
 }
 
-class _OverviewStat extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String value;
-  final Color color;
-  const _OverviewStat({
-    required this.icon,
-    required this.label,
-    required this.value,
-    required this.color,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(14),
-        ),
-        child: Column(
-          children: [
-            Icon(icon, color: color, size: 22),
-            const SizedBox(height: 8),
-            Text(
-              value,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              label,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DetailCard extends StatelessWidget {
-  final String title;
-  final IconData icon;
-  final List<Widget> children;
-  const _DetailCard({
-    required this.title,
-    required this.icon,
-    required this.children,
-  });
+class _GlassCard extends StatelessWidget {
+  final Widget child;
+  const _GlassCard({required this.child});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                icon,
-                size: 18,
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-              ),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-            ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.04),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.03),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          const SizedBox(height: 12),
-          ...children,
         ],
       ),
+      child: child,
     );
   }
 }
 
-class _DetailRow extends StatelessWidget {
-  final String label;
-  final String value;
-  const _DetailRow(this.label, this.value);
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-            ),
-          ),
-          Text(
-            value,
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
+// Removed _OverviewStat — stat cards no longer shown
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ── MEMBERS TAB
@@ -747,52 +807,48 @@ class _MembersTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final teachers = members.where((m) => m.role == 'TEACHER').toList();
     final students = members.where((m) => m.role == 'STUDENT').toList();
 
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
       children: [
         if (isAdmin)
           Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: FilledButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(Icons.person_add_rounded, size: 18),
-              label: const Text('Add Members'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
+            padding: const EdgeInsets.only(bottom: 20),
+            child: _ActionButton(
+              icon: Icons.person_add_rounded,
+              label: 'Add Members',
+              onTap: onAdd,
             ),
           ),
         if (teachers.isNotEmpty) ...[
-          _SectionHeader('Teachers (${teachers.length})'),
-          const SizedBox(height: 8),
+          _SectionHeader(
+            'Teachers',
+            count: teachers.length,
+            icon: Icons.school_rounded,
+            color: const Color(0xFF10B981),
+          ),
+          const SizedBox(height: 10),
           ...teachers.map(
             (m) => _MemberTile(
               member: m,
               onRemove: isAdmin ? () => onRemove(m) : null,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
         ],
-        _SectionHeader('Students (${students.length})'),
-        const SizedBox(height: 8),
+        _SectionHeader(
+          'Students',
+          count: students.length,
+          icon: Icons.people_rounded,
+          color: const Color(0xFF3B82F6),
+        ),
+        const SizedBox(height: 10),
         if (students.isEmpty)
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Center(
-              child: Text(
-                'No students yet',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                ),
-              ),
-            ),
+          _EmptySection(
+            icon: Icons.person_off_outlined,
+            text: 'No students yet',
           )
         else
           ...students.map(
@@ -802,103 +858,6 @@ class _MembersTab extends StatelessWidget {
             ),
           ),
       ],
-    );
-  }
-}
-
-class _SectionHeader extends StatelessWidget {
-  final String text;
-  const _SectionHeader(this.text);
-
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      text,
-      style: Theme.of(context).textTheme.titleSmall?.copyWith(
-        fontWeight: FontWeight.w600,
-        color: Theme.of(context).colorScheme.onSurface.withValues(alpha: 0.6),
-      ),
-    );
-  }
-}
-
-class _MemberTile extends StatelessWidget {
-  final BatchMemberModel member;
-  final VoidCallback? onRemove;
-  const _MemberTile({required this.member, this.onRemove});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 20,
-            backgroundImage: member.displayPicture != null
-                ? NetworkImage(member.displayPicture!)
-                : null,
-            child: member.displayPicture == null
-                ? Text(member.displayName[0].toUpperCase())
-                : null,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  member.displayName,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                if (member.subtitle.isNotEmpty)
-                  Text(
-                    member.subtitle,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-            decoration: BoxDecoration(
-              color: member.role == 'TEACHER'
-                  ? Colors.teal.withValues(alpha: 0.1)
-                  : Colors.blue.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              member.role,
-              style: TextStyle(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: member.role == 'TEACHER'
-                    ? Colors.teal.shade700
-                    : Colors.blue.shade700,
-              ),
-            ),
-          ),
-          if (onRemove != null)
-            IconButton(
-              icon: Icon(
-                Icons.close_rounded,
-                size: 18,
-                color: Colors.red.withValues(alpha: 0.6),
-              ),
-              onPressed: onRemove,
-            ),
-        ],
-      ),
     );
   }
 }
@@ -922,27 +881,24 @@ class _NotesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
       children: [
         if (isTeacher)
           Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: FilledButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(Icons.upload_file_rounded, size: 18),
-              label: const Text('Upload Note'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
+            padding: const EdgeInsets.only(bottom: 20),
+            child: _ActionButton(
+              icon: Icons.upload_file_rounded,
+              label: 'Upload Note',
+              onTap: onAdd,
             ),
           ),
         if (notes.isEmpty)
           _EmptySection(
             icon: Icons.note_outlined,
             text: 'No notes uploaded yet',
+            subtitle: isTeacher
+                ? 'Upload study materials for your students'
+                : null,
           )
         else
           ...notes.map(
@@ -967,120 +923,144 @@ class _NoteCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  IconData get _fileIcon {
-    switch (note.fileType) {
-      case 'pdf':
-        return Icons.picture_as_pdf_rounded;
-      case 'image':
-        return Icons.image_rounded;
-      case 'doc':
-        return Icons.description_rounded;
-      case 'video':
-        return Icons.movie_rounded;
-      case 'link':
-        return Icons.link_rounded;
-      default:
-        return Icons.attach_file_rounded;
-    }
-  }
-
-  Color _fileColor(ThemeData theme) {
-    switch (note.fileType) {
-      case 'pdf':
-        return Colors.red;
-      case 'image':
-        return Colors.purple;
-      case 'doc':
-        return Colors.blue;
-      case 'video':
-        return Colors.orange;
-      case 'link':
-        return Colors.teal;
-      default:
-        return theme.colorScheme.primary;
-    }
-  }
+  static const _typeConfig = {
+    'pdf': (Icons.picture_as_pdf_rounded, Color(0xFFE53935)),
+    'image': (Icons.image_rounded, Color(0xFF8E24AA)),
+    'doc': (Icons.description_rounded, Color(0xFF1E88E5)),
+    'link': (Icons.link_rounded, Color(0xFF00897B)),
+  };
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = _fileColor(theme);
+    final config =
+        _typeConfig[note.fileType] ??
+        (Icons.attach_file_rounded, theme.colorScheme.primary);
+    final icon = config.$1;
+    final color = config.$2;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(_fileIcon, color: color, size: 22),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.05),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.04),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  note.title,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
+        ],
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          children: [
+            // File type icon with gradient bg
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [
+                    color.withValues(alpha: 0.15),
+                    color.withValues(alpha: 0.05),
+                  ],
                 ),
-                if (note.description != null)
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    note.description!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                    note.title,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                const SizedBox(height: 4),
-                Row(
-                  children: [
-                    if (note.uploadedBy != null)
-                      Text(
-                        note.uploadedBy!.name ?? '',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w500,
-                          fontSize: 11,
+                  if (note.description != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      note.description!,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.5,
                         ),
                       ),
-                    if (note.createdAt != null) ...[
-                      const SizedBox(width: 8),
-                      Text(
-                        _timeAgo(note.createdAt!),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: 11,
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.35,
+                    ),
+                  ],
+                  const SizedBox(height: 6),
+                  Row(
+                    children: [
+                      // File type badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: color.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Text(
+                          note.fileType.toUpperCase(),
+                          style: TextStyle(
+                            fontSize: 9,
+                            fontWeight: FontWeight.w700,
+                            color: color,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),
+                      if (note.uploadedBy != null) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          note.uploadedBy!.name ?? '',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w500,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                      if (note.createdAt != null) ...[
+                        const SizedBox(width: 8),
+                        Text(
+                          _timeAgo(note.createdAt!),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            fontSize: 11,
+                            color: theme.colorScheme.onSurface.withValues(
+                              alpha: 0.3,
+                            ),
+                          ),
+                        ),
+                      ],
                     ],
-                  ],
-                ),
-              ],
-            ),
-          ),
-          if (canDelete)
-            IconButton(
-              icon: Icon(
-                Icons.delete_outline_rounded,
-                size: 18,
-                color: Colors.red.withValues(alpha: 0.6),
+                  ),
+                ],
               ),
-              onPressed: onDelete,
             ),
-        ],
+            if (canDelete)
+              IconButton(
+                icon: Icon(
+                  Icons.delete_outline_rounded,
+                  size: 18,
+                  color: Colors.red.withValues(alpha: 0.5),
+                ),
+                onPressed: onDelete,
+              ),
+          ],
+        ),
       ),
     );
   }
@@ -1105,25 +1085,23 @@ class _NoticesTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 40),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
       children: [
         if (isTeacher)
           Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: FilledButton.icon(
-              onPressed: onAdd,
-              icon: const Icon(Icons.campaign_rounded, size: 18),
-              label: const Text('Send Notice'),
-              style: FilledButton.styleFrom(
-                minimumSize: const Size(double.infinity, 48),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
-                ),
-              ),
+            padding: const EdgeInsets.only(bottom: 20),
+            child: _ActionButton(
+              icon: Icons.campaign_rounded,
+              label: 'Send Notice',
+              onTap: onAdd,
             ),
           ),
         if (notices.isEmpty)
-          _EmptySection(icon: Icons.campaign_outlined, text: 'No notices yet')
+          _EmptySection(
+            icon: Icons.campaign_outlined,
+            text: 'No notices yet',
+            subtitle: isTeacher ? 'Send announcements to batch members' : null,
+          )
         else
           ...notices.map(
             (n) => _NoticeCard(
@@ -1147,160 +1125,457 @@ class _NoticeCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  Color _priorityColor() {
-    switch (notice.priority) {
-      case 'urgent':
-        return Colors.red;
-      case 'high':
-        return Colors.orange;
-      case 'low':
-        return Colors.grey;
-      default:
-        return Colors.blue;
-    }
-  }
+  static const _priorityConfig = {
+    'urgent': (Color(0xFFEF4444), Icons.priority_high_rounded),
+    'high': (Color(0xFFF59E0B), Icons.arrow_upward_rounded),
+    'normal': (Color(0xFF3B82F6), Icons.remove_rounded),
+    'low': (Color(0xFF9CA3AF), Icons.arrow_downward_rounded),
+  };
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = _priorityColor();
+    final config =
+        _priorityConfig[notice.priority] ??
+        (const Color(0xFF3B82F6), Icons.remove_rounded);
+    final color = config.$1;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(14),
-        border: notice.isImportant
-            ? Border.all(color: color.withValues(alpha: 0.3), width: 1)
-            : null,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(
+          color: notice.isImportant
+              ? color.withValues(alpha: 0.2)
+              : theme.colorScheme.onSurface.withValues(alpha: 0.05),
+        ),
+        boxShadow: [
+          if (notice.isImportant)
+            BoxShadow(
+              color: color.withValues(alpha: 0.06),
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
+        ],
       ),
-      child: Padding(
-        padding: const EdgeInsets.all(14),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    notice.priorityLabel,
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w600,
-                      color: color,
-                    ),
-                  ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Priority accent strip for urgent/high
+          if (notice.isImportant)
+            Container(
+              height: 3,
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(18),
                 ),
-                const Spacer(),
-                if (notice.createdAt != null)
-                  Text(
-                    _timeAgo(notice.createdAt!),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontSize: 11,
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.35,
+                gradient: LinearGradient(
+                  colors: [color, color.withValues(alpha: 0.4)],
+                ),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: color.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(config.$2, size: 12, color: color),
+                          const SizedBox(width: 4),
+                          Text(
+                            notice.priorityLabel,
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
+                              color: color,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
+                    const Spacer(),
+                    if (notice.createdAt != null)
+                      Text(
+                        _timeAgo(notice.createdAt!),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontSize: 11,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.3,
+                          ),
+                        ),
+                      ),
+                    if (canDelete)
+                      Padding(
+                        padding: const EdgeInsets.only(left: 8),
+                        child: InkWell(
+                          onTap: onDelete,
+                          borderRadius: BorderRadius.circular(8),
+                          child: Padding(
+                            padding: const EdgeInsets.all(4),
+                            child: Icon(
+                              Icons.delete_outline_rounded,
+                              size: 16,
+                              color: Colors.red.withValues(alpha: 0.4),
+                            ),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  notice.title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    height: 1.3,
                   ),
-                if (canDelete)
-                  IconButton(
-                    icon: Icon(
-                      Icons.delete_outline_rounded,
-                      size: 16,
-                      color: Colors.red.withValues(alpha: 0.5),
-                    ),
-                    onPressed: onDelete,
-                    constraints: const BoxConstraints(),
-                    padding: const EdgeInsets.only(left: 8),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  notice.message,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    height: 1.6,
                   ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              notice.title,
-              style: theme.textTheme.titleSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              notice.message,
-              style: theme.textTheme.bodySmall?.copyWith(
-                color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                height: 1.5,
-              ),
-            ),
-            if (notice.sentBy != null) ...[
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  CircleAvatar(
-                    radius: 10,
-                    backgroundImage: notice.sentBy!.picture != null
-                        ? NetworkImage(notice.sentBy!.picture!)
-                        : null,
-                    child: notice.sentBy!.picture == null
-                        ? Text(
-                            (notice.sentBy!.name ?? 'T')[0].toUpperCase(),
-                            style: const TextStyle(fontSize: 8),
-                          )
-                        : null,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    notice.sentBy!.name ?? 'Teacher',
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.w500,
-                      fontSize: 11,
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
-                    ),
+                ),
+                if (notice.sentBy != null) ...[
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        radius: 11,
+                        backgroundImage: notice.sentBy!.picture != null
+                            ? NetworkImage(notice.sentBy!.picture!)
+                            : null,
+                        backgroundColor: theme.colorScheme.primary.withValues(
+                          alpha: 0.1,
+                        ),
+                        child: notice.sentBy!.picture == null
+                            ? Text(
+                                (notice.sentBy!.name ?? 'T')[0].toUpperCase(),
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.primary,
+                                ),
+                              )
+                            : null,
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        notice.sentBy!.name ?? 'Teacher',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 11,
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.45,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
-              ),
-            ],
-          ],
-        ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// ── SHARED HELPERS
+// ── SHARED COMPONENTS
 // ═══════════════════════════════════════════════════════════════════════════
 
-class _EmptySection extends StatelessWidget {
+/// Detail row used in schedule cards.
+
+/// Prominent action button used in tab headers.
+class _ActionButton extends StatelessWidget {
   final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            theme.colorScheme.primary,
+            theme.colorScheme.primary.withValues(alpha: 0.85),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: theme.colorScheme.primary.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(icon, size: 20, color: theme.colorScheme.onPrimary),
+                const SizedBox(width: 10),
+                Text(
+                  label,
+                  style: TextStyle(
+                    color: theme.colorScheme.onPrimary,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SectionHeader extends StatelessWidget {
   final String text;
-  const _EmptySection({required this.icon, required this.text});
+  final int count;
+  final IconData icon;
+  final Color color;
+  const _SectionHeader(
+    this.text, {
+    required this.count,
+    required this.icon,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      children: [
+        Container(
+          padding: const EdgeInsets.all(6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, size: 14, color: color),
+        ),
+        const SizedBox(width: 10),
+        Text(
+          '$text ($count)',
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.w700,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _MemberTile extends StatelessWidget {
+  final BatchMemberModel member;
+  final VoidCallback? onRemove;
+  const _MemberTile({required this.member, this.onRemove});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isTeacher = member.role == 'TEACHER';
+    final roleColor = isTeacher
+        ? const Color(0xFF10B981)
+        : const Color(0xFF3B82F6);
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLowest,
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.04),
+        ),
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 22,
+            backgroundImage: member.displayPicture != null
+                ? NetworkImage(member.displayPicture!)
+                : null,
+            backgroundColor: roleColor.withValues(alpha: 0.1),
+            child: member.displayPicture == null
+                ? Text(
+                    member.displayName[0].toUpperCase(),
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: roleColor,
+                    ),
+                  )
+                : null,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  member.displayName,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                if (member.subtitle.isNotEmpty)
+                  Text(
+                    member.subtitle,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                      fontSize: 11,
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: roleColor.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              member.role,
+              style: TextStyle(
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+                color: roleColor,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+          if (onRemove != null)
+            Padding(
+              padding: const EdgeInsets.only(left: 4),
+              child: IconButton(
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: 18,
+                  color: Colors.red.withValues(alpha: 0.5),
+                ),
+                onPressed: onRemove,
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color? valueColor;
+  const _DetailRow(this.label, this.value, {this.valueColor});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.all(40),
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          Text(
+            value,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+              color: valueColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptySection extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  final String? subtitle;
+  const _EmptySection({required this.icon, required this.text, this.subtitle});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 48),
       child: Center(
         child: Column(
           children: [
-            Icon(
-              icon,
-              size: 48,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.04),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                icon,
+                size: 36,
+                color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
+              ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 16),
             Text(
               text,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                fontWeight: FontWeight.w600,
               ),
             ),
+            if (subtitle != null) ...[
+              const SizedBox(height: 4),
+              Text(
+                subtitle!,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                ),
+              ),
+            ],
           ],
         ),
       ),
