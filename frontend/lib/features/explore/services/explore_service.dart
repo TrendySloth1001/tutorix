@@ -86,7 +86,10 @@ class ExploreService {
 
   /// Save a coaching (bookmark).
   Future<void> saveCoaching(String coachingId) async {
-    await _api.postAuthenticated(ApiConstants.coachingSave(coachingId), body: {});
+    await _api.postAuthenticated(
+      ApiConstants.coachingSave(coachingId),
+      body: {},
+    );
   }
 
   /// Unsave a coaching (un-bookmark).

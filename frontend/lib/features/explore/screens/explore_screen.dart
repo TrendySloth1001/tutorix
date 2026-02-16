@@ -34,6 +34,8 @@ class _ExploreScreenState extends State<ExploreScreen>
   // Location
   LatLng? _userLocation;
   bool _locationLoading = true;
+  String _locationStatus = 'Checking location permission...';
+  bool _usingFallbackLocation = false;
 
   // Nearby coachings
   List<NearbyCoaching> _nearby = [];
@@ -49,8 +51,17 @@ class _ExploreScreenState extends State<ExploreScreen>
   late final Animation<double> _searchFadeAnim;
   late final Animation<Offset> _searchSlideAnim;
 
+  // Radius filter (km)
+  double _radiusKm = 20;
+
   // Selected coaching on map
   NearbyCoaching? _selectedCoaching;
+
+  // Card tap-to-locate-then-open: track which card was last tapped
+  String? _highlightedCardId;
+
+  // Map card expand/collapse
+  bool _mapExpanded = true;
 
   @override
   void initState() {
@@ -63,13 +74,10 @@ class _ExploreScreenState extends State<ExploreScreen>
       parent: _searchAnimController,
       curve: Curves.easeOut,
     );
-    _searchSlideAnim = Tween<Offset>(
-      begin: const Offset(0, -0.05),
-      end: Offset.zero,
-    ).animate(CurvedAnimation(
-      parent: _searchAnimController,
-      curve: Curves.easeOut,
-    ));
+    _searchSlideAnim =
+        Tween<Offset>(begin: const Offset(0, -0.05), end: Offset.zero).animate(
+          CurvedAnimation(parent: _searchAnimController, curve: Curves.easeOut),
+        );
     _searchController.addListener(_onSearchChanged);
     _searchFocus.addListener(_onSearchFocusChanged);
     _determineLocation();
@@ -90,15 +98,23 @@ class _ExploreScreenState extends State<ExploreScreen>
 
   Future<void> _determineLocation() async {
     try {
+      if (mounted) {
+        setState(() => _locationStatus = 'Checking location permission...');
+      }
       LocationPermission perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) {
+        if (mounted) {
+          setState(() => _locationStatus = 'Requesting location access...');
+        }
         perm = await Geolocator.requestPermission();
       }
       if (perm == LocationPermission.denied ||
           perm == LocationPermission.deniedForever) {
-        // Fallback: New Delhi
-        _setLocation(const LatLng(28.6139, 77.2090));
+        _setLocation(const LatLng(28.6139, 77.2090), fallback: true);
         return;
+      }
+      if (mounted) {
+        setState(() => _locationStatus = 'Getting your location...');
       }
       final pos = await Geolocator.getCurrentPosition(
         locationSettings: const LocationSettings(
@@ -108,17 +124,61 @@ class _ExploreScreenState extends State<ExploreScreen>
       );
       _setLocation(LatLng(pos.latitude, pos.longitude));
     } catch (_) {
-      _setLocation(const LatLng(28.6139, 77.2090));
+      _setLocation(const LatLng(28.6139, 77.2090), fallback: true);
     }
   }
 
-  void _setLocation(LatLng loc) {
+  void _setLocation(LatLng loc, {bool fallback = false}) {
     if (!mounted) return;
     setState(() {
       _userLocation = loc;
       _locationLoading = false;
+      _usingFallbackLocation = fallback;
     });
     _loadNearby();
+  }
+
+  void _recenterMap() {
+    if (_userLocation != null) {
+      _mapController.move(_userLocation!, 13);
+      setState(() => _selectedCoaching = null);
+    }
+  }
+
+  void _zoomIn() {
+    final z = _mapController.camera.zoom;
+    if (z < 18) _mapController.move(_mapController.camera.center, z + 1);
+  }
+
+  void _zoomOut() {
+    final z = _mapController.camera.zoom;
+    if (z > 4) _mapController.move(_mapController.camera.center, z - 1);
+  }
+
+  void _fitAllMarkers() {
+    final points = _nearby
+        .where(
+          (nc) =>
+              nc.coaching.address?.latitude != null &&
+              nc.coaching.address?.longitude != null,
+        )
+        .map(
+          (nc) => LatLng(
+            nc.coaching.address!.latitude!,
+            nc.coaching.address!.longitude!,
+          ),
+        )
+        .toList();
+    if (_userLocation != null) points.add(_userLocation!);
+    if (points.length < 2) return;
+    final bounds = LatLngBounds.fromPoints(points);
+    _mapController.fitCamera(
+      CameraFit.bounds(
+        bounds: bounds,
+        padding: const EdgeInsets.all(48),
+        maxZoom: 16,
+      ),
+    );
   }
 
   // ── Nearby ────────────────────────────────────────────────────────
@@ -126,19 +186,23 @@ class _ExploreScreenState extends State<ExploreScreen>
   void _loadNearby() {
     final loc = _userLocation;
     if (loc == null) return;
+    setState(() => _nearbyLoading = true);
     _nearbySub?.cancel();
     _nearbySub = _exploreService
-        .watchNearby(lat: loc.latitude, lng: loc.longitude)
-        .listen((list) {
-      if (!mounted) return;
-      setState(() {
-        _nearby = list;
-        _nearbyLoading = false;
-      });
-    }, onError: (_) {
-      if (!mounted) return;
-      setState(() => _nearbyLoading = false);
-    });
+        .watchNearby(lat: loc.latitude, lng: loc.longitude, radiusKm: _radiusKm)
+        .listen(
+          (list) {
+            if (!mounted) return;
+            setState(() {
+              _nearby = list;
+              _nearbyLoading = false;
+            });
+          },
+          onError: (_) {
+            if (!mounted) return;
+            setState(() => _nearbyLoading = false);
+          },
+        );
   }
 
   // ── Search ────────────────────────────────────────────────────────
@@ -195,9 +259,7 @@ class _ExploreScreenState extends State<ExploreScreen>
       final target = LatLng(result.latitude!, result.longitude!);
       _mapController.move(target, 15);
       // Try to match with a nearby coaching to select it
-      final match = _nearby.where(
-        (n) => n.coaching.id == result.id,
-      );
+      final match = _nearby.where((n) => n.coaching.id == result.id);
       if (match.isNotEmpty) {
         setState(() => _selectedCoaching = match.first);
       } else {
@@ -215,12 +277,12 @@ class _ExploreScreenState extends State<ExploreScreen>
     try {
       final full = await _coachingService.getCoachingById(coachingId);
       if (!mounted || full == null) return;
-      Navigator.of(context).push(MaterialPageRoute(
-        builder: (_) => CoachingProfileScreen(
-          coaching: full,
-          user: widget.user,
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) =>
+              CoachingProfileScreen(coaching: full, user: widget.user),
         ),
-      ));
+      );
     } catch (e) {
       if (mounted) {
         AppAlert.error(context, 'Could not load coaching details');
@@ -229,13 +291,26 @@ class _ExploreScreenState extends State<ExploreScreen>
   }
 
   void _onMarkerTapped(NearbyCoaching nc) {
-    setState(() => _selectedCoaching = nc);
+    setState(() {
+      _selectedCoaching = nc;
+      _highlightedCardId = nc.coaching.id;
+    });
     final addr = nc.coaching.address;
     if (addr?.latitude != null && addr?.longitude != null) {
-      _mapController.move(
-        LatLng(addr!.latitude!, addr.longitude!),
-        15,
-      );
+      _mapController.move(LatLng(addr!.latitude!, addr.longitude!), 15);
+    }
+    // Expand the map if collapsed so user can see the pin
+    if (!_mapExpanded) setState(() => _mapExpanded = true);
+  }
+
+  /// Card tap UX: first tap → show on map, second tap on same card → open profile.
+  void _onCardTapped(NearbyCoaching nc) {
+    if (_highlightedCardId == nc.coaching.id) {
+      // Second tap on the same card → open
+      _navigateToCoaching(nc.coaching.id);
+    } else {
+      // First tap → highlight & show on map
+      _onMarkerTapped(nc);
     }
   }
 
@@ -265,26 +340,74 @@ class _ExploreScreenState extends State<ExploreScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final topPadding = MediaQuery.of(context).padding.top;
 
     return Scaffold(
       body: Stack(
         children: [
-          // Main content
+          // Main scrollable content
           _locationLoading
-              ? const Center(child: CircularProgressIndicator())
-              : Column(
-                  children: [
-                    // Map
-                    Expanded(flex: 5, child: _buildMap(theme)),
-                    // Bottom list
-                    Expanded(flex: 4, child: _buildBottomPanel(theme)),
+              ? _buildLocationLoading(theme)
+              : CustomScrollView(
+                  slivers: [
+                    // Top spacing for search bar
+                    SliverToBoxAdapter(
+                      child: SizedBox(height: topPadding + 72),
+                    ),
+
+                    // Fallback location banner
+                    if (_usingFallbackLocation)
+                      SliverToBoxAdapter(child: _buildFallbackBanner(theme)),
+
+                    // Map card
+                    SliverToBoxAdapter(child: _buildMapCard(theme)),
+
+                    // Selected coaching card (inline, not floating)
+                    if (_selectedCoaching != null)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                          child: _buildSelectedCard(theme),
+                        ),
+                      ),
+
+                    // Section header
+                    SliverToBoxAdapter(child: _buildSectionHeader(theme)),
+
+                    // Nearby coaching cards or empty/loading state
+                    if (_nearbyLoading)
+                      const SliverToBoxAdapter(
+                        child: Padding(
+                          padding: EdgeInsets.all(48),
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                      )
+                    else if (_nearby.isEmpty)
+                      SliverToBoxAdapter(child: _buildEmptyState(theme))
+                    else
+                      SliverPadding(
+                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                        sliver: SliverList.separated(
+                          itemCount: _nearby.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (_, i) => _NearbyCoachingCard(
+                            nearby: _nearby[i],
+                            theme: theme,
+                            getFullUrl: _getFullUrl,
+                            isHighlighted:
+                                _highlightedCardId == _nearby[i].coaching.id,
+                            onTap: () => _onCardTapped(_nearby[i]),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
 
-          // Search bar (floating)
+          // Floating search bar
           if (!_locationLoading)
             Positioned(
-              top: MediaQuery.of(context).padding.top + 12,
+              top: topPadding + 12,
               left: 16,
               right: 16,
               child: _buildSearchBar(theme),
@@ -292,16 +415,297 @@ class _ExploreScreenState extends State<ExploreScreen>
 
           // Search overlay
           if (_searchOverlayVisible) _buildSearchOverlay(theme),
-
-          // Selected coaching popup
-          if (_selectedCoaching != null && !_searchOverlayVisible)
-            _buildSelectedPopup(theme),
         ],
       ),
     );
   }
 
-  // ── Map ───────────────────────────────────────────────────────────
+  // ── Location loading ─────────────────────────────────────────────
+
+  Widget _buildLocationLoading(ThemeData theme) {
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              color: theme.colorScheme.primary,
+            ),
+          ),
+          const SizedBox(height: 20),
+          Text(
+            _locationStatus,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'We need your location to find\nnearby coachings',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFallbackBanner(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
+      child: Material(
+        borderRadius: BorderRadius.circular(12),
+        color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          child: Row(
+            children: [
+              Icon(
+                Icons.info_outline_rounded,
+                size: 18,
+                color: theme.colorScheme.tertiary,
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Showing results for New Delhi. Enable location for accurate results.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onTertiaryContainer,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              InkWell(
+                borderRadius: BorderRadius.circular(8),
+                onTap: () {
+                  setState(() {
+                    _locationLoading = true;
+                    _usingFallbackLocation = false;
+                  });
+                  _determineLocation();
+                },
+                child: Padding(
+                  padding: const EdgeInsets.all(4),
+                  child: Text(
+                    'Retry',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.tertiary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ── Map card ──────────────────────────────────────────────────────
+
+  Widget _buildMapCard(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Material(
+        elevation: 4,
+        shadowColor: Colors.black.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+        color: theme.colorScheme.surface,
+        child: Column(
+          children: [
+            // Header — tap to expand/collapse
+            InkWell(
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
+              onTap: () => setState(() => _mapExpanded = !_mapExpanded),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(18, 14, 12, 14),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.map_rounded,
+                      size: 20,
+                      color: theme.colorScheme.primary,
+                    ),
+                    const SizedBox(width: 10),
+                    Text(
+                      'Map',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    if (_nearby.isNotEmpty) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 7,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer.withValues(
+                            alpha: 0.5,
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          '${_nearby.length}',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                    const Spacer(),
+                    AnimatedRotation(
+                      turns: _mapExpanded ? 0.5 : 0,
+                      duration: const Duration(milliseconds: 250),
+                      child: Icon(
+                        Icons.keyboard_arrow_down_rounded,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.45,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            // Radius slider (visible when expanded)
+            if (_mapExpanded)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.radar_rounded,
+                      size: 16,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                    ),
+                    Expanded(
+                      child: SliderTheme(
+                        data: SliderThemeData(
+                          activeTrackColor: theme.colorScheme.primary,
+                          inactiveTrackColor: theme.colorScheme.primary
+                              .withValues(alpha: 0.15),
+                          thumbColor: theme.colorScheme.primary,
+                          overlayColor: theme.colorScheme.primary.withValues(
+                            alpha: 0.12,
+                          ),
+                          trackHeight: 3,
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 7,
+                          ),
+                        ),
+                        child: Slider(
+                          value: _radiusKm,
+                          min: 5,
+                          max: 50,
+                          divisions: 9,
+                          onChanged: (v) => setState(() => _radiusKm = v),
+                          onChangeEnd: (_) => _loadNearby(),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 3,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer.withValues(
+                          alpha: 0.5,
+                        ),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        '${_radiusKm.round()} km',
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: theme.colorScheme.primary,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+            // Map body
+            AnimatedCrossFade(
+              firstChild: ClipRRect(
+                borderRadius: const BorderRadius.vertical(
+                  bottom: Radius.circular(20),
+                ),
+                child: SizedBox(
+                  height: 280,
+                  child: Stack(
+                    children: [
+                      _buildMap(theme),
+
+                      // Map control buttons
+                      Positioned(
+                        right: 10,
+                        bottom: 10,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            _MapControlButton(
+                              icon: Icons.my_location_rounded,
+                              tooltip: 'My location',
+                              theme: theme,
+                              onTap: _recenterMap,
+                            ),
+                            const SizedBox(height: 6),
+                            _MapControlButton(
+                              icon: Icons.add_rounded,
+                              tooltip: 'Zoom in',
+                              theme: theme,
+                              onTap: _zoomIn,
+                            ),
+                            const SizedBox(height: 6),
+                            _MapControlButton(
+                              icon: Icons.remove_rounded,
+                              tooltip: 'Zoom out',
+                              theme: theme,
+                              onTap: _zoomOut,
+                            ),
+                            if (_nearby.length >= 2) ...[
+                              const SizedBox(height: 6),
+                              _MapControlButton(
+                                icon: Icons.fit_screen_rounded,
+                                tooltip: 'Fit all',
+                                theme: theme,
+                                onTap: _fitAllMarkers,
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              secondChild: const SizedBox.shrink(),
+              crossFadeState: _mapExpanded
+                  ? CrossFadeState.showFirst
+                  : CrossFadeState.showSecond,
+              duration: const Duration(milliseconds: 300),
+              sizeCurve: Curves.easeInOut,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   Widget _buildMap(ThemeData theme) {
     final center = _userLocation ?? const LatLng(28.6139, 77.2090);
@@ -461,8 +865,10 @@ class _ExploreScreenState extends State<ExploreScreen>
             borderRadius: BorderRadius.circular(16),
             borderSide: BorderSide.none,
           ),
-          contentPadding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 14,
+          ),
         ),
       ),
     );
@@ -583,21 +989,25 @@ class _ExploreScreenState extends State<ExploreScreen>
 
   Widget _buildSearchResultTile(SearchResult result, ThemeData theme) {
     final logoUrl = _getFullUrl(result.logo);
-    final location = [result.city, result.state]
-        .where((s) => s != null && s.isNotEmpty)
-        .join(', ');
+    final location = [
+      result.city,
+      result.state,
+    ].where((s) => s != null && s.isNotEmpty).join(', ');
 
     return ListTile(
       onTap: () => _onSearchResultTapped(result),
       leading: CircleAvatar(
         radius: 22,
-        backgroundColor:
-            theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
-        backgroundImage:
-            logoUrl.isNotEmpty ? NetworkImage(logoUrl) : null,
+        backgroundColor: theme.colorScheme.primaryContainer.withValues(
+          alpha: 0.5,
+        ),
+        backgroundImage: logoUrl.isNotEmpty ? NetworkImage(logoUrl) : null,
         child: logoUrl.isEmpty
-            ? Icon(Icons.school_rounded,
-                size: 20, color: theme.colorScheme.primary)
+            ? Icon(
+                Icons.school_rounded,
+                size: 20,
+                color: theme.colorScheme.primary,
+              )
             : null,
       ),
       title: Text(
@@ -617,136 +1027,171 @@ class _ExploreScreenState extends State<ExploreScreen>
             )
           : null,
       trailing: result.isVerified
-          ? Icon(Icons.verified_rounded,
-              size: 18, color: theme.colorScheme.primary)
+          ? Icon(
+              Icons.verified_rounded,
+              size: 18,
+              color: theme.colorScheme.primary,
+            )
           : null,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
     );
   }
 
-  // ── Selected coaching popup ───────────────────────────────────────
+  // ── Selected coaching card (inline) ────────────────────────────────
 
-  Widget _buildSelectedPopup(ThemeData theme) {
+  Widget _buildSelectedCard(ThemeData theme) {
     final nc = _selectedCoaching!;
     final coaching = nc.coaching;
     final logoUrl = _getFullUrl(coaching.logo);
     final addr = coaching.address;
 
-    return Positioned(
-      bottom: MediaQuery.of(context).size.height * 0.40 + 12,
-      left: 16,
-      right: 16,
-      child: Material(
-        elevation: 8,
+    return Material(
+      elevation: 6,
+      borderRadius: BorderRadius.circular(16),
+      shadowColor: theme.colorScheme.primary.withValues(alpha: 0.2),
+      child: InkWell(
         borderRadius: BorderRadius.circular(16),
-        shadowColor: Colors.black.withValues(alpha: 0.2),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16),
-          onTap: () {
-            setState(() => _selectedCoaching = null);
-            _navigateToCoaching(coaching.id);
-          },
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(16),
+        onTap: () {
+          setState(() => _selectedCoaching = null);
+          _navigateToCoaching(coaching.id);
+        },
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: theme.colorScheme.primary.withValues(alpha: 0.2),
             ),
-            child: Row(
-              children: [
-                // Logo
-                CircleAvatar(
-                  radius: 26,
-                  backgroundColor: theme.colorScheme.primaryContainer
-                      .withValues(alpha: 0.5),
-                  backgroundImage:
-                      logoUrl.isNotEmpty ? NetworkImage(logoUrl) : null,
-                  child: logoUrl.isEmpty
-                      ? Icon(Icons.school_rounded,
-                          size: 24, color: theme.colorScheme.primary)
-                      : null,
+          ),
+          child: Row(
+            children: [
+              // Logo
+              CircleAvatar(
+                radius: 26,
+                backgroundColor: theme.colorScheme.primaryContainer.withValues(
+                  alpha: 0.5,
                 ),
-                const SizedBox(width: 14),
-                // Info
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              coaching.name,
-                              style: theme.textTheme.titleSmall
-                                  ?.copyWith(fontWeight: FontWeight.w700),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
+                backgroundImage: logoUrl.isNotEmpty
+                    ? NetworkImage(logoUrl)
+                    : null,
+                child: logoUrl.isEmpty
+                    ? Icon(
+                        Icons.school_rounded,
+                        size: 24,
+                        color: theme.colorScheme.primary,
+                      )
+                    : null,
+              ),
+              const SizedBox(width: 14),
+              // Info
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            coaching.name,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
                             ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          if (coaching.isVerified) ...[
-                            const SizedBox(width: 4),
-                            Icon(Icons.verified_rounded,
-                                size: 16, color: theme.colorScheme.primary),
-                          ],
+                        ),
+                        if (coaching.isVerified) ...[
+                          const SizedBox(width: 4),
+                          Icon(
+                            Icons.verified_rounded,
+                            size: 16,
+                            color: theme.colorScheme.primary,
+                          ),
                         ],
-                      ),
-                      const SizedBox(height: 4),
-                      if (coaching.category != null)
-                        Text(
-                          coaching.category!,
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.6),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    if (coaching.category != null)
+                      Text(
+                        coaching.category!,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.6,
                           ),
                         ),
-                      Text(
-                        '${nc.distanceKm.toStringAsFixed(1)} km away',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.primary,
-                          fontWeight: FontWeight.w600,
-                        ),
                       ),
-                    ],
-                  ),
+                    Text(
+                      '${nc.distanceKm.toStringAsFixed(1)} km away',
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ),
-                // Directions button
-                if (addr?.latitude != null && addr?.longitude != null)
-                  IconButton(
-                    onPressed: () =>
-                        _openDirections(addr!.latitude!, addr.longitude!),
-                    icon: Icon(Icons.directions_rounded,
-                        color: theme.colorScheme.primary),
-                    tooltip: 'Directions',
+              ),
+              // Directions button
+              if (addr?.latitude != null && addr?.longitude != null)
+                IconButton(
+                  onPressed: () =>
+                      _openDirections(addr!.latitude!, addr.longitude!),
+                  icon: Icon(
+                    Icons.directions_rounded,
+                    color: theme.colorScheme.primary,
                   ),
-              ],
-            ),
+                  tooltip: 'Directions',
+                ),
+              // Dismiss
+              IconButton(
+                onPressed: () => setState(() => _selectedCoaching = null),
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: 20,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                ),
+              ),
+            ],
           ),
         ),
       ),
     );
   }
 
-  // ── Bottom panel ──────────────────────────────────────────────────
+  // ── Section header ────────────────────────────────────────────────
 
-  Widget _buildBottomPanel(ThemeData theme) {
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
-            blurRadius: 16,
-            offset: const Offset(0, -4),
+  Widget _buildSectionHeader(ThemeData theme) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+      child: Row(
+        children: [
+          Text(
+            'Nearby',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
+          const SizedBox(width: 8),
+          if (!_nearbyLoading && _nearby.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primaryContainer.withValues(
+                  alpha: 0.5,
+                ),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Text(
+                '${_nearby.length}',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  color: theme.colorScheme.primary,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
         ],
       ),
-      child: _nearbyLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _nearby.isEmpty
-              ? _buildEmptyState(theme)
-              : _buildNearbyList(theme),
     );
   }
 
@@ -781,177 +1226,450 @@ class _ExploreScreenState extends State<ExploreScreen>
       ),
     );
   }
-
-  Widget _buildNearbyList(ThemeData theme) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 12),
-          child: Row(
-            children: [
-              Text(
-                'Nearby',
-                style: theme.textTheme.titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w700),
-              ),
-              const SizedBox(width: 8),
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primaryContainer
-                      .withValues(alpha: 0.5),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Text(
-                  '${_nearby.length}',
-                  style: theme.textTheme.labelSmall?.copyWith(
-                    color: theme.colorScheme.primary,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-        Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            itemCount: _nearby.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (_, i) =>
-                _NearbyCoachingCard(
-                  nearby: _nearby[i],
-                  theme: theme,
-                  getFullUrl: _getFullUrl,
-                  onTap: () {
-                    _onMarkerTapped(_nearby[i]);
-                  },
-                  onOpen: () => _navigateToCoaching(_nearby[i].coaching.id),
-                ),
-          ),
-        ),
-      ],
-    );
-  }
 }
 
 // ═══════════════════════════════════════════════════════════════════════
-// Nearby Coaching Card
+// Nearby Coaching Card — cover image + logo style
 // ═══════════════════════════════════════════════════════════════════════
 
 class _NearbyCoachingCard extends StatelessWidget {
   final NearbyCoaching nearby;
   final ThemeData theme;
   final String Function(String?) getFullUrl;
+  final bool isHighlighted;
   final VoidCallback onTap;
-  final VoidCallback onOpen;
 
   const _NearbyCoachingCard({
     required this.nearby,
     required this.theme,
     required this.getFullUrl,
     required this.onTap,
-    required this.onOpen,
+    this.isHighlighted = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final coaching = nearby.coaching;
     final logoUrl = getFullUrl(coaching.logo);
-    final location = [coaching.address?.city, coaching.address?.state]
-        .where((s) => s != null && s.isNotEmpty)
-        .join(', ');
+    final coverUrl = getFullUrl(coaching.coverImage);
+    final hasLogo = logoUrl.isNotEmpty;
+    final hasCover = coverUrl.isNotEmpty;
+    final location = [
+      coaching.address?.city,
+      coaching.address?.state,
+    ].where((s) => s != null && s.isNotEmpty).join(', ');
 
     return Material(
-      borderRadius: BorderRadius.circular(14),
-      color: theme.colorScheme.surfaceContainerLow,
+      color: Colors.transparent,
+      elevation: isHighlighted ? 8 : 6,
+      shadowColor: isHighlighted
+          ? theme.colorScheme.primary.withValues(alpha: 0.35)
+          : Colors.black.withValues(alpha: 0.25),
+      borderRadius: BorderRadius.circular(18),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onOpen,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(
-            children: [
-              // Logo
-              CircleAvatar(
-                radius: 24,
-                backgroundColor:
-                    theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
-                backgroundImage:
-                    logoUrl.isNotEmpty ? NetworkImage(logoUrl) : null,
-                child: logoUrl.isEmpty
-                    ? Icon(Icons.school_rounded,
-                        size: 22, color: theme.colorScheme.primary)
-                    : null,
-              ),
-              const SizedBox(width: 12),
-              // Info
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(18),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          height: 150,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerHighest,
+            borderRadius: BorderRadius.circular(18),
+            border: Border.all(
+              color: isHighlighted
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.outline.withValues(alpha: 0.08),
+              width: isHighlighted ? 2.5 : 1,
+            ),
+          ),
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(18),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                // ─── Cover image background ───
+                if (hasCover)
+                  Image.network(
+                    coverUrl,
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _buildPlaceholderBg(theme),
+                  )
+                else
+                  _buildPlaceholderBg(theme),
+
+                // ─── Gradient overlay ───
+                Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.black.withValues(alpha: 0.05),
+                        Colors.black.withValues(alpha: 0.25),
+                        Colors.black.withValues(alpha: 0.7),
+                        Colors.black.withValues(alpha: 0.9),
+                      ],
+                      stops: const [0.0, 0.3, 0.65, 1.0],
+                    ),
+                  ),
+                ),
+
+                // ─── Distance badge (top-right) ───
+                Positioned(
+                  top: 10,
+                  right: 10,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.55),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Flexible(
-                          child: Text(
-                            coaching.name,
-                            style: theme.textTheme.bodyLarge
-                                ?.copyWith(fontWeight: FontWeight.w600),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
+                        const Icon(
+                          Icons.near_me_rounded,
+                          size: 13,
+                          color: Colors.white,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          '${nearby.distanceKm.toStringAsFixed(1)} km',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        if (coaching.isVerified) ...[
-                          const SizedBox(width: 4),
-                          Icon(Icons.verified_rounded,
-                              size: 15, color: theme.colorScheme.primary),
-                        ],
                       ],
                     ),
-                    const SizedBox(height: 2),
-                    if (location.isNotEmpty)
-                      Text(
-                        location,
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurface
-                              .withValues(alpha: 0.55),
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                  ],
+                  ),
                 ),
-              ),
-              // Distance + map pin
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Text(
-                    '${nearby.distanceKm.toStringAsFixed(1)} km',
-                    style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  InkWell(
-                    borderRadius: BorderRadius.circular(8),
-                    onTap: onTap,
-                    child: Padding(
-                      padding: const EdgeInsets.all(4),
-                      child: Icon(
-                        Icons.location_on_outlined,
-                        size: 18,
-                        color: theme.colorScheme.onSurface
-                            .withValues(alpha: 0.4),
+
+                // ─── Locate-on-map / "tap again" hint (top-left) ───
+                if (isHighlighted)
+                  Positioned(
+                    top: 10,
+                    left: 10,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 5,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.85,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.touch_app_rounded,
+                            size: 13,
+                            color: Colors.white,
+                          ),
+                          SizedBox(width: 4),
+                          Text(
+                            'Tap again to open',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                ],
-              ),
-            ],
+
+                // ─── Bottom content: logo + info ───
+                Positioned(
+                  left: 14,
+                  right: 14,
+                  bottom: 14,
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      // Logo
+                      Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(13),
+                          border: Border.all(
+                            color: Colors.white.withValues(alpha: 0.35),
+                            width: 2,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                        child: hasLogo
+                            ? ClipRRect(
+                                borderRadius: BorderRadius.circular(11),
+                                child: Image.network(
+                                  logoUrl,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, __, ___) =>
+                                      _buildLogoPlaceholder(theme),
+                                ),
+                              )
+                            : _buildLogoPlaceholder(theme),
+                      ),
+                      const SizedBox(width: 12),
+
+                      // Name + category/location + members
+                      Expanded(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            // Name row
+                            Row(
+                              children: [
+                                Flexible(
+                                  child: Text(
+                                    coaching.name,
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(
+                                          color: Colors.white,
+                                          fontWeight: FontWeight.bold,
+                                          letterSpacing: -0.3,
+                                          shadows: [
+                                            Shadow(
+                                              color: Colors.black.withValues(
+                                                alpha: 0.5,
+                                              ),
+                                              blurRadius: 6,
+                                            ),
+                                          ],
+                                        ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                                if (coaching.isVerified) ...[
+                                  const SizedBox(width: 5),
+                                  Icon(
+                                    Icons.verified_rounded,
+                                    size: 16,
+                                    color: Colors.blue.shade300,
+                                  ),
+                                ],
+                              ],
+                            ),
+
+                            const SizedBox(height: 3),
+
+                            // Category / location row
+                            Row(
+                              children: [
+                                if (coaching.category != null &&
+                                    coaching.category!.isNotEmpty) ...[
+                                  Text(
+                                    coaching.category!,
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.8,
+                                      ),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  if (location.isNotEmpty)
+                                    Text(
+                                      '  •  ',
+                                      style: TextStyle(
+                                        color: Colors.white.withValues(
+                                          alpha: 0.4,
+                                        ),
+                                        fontSize: 12,
+                                      ),
+                                    ),
+                                ],
+                                if (location.isNotEmpty)
+                                  Flexible(
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          Icons.location_on_rounded,
+                                          size: 13,
+                                          color: Colors.white.withValues(
+                                            alpha: 0.7,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 2),
+                                        Flexible(
+                                          child: Text(
+                                            location,
+                                            style: TextStyle(
+                                              color: Colors.white.withValues(
+                                                alpha: 0.75,
+                                              ),
+                                              fontSize: 12,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 4),
+
+                            // Members stat
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.people_rounded,
+                                  size: 13,
+                                  color: Colors.white.withValues(alpha: 0.7),
+                                ),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${coaching.memberCount} members',
+                                  style: TextStyle(
+                                    color: Colors.white.withValues(alpha: 0.75),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                                if (coaching.branches.isNotEmpty) ...[
+                                  const SizedBox(width: 10),
+                                  Icon(
+                                    Icons.account_tree_rounded,
+                                    size: 13,
+                                    color: Colors.white.withValues(alpha: 0.7),
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${coaching.branches.length} ${coaching.branches.length == 1 ? 'branch' : 'branches'}',
+                                    style: TextStyle(
+                                      color: Colors.white.withValues(
+                                        alpha: 0.75,
+                                      ),
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+
+                      // Arrow indicator
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 13,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholderBg(ThemeData theme) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primary.withValues(alpha: 0.15),
+            theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
+            theme.colorScheme.secondary.withValues(alpha: 0.12),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.school_rounded,
+          size: 40,
+          color: theme.colorScheme.primary.withValues(alpha: 0.15),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLogoPlaceholder(ThemeData theme) {
+    return Center(
+      child: Icon(
+        Icons.school_rounded,
+        size: 24,
+        color: Colors.white.withValues(alpha: 0.7),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Map control button
+// ═══════════════════════════════════════════════════════════════════════
+
+class _MapControlButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final ThemeData theme;
+  final VoidCallback onTap;
+
+  const _MapControlButton({
+    required this.icon,
+    required this.tooltip,
+    required this.theme,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        elevation: 3,
+        shadowColor: Colors.black.withValues(alpha: 0.2),
+        shape: const CircleBorder(),
+        color: theme.colorScheme.surface,
+        child: InkWell(
+          onTap: onTap,
+          customBorder: const CircleBorder(),
+          child: SizedBox(
+            width: 36,
+            height: 36,
+            child: Icon(
+              icon,
+              size: 18,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.7),
+            ),
           ),
         ),
       ),
