@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -30,6 +31,7 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
   List<BatchModel> _batches = [];
   bool _isLoading = true;
   String _filter = 'all';
+  StreamSubscription? _sub;
 
   bool get _isAdmin =>
       widget.coaching.ownerId == widget.user.id ||
@@ -41,24 +43,39 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
     _loadBatches();
   }
 
-  Future<void> _loadBatches() async {
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  void _loadBatches() {
     setState(() => _isLoading = true);
-    try {
-      if (_isAdmin) {
-        final status = _filter == 'all' ? null : _filter;
-        _batches = await _batchService.listBatches(
-          widget.coaching.id,
-          status: status,
-        );
-      } else {
-        _batches = await _batchService.getMyBatches(widget.coaching.id);
-      }
-    } catch (e) {
-      if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to load batches');
-      }
+    _sub?.cancel();
+
+    final Stream<List<BatchModel>> stream;
+    if (_isAdmin) {
+      final status = _filter == 'all' ? null : _filter;
+      stream = _batchService.watchBatches(widget.coaching.id, status: status);
+    } else {
+      stream = _batchService.watchMyBatches(widget.coaching.id);
     }
-    if (mounted) setState(() => _isLoading = false);
+
+    _sub = stream.listen(
+      (list) {
+        if (!mounted) return;
+        setState(() {
+          _batches = list;
+          _isLoading = false;
+        });
+      },
+      onError: (e) {
+        if (mounted) {
+          AppAlert.error(context, e, fallback: 'Failed to load batches');
+          setState(() => _isLoading = false);
+        }
+      },
+    );
   }
 
   void _openCreateBatch() async {
@@ -255,7 +272,10 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                 : _batches.isEmpty
                 ? _EmptyState(isAdmin: _isAdmin, onTap: _openCreateBatch)
                 : RefreshIndicator(
-                    onRefresh: _loadBatches,
+                    onRefresh: () async {
+                      _loadBatches();
+                      await Future.delayed(const Duration(milliseconds: 500));
+                    },
                     child: ListView.separated(
                       padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                       itemCount: _batches.length,

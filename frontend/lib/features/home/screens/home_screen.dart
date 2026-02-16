@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -30,6 +31,10 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isLoading = true;
   int _unreadNotifications = 0;
 
+  StreamSubscription? _mySub;
+  StreamSubscription? _joinedSub;
+  StreamSubscription? _notifSub;
+
   @override
   void initState() {
     super.initState();
@@ -37,37 +42,73 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadNotificationCount();
   }
 
-  Future<void> _loadNotificationCount() async {
-    try {
-      final result = await _notificationService.getUserNotifications(limit: 1);
-      if (!mounted) return;
-      final pendingInvites = context
-          .read<AuthController>()
-          .pendingInvitations
-          .length;
-      setState(() {
-        _unreadNotifications = (result['unreadCount'] ?? 0) + pendingInvites;
-      });
-    } catch (_) {
-      // Silent fail
-    }
+  @override
+  void dispose() {
+    _mySub?.cancel();
+    _joinedSub?.cancel();
+    _notifSub?.cancel();
+    super.dispose();
   }
 
-  Future<void> _loadCoachings() async {
+  void _loadNotificationCount() {
+    _notifSub?.cancel();
+    _notifSub = _notificationService
+        .watchUserNotifications(limit: 1)
+        .listen(
+      (result) {
+        if (!mounted) return;
+        final pendingInvites = context
+            .read<AuthController>()
+            .pendingInvitations
+            .length;
+        setState(() {
+          _unreadNotifications = (result['unreadCount'] ?? 0) + pendingInvites;
+        });
+      },
+      onError: (_) {},
+    );
+  }
+
+  void _loadCoachings() {
     setState(() => _isLoading = true);
-    try {
-      final results = await Future.wait([
-        _coachingService.getMyCoachings(),
-        _coachingService.getJoinedCoachings(),
-      ]);
-      _myCoachings = results[0];
-      _joinedCoachings = results[1];
-    } catch (e) {
-      if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to load coachings');
-      }
-    }
-    if (mounted) setState(() => _isLoading = false);
+    bool gotMy = false, gotJoined = false;
+
+    _mySub?.cancel();
+    _mySub = _coachingService.watchMyCoachings().listen(
+      (list) {
+        if (!mounted) return;
+        gotMy = true;
+        setState(() {
+          _myCoachings = list;
+          if (gotJoined) _isLoading = false;
+        });
+      },
+      onError: (e) {
+        gotMy = true;
+        if (mounted) {
+          AppAlert.error(context, e, fallback: 'Failed to load coachings');
+          if (gotJoined) setState(() => _isLoading = false);
+        }
+      },
+    );
+
+    _joinedSub?.cancel();
+    _joinedSub = _coachingService.watchJoinedCoachings().listen(
+      (list) {
+        if (!mounted) return;
+        gotJoined = true;
+        setState(() {
+          _joinedCoachings = list;
+          if (gotMy) _isLoading = false;
+        });
+      },
+      onError: (e) {
+        gotJoined = true;
+        if (mounted) {
+          if (gotMy) setState(() => _isLoading = false);
+        }
+      },
+    );
   }
 
   void _navigateToCreate() async {
@@ -113,7 +154,10 @@ class _HomeScreenState extends State<HomeScreen> {
     return Scaffold(
       body: RefreshIndicator(
         onRefresh: () async {
-          await Future.wait([_loadCoachings(), _loadNotificationCount()]);
+          _loadCoachings();
+          _loadNotificationCount();
+          // Give streams a moment to emit fresh data.
+          await Future.delayed(const Duration(milliseconds: 500));
         },
         child: CustomScrollView(
           physics: const AlwaysScrollableScrollPhysics(),

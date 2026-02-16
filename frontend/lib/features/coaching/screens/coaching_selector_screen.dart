@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -29,6 +30,7 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
   final CoachingService _coachingService = CoachingService();
   List<CoachingModel> _coachings = [];
   bool _isLoading = true;
+  StreamSubscription? _sub;
 
   @override
   void initState() {
@@ -36,17 +38,30 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
     _loadCoachings();
   }
 
-  Future<void> _loadCoachings() async {
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  void _loadCoachings() {
     setState(() => _isLoading = true);
-    try {
-      _coachings = await _coachingService.getMyCoachings();
-    } catch (e) {
-      if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to load coachings');
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
+    _sub?.cancel();
+    _sub = _coachingService.watchMyCoachings().listen(
+      (list) {
+        if (!mounted) return;
+        setState(() {
+          _coachings = list;
+          _isLoading = false;
+        });
+      },
+      onError: (e) {
+        if (mounted) {
+          AppAlert.error(context, e, fallback: 'Failed to load coachings');
+          setState(() => _isLoading = false);
+        }
+      },
+    );
   }
 
   void _navigateToCreate() async {
@@ -152,7 +167,10 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
           : _coachings.isEmpty
           ? _EmptyState(onGetStarted: _navigateToCreate)
           : RefreshIndicator(
-              onRefresh: _loadCoachings,
+              onRefresh: () async {
+                _loadCoachings();
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 itemCount: _coachings.length,

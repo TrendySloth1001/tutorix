@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
@@ -37,6 +38,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
   bool _isLoading = false;
 
   late CoachingModel _coaching;
+  StreamSubscription? _sub;
 
   @override
   void initState() {
@@ -45,16 +47,25 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     _refreshCoaching();
   }
 
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
   bool get _isOwner => _coaching.ownerId == widget.user.id;
 
-  Future<void> _refreshCoaching() async {
-    try {
-      final updated = await _coachingService.getCoachingById(_coaching.id);
-      if (updated != null && mounted) {
-        setState(() => _coaching = updated);
-        widget.onCoachingUpdated?.call(updated);
-      }
-    } catch (_) {}
+  void _refreshCoaching() {
+    _sub?.cancel();
+    _sub = _coachingService.watchCoachingById(_coaching.id).listen(
+      (updated) {
+        if (updated != null && mounted) {
+          setState(() => _coaching = updated);
+          widget.onCoachingUpdated?.call(updated);
+        }
+      },
+      onError: (_) {},
+    );
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -164,7 +175,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       setState(() => _isLoading = true);
       try {
         await onSave(result);
-        await _refreshCoaching();
+        _refreshCoaching();
         if (mounted) AppAlert.success(context, 'Updated successfully');
       } catch (e) {
         if (mounted) AppAlert.error(context, e, fallback: 'Update failed');
@@ -315,7 +326,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     try {
       final url = await _coachingService.uploadLogo(picked.path);
       await _coachingService.updateCoaching(id: _coaching.id, logo: url);
-      await _refreshCoaching();
+      _refreshCoaching();
       if (mounted) _showSuccess('Logo updated');
     } catch (e) {
       if (mounted) _showError('Upload failed');
@@ -390,7 +401,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     try {
       final url = await _coachingService.uploadCover(picked.path);
       await _coachingService.updateCoaching(id: _coaching.id, coverImage: url);
-      await _refreshCoaching();
+      _refreshCoaching();
       if (mounted) _showSuccess('Cover updated');
     } catch (e) {
       if (mounted) _showError('Upload failed');
@@ -438,7 +449,10 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
         body: Stack(
           children: [
             RefreshIndicator(
-              onRefresh: _refreshCoaching,
+              onRefresh: () async {
+                _refreshCoaching();
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
               edgeOffset: expandedHeight,
               child: CustomScrollView(
                 slivers: [

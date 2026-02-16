@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -44,6 +45,8 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
   bool _isLoading = true;
   bool _changed = false;
 
+  final List<StreamSubscription> _subs = [];
+
   bool get _isAdmin =>
       widget.coaching.ownerId == widget.user.id ||
       widget.coaching.myRole == 'ADMIN';
@@ -64,29 +67,82 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
 
   @override
   void dispose() {
+    for (final s in _subs) {
+      s.cancel();
+    }
     _tabCtrl.dispose();
     super.dispose();
   }
 
-  Future<void> _loadAll() async {
+  void _loadAll() {
     setState(() => _isLoading = true);
-    try {
-      final results = await Future.wait([
-        _batchService.getBatchById(widget.coaching.id, widget.batchId),
-        _batchService.getMembers(widget.coaching.id, widget.batchId),
-        _batchService.listNotes(widget.coaching.id, widget.batchId),
-        _batchService.listNotices(widget.coaching.id, widget.batchId),
-      ]);
-      _batch = results[0] as BatchModel;
-      _members = results[1] as List<BatchMemberModel>;
-      _notes = results[2] as List<BatchNoteModel>;
-      _notices = results[3] as List<BatchNoticeModel>;
-    } catch (e) {
-      if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to load batch details');
-      }
+    for (final s in _subs) {
+      s.cancel();
     }
-    if (mounted) setState(() => _isLoading = false);
+    _subs.clear();
+
+    int completed = 0;
+    void checkDone() {
+      completed++;
+      if (completed >= 4 && mounted) setState(() => _isLoading = false);
+    }
+
+    _subs.add(
+      _batchService
+          .watchBatchById(widget.coaching.id, widget.batchId)
+          .listen(
+        (batch) {
+          if (!mounted) return;
+          setState(() => _batch = batch);
+          checkDone();
+        },
+        onError: (e) {
+          if (mounted) {
+            AppAlert.error(context, e, fallback: 'Failed to load batch details');
+          }
+          checkDone();
+        },
+      ),
+    );
+
+    _subs.add(
+      _batchService
+          .watchMembers(widget.coaching.id, widget.batchId)
+          .listen(
+        (list) {
+          if (!mounted) return;
+          setState(() => _members = list);
+          checkDone();
+        },
+        onError: (_) => checkDone(),
+      ),
+    );
+
+    _subs.add(
+      _batchService
+          .watchNotes(widget.coaching.id, widget.batchId)
+          .listen(
+        (list) {
+          if (!mounted) return;
+          setState(() => _notes = list);
+          checkDone();
+        },
+        onError: (_) => checkDone(),
+      ),
+    );
+
+    _subs.add(
+      _batchService
+          .watchNotices(widget.coaching.id, widget.batchId)
+          .listen(
+        (list) {
+          if (!mounted) return;
+          setState(() => _notices = list);
+          checkDone();
+        },
+        onError: (_) => checkDone(),
+      ),
+    );
   }
 
   void _editBatch() async {

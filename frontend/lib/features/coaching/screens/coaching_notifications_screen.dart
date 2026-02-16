@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../shared/models/notification_model.dart';
@@ -23,6 +24,7 @@ class _CoachingNotificationsScreenState
 
   List<NotificationModel> _notifications = [];
   bool _isLoading = true;
+  StreamSubscription? _sub;
 
   @override
   void initState() {
@@ -30,27 +32,35 @@ class _CoachingNotificationsScreenState
     _load();
   }
 
-  Future<void> _load() async {
+  @override
+  void dispose() {
+    _sub?.cancel();
+    super.dispose();
+  }
+
+  void _load() {
     setState(() => _isLoading = true);
-    try {
-      final result = await _allowNotifications.getCoachingNotifications(
-        widget.coachingId,
-      );
-      final list = (result['notifications'] as List)
-          .map((e) => NotificationModel.fromJson(e))
-          .toList();
-      setState(() {
-        _notifications = list;
-        _isLoading = false;
-      });
-    } catch (e) {
-      if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to load notifications');
+    _sub?.cancel();
+    _sub = _allowNotifications
+        .watchCoachingNotifications(widget.coachingId)
+        .listen(
+      (result) {
+        if (!mounted) return;
+        final list = (result['notifications'] as List)
+            .map((e) => NotificationModel.fromJson(e))
+            .toList();
         setState(() {
+          _notifications = list;
           _isLoading = false;
         });
-      }
-    }
+      },
+      onError: (e) {
+        if (mounted) {
+          AppAlert.error(context, e, fallback: 'Failed to load notifications');
+          setState(() => _isLoading = false);
+        }
+      },
+    );
   }
 
   Future<void> _markAsRead(NotificationModel notification) async {

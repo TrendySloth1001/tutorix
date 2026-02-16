@@ -10,30 +10,25 @@ class MemberService {
   final CacheManager _cache = CacheManager.instance;
 
   /// GET /coaching/:id/members — fetch all members grouped by role.
-  Future<List<MemberModel>> getMembers(String coachingId) async {
+  /// Stream: emits cached list first, then fresh from network.
+  Stream<List<MemberModel>> watchMembers(String coachingId) {
     final key = 'members:$coachingId';
-    try {
-      final data = await _api.getAuthenticated(
-        ApiConstants.coachingMembers(coachingId),
-      );
-      await _cache.put(key, data);
-      final list = data['members'] as List<dynamic>;
-      return list
-          .map((e) => MemberModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      final cached = await _cache.get(key);
-      if (cached != null) {
-        final list = (cached['members'] as List<dynamic>);
+    return _cache.swr<List<MemberModel>>(
+      key,
+      () => _api.getAuthenticated(ApiConstants.coachingMembers(coachingId)),
+      (raw) {
+        final list = (raw['members'] as List<dynamic>?) ?? [];
         return list
             .map(
               (e) => MemberModel.fromJson(Map<String, dynamic>.from(e as Map)),
             )
             .toList();
-      }
-      rethrow;
-    }
+      },
+    );
   }
+
+  Future<List<MemberModel>> getMembers(String coachingId) =>
+      watchMembers(coachingId).last;
 
   /// DELETE /coaching/:id/members/:memberId
   Future<bool> removeMember(String coachingId, String memberId) async {
@@ -59,34 +54,20 @@ class MemberService {
   }
 
   /// GET /coaching/:id/invitations — all invitations for the coaching.
-  Future<List<InvitationModel>> getInvitations(String coachingId) async {
+  /// Stream: emits cached list first, then fresh from network.
+  Stream<List<InvitationModel>> watchInvitations(String coachingId) {
     final key = 'invitations:$coachingId';
-    try {
-      final raw = await _api.getAuthenticatedRaw(
+    return _cache.swr<List<InvitationModel>>(
+      key,
+      () => _api.getAuthenticatedRaw(
         ApiConstants.coachingInvitations(coachingId),
-      );
-      // Cache the raw response.
-      await _cache.put(key, raw);
-      // The endpoint may return a list directly or wrapped in { invitations: [...] }
-      final List<dynamic> list;
-      if (raw is List) {
-        list = raw;
-      } else if (raw is Map<String, dynamic>) {
-        list = raw['invitations'] as List<dynamic>? ?? [];
-      } else {
-        list = [];
-      }
-      return list
-          .map((e) => InvitationModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      final cached = await _cache.get(key);
-      if (cached != null) {
+      ),
+      (raw) {
         final List<dynamic> list;
-        if (cached is List) {
-          list = cached;
-        } else if (cached is Map) {
-          list = (cached['invitations'] as List<dynamic>?) ?? [];
+        if (raw is List) {
+          list = raw;
+        } else if (raw is Map) {
+          list = (raw['invitations'] as List<dynamic>?) ?? [];
         } else {
           list = [];
         }
@@ -96,10 +77,12 @@ class MemberService {
                   InvitationModel.fromJson(Map<String, dynamic>.from(e as Map)),
             )
             .toList();
-      }
-      rethrow;
-    }
+      },
+    );
   }
+
+  Future<List<InvitationModel>> getInvitations(String coachingId) =>
+      watchInvitations(coachingId).last;
 
   /// DELETE /coaching/:id/invitations/:invitationId — cancel invitation
   Future<bool> cancelInvitation(String coachingId, String invitationId) async {

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/coaching_model.dart';
@@ -7,7 +8,6 @@ import '../services/member_service.dart';
 import 'coaching_notifications_screen.dart';
 import '../../../shared/services/notification_service.dart';
 import '../../../shared/models/user_model.dart';
-import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
 import '../../batch/services/batch_service.dart';
 import '../../batch/models/batch_note_model.dart';
@@ -44,42 +44,80 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
   int _unreadNotifications = 0;
   bool _isLoading = true;
 
+  final List<StreamSubscription> _subs = [];
+
   @override
   void initState() {
     super.initState();
     _loadData();
   }
 
-  Future<void> _loadData() async {
-    setState(() => _isLoading = true);
-    try {
-      // Load all data in parallel for faster initial render
-      final results = await Future.wait([
-        _memberService
-            .getMembers(widget.coaching.id)
-            .catchError((e) => <MemberModel>[]),
-        _memberService
-            .getInvitations(widget.coaching.id)
-            .catchError((e) => <InvitationModel>[]),
-        _notificationService
-            .getCoachingNotifications(widget.coaching.id, limit: 1)
-            .catchError((e) => <String, dynamic>{'unreadCount': 0}),
-        _batchService
-            .getRecentNotes(widget.coaching.id)
-            .catchError((e) => <BatchNoteModel>[]),
-      ]);
-
-      _members = results[0] as List<MemberModel>;
-      _invitations = results[1] as List<InvitationModel>;
-      _unreadNotifications =
-          (results[2] as Map<String, dynamic>)['unreadCount'] ?? 0;
-      _recentNotes = results[3] as List<BatchNoteModel>;
-    } catch (e) {
-      if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to load dashboard');
-      }
+  @override
+  void dispose() {
+    for (final s in _subs) {
+      s.cancel();
     }
-    if (mounted) setState(() => _isLoading = false);
+    super.dispose();
+  }
+
+  void _loadData() {
+    setState(() => _isLoading = true);
+    for (final s in _subs) {
+      s.cancel();
+    }
+    _subs.clear();
+
+    int completed = 0;
+    void checkDone() {
+      completed++;
+      if (completed >= 4 && mounted) setState(() => _isLoading = false);
+    }
+
+    _subs.add(
+      _memberService.watchMembers(widget.coaching.id).listen(
+        (list) {
+          if (mounted) setState(() => _members = list);
+          checkDone();
+        },
+        onError: (_) => checkDone(),
+      ),
+    );
+
+    _subs.add(
+      _memberService.watchInvitations(widget.coaching.id).listen(
+        (list) {
+          if (mounted) setState(() => _invitations = list);
+          checkDone();
+        },
+        onError: (_) => checkDone(),
+      ),
+    );
+
+    _subs.add(
+      _notificationService
+          .watchCoachingNotifications(widget.coaching.id, limit: 1)
+          .listen(
+        (data) {
+          if (mounted) {
+            setState(
+              () => _unreadNotifications = data['unreadCount'] ?? 0,
+            );
+          }
+          checkDone();
+        },
+        onError: (_) => checkDone(),
+      ),
+    );
+
+    _subs.add(
+      _batchService.watchRecentNotes(widget.coaching.id).listen(
+        (list) {
+          if (mounted) setState(() => _recentNotes = list);
+          checkDone();
+        },
+        onError: (_) => checkDone(),
+      ),
+    );
   }
 
   void _onNotificationTap() async {
@@ -150,7 +188,10 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
           // ── Scrollable Content ──
           Expanded(
             child: RefreshIndicator(
-              onRefresh: _loadData,
+              onRefresh: () async {
+                _loadData();
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
               child: ListView(
                 padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
                 children: [

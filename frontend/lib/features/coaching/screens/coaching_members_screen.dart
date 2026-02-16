@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -32,6 +33,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
   List<InvitationModel> _invitations = [];
   bool _isLoading = true;
   String _searchQuery = '';
+  final List<StreamSubscription> _subs = [];
 
   /// Check if current user can invite members (owner, admin, or teacher)
   bool get _canInvite {
@@ -62,26 +64,50 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
 
   @override
   void dispose() {
+    for (final s in _subs) {
+      s.cancel();
+    }
     _tabController.dispose();
     super.dispose();
   }
 
-  Future<void> _loadData() async {
+  void _loadData() {
     setState(() => _isLoading = true);
-    try {
-      final results = await Future.wait([
-        _memberService.getMembers(widget.coaching.id),
-        _memberService.getInvitations(widget.coaching.id),
-      ]);
-      _members = results[0] as List<MemberModel>;
-      _invitations = results[1] as List<InvitationModel>;
-    } catch (e) {
-      if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to load members');
-      }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
+    for (final s in _subs) {
+      s.cancel();
     }
+    _subs.clear();
+
+    int completed = 0;
+    void checkDone() {
+      completed++;
+      if (completed >= 2 && mounted) setState(() => _isLoading = false);
+    }
+
+    _subs.add(
+      _memberService.watchMembers(widget.coaching.id).listen(
+        (list) {
+          if (mounted) setState(() => _members = list);
+          checkDone();
+        },
+        onError: (e) {
+          if (mounted) {
+            AppAlert.error(context, e, fallback: 'Failed to load members');
+          }
+          checkDone();
+        },
+      ),
+    );
+
+    _subs.add(
+      _memberService.watchInvitations(widget.coaching.id).listen(
+        (list) {
+          if (mounted) setState(() => _invitations = list);
+          checkDone();
+        },
+        onError: (_) => checkDone(),
+      ),
+    );
   }
 
   List<MemberModel> _filter(String? role) {
@@ -357,7 +383,10 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                       _MemberListView(
                         members: _filter(null),
                         onRemove: _removeMember,
-                        onRefresh: _loadData,
+                        onRefresh: () async {
+                          _loadData();
+                          await Future.delayed(const Duration(milliseconds: 500));
+                        },
                         emptyIcon: Icons.groups_outlined,
                         emptyText: 'No members yet',
                         canManage: _canInvite,
@@ -365,7 +394,10 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                       _MemberListView(
                         members: _filter('TEACHER'),
                         onRemove: _removeMember,
-                        onRefresh: _loadData,
+                        onRefresh: () async {
+                          _loadData();
+                          await Future.delayed(const Duration(milliseconds: 500));
+                        },
                         emptyIcon: Icons.school_outlined,
                         emptyText: 'No teachers yet',
                         canManage: _canInvite,
@@ -373,7 +405,10 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                       _InviteListView(
                         invites: _pending,
                         onCancel: _cancelInvitation,
-                        onRefresh: _loadData,
+                        onRefresh: () async {
+                          _loadData();
+                          await Future.delayed(const Duration(milliseconds: 500));
+                        },
                       ),
                     ],
                   ),

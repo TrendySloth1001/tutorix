@@ -7,6 +7,17 @@ class CoachingService {
   final ApiClient _api = ApiClient.instance;
   final CacheManager _cache = CacheManager.instance;
 
+  // ── Helpers ─────────────────────────────────────────────────────────
+
+  List<CoachingModel> _parseList(dynamic data) {
+    final list = (data['coachings'] as List<dynamic>?) ?? [];
+    return list
+        .map((e) => CoachingModel.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  // ── CREATE ──────────────────────────────────────────────────────────
+
   /// POST /coaching
   Future<CoachingModel?> createCoaching({
     required String name,
@@ -17,7 +28,6 @@ class CoachingService {
       ApiConstants.coaching,
       body: {'name': name, 'description': description, 'logo': logo},
     );
-    // Invalidate coaching lists so they refresh.
     await Future.wait([
       _cache.invalidate('coaching:my'),
       _cache.invalidate('coaching:joined'),
@@ -25,73 +35,56 @@ class CoachingService {
     return CoachingModel.fromJson(data['coaching']);
   }
 
-  /// GET /coaching/my
-  Future<List<CoachingModel>> getMyCoachings() async {
+  // ── READ (SWR) ─────────────────────────────────────────────────────
+
+  /// Stream that emits cached list first, then fresh from network.
+  Stream<List<CoachingModel>> watchMyCoachings() {
     const key = 'coaching:my';
-    try {
-      final data = await _api.getAuthenticated(ApiConstants.coachingMy);
-      await _cache.put(key, data);
-      final list = data['coachings'] as List<dynamic>;
-      return list
-          .map((e) => CoachingModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      final cached = await _cache.get(key);
-      if (cached != null) {
-        final list = (cached['coachings'] as List<dynamic>);
-        return list
-            .map(
-              (e) =>
-                  CoachingModel.fromJson(Map<String, dynamic>.from(e as Map)),
-            )
-            .toList();
-      }
-      rethrow;
-    }
+    return _cache.swr<List<CoachingModel>>(
+      key,
+      () => _api.getAuthenticated(ApiConstants.coachingMy),
+      (raw) => _parseList(raw),
+    );
   }
 
-  /// GET /coaching/joined
-  Future<List<CoachingModel>> getJoinedCoachings() async {
+  /// Future variant — returns the last (freshest) value from the stream.
+  Future<List<CoachingModel>> getMyCoachings() =>
+      watchMyCoachings().last;
+
+  /// Stream that emits cached list first, then fresh from network.
+  Stream<List<CoachingModel>> watchJoinedCoachings() {
     const key = 'coaching:joined';
-    try {
-      final data = await _api.getAuthenticated(ApiConstants.coachingJoined);
-      await _cache.put(key, data);
-      final list = data['coachings'] as List<dynamic>;
-      return list
-          .map((e) => CoachingModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-    } catch (e) {
-      final cached = await _cache.get(key);
-      if (cached != null) {
-        final list = (cached['coachings'] as List<dynamic>);
-        return list
-            .map(
-              (e) =>
-                  CoachingModel.fromJson(Map<String, dynamic>.from(e as Map)),
-            )
-            .toList();
-      }
-      rethrow;
-    }
+    return _cache.swr<List<CoachingModel>>(
+      key,
+      () => _api.getAuthenticated(ApiConstants.coachingJoined),
+      (raw) => _parseList(raw),
+    );
   }
 
-  /// GET /coaching/:id
-  Future<CoachingModel?> getCoachingById(String id) async {
+  /// Future variant.
+  Future<List<CoachingModel>> getJoinedCoachings() =>
+      watchJoinedCoachings().last;
+
+  /// Stream a single coaching.
+  Stream<CoachingModel?> watchCoachingById(String id) {
     final key = 'coaching:$id';
-    try {
-      final data = await _api.getPublic(ApiConstants.coachingById(id));
-      await _cache.put(key, data);
-      return CoachingModel.fromJson(data['coaching']);
-    } catch (_) {
-      final cached = await _cache.get(key);
-      if (cached != null) {
+    return _cache.swr<CoachingModel?>(
+      key,
+      () => _api.getPublic(ApiConstants.coachingById(id)),
+      (raw) {
+        if (raw == null || raw['coaching'] == null) return null;
         return CoachingModel.fromJson(
-          Map<String, dynamic>.from(cached['coaching'] as Map),
+          Map<String, dynamic>.from(raw['coaching'] as Map),
         );
-      }
-      return null;
-    }
+      },
+    );
   }
+
+  /// Future variant.
+  Future<CoachingModel?> getCoachingById(String id) =>
+      watchCoachingById(id).last;
+
+  // ── UPDATE / DELETE ─────────────────────────────────────────────────
 
   /// PATCH /coaching/:id
   Future<CoachingModel?> updateCoaching({
@@ -111,7 +104,6 @@ class CoachingService {
       ApiConstants.coachingById(id),
       body: body,
     );
-    // Invalidate coaching lists + this coaching detail.
     await Future.wait([
       _cache.invalidate('coaching:my'),
       _cache.invalidate('coaching:joined'),

@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -29,70 +30,87 @@ class _PersonalNotificationsScreenState
       []; // Combined list of NotificationModel and Invitation Maps
   bool _isLoading = true;
   int _unreadCount = 0;
+  StreamSubscription? _notifSub;
 
   @override
   void initState() {
     super.initState();
-    // Defer loading until context is available for AuthController
     Future.microtask(_load);
   }
 
-  Future<void> _load() async {
+  @override
+  void dispose() {
+    _notifSub?.cancel();
+    super.dispose();
+  }
+
+  void _load() {
     if (!mounted) return;
     final userId = context.read<AuthController>().user?.id;
-    if (userId == null) {
-      // Should likely not happen if protected
-      return;
-    }
+    if (userId == null) return;
 
     setState(() => _isLoading = true);
-    try {
-      // 1. Fetch Notifications
-      final notifResult = await _notificationService.getUserNotifications();
-      final notifications = (notifResult['notifications'] as List)
-          .map((e) => NotificationModel.fromJson(e))
-          .toList();
+    _notifSub?.cancel();
+    _notifSub = _notificationService.watchUserNotifications().listen(
+      (notifResult) async {
+        if (!mounted) return;
+        try {
+          final notifications = (notifResult['notifications'] as List)
+              .map((e) => NotificationModel.fromJson(e))
+              .toList();
 
-      // 2. Fetch Invitations
-      final invitationsData = await _invitationService.getMyInvitations();
-      // Ensure it's a list of maps
-      final invitations = List<Map<String, dynamic>>.from(invitationsData);
+          final invitationsData = await _invitationService.getMyInvitations();
+          final invitations = List<Map<String, dynamic>>.from(invitationsData);
 
-      // 3. Combine and Sort
-      final combined = <dynamic>[...notifications, ...invitations];
-      combined.sort((a, b) {
-        DateTime dateA;
-        if (a is NotificationModel) {
-          dateA = a.createdAt;
-        } else {
-          dateA = DateTime.tryParse(a['createdAt'] ?? '') ?? DateTime.now();
+          final combined = <dynamic>[...notifications, ...invitations];
+          combined.sort((a, b) {
+            DateTime dateA;
+            if (a is NotificationModel) {
+              dateA = a.createdAt;
+            } else {
+              dateA =
+                  DateTime.tryParse(a['createdAt'] ?? '') ?? DateTime.now();
+            }
+            DateTime dateB;
+            if (b is NotificationModel) {
+              dateB = b.createdAt;
+            } else {
+              dateB =
+                  DateTime.tryParse(b['createdAt'] ?? '') ?? DateTime.now();
+            }
+            return dateB.compareTo(dateA);
+          });
+
+          if (mounted) {
+            setState(() {
+              _items = combined;
+              _unreadCount =
+                  (notifResult['unreadCount'] ?? 0) + invitations.length;
+              _isLoading = false;
+            });
+          }
+        } catch (e) {
+          if (mounted) {
+            AppAlert.error(
+              context,
+              e,
+              fallback: 'Failed to load notifications',
+            );
+            setState(() => _isLoading = false);
+          }
         }
-
-        DateTime dateB;
-        if (b is NotificationModel) {
-          dateB = b.createdAt;
-        } else {
-          dateB = DateTime.tryParse(b['createdAt'] ?? '') ?? DateTime.now();
+      },
+      onError: (e) {
+        if (mounted) {
+          AppAlert.error(
+            context,
+            e,
+            fallback: 'Failed to load notifications',
+          );
+          setState(() => _isLoading = false);
         }
-
-        return dateB.compareTo(dateA); // Descending
-      });
-
-      if (mounted) {
-        setState(() {
-          _items = combined;
-          _unreadCount = (notifResult['unreadCount'] ?? 0) + invitations.length;
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to load notifications');
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
+      },
+    );
   }
 
   Future<void> _markAsRead(NotificationModel notification) async {
@@ -260,7 +278,10 @@ class _PersonalNotificationsScreenState
           ? const NotificationsShimmer()
           : _items.isEmpty
           ? RefreshIndicator(
-              onRefresh: _load,
+              onRefresh: () async {
+                _load();
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
                 slivers: [
@@ -311,7 +332,10 @@ class _PersonalNotificationsScreenState
               ),
             )
           : RefreshIndicator(
-              onRefresh: _load,
+              onRefresh: () async {
+                _load();
+                await Future.delayed(const Duration(milliseconds: 500));
+              },
               child: ListView.separated(
                 padding: const EdgeInsets.symmetric(vertical: 8),
                 itemCount: _items.length,
