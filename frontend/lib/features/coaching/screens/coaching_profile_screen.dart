@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_map/flutter_map.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../models/coaching_model.dart';
@@ -1109,6 +1112,134 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
           ),
         ),
         if (addr.latitude != null && addr.longitude != null) ...[
+          const SizedBox(height: 14),
+          // ── Map card ─────────────────────────────────────────────
+          Container(
+            height: 180,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: theme.shadowColor.withValues(alpha: 0.06),
+                  blurRadius: 12,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            clipBehavior: Clip.antiAlias,
+            child: Stack(
+              children: [
+                FlutterMap(
+                  options: MapOptions(
+                    initialCenter: LatLng(addr.latitude!, addr.longitude!),
+                    initialZoom: 15,
+                    minZoom: 4,
+                    maxZoom: 18,
+                    interactionOptions: const InteractionOptions(
+                      flags: InteractiveFlag.none,
+                    ),
+                  ),
+                  children: [
+                    TileLayer(
+                      urlTemplate:
+                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      userAgentPackageName: 'com.tutorix.app',
+                      maxZoom: 18,
+                    ),
+                    MarkerLayer(
+                      markers: [
+                        Marker(
+                          point: LatLng(addr.latitude!, addr.longitude!),
+                          width: 44,
+                          height: 44,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary,
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 3,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: theme.colorScheme.primary
+                                      .withValues(alpha: 0.4),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, 3),
+                                ),
+                              ],
+                            ),
+                            child: _coaching.logo != null
+                                ? ClipOval(
+                                    child: Image.network(
+                                      _coaching.logo!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (_, _, _) => const Icon(
+                                        Icons.school_rounded,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
+                                    ),
+                                  )
+                                : const Icon(
+                                    Icons.school_rounded,
+                                    color: Colors.white,
+                                    size: 18,
+                                  ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                // Directions button overlay
+                Positioned(
+                  bottom: 10,
+                  right: 10,
+                  child: GestureDetector(
+                    onTap: () => _openDirections(addr.latitude!, addr.longitude!),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary,
+                        borderRadius: BorderRadius.circular(12),
+                        boxShadow: [
+                          BoxShadow(
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.35),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.directions_rounded,
+                              size: 16, color: Colors.white),
+                          const SizedBox(width: 5),
+                          Text(
+                            'Directions',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 10),
           Row(
             children: [
@@ -1127,6 +1258,22 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
         ],
       ],
     );
+  }
+
+  Future<void> _openDirections(double lat, double lng) async {
+    final gMapsUrl = Uri.parse(
+        'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
+    final aMapsUrl = Uri.parse(
+        'https://maps.apple.com/?daddr=$lat,$lng&dirflg=d');
+    try {
+      await launchUrl(gMapsUrl, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      try {
+        await launchUrl(aMapsUrl, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        if (mounted) AppAlert.error(context, 'Could not open maps');
+      }
+    }
   }
 
   Widget _buildTimingContent(ThemeData theme) {

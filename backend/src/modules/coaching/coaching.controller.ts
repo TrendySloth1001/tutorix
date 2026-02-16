@@ -224,6 +224,21 @@ export class CoachingController {
         }
     }
 
+    // GET /coaching/search?q=term - Search coachings by name
+    async search(req: Request, res: Response) {
+        try {
+            const q = (req.query.q as string || '').trim();
+            if (!q) {
+                return res.json({ results: [] });
+            }
+            const limit = parseInt(req.query.limit as string) || 15;
+            const results = await coachingService.search(q, limit);
+            res.json({ results });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
     // GET /coaching/:id/members - Get all members of a coaching
     async getMembers(req: Request, res: Response) {
         try {

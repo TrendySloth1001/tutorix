@@ -9,6 +9,8 @@ import '../../../core/constants/api_constants.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
+import '../../coaching/screens/coaching_profile_screen.dart';
+import '../../coaching/services/coaching_service.dart';
 import '../services/explore_service.dart';
 
 class ExploreScreen extends StatefulWidget {
@@ -44,6 +46,14 @@ class _ExploreScreenState extends State<ExploreScreen>
   bool _mapExpanded = false;
   NearbyCoaching? _selectedCoaching;
 
+  // Search
+  final TextEditingController _searchController = TextEditingController();
+  final FocusNode _searchFocus = FocusNode();
+  List<SearchResult> _searchResults = [];
+  bool _searchLoading = false;
+  bool _showSearch = false;
+  Timer? _debounce;
+
   @override
   void initState() {
     super.initState();
@@ -53,6 +63,9 @@ class _ExploreScreenState extends State<ExploreScreen>
   @override
   void dispose() {
     _dataSub?.cancel();
+    _searchController.dispose();
+    _searchFocus.dispose();
+    _debounce?.cancel();
     _mapController.dispose();
     super.dispose();
   }
@@ -152,6 +165,64 @@ class _ExploreScreenState extends State<ExploreScreen>
     _loadNearby();
   }
 
+  void _onSearchChanged(String query) {
+    _debounce?.cancel();
+    if (query.trim().isEmpty) {
+      setState(() {
+        _searchResults = [];
+        _searchLoading = false;
+        _showSearch = false;
+      });
+      return;
+    }
+    setState(() {
+      _showSearch = true;
+      _searchLoading = true;
+    });
+    _debounce = Timer(const Duration(milliseconds: 350), () async {
+      try {
+        final results = await _service.searchCoachings(query);
+        if (!mounted) return;
+        setState(() {
+          _searchResults = results;
+          _searchLoading = false;
+        });
+      } catch (_) {
+        if (!mounted) return;
+        setState(() => _searchLoading = false);
+      }
+    });
+  }
+
+  void _dismissSearch() {
+    _searchController.clear();
+    _searchFocus.unfocus();
+    setState(() {
+      _showSearch = false;
+      _searchResults = [];
+    });
+  }
+
+  void _openCoachingProfile(CoachingModel coaching) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => CoachingProfileScreen(
+          coaching: coaching,
+          user: widget.user,
+        ),
+      ),
+    );
+  }
+
+  /// Fetch full coaching by ID and navigate to profile
+  void _openCoachingById(String id) async {
+    try {
+      final coaching = await CoachingService().getCoachingById(id);
+      if (!mounted || coaching == null) return;
+      _openCoachingProfile(coaching);
+    } catch (_) {}
+  }
+
   // ── Build ──────────────────────────────────────────────────────────────
 
   @override
@@ -159,7 +230,9 @@ class _ExploreScreenState extends State<ExploreScreen>
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      body: CustomScrollView(
+      body: Stack(
+        children: [
+          CustomScrollView(
         slivers: [
           // ── App Bar ──────────────────────────────────────────────────
           SliverAppBar(
@@ -176,6 +249,52 @@ class _ExploreScreenState extends State<ExploreScreen>
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ),
+
+          // ── Search Bar ─────────────────────────────────────────────
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+              child: Container(
+                height: 48,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary.withValues(alpha: 0.04),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                  ),
+                ),
+                child: TextField(
+                  controller: _searchController,
+                  focusNode: _searchFocus,
+                  onChanged: _onSearchChanged,
+                  style: theme.textTheme.bodyMedium,
+                  decoration: InputDecoration(
+                    hintText: 'Search coachings by name…',
+                    hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+                    ),
+                    prefixIcon: Icon(
+                      Icons.search_rounded,
+                      size: 20,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                    ),
+                    suffixIcon: _searchController.text.isNotEmpty
+                        ? GestureDetector(
+                            onTap: _dismissSearch,
+                            child: Icon(
+                              Icons.close_rounded,
+                              size: 18,
+                              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                            ),
+                          )
+                        : null,
+                    border: InputBorder.none,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
                 ),
               ),
             ),
@@ -207,6 +326,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                 onMarkerTap: (c) => setState(() => _selectedCoaching = c),
                 onDismissSelection: () =>
                     setState(() => _selectedCoaching = null),
+                onOpenCoaching: _openCoachingProfile,
               ),
             ),
 
@@ -304,11 +424,27 @@ class _ExploreScreenState extends State<ExploreScreen>
                           }
                         }
                       },
+                      onOpen: () => _openCoachingProfile(item.coaching),
                     );
                   },
                 ),
               ),
           ],
+        ],
+      ),
+
+          // ── Search results overlay ────────────────────────────────
+          if (_showSearch)
+            _SearchOverlay(
+              results: _searchResults,
+              loading: _searchLoading,
+              query: _searchController.text,
+              onResultTap: (result) {
+                _dismissSearch();
+                _openCoachingById(result.id);
+              },
+              onDismiss: _dismissSearch,
+            ),
         ],
       ),
     );
@@ -329,6 +465,7 @@ class _MapCard extends StatelessWidget {
   final VoidCallback onToggleExpand;
   final ValueChanged<NearbyCoaching> onMarkerTap;
   final VoidCallback onDismissSelection;
+  final ValueChanged<CoachingModel>? onOpenCoaching;
 
   const _MapCard({
     required this.userLocation,
@@ -340,6 +477,7 @@ class _MapCard extends StatelessWidget {
     required this.onToggleExpand,
     required this.onMarkerTap,
     required this.onDismissSelection,
+    this.onOpenCoaching,
   });
 
   @override
@@ -377,6 +515,8 @@ class _MapCard extends StatelessWidget {
                 options: MapOptions(
                   initialCenter: userLocation,
                   initialZoom: _zoomForRadius(radiusKm),
+                  minZoom: 4,
+                  maxZoom: 18,
                   interactionOptions: const InteractionOptions(
                     flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
                   ),
@@ -476,7 +616,12 @@ class _MapCard extends StatelessWidget {
                 left: 0,
                 right: 0,
                 bottom: 0,
-                child: _MapPreviewCard(item: selectedCoaching!),
+                child: _MapPreviewCard(
+                  item: selectedCoaching!,
+                  onOpen: onOpenCoaching != null
+                      ? () => onOpenCoaching!(selectedCoaching!.coaching)
+                      : null,
+                ),
               ),
           ],
         ),
@@ -663,14 +808,17 @@ class _MapActionButton extends StatelessWidget {
 
 class _MapPreviewCard extends StatelessWidget {
   final NearbyCoaching item;
-  const _MapPreviewCard({required this.item});
+  final VoidCallback? onOpen;
+  const _MapPreviewCard({required this.item, this.onOpen});
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final coaching = item.coaching;
 
-    return Container(
+    return GestureDetector(
+      onTap: onOpen,
+      child: Container(
       height: 86,
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
@@ -748,6 +896,7 @@ class _MapPreviewCard extends StatelessWidget {
             compact: true,
           ),
         ],
+      ),
       ),
     );
   }
@@ -839,11 +988,13 @@ class _NearbyCoachingCard extends StatelessWidget {
   final NearbyCoaching item;
   final bool isSelected;
   final VoidCallback onTap;
+  final VoidCallback? onOpen;
 
   const _NearbyCoachingCard({
     required this.item,
     required this.isSelected,
     required this.onTap,
+    this.onOpen,
   });
 
   @override
@@ -1065,7 +1216,7 @@ class _NearbyCoachingCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(height: 8),
-                          // Stats + Directions
+                          // Stats + Directions + View
                           Row(
                             children: [
                               _StatChip(
@@ -1091,6 +1242,40 @@ class _NearbyCoachingCard extends StatelessWidget {
                                 lng: coaching.address?.longitude,
                                 label: coaching.name,
                                 compact: false,
+                              ),
+                              const SizedBox(width: 6),
+                              GestureDetector(
+                                onTap: onOpen,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.primary,
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        'View',
+                                        style: theme.textTheme.labelSmall
+                                            ?.copyWith(
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                          fontSize: 11,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 2),
+                                      const Icon(
+                                        Icons.arrow_forward_ios_rounded,
+                                        size: 10,
+                                        color: Colors.white,
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ],
                           ),
@@ -1466,6 +1651,212 @@ class _EmptyNearbyView extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  SEARCH OVERLAY
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _SearchOverlay extends StatelessWidget {
+  final List<SearchResult> results;
+  final bool loading;
+  final String query;
+  final ValueChanged<SearchResult> onResultTap;
+  final VoidCallback onDismiss;
+
+  const _SearchOverlay({
+    required this.results,
+    required this.loading,
+    required this.query,
+    required this.onResultTap,
+    required this.onDismiss,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    // Position below the app bar + search bar
+    return Positioned(
+      top: MediaQuery.of(context).padding.top + 70 + 56,
+      left: 16,
+      right: 16,
+      bottom: 0,
+      child: GestureDetector(
+        onTap: onDismiss,
+        behavior: HitTestBehavior.opaque,
+        child: Align(
+          alignment: Alignment.topCenter,
+          child: Material(
+            elevation: 8,
+            borderRadius: BorderRadius.circular(16),
+            shadowColor: Colors.black26,
+            color: theme.colorScheme.surface,
+            clipBehavior: Clip.antiAlias,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxHeight: 360),
+              child: loading
+                  ? const Padding(
+                      padding: EdgeInsets.all(32),
+                      child: Center(
+                        child: SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        ),
+                      ),
+                    )
+                  : results.isEmpty
+                      ? Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 32,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(
+                                Icons.search_off_rounded,
+                                size: 36,
+                                color: theme.colorScheme.primary
+                                    .withValues(alpha: 0.2),
+                              ),
+                              const SizedBox(height: 10),
+                              Text(
+                                'No results for "$query"',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  color: theme.colorScheme.onSurface
+                                      .withValues(alpha: 0.45),
+                                ),
+                              ),
+                            ],
+                          ),
+                        )
+                      : ListView.separated(
+                          shrinkWrap: true,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: results.length,
+                          separatorBuilder: (_, _) => Divider(
+                            height: 1,
+                            indent: 68,
+                            color: theme.colorScheme.onSurface
+                                .withValues(alpha: 0.06),
+                          ),
+                          itemBuilder: (context, index) {
+                            final r = results[index];
+                            return _SearchResultTile(
+                              result: r,
+                              onTap: () => onResultTap(r),
+                            );
+                          },
+                        ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SearchResultTile extends StatelessWidget {
+  final SearchResult result;
+  final VoidCallback onTap;
+
+  const _SearchResultTile({required this.result, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        child: Row(
+          children: [
+            // Logo
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.06),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(12),
+                child: _getFullUrl(result.logo) != null
+                    ? Image.network(
+                        _getFullUrl(result.logo)!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Icon(
+                          Icons.school_rounded,
+                          size: 20,
+                          color: theme.colorScheme.primary,
+                        ),
+                      )
+                    : Icon(
+                        Icons.school_rounded,
+                        size: 20,
+                        color: theme.colorScheme.primary,
+                      ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          result.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ),
+                      if (result.isVerified) ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.verified_rounded,
+                          size: 14,
+                          color: theme.colorScheme.primary,
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    [
+                      if (result.category != null) result.category!,
+                      if (result.city != null) result.city!,
+                    ].join(' · '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Arrow
+            Icon(
+              Icons.arrow_forward_ios_rounded,
+              size: 14,
+              color: theme.colorScheme.primary.withValues(alpha: 0.3),
+            ),
+          ],
+        ),
       ),
     );
   }

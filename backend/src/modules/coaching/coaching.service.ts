@@ -358,6 +358,45 @@ export class CoachingService {
         };
     }
 
+    /**
+     * Search active coachings by name (prefix / contains).
+     * Lightweight: only returns fields needed for search results.
+     */
+    async search(query: string, limit: number = 15) {
+        const safeLimit = Math.min(Math.max(limit, 1), 50);
+        const coachings = await prisma.coaching.findMany({
+            where: {
+                status: 'active',
+                onboardingComplete: true,
+                name: { contains: query, mode: 'insensitive' },
+            },
+            select: {
+                id: true,
+                name: true,
+                slug: true,
+                logo: true,
+                category: true,
+                isVerified: true,
+                address: { select: { city: true, state: true } },
+                _count: { select: { members: true } },
+            },
+            take: safeLimit,
+            orderBy: { name: 'asc' },
+        });
+
+        return coachings.map((c) => ({
+            id: c.id,
+            name: c.name,
+            slug: c.slug,
+            logo: c.logo,
+            category: c.category,
+            isVerified: c.isVerified,
+            city: c.address?.city ?? null,
+            state: c.address?.state ?? null,
+            memberCount: c._count.members,
+        }));
+    }
+
     async getMembers(coachingId: string) {
         const members = await prisma.coachingMember.findMany({
             where: { coachingId },

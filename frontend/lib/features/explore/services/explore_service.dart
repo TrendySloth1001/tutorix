@@ -60,4 +60,54 @@ class ExploreService {
     page: page,
     limit: limit,
   ).last;
+
+  /// Search coachings by name (real-time, no caching).
+  Future<List<SearchResult>> searchCoachings(String query) async {
+    if (query.trim().isEmpty) return [];
+    final url = '${ApiConstants.coachingSearch}?q=${Uri.encodeComponent(query.trim())}&limit=15';
+    final raw = await _api.getPublic(url);
+    final list = (raw['results'] as List<dynamic>?) ?? [];
+    return list
+        .map((e) => SearchResult.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+}
+
+/// Lightweight search result (no full CoachingModel needed).
+class SearchResult {
+  final String id;
+  final String name;
+  final String slug;
+  final String? logo;
+  final String? category;
+  final bool isVerified;
+  final String? city;
+  final String? state;
+  final int memberCount;
+
+  const SearchResult({
+    required this.id,
+    required this.name,
+    required this.slug,
+    this.logo,
+    this.category,
+    this.isVerified = false,
+    this.city,
+    this.state,
+    this.memberCount = 0,
+  });
+
+  factory SearchResult.fromJson(Map<String, dynamic> json) {
+    return SearchResult(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      slug: json['slug'] as String,
+      logo: json['logo'] as String?,
+      category: json['category'] as String?,
+      isVerified: json['isVerified'] as bool? ?? false,
+      city: json['city'] as String?,
+      state: json['state'] as String?,
+      memberCount: json['memberCount'] as int? ?? 0,
+    );
+  }
 }
