@@ -576,6 +576,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
                 members: _members,
                 notices: _notices,
                 isTeacher: _isTeacherOrAdmin,
+                isAdmin: _isAdmin,
               ),
               _MembersTab(
                 members: _members,
@@ -633,11 +634,13 @@ class _OverviewTab extends StatelessWidget {
   final List<BatchMemberModel> members;
   final List<BatchNoticeModel> notices;
   final bool isTeacher;
+  final bool isAdmin;
   const _OverviewTab({
     required this.batch,
     required this.members,
     required this.notices,
     required this.isTeacher,
+    this.isAdmin = false,
   });
 
   /// Calculate the next upcoming class from the batch schedule.
@@ -907,7 +910,7 @@ class _OverviewTab extends StatelessWidget {
               ),
             ),
           ),
-          ...teachers.map((t) => _MemberTile(member: t)),
+          ...teachers.map((t) => _MemberTile(member: t, showEmail: isAdmin)),
         ],
       ],
     );
@@ -1120,6 +1123,7 @@ class _MembersTab extends StatelessWidget {
           ...teachers.map(
             (m) => _MemberTile(
               member: m,
+              showEmail: isAdmin,
               onRemove: isAdmin ? () => onRemove(m) : null,
             ),
           ),
@@ -1141,6 +1145,7 @@ class _MembersTab extends StatelessWidget {
           ...students.map(
             (m) => _MemberTile(
               member: m,
+              showEmail: isAdmin,
               onRemove: isAdmin ? () => onRemove(m) : null,
             ),
           ),
@@ -1706,303 +1711,174 @@ class _NoticeCard extends StatelessWidget {
     final prioColor = prioConf.$1;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: notice.isImportant
-              ? prioColor.withValues(alpha: 0.18)
-              : theme.colorScheme.onSurface.withValues(alpha: 0.08),
-          width: 1,
+              ? prioColor.withValues(alpha: 0.25)
+              : theme.colorScheme.onSurface.withValues(alpha: 0.06),
         ),
-        boxShadow: [
-          BoxShadow(
-            color: color.withValues(alpha: 0.06),
-            blurRadius: 12,
-            offset: const Offset(0, 3),
-          ),
-          BoxShadow(
-            color: theme.colorScheme.onSurface.withValues(alpha: 0.02),
-            blurRadius: 8,
-            offset: const Offset(0, 1),
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Priority accent strip for urgent/high
-          if (notice.isImportant)
-            Container(
-              height: 3,
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
-                ),
-                gradient: LinearGradient(
-                  colors: [prioColor, prioColor.withValues(alpha: 0.3)],
+          // ── Title row
+          Row(
+            children: [
+              Icon(icon, color: color, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  notice.title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-            ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // ── Header row: gradient icon + title + time
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    // Gradient icon container (matching _NoteCard style)
-                    Container(
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            color.withValues(alpha: 0.18),
-                            color.withValues(alpha: 0.08),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: color.withValues(alpha: 0.12),
-                          width: 1,
-                        ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: color.withValues(alpha: 0.1),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
-                      ),
-                      child: Icon(icon, color: color, size: 26),
-                    ),
-                    const SizedBox(width: 16),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            notice.title,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.w700,
-                              letterSpacing: -0.3,
-                              height: 1.3,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            notice.message,
-                            maxLines: 3,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.55,
-                              ),
-                              height: 1.5,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        if (notice.createdAt != null)
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 8,
-                              vertical: 4,
-                            ),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.onSurface.withValues(
-                                alpha: 0.04,
-                              ),
-                              borderRadius: BorderRadius.circular(6),
-                            ),
-                            child: Text(
-                              _timeAgo(notice.createdAt!),
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w500,
-                                color: theme.colorScheme.onSurface.withValues(
-                                  alpha: 0.45,
-                                ),
-                              ),
-                            ),
-                          ),
-                        if (canDelete) ...[
-                          const SizedBox(height: 8),
-                          Container(
-                            decoration: BoxDecoration(
-                              color: Colors.red.withValues(alpha: 0.08),
-                              borderRadius: BorderRadius.circular(10),
-                            ),
-                            child: IconButton(
-                              icon: Icon(
-                                Icons.delete_outline_rounded,
-                                size: 20,
-                                color: Colors.red.shade600,
-                              ),
-                              onPressed: onDelete,
-                              constraints: const BoxConstraints(
-                                minWidth: 40,
-                                minHeight: 40,
-                              ),
-                              padding: EdgeInsets.zero,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-
-                // ── Schedule info chips (for timetable_update, event, exam)
-                if (notice.hasScheduleInfo) ...[
-                  const SizedBox(height: 12),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 6,
-                    children: [
-                      if (notice.date != null)
-                        _InfoChip(
-                          icon: Icons.calendar_today_rounded,
-                          label:
-                              '${notice.date!.day}/${notice.date!.month}/${notice.date!.year}',
-                          color: color,
-                        ),
-                      if (notice.day != null)
-                        _InfoChip(
-                          icon: Icons.today_rounded,
-                          label: notice.day!,
-                          color: color,
-                        ),
-                      if (notice.startTime != null)
-                        _InfoChip(
-                          icon: Icons.access_time_rounded,
-                          label: notice.endTime != null
-                              ? '${notice.startTime} – ${notice.endTime}'
-                              : notice.startTime!,
-                          color: color,
-                        ),
-                      if (notice.location != null)
-                        _InfoChip(
-                          icon: Icons.location_on_rounded,
-                          label: notice.location!,
-                          color: color,
-                        ),
-                    ],
+              if (notice.createdAt != null)
+                Text(
+                  _timeAgo(notice.createdAt!),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontSize: 11,
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                   ),
-                ],
-
-                // ── Footer: type badge + priority + sender
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    // Type badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
-                      ),
-                      decoration: BoxDecoration(
-                        color: color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: color.withValues(alpha: 0.15),
-                          width: 1,
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(icon, size: 12, color: color),
-                          const SizedBox(width: 4),
-                          Text(
-                            notice.typeLabel,
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w700,
-                              color: color,
-                            ),
-                          ),
-                        ],
+                ),
+              if (canDelete)
+                Padding(
+                  padding: const EdgeInsets.only(left: 4),
+                  child: InkWell(
+                    onTap: onDelete,
+                    borderRadius: BorderRadius.circular(8),
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: Icon(
+                        Icons.delete_outline_rounded,
+                        size: 18,
+                        color: Colors.red.shade400,
                       ),
                     ),
-                    if (notice.isImportant) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
-                        ),
-                        decoration: BoxDecoration(
-                          color: prioColor.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(prioConf.$2, size: 10, color: prioColor),
-                            const SizedBox(width: 3),
-                            Text(
-                              notice.priorityLabel,
-                              style: TextStyle(
-                                fontSize: 10,
-                                fontWeight: FontWeight.w700,
-                                color: prioColor,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                    const Spacer(),
-                    // Sender
-                    if (notice.sentBy != null) ...[
-                      CircleAvatar(
-                        radius: 12,
-                        backgroundColor: theme.colorScheme.primary.withValues(
-                          alpha: 0.1,
-                        ),
-                        backgroundImage: notice.sentBy!.picture != null
-                            ? NetworkImage(notice.sentBy!.picture!)
-                            : null,
-                        child: notice.sentBy!.picture == null
-                            ? Icon(
-                                Icons.person_rounded,
-                                size: 14,
-                                color: theme.colorScheme.primary.withValues(
-                                  alpha: 0.7,
-                                ),
-                              )
-                            : null,
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        notice.sentBy!.name ?? 'Teacher',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 13,
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.7,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ],
+                  ),
                 ),
+            ],
+          ),
+
+          // ── Message
+          const SizedBox(height: 6),
+          Text(
+            notice.message,
+            maxLines: 3,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
+              height: 1.45,
+            ),
+          ),
+
+          // ── Schedule details (inline text, not chips)
+          if (notice.hasScheduleInfo) ...[
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 12,
+              runSpacing: 4,
+              children: [
+                if (notice.date != null)
+                  _DetailText(
+                    icon: Icons.calendar_today_rounded,
+                    text:
+                        '${notice.date!.day}/${notice.date!.month}/${notice.date!.year}',
+                    theme: theme,
+                  ),
+                if (notice.day != null)
+                  _DetailText(
+                    icon: Icons.today_rounded,
+                    text: notice.day!,
+                    theme: theme,
+                  ),
+                if (notice.startTime != null)
+                  _DetailText(
+                    icon: Icons.access_time_rounded,
+                    text: notice.endTime != null
+                        ? '${notice.startTime} – ${notice.endTime}'
+                        : notice.startTime!,
+                    theme: theme,
+                  ),
+                if (notice.location != null)
+                  _DetailText(
+                    icon: Icons.location_on_rounded,
+                    text: notice.location!,
+                    theme: theme,
+                  ),
               ],
             ),
+          ],
+
+          // ── Footer: type + priority + sender
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              // Type label
+              Text(
+                notice.typeLabel,
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w600,
+                  color: color,
+                ),
+              ),
+              if (notice.isImportant) ...[
+                const SizedBox(width: 8),
+                Icon(prioConf.$2, size: 12, color: prioColor),
+                const SizedBox(width: 2),
+                Text(
+                  notice.priorityLabel,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: prioColor,
+                  ),
+                ),
+              ],
+              const Spacer(),
+              if (notice.sentBy != null) ...[
+                CircleAvatar(
+                  radius: 10,
+                  backgroundColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.08,
+                  ),
+                  backgroundImage: notice.sentBy!.picture != null
+                      ? NetworkImage(notice.sentBy!.picture!)
+                      : null,
+                  child: notice.sentBy!.picture == null
+                      ? Icon(
+                          Icons.person_rounded,
+                          size: 12,
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.6,
+                          ),
+                        )
+                      : null,
+                ),
+                const SizedBox(width: 6),
+                Flexible(
+                  child: Text(
+                    notice.sentBy!.name ?? 'Teacher',
+                    overflow: TextOverflow.ellipsis,
+                    maxLines: 1,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: 11,
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.5,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ],
       ),
@@ -2010,42 +1886,36 @@ class _NoticeCard extends StatelessWidget {
   }
 }
 
-/// Small info chip for schedule data (date, time, location, day).
-class _InfoChip extends StatelessWidget {
+/// Inline detail text for schedule info (icon + text, no chip styling).
+class _DetailText extends StatelessWidget {
   final IconData icon;
-  final String label;
-  final Color color;
-  const _InfoChip({
+  final String text;
+  final ThemeData theme;
+  const _DetailText({
     required this.icon,
-    required this.label,
-    required this.color,
+    required this.text,
+    required this.theme,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10),
-        border: Border.all(color: color.withValues(alpha: 0.1), width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 13, color: color.withValues(alpha: 0.7)),
-          const SizedBox(width: 5),
-          Text(
-            label,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
-            ),
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 13,
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          text,
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontSize: 12,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.55),
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -2157,7 +2027,8 @@ class _SectionHeader extends StatelessWidget {
 class _MemberTile extends StatelessWidget {
   final BatchMemberModel member;
   final VoidCallback? onRemove;
-  const _MemberTile({required this.member, this.onRemove});
+  final bool showEmail;
+  const _MemberTile({required this.member, this.onRemove, this.showEmail = false});
 
   @override
   Widget build(BuildContext context) {
@@ -2206,7 +2077,7 @@ class _MemberTile extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                if (member.subtitle.isNotEmpty)
+                if (showEmail && member.subtitle.isNotEmpty)
                   Text(
                     member.subtitle,
                     style: theme.textTheme.bodySmall?.copyWith(

@@ -35,6 +35,13 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
   String _searchQuery = '';
   final List<StreamSubscription> _subs = [];
 
+  /// Check if current user is admin/owner
+  bool get _isAdmin {
+    if (widget.coaching.ownerId == widget.user.id) return true;
+    final role = widget.coaching.myRole;
+    return role == 'ADMIN';
+  }
+
   /// Check if current user can invite members (owner, admin, or teacher)
   bool get _canInvite {
     // Owner can always invite
@@ -391,6 +398,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                         emptyIcon: Icons.groups_outlined,
                         emptyText: 'No members yet',
                         canManage: _canInvite,
+                        showEmail: _isAdmin,
                       ),
                       _MemberListView(
                         members: _filter('TEACHER'),
@@ -404,6 +412,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                         emptyIcon: Icons.school_outlined,
                         emptyText: 'No teachers yet',
                         canManage: _canInvite,
+                        showEmail: _isAdmin,
                       ),
                       _InviteListView(
                         invites: _pending,
@@ -490,6 +499,7 @@ class _MemberListView extends StatelessWidget {
   final IconData emptyIcon;
   final String emptyText;
   final bool canManage;
+  final bool showEmail;
 
   const _MemberListView({
     required this.members,
@@ -498,6 +508,7 @@ class _MemberListView extends StatelessWidget {
     required this.emptyIcon,
     required this.emptyText,
     required this.canManage,
+    this.showEmail = false,
   });
 
   @override
@@ -513,6 +524,7 @@ class _MemberListView extends StatelessWidget {
           member: members[i],
           onRemove: () => onRemove(members[i]),
           canRemove: canManage,
+          showEmail: showEmail,
         ),
       ),
     );
@@ -523,11 +535,13 @@ class _MemberRow extends StatelessWidget {
   final MemberModel member;
   final VoidCallback onRemove;
   final bool canRemove;
+  final bool showEmail;
 
   const _MemberRow({
     required this.member,
     required this.onRemove,
     required this.canRemove,
+    this.showEmail = false,
   });
 
   @override
@@ -576,7 +590,7 @@ class _MemberRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                if (member.subtitle.isNotEmpty)
+                if (showEmail && member.subtitle.isNotEmpty)
                   Text(
                     member.subtitle,
                     style: theme.textTheme.bodySmall?.copyWith(
