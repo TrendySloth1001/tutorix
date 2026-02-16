@@ -70,28 +70,20 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
 
     _subs.add(
       _service
-          .watchAssessments(widget.coachingId, widget.batchId,
-              role: _role)
-          .listen(
-        (list) {
-          if (mounted) setState(() => _assessments = list);
-          check();
-        },
-        onError: (_) => check(),
-      ),
+          .watchAssessments(widget.coachingId, widget.batchId, role: _role)
+          .listen((list) {
+            if (mounted) setState(() => _assessments = list);
+            check();
+          }, onError: (_) => check()),
     );
 
     _subs.add(
       _service
-          .watchAssignments(widget.coachingId, widget.batchId,
-              role: _role)
-          .listen(
-        (list) {
-          if (mounted) setState(() => _assignments = list);
-          check();
-        },
-        onError: (_) => check(),
-      ),
+          .watchAssignments(widget.coachingId, widget.batchId, role: _role)
+          .listen((list) {
+            if (mounted) setState(() => _assignments = list);
+            check();
+          }, onError: (_) => check()),
     );
   }
 
@@ -210,12 +202,13 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
         content: Text('Delete "${a.title}"? This cannot be undone.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child:
-                  const Text('Delete', style: TextStyle(color: Colors.red))),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
     );
@@ -227,7 +220,11 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
   Future<void> _toggleAssessmentStatus(AssessmentModel a) async {
     final newStatus = a.isPublished ? 'CLOSED' : 'PUBLISHED';
     await _service.updateAssessmentStatus(
-        widget.coachingId, widget.batchId, a.id, newStatus);
+      widget.coachingId,
+      widget.batchId,
+      a.id,
+      newStatus,
+    );
     _loadData();
   }
 
@@ -239,18 +236,18 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
         content: Text('Delete "${a.title}"? This cannot be undone.'),
         actions: [
           TextButton(
-              onPressed: () => Navigator.pop(ctx, false),
-              child: const Text('Cancel')),
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
           TextButton(
-              onPressed: () => Navigator.pop(ctx, true),
-              child:
-                  const Text('Delete', style: TextStyle(color: Colors.red))),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+          ),
         ],
       ),
     );
     if (confirm != true) return;
-    await _service.deleteAssignment(
-        widget.coachingId, widget.batchId, a.id);
+    await _service.deleteAssignment(widget.coachingId, widget.batchId, a.id);
     _loadData();
   }
 
@@ -289,8 +286,8 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
           child: _loading
               ? const _ShimmerList()
               : _selectedSegment == 0
-                  ? _buildAssessmentList(theme)
-                  : _buildAssignmentList(theme),
+              ? _buildAssessmentList(theme)
+              : _buildAssignmentList(theme),
         ),
       ],
     );
@@ -395,8 +392,9 @@ class _SegmentButton extends StatelessWidget {
           decoration: BoxDecoration(
             color: isSelected
                 ? theme.colorScheme.primary.withValues(alpha: 0.1)
-                : theme.colorScheme.surfaceContainerHighest
-                    .withValues(alpha: 0.5),
+                : theme.colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.5,
+                  ),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
               color: isSelected
@@ -413,15 +411,16 @@ class _SegmentButton extends StatelessWidget {
                   color: isSelected
                       ? theme.colorScheme.primary
                       : theme.colorScheme.onSurfaceVariant,
-                  fontWeight:
-                      isSelected ? FontWeight.w600 : FontWeight.normal,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
               ),
               if (count > 0) ...[
                 const SizedBox(width: 6),
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? theme.colorScheme.primary.withValues(alpha: 0.15)
@@ -491,8 +490,9 @@ class _AssessmentCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     a.title,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -503,8 +503,7 @@ class _AssessmentCard extends StatelessWidget {
                   _PopupMenu(
                     onDelete: onDelete,
                     onToggleStatus: onToggleStatus,
-                    statusLabel:
-                        a.isPublished ? 'Close' : 'Publish',
+                    statusLabel: a.isPublished ? 'Close' : 'Publish',
                   ),
                 ],
               ],
@@ -603,14 +602,18 @@ class _AssignmentCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.assignment_rounded,
-                    size: 20, color: theme.colorScheme.primary),
+                Icon(
+                  Icons.assignment_rounded,
+                  size: 20,
+                  color: theme.colorScheme.primary,
+                ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     a.title,
-                    style: theme.textTheme.titleSmall
-                        ?.copyWith(fontWeight: FontWeight.w600),
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -623,9 +626,11 @@ class _AssignmentCard extends StatelessWidget {
                   const SizedBox(width: 4),
                   GestureDetector(
                     onTap: onDelete,
-                    child: Icon(Icons.delete_outline_rounded,
-                        size: 18,
-                        color: theme.colorScheme.error.withValues(alpha: 0.7)),
+                    child: Icon(
+                      Icons.delete_outline_rounded,
+                      size: 18,
+                      color: theme.colorScheme.error.withValues(alpha: 0.7),
+                    ),
                   ),
                 ],
               ],
@@ -670,10 +675,7 @@ class _AssignmentCard extends StatelessWidget {
                     label: '${a.submissionCount} submitted',
                   ),
                 if (a.allowLateSubmission)
-                  _InfoItem(
-                    icon: Icons.schedule_rounded,
-                    label: 'Late OK',
-                  ),
+                  _InfoItem(icon: Icons.schedule_rounded, label: 'Late OK'),
               ],
             ),
 
@@ -690,8 +692,18 @@ class _AssignmentCard extends StatelessWidget {
 
   String _formatDate(DateTime dt) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return '${dt.day} ${months[dt.month - 1]}, ${dt.hour.toString().padLeft(2, '0')}:${dt.minute.toString().padLeft(2, '0')}';
   }
@@ -805,10 +817,7 @@ class _PopupMenu extends StatelessWidget {
       padding: EdgeInsets.zero,
       constraints: const BoxConstraints(),
       itemBuilder: (_) => [
-        PopupMenuItem(
-          value: 'status',
-          child: Text(statusLabel),
-        ),
+        PopupMenuItem(value: 'status', child: Text(statusLabel)),
         const PopupMenuItem(
           value: 'delete',
           child: Text('Delete', style: TextStyle(color: Colors.red)),
@@ -830,8 +839,9 @@ class _StudentAttemptBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final best = assessment.bestAttempt;
-    final inProgress = assessment.myAttempts
-        .any((a) => a.status == 'IN_PROGRESS');
+    final inProgress = assessment.myAttempts.any(
+      (a) => a.status == 'IN_PROGRESS',
+    );
 
     if (inProgress) {
       return Container(
@@ -842,13 +852,15 @@ class _StudentAttemptBanner extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(Icons.play_circle_outline_rounded,
-                size: 16, color: Colors.orange),
+            const Icon(
+              Icons.play_circle_outline_rounded,
+              size: 16,
+              color: Colors.orange,
+            ),
             const SizedBox(width: 6),
             Text(
               'In Progress — tap to continue',
-              style: theme.textTheme.labelSmall
-                  ?.copyWith(color: Colors.orange),
+              style: theme.textTheme.labelSmall?.copyWith(color: Colors.orange),
             ),
           ],
         ),
@@ -856,14 +868,14 @@ class _StudentAttemptBanner extends StatelessWidget {
     }
 
     if (best != null) {
-      final passed = assessment.passingMarks != null &&
+      final passed =
+          assessment.passingMarks != null &&
           (best.percentage ?? 0) >=
               (assessment.passingMarks! / assessment.totalMarks * 100);
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: (passed ? Colors.green : Colors.blue)
-              .withValues(alpha: 0.08),
+          color: (passed ? Colors.green : Colors.blue).withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -975,14 +987,20 @@ class _EmptyState extends StatelessWidget {
         children: [
           Icon(icon, size: 56, color: theme.colorScheme.outlineVariant),
           const SizedBox(height: 12),
-          Text(title,
-              style: theme.textTheme.titleMedium
-                  ?.copyWith(fontWeight: FontWeight.w600)),
+          Text(
+            title,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
           const SizedBox(height: 4),
-          Text(subtitle,
-              style: theme.textTheme.bodySmall
-                  ?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-              textAlign: TextAlign.center),
+          Text(
+            subtitle,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+            textAlign: TextAlign.center,
+          ),
           if (showAction && actionLabel != null) ...[
             const SizedBox(height: 16),
             FilledButton.icon(
