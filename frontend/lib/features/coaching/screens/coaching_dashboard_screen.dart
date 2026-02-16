@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/coaching_model.dart';
 import '../models/member_model.dart';
 import '../models/invitation_model.dart';
@@ -52,12 +53,14 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
   List<dynamic> _feedAssessments = [];
   List<dynamic> _feedAssignments = [];
   List<dynamic> _feedNotices = [];
+  Set<String> _dismissedItems = {};
 
   final List<StreamSubscription> _subs = [];
 
   @override
   void initState() {
     super.initState();
+    _loadDismissedItems();
     _loadData();
   }
 
@@ -145,6 +148,49 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
       context,
       MaterialPageRoute(builder: (_) => NoteDetailScreen(note: note)),
     );
+  }
+
+  Future<void> _loadDismissedItems() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'dismissed_feed_${widget.coaching.id}';
+      final dismissed = prefs.getStringList(key) ?? [];
+      if (mounted) {
+        setState(() {
+          _dismissedItems = dismissed.toSet();
+        });
+      }
+    } catch (_) {}
+  }
+
+  Future<void> _dismissItem(String itemId, String type) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'dismissed_feed_${widget.coaching.id}';
+      _dismissedItems.add('${type}_$itemId');
+      await prefs.setStringList(key, _dismissedItems.toList());
+      if (mounted) setState(() {});
+    } catch (_) {}
+  }
+
+  Future<void> _clearDismissed() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final key = 'dismissed_feed_${widget.coaching.id}';
+      await prefs.remove(key);
+      if (mounted) {
+        setState(() {
+          _dismissedItems.clear();
+        });
+      }
+    } catch (_) {}
+  }
+
+  List<dynamic> _filterDismissed(List<dynamic> items, String type) {
+    return items.where((item) {
+      final id = (item as Map<String, dynamic>)['id'] as String? ?? '';
+      return !_dismissedItems.contains('${type}_$id');
+    }).toList();
   }
 
   void _onAssessmentTap(dynamic assessmentData) {
@@ -313,8 +359,25 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                     _SwipeableNoticesSection(notices: _feedNotices),
                   ],
 
+                  // ── Clear dismissed button (only if items are dismissed) ──
+                  if (!_canManageMembers && _dismissedItems.isNotEmpty) ...[
+                    const SizedBox(height: 20),
+                    Center(
+                      child: TextButton.icon(
+                        onPressed: _clearDismissed,
+                        icon: const Icon(Icons.refresh_rounded, size: 18),
+                        label: Text(
+                          'Show ${_dismissedItems.length} dismissed item${_dismissedItems.length > 1 ? 's' : ''}',
+                          style: const TextStyle(fontSize: 13),
+                        ),
+                      ),
+                    ),
+                  ],
+
                   // ── New Quizzes (for students/teachers) ──
-                  if (!_canManageMembers && _feedAssessments.isNotEmpty) ...[
+                  if (!_canManageMembers &&
+                      _filterDismissed(_feedAssessments, 'assessment')
+                          .isNotEmpty) ...[
                     const SizedBox(height: 24),
                     _SectionHeader(
                       title: 'New Quizzes',
@@ -322,16 +385,24 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                     ),
                     const SizedBox(height: 8),
                     _DateGroupedFeedSection(
-                      items: _feedAssessments,
+                      items: _filterDismissed(_feedAssessments, 'assessment'),
                       itemBuilder: (a) => _FeedAssessmentCard(
                         assessment: a,
                         onTap: () => _onAssessmentTap(a),
+                        onDismiss: () {
+                          final id =
+                              (a as Map<String, dynamic>)['id'] as String? ??
+                                  '';
+                          if (id.isNotEmpty) _dismissItem(id, 'assessment');
+                        },
                       ),
                     ),
                   ],
 
                   // ── New Assignments (for students/teachers) ──
-                  if (!_canManageMembers && _feedAssignments.isNotEmpty) ...[
+                  if (!_canManageMembers &&
+                      _filterDismissed(_feedAssignments, 'assignment')
+                          .isNotEmpty) ...[
                     const SizedBox(height: 24),
                     _SectionHeader(
                       title: 'New Assignments',
@@ -339,10 +410,16 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                     ),
                     const SizedBox(height: 8),
                     _DateGroupedFeedSection(
-                      items: _feedAssignments,
+                      items: _filterDismissed(_feedAssignments, 'assignment'),
                       itemBuilder: (a) => _FeedAssignmentCard(
                         assignment: a,
                         onTap: () => _onAssignmentTap(a),
+                        onDismiss: () {
+                          final id =
+                              (a as Map<String, dynamic>)['id'] as String? ??
+                                  '';
+                          if (id.isNotEmpty) _dismissItem(id, 'assignment');
+                        },
                       ),
                     ),
                   ],
@@ -1568,6 +1645,23 @@ class _DateGroupedFeedSection extends StatelessWidget {
     return grouped;
   }
 
+  List<MapEntry<String, List<dynamic>>> _getSortedGroups(
+    Map<String, List<dynamic>> grouped,
+  ) {
+    final entries = grouped.entries.toList();
+    // Sort by the date of the first item in each group (newest first)
+    entries.sort((a, b) {
+      final aDate = (a.value.first as Map<String, dynamic>)['createdAt'];
+      final bDate = (b.value.first as Map<String, dynamic>)['createdAt'];
+      if (aDate == null || bDate == null) return 0;
+      final aTime = DateTime.tryParse(aDate as String);
+      final bTime = DateTime.tryParse(bDate as String);
+      if (aTime == null || bTime == null) return 0;
+      return bTime.compareTo(aTime); // Newest first
+    });
+    return entries;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -1575,14 +1669,14 @@ class _DateGroupedFeedSection extends StatelessWidget {
 
     // If all items are same date, show without dividers
     if (grouped.length <= 1) {
-      return Column(
-        children: items.map((item) => itemBuilder(item)).toList(),
-      );
+      return Column(children: items.map((item) => itemBuilder(item)).toList());
     }
+
+    final sortedGroups = _getSortedGroups(grouped);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: grouped.entries.expand((entry) {
+      children: sortedGroups.expand((entry) {
         return [
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
@@ -1599,9 +1693,7 @@ class _DateGroupedFeedSection extends StatelessWidget {
                   child: Text(
                     entry.key,
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.5,
-                      ),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                       fontWeight: FontWeight.w600,
                       letterSpacing: 0.5,
                     ),
@@ -1806,7 +1898,12 @@ class _SwipeableNoticesSectionState extends State<_SwipeableNoticesSection> {
 class _FeedAssessmentCard extends StatelessWidget {
   final dynamic assessment;
   final VoidCallback? onTap;
-  const _FeedAssessmentCard({required this.assessment, this.onTap});
+  final VoidCallback? onDismiss;
+  const _FeedAssessmentCard({
+    required this.assessment,
+    this.onTap,
+    this.onDismiss,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1827,7 +1924,7 @@ class _FeedAssessmentCard extends StatelessWidget {
         ? Icons.quiz_rounded
         : Icons.assignment_turned_in_rounded;
 
-    return Padding(
+    final card = Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: theme.colorScheme.surface,
@@ -1915,6 +2012,28 @@ class _FeedAssessmentCard extends StatelessWidget {
         ),
       ),
     );
+
+    if (onDismiss == null) return card;
+
+    return Dismissible(
+      key: Key('assessment_${a['id']}'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: Colors.red.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Icon(Icons.remove_circle_outline, color: Colors.red),
+      ),
+      confirmDismiss: (_) async {
+        onDismiss?.call();
+        return true;
+      },
+      child: card,
+    );
   }
 }
 
@@ -1922,7 +2041,12 @@ class _FeedAssessmentCard extends StatelessWidget {
 class _FeedAssignmentCard extends StatelessWidget {
   final dynamic assignment;
   final VoidCallback? onTap;
-  const _FeedAssignmentCard({required this.assignment, this.onTap});
+  final VoidCallback? onDismiss;
+  const _FeedAssignmentCard({
+    required this.assignment,
+    this.onTap,
+    this.onDismiss,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -1938,7 +2062,7 @@ class _FeedAssignmentCard extends StatelessWidget {
 
     const color = Color(0xFF5B8C5A);
 
-    return Padding(
+    final card = Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
         color: theme.colorScheme.surface,
@@ -1998,7 +2122,8 @@ class _FeedAssignmentCard extends StatelessWidget {
                           if (dueDate != null) ...[
                             _FeedMeta(
                               icon: Icons.event_outlined,
-                              text: 'Due ${DateFormat('MMM dd').format(dueDate)}',
+                              text:
+                                  'Due ${DateFormat('MMM dd').format(dueDate)}',
                             ),
                             const SizedBox(width: 12),
                           ],
@@ -2022,6 +2147,28 @@ class _FeedAssignmentCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+
+    if (onDismiss == null) return card;
+
+    return Dismissible(
+      key: Key('assignment_${a['id']}'),
+      direction: DismissDirection.endToStart,
+      background: Container(
+        alignment: Alignment.centerRight,
+        padding: const EdgeInsets.only(right: 20),
+        margin: const EdgeInsets.only(bottom: 8),
+        decoration: BoxDecoration(
+          color: Colors.red.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: const Icon(Icons.remove_circle_outline, color: Colors.red),
+      ),
+      confirmDismiss: (_) async {
+        onDismiss?.call();
+        return true;
+      },
+      child: card,
     );
   }
 }

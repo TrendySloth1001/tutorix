@@ -15,6 +15,8 @@ import 'create_note_screen.dart';
 import 'create_notice_screen.dart';
 import 'note_detail_screen.dart';
 import '../../assessment/screens/assessment_tab_screen.dart';
+import '../../assessment/screens/create_assessment_screen.dart';
+import '../../assessment/screens/create_assignment_screen.dart';
 
 /// Full batch detail — overview, members, notes, notices via TabBar.
 /// Premium design with layered header, rich cards, and polished interactions.
@@ -45,6 +47,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
   List<BatchNoticeModel> _notices = [];
   bool _isLoading = true;
   bool _changed = false;
+  int _currentTabIndex = 0;
 
   final List<StreamSubscription> _subs = [];
 
@@ -65,6 +68,13 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
     // Admin: Overview, Members, Assessment, Notes, Notices (5 tabs)
     // Non-admin: Overview, Assessment, Notes, Notices (4 tabs)
     _tabCtrl = TabController(length: _isAdmin ? 5 : 4, vsync: this);
+    _tabCtrl.addListener(() {
+      if (mounted) {
+        setState(() {
+          _currentTabIndex = _tabCtrl.index;
+        });
+      }
+    });
     _loadAll();
   }
 
@@ -609,8 +619,70 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
             ],
           ),
         ),
+        floatingActionButton: _buildFAB(context),
       ),
     );
+  }
+
+  Widget? _buildFAB(BuildContext context) {
+    // Only show FAB on assessment tab for teachers
+    if (!_isTeacherOrAdmin) return null;
+    
+    // Calculate assessment tab index: 2 for admin, 1 for non-admin
+    final assessmentTabIndex = _isAdmin ? 2 : 1;
+    if (_currentTabIndex != assessmentTabIndex) return null;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        FloatingActionButton.extended(
+          heroTag: 'createAssignment',
+          onPressed: _openCreateAssignment,
+          label: const Text('Assignment'),
+          icon: const Icon(Icons.assignment_outlined),
+          backgroundColor: Theme.of(context).colorScheme.secondaryContainer,
+          foregroundColor: Theme.of(context).colorScheme.onSecondaryContainer,
+        ),
+        const SizedBox(height: 12),
+        FloatingActionButton.extended(
+          heroTag: 'createAssessment',
+          onPressed: _openCreateAssessment,
+          label: const Text('Assessment'),
+          icon: const Icon(Icons.quiz_outlined),
+        ),
+      ],
+    );
+  }
+
+  void _openCreateAssessment() async {
+    final created = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateAssessmentScreen(
+          coachingId: widget.coaching.id,
+          batchId: widget.batchId,
+        ),
+      ),
+    );
+    if (created == true) {
+      setState(() => _changed = true);
+    }
+  }
+
+  void _openCreateAssignment() async {
+    final created = await Navigator.push<bool>(
+      context,
+      MaterialPageRoute(
+        builder: (_) => CreateAssignmentScreen(
+          coachingId: widget.coaching.id,
+          batchId: widget.batchId,
+        ),
+      ),
+    );
+    if (created == true) {
+      setState(() => _changed = true);
+    }
   }
 
   PopupMenuItem<String> _popupItem(
