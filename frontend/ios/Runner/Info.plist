@@ -49,5 +49,16 @@
 	<string>We need your location to accurately place your coaching on the map so students can find you easily.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>We need your location to accurately place your coaching on the map so students can find you easily.</string>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>https</string>
+		<string>http</string>
+		<string>comgooglemaps</string>
+		<string>comgooglemapsurl</string>
+		<string>maps</string>
+		<string>tel</string>
+		<string>mailto</string>
+		<string>whatsapp</string>
+	</array>
 </dict>
 </plist>

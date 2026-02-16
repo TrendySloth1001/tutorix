@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -345,7 +347,7 @@ class _MapCard extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 350),
         curve: Curves.easeInOut,
-        height: mapHeight + (selectedCoaching != null ? 80 : 0),
+        height: mapHeight + (selectedCoaching != null ? 86 : 0),
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(24),
           border: Border.all(
@@ -421,8 +423,8 @@ class _MapCard extends StatelessWidget {
                             selectedCoaching?.coaching.id == c.coaching.id;
                         return Marker(
                           point: LatLng(addr!.latitude!, addr.longitude!),
-                          width: isSelected ? 48 : 40,
-                          height: isSelected ? 48 : 40,
+                          width: isSelected ? 44 : 36,
+                          height: isSelected ? 54 : 44,
                           child: GestureDetector(
                             onTap: () => onMarkerTap(c),
                             child: _CoachingMarkerPin(
@@ -517,6 +519,13 @@ class _UserLocationDot extends StatelessWidget {
   }
 }
 
+String? _getFullUrl(String? path) {
+  if (path == null || path.isEmpty) return null;
+  if (path.startsWith('http')) return path;
+  final cleanPath = path.startsWith('/') ? path.substring(1) : path;
+  return '${ApiConstants.baseUrl}/$cleanPath';
+}
+
 class _CoachingMarkerPin extends StatelessWidget {
   final CoachingModel coaching;
   final bool isSelected;
@@ -527,56 +536,97 @@ class _CoachingMarkerPin extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final bgColor = isSelected
+    final pinSize = isSelected ? 44.0 : 36.0;
+    final logoSize = isSelected ? 30.0 : 22.0;
+    final borderColor = isSelected
         ? theme.colorScheme.primary
         : theme.colorScheme.surface;
-    final fgColor = isSelected
-        ? theme.colorScheme.onPrimary
-        : theme.colorScheme.primary;
 
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 200),
-      decoration: BoxDecoration(
-        color: bgColor,
-        shape: BoxShape.circle,
-        border: Border.all(
-          color: isSelected
-              ? theme.colorScheme.primary
-              : theme.colorScheme.primary.withValues(alpha: 0.3),
-          width: isSelected ? 2.5 : 1.5,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: (isSelected
-                    ? theme.colorScheme.primary
-                    : Colors.black)
-                .withValues(alpha: isSelected ? 0.35 : 0.15),
-            blurRadius: isSelected ? 12 : 6,
-            offset: const Offset(0, 3),
-          ),
-        ],
-      ),
-      child: coaching.logo != null
-          ? ClipOval(
-              child: Image.network(
-                '${ApiConstants.baseUrl}/upload/assets/coaching-logos/${coaching.logo}',
-                width: isSelected ? 48 : 40,
-                height: isSelected ? 48 : 40,
-                fit: BoxFit.cover,
-                errorBuilder: (_, _, _) => Icon(
-                  Icons.school_rounded,
-                  size: isSelected ? 22 : 18,
-                  color: fgColor,
-                ),
-              ),
-            )
-          : Icon(
-              Icons.school_rounded,
-              size: isSelected ? 22 : 18,
-              color: fgColor,
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        // Pin head with logo
+        AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          width: pinSize,
+          height: pinSize,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(pinSize / 2).copyWith(
+              bottomRight: Radius.circular(isSelected ? 4 : pinSize / 2),
             ),
+            border: Border.all(
+              color: borderColor,
+              width: isSelected ? 3 : 2,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: (isSelected
+                        ? theme.colorScheme.primary
+                        : Colors.black)
+                    .withValues(alpha: isSelected ? 0.35 : 0.18),
+                blurRadius: isSelected ? 14 : 8,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Center(
+            child: ClipRRect(
+                    borderRadius: BorderRadius.circular(logoSize / 2),
+                    child: _getFullUrl(coaching.logo) != null
+                        ? Image.network(
+                            _getFullUrl(coaching.logo)!,
+                            width: logoSize,
+                            height: logoSize,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Icon(
+                              Icons.school_rounded,
+                              size: logoSize * 0.55,
+                              color: theme.colorScheme.primary,
+                            ),
+                          )
+                        : Icon(
+                            Icons.school_rounded,
+                            size: logoSize * 0.55,
+                            color: theme.colorScheme.primary,
+                          ),
+                  ),
+          ),
+        ),
+        // Pin tail triangle
+        CustomPaint(
+          size: const Size(12, 8),
+          painter: _PinTailPainter(
+            color: borderColor,
+            strokeWidth: isSelected ? 3 : 2,
+          ),
+        ),
+      ],
     );
   }
+}
+
+class _PinTailPainter extends CustomPainter {
+  final Color color;
+  final double strokeWidth;
+  _PinTailPainter({required this.color, required this.strokeWidth});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+    final path = ui.Path()
+      ..moveTo(0, 0)
+      ..lineTo(size.width / 2, size.height)
+      ..lineTo(size.width, 0)
+      ..close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(_PinTailPainter old) =>
+      old.color != color || old.strokeWidth != strokeWidth;
 }
 
 class _MapActionButton extends StatelessWidget {
@@ -622,14 +672,13 @@ class _MapPreviewCard extends StatelessWidget {
     final coaching = item.coaching;
 
     return Container(
-      height: 80,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      height: 86,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         border: Border(
           top: BorderSide(
-            color:
-                theme.colorScheme.primary.withValues(alpha: 0.08),
+            color: theme.colorScheme.primary.withValues(alpha: 0.08),
           ),
         ),
       ),
@@ -637,29 +686,28 @@ class _MapPreviewCard extends StatelessWidget {
         children: [
           // Logo
           Container(
-            width: 48,
-            height: 48,
+            width: 52,
+            height: 52,
             decoration: BoxDecoration(
-              color:
-                  theme.colorScheme.primary.withValues(alpha: 0.08),
+              color: theme.colorScheme.primary.withValues(alpha: 0.08),
               borderRadius: BorderRadius.circular(14),
             ),
-            child: coaching.logo != null
-                ? ClipRRect(
+            child: ClipRRect(
                     borderRadius: BorderRadius.circular(14),
-                    child: Image.network(
-                      '${ApiConstants.baseUrl}/upload/assets/coaching-logos/${coaching.logo}',
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Icon(
-                        Icons.school_rounded,
-                        color: theme.colorScheme.primary,
-                      ),
-                    ),
-                  )
-                : Icon(Icons.school_rounded,
-                    color: theme.colorScheme.primary),
+                    child: _getFullUrl(coaching.logo) != null
+                        ? Image.network(
+                            _getFullUrl(coaching.logo)!,
+                            fit: BoxFit.cover,
+                            errorBuilder: (_, _, _) => Icon(
+                              Icons.school_rounded,
+                              color: theme.colorScheme.primary,
+                            ),
+                          )
+                        : Icon(Icons.school_rounded,
+                            color: theme.colorScheme.primary),
+                  ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 10),
           // Info
           Expanded(
             child: Column(
@@ -692,22 +740,13 @@ class _MapPreviewCard extends StatelessWidget {
               ],
             ),
           ),
-          // Distance badge
-          Container(
-            padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            decoration: BoxDecoration(
-              color:
-                  theme.colorScheme.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Text(
-              '${item.distanceKm} km',
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.w600,
-                color: theme.colorScheme.primary,
-              ),
-            ),
+          const SizedBox(width: 6),
+          // Directions button
+          _DirectionsButton(
+            lat: coaching.address?.latitude,
+            lng: coaching.address?.longitude,
+            label: coaching.name,
+            compact: true,
           ),
         ],
       ),
@@ -793,7 +832,7 @@ class _RadiusSelector extends StatelessWidget {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  NEARBY COACHING CARD
+//  NEARBY COACHING CARD — Cover image + overlapping logo
 // ═══════════════════════════════════════════════════════════════════════════
 
 class _NearbyCoachingCard extends StatelessWidget {
@@ -813,20 +852,18 @@ class _NearbyCoachingCard extends StatelessWidget {
     final coaching = item.coaching;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: 14),
       child: GestureDetector(
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(22),
             border: Border.all(
               color: isSelected
                   ? theme.colorScheme.primary.withValues(alpha: 0.3)
-                  : theme.colorScheme.primary
-                      .withValues(alpha: 0.05),
+                  : theme.colorScheme.primary.withValues(alpha: 0.05),
               width: isSelected ? 1.5 : 1,
             ),
             boxShadow: [
@@ -834,142 +871,359 @@ class _NearbyCoachingCard extends StatelessWidget {
                 color: (isSelected
                         ? theme.colorScheme.primary
                         : theme.shadowColor)
-                    .withValues(alpha: isSelected ? 0.1 : 0.05),
-                blurRadius: isSelected ? 16 : 10,
-                offset: const Offset(0, 4),
+                    .withValues(alpha: isSelected ? 0.12 : 0.06),
+                blurRadius: isSelected ? 18 : 12,
+                offset: const Offset(0, 5),
               ),
             ],
           ),
-          child: Row(
+          clipBehavior: Clip.antiAlias,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Logo
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary
-                      .withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(
-                    color: theme.colorScheme.primary
-                        .withValues(alpha: 0.06),
-                  ),
-                ),
-                child: coaching.logo != null
-                    ? ClipRRect(
-                        borderRadius: BorderRadius.circular(16),
-                        child: Image.network(
-                          '${ApiConstants.baseUrl}/upload/assets/coaching-logos/${coaching.logo}',
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, _, _) => Icon(
-                            Icons.school_rounded,
-                            color: theme.colorScheme.primary,
-                            size: 26,
+              // ── Cover image area ─────────────────────────────────
+              SizedBox(
+                height: 100,
+                width: double.infinity,
+                child: Stack(
+                  children: [
+                    // Cover image or gradient placeholder
+                    Positioned.fill(
+                      child: _getFullUrl(coaching.coverImage) != null
+                          ? Image.network(
+                              _getFullUrl(coaching.coverImage)!,
+                              fit: BoxFit.cover,
+                              errorBuilder: (_, _, _) =>
+                                  _CoverPlaceholder(theme: theme),
+                            )
+                          : _CoverPlaceholder(theme: theme),
+                    ),
+                    // Gradient overlay for readability
+                    Positioned.fill(
+                      child: DecoratedBox(
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            begin: Alignment.topCenter,
+                            end: Alignment.bottomCenter,
+                            colors: [
+                              Colors.black.withValues(alpha: 0.05),
+                              Colors.black.withValues(alpha: 0.45),
+                            ],
                           ),
                         ),
-                      )
-                    : Icon(
-                        Icons.school_rounded,
-                        color: theme.colorScheme.primary,
-                        size: 26,
                       ),
+                    ),
+                    // Distance badge (top right)
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 5),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.45),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Icons.near_me_rounded,
+                                size: 12, color: Colors.white),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${item.distanceKm} km',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    // Verified badge (top left)
+                    if (coaching.isVerified)
+                      Positioned(
+                        top: 10,
+                        left: 10,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withValues(alpha: 0.9),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.verified_rounded,
+                                  size: 13,
+                                  color: theme.colorScheme.primary),
+                              const SizedBox(width: 3),
+                              Text(
+                                'Verified',
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  fontWeight: FontWeight.w600,
+                                  color: theme.colorScheme.primary,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               ),
-              const SizedBox(width: 14),
-              // Content
-              Expanded(
-                child: Column(
+
+              // ── Content area ─────────────────────────────────────
+              Padding(
+                padding: const EdgeInsets.fromLTRB(14, 10, 14, 14),
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Name + verified
-                    Row(
-                      children: [
-                        Flexible(
-                          child: Text(
+                    // Logo (overlapping the cover slightly)
+                    Transform.translate(
+                      offset: const Offset(0, -28),
+                      child: Container(
+                        width: 52,
+                        height: 52,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.surface,
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: theme.colorScheme.surface,
+                            width: 3,
+                          ),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.1),
+                              blurRadius: 8,
+                              offset: const Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: ClipRRect(
+                                borderRadius: BorderRadius.circular(11),
+                                child: _getFullUrl(coaching.logo) != null
+                                    ? Image.network(
+                                        _getFullUrl(coaching.logo)!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (_, _, _) => Icon(
+                                          Icons.school_rounded,
+                                          color: theme.colorScheme.primary,
+                                          size: 24,
+                                        ),
+                                      )
+                                    : Icon(Icons.school_rounded,
+                                        color: theme.colorScheme.primary, size: 24),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // Text content
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Name
+                          Text(
                             coaching.name,
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style:
-                                theme.textTheme.titleMedium?.copyWith(
+                            style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w600,
                               letterSpacing: -0.3,
                             ),
                           ),
-                        ),
-                        if (coaching.isVerified) ...[
-                          const SizedBox(width: 4),
-                          Icon(Icons.verified_rounded,
-                              size: 16,
-                              color: theme.colorScheme.primary),
-                        ],
-                      ],
-                    ),
-                    const SizedBox(height: 4),
-                    // Category + City
-                    Text(
-                      [
-                        if (coaching.category != null)
-                          coaching.category!,
-                        if (coaching.address?.city != null)
-                          coaching.address!.city,
-                      ].join(' · '),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.secondary
-                            .withValues(alpha: 0.65),
-                      ),
-                    ),
-                    const SizedBox(height: 6),
-                    // Stats row
-                    Row(
-                      children: [
-                        _StatChip(
-                          icon: Icons.group_rounded,
-                          label: '${coaching.memberCount}',
-                          theme: theme,
-                        ),
-                        const SizedBox(width: 8),
-                        _StatChip(
-                          icon: Icons.near_me_rounded,
-                          label: '${item.distanceKm} km',
-                          theme: theme,
-                        ),
-                        if (coaching.subjects.isNotEmpty) ...[
-                          const SizedBox(width: 8),
-                          Flexible(
-                            child: _StatChip(
-                              icon: Icons.menu_book_rounded,
-                              label: coaching.subjects.length > 2
-                                  ? '${coaching.subjects.take(2).join(", ")}…'
-                                  : coaching.subjects.join(", "),
-                              theme: theme,
+                          const SizedBox(height: 3),
+                          // Category + City
+                          Text(
+                            [
+                              if (coaching.category != null)
+                                coaching.category!,
+                              if (coaching.address?.city != null)
+                                coaching.address!.city,
+                            ].join(' · '),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.secondary
+                                  .withValues(alpha: 0.65),
                             ),
                           ),
+                          const SizedBox(height: 8),
+                          // Stats + Directions
+                          Row(
+                            children: [
+                              _StatChip(
+                                icon: Icons.group_rounded,
+                                label: '${coaching.memberCount}',
+                                theme: theme,
+                              ),
+                              if (coaching.subjects.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                Flexible(
+                                  child: _StatChip(
+                                    icon: Icons.menu_book_rounded,
+                                    label: coaching.subjects.length > 2
+                                        ? '${coaching.subjects.take(2).join(", ")}…'
+                                        : coaching.subjects.join(", "),
+                                    theme: theme,
+                                  ),
+                                ),
+                              ],
+                              const Spacer(),
+                              _DirectionsButton(
+                                lat: coaching.address?.latitude,
+                                lng: coaching.address?.longitude,
+                                label: coaching.name,
+                                compact: false,
+                              ),
+                            ],
+                          ),
                         ],
-                      ],
+                      ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              // Arrow
-              Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary
-                      .withValues(alpha: 0.06),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.arrow_forward_ios_rounded,
-                  size: 13,
-                  color: theme.colorScheme.primary
-                      .withValues(alpha: 0.3),
-                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CoverPlaceholder extends StatelessWidget {
+  final ThemeData theme;
+  const _CoverPlaceholder({required this.theme});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            theme.colorScheme.primary.withValues(alpha: 0.15),
+            theme.colorScheme.tertiary.withValues(alpha: 0.25),
+          ],
+        ),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.school_rounded,
+          size: 36,
+          color: theme.colorScheme.primary.withValues(alpha: 0.15),
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  DIRECTIONS BUTTON — opens native maps
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _DirectionsButton extends StatelessWidget {
+  final double? lat;
+  final double? lng;
+  final String label;
+  final bool compact;
+
+  const _DirectionsButton({
+    required this.lat,
+    required this.lng,
+    required this.label,
+    this.compact = false,
+  });
+
+  Future<void> _openMaps(BuildContext context) async {
+    if (lat == null || lng == null) {
+      AppAlert.error(context, 'Location not available for this coaching');
+      return;
+    }
+    // Google Maps universal link — works on both Android (opens app) & iOS (opens in browser or app)
+    final gMapsUrl = Uri.parse(
+        'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
+    // Apple Maps (iOS fallback)
+    final aMapsUrl = Uri.parse(
+        'https://maps.apple.com/?daddr=$lat,$lng&dirflg=d');
+
+    try {
+      // Launch directly — canLaunchUrl fails on Android 11+ without <queries>
+      await launchUrl(gMapsUrl, mode: LaunchMode.externalApplication);
+    } catch (_) {
+      try {
+        // Fallback to Apple Maps (iOS)
+        await launchUrl(aMapsUrl, mode: LaunchMode.externalApplication);
+      } catch (_) {
+        if (context.mounted) {
+          AppAlert.error(context, 'Could not open maps application');
+        }
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    if (compact) {
+      // Small icon-only button for map preview card
+      return GestureDetector(
+        onTap: () => _openMaps(context),
+        child: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary,
+            borderRadius: BorderRadius.circular(11),
+            boxShadow: [
+              BoxShadow(
+                color: theme.colorScheme.primary.withValues(alpha: 0.3),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
               ),
             ],
           ),
+          child: const Icon(Icons.directions_rounded,
+              size: 18, color: Colors.white),
+        ),
+      );
+    }
+
+    // Pill button for list cards
+    return GestureDetector(
+      onTap: () => _openMaps(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary.withValues(alpha: 0.1),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 0.15),
+          ),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.directions_rounded,
+                size: 14, color: theme.colorScheme.primary),
+            const SizedBox(width: 4),
+            Text(
+              'Directions',
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.primary,
+                fontSize: 11,
+              ),
+            ),
+          ],
         ),
       ),
     );

@@ -260,23 +260,47 @@ export class CoachingService {
 
     /**
      * Find coachings near a location using the Haversine formula.
-     * Returns coachings within `radiusKm` of the given lat/lng,
-     * sorted by distance ascending.
+     * Uses a bounding-box pre-filter on the DB query to avoid loading
+     * rows that are obviously outside the radius, then refines with
+     * Haversine in JS for accurate distance.
      */
     async findNearby(lat: number, lng: number, radiusKm: number = 20, page: number = 1, limit: number = 20) {
-        // Pull all active coachings that have an address with coordinates
+        // Clamp radius to a sane maximum (500 km)
+        const safeRadius = Math.min(radiusKm, 500);
+
+        // Bounding box: ~1 degree ≈ 111 km
+        const degDelta = safeRadius / 111;
+        const minLat = lat - degDelta;
+        const maxLat = lat + degDelta;
+        const minLng = lng - degDelta;
+        const maxLng = lng + degDelta;
+
         const coachings = await prisma.coaching.findMany({
             where: {
                 status: 'active',
                 onboardingComplete: true,
                 address: {
-                    latitude: { not: null },
-                    longitude: { not: null },
+                    latitude: { gte: minLat, lte: maxLat },
+                    longitude: { gte: minLng, lte: maxLng },
                 },
             },
-            include: {
+            select: {
+                id: true,
+                name: true,
+                slug: true,
+                description: true,
+                logo: true,
+                coverImage: true,
+                status: true,
+                ownerId: true,
+                category: true,
+                subjects: true,
+                isVerified: true,
+                tagline: true,
+                createdAt: true,
+                updatedAt: true,
                 owner: {
-                    select: { id: true, name: true, email: true, picture: true },
+                    select: { id: true, name: true, picture: true },
                 },
                 address: true,
                 _count: { select: { members: true } },
@@ -295,14 +319,14 @@ export class CoachingService {
             return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
         };
 
-        // Filter + compute distance
+        // Filter with exact Haversine + compute distance
         const withDistance = coachings
             .map((c) => {
                 const addr = c.address!;
                 const dist = haversine(lat, lng, addr.latitude!, addr.longitude!);
                 return { coaching: c, distance: Math.round(dist * 10) / 10 };
             })
-            .filter((c) => c.distance <= radiusKm)
+            .filter((c) => c.distance <= safeRadius)
             .sort((a, b) => a.distance - b.distance);
 
         const total = withDistance.length;
