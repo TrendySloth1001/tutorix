@@ -627,7 +627,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
   Widget? _buildFAB(BuildContext context) {
     // Only show FAB on assessment tab for teachers
     if (!_isTeacherOrAdmin) return null;
-    
+
     // Calculate assessment tab index: 2 for admin, 1 for non-admin
     final assessmentTabIndex = _isAdmin ? 2 : 1;
     if (_currentTabIndex != assessmentTabIndex) return null;

@@ -376,8 +376,10 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
 
                   // ── New Quizzes (for students/teachers) ──
                   if (!_canManageMembers &&
-                      _filterDismissed(_feedAssessments, 'assessment')
-                          .isNotEmpty) ...[
+                      _filterDismissed(
+                        _feedAssessments,
+                        'assessment',
+                      ).isNotEmpty) ...[
                     const SizedBox(height: 24),
                     _SectionHeader(
                       title: 'New Quizzes',
@@ -392,7 +394,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                         onDismiss: () {
                           final id =
                               (a as Map<String, dynamic>)['id'] as String? ??
-                                  '';
+                              '';
                           if (id.isNotEmpty) _dismissItem(id, 'assessment');
                         },
                       ),
@@ -401,8 +403,10 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
 
                   // ── New Assignments (for students/teachers) ──
                   if (!_canManageMembers &&
-                      _filterDismissed(_feedAssignments, 'assignment')
-                          .isNotEmpty) ...[
+                      _filterDismissed(
+                        _feedAssignments,
+                        'assignment',
+                      ).isNotEmpty) ...[
                     const SizedBox(height: 24),
                     _SectionHeader(
                       title: 'New Assignments',
@@ -417,7 +421,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                         onDismiss: () {
                           final id =
                               (a as Map<String, dynamic>)['id'] as String? ??
-                                  '';
+                              '';
                           if (id.isNotEmpty) _dismissItem(id, 'assignment');
                         },
                       ),
