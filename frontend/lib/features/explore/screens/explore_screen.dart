@@ -520,58 +520,99 @@ class _ExploreScreenState extends State<ExploreScreen>
         color: theme.colorScheme.surface,
         child: Column(
           children: [
-            // Header — tap to expand/collapse
+            // Header row: title + count + radius chip + chevron
             InkWell(
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20),
+              borderRadius: BorderRadius.vertical(
+                top: const Radius.circular(20),
+                bottom: _mapExpanded ? Radius.zero : const Radius.circular(20),
               ),
               onTap: () => setState(() => _mapExpanded = !_mapExpanded),
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(18, 14, 12, 14),
+                padding: const EdgeInsets.fromLTRB(16, 12, 10, 12),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.map_rounded,
-                      size: 20,
-                      color: theme.colorScheme.primary,
+                    // Map icon + title
+                    Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Icon(
+                        Icons.map_rounded,
+                        size: 16,
+                        color: theme.colorScheme.primary,
+                      ),
                     ),
                     const SizedBox(width: 10),
                     Text(
-                      'Map',
+                      'Explore Map',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w700,
                       ),
                     ),
                     if (_nearby.isNotEmpty) ...[
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 7,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer.withValues(
-                            alpha: 0.5,
+                      const SizedBox(width: 6),
+                      Text(
+                        '·',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.3,
                           ),
-                          borderRadius: BorderRadius.circular(8),
+                          fontWeight: FontWeight.w900,
                         ),
-                        child: Text(
-                          '${_nearby.length}',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            color: theme.colorScheme.primary,
-                            fontWeight: FontWeight.w700,
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${_nearby.length} found',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.5,
                           ),
                         ),
                       ),
                     ],
                     const Spacer(),
+                    // Radius chip (always visible as a summary)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: theme.colorScheme.primaryContainer.withValues(
+                          alpha: 0.45,
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.radar_rounded,
+                            size: 13,
+                            color: theme.colorScheme.primary,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            '${_radiusKm.round()} km',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 4),
                     AnimatedRotation(
                       turns: _mapExpanded ? 0.5 : 0,
                       duration: const Duration(milliseconds: 250),
                       child: Icon(
                         Icons.keyboard_arrow_down_rounded,
+                        size: 22,
                         color: theme.colorScheme.onSurface.withValues(
-                          alpha: 0.45,
+                          alpha: 0.4,
                         ),
                       ),
                     ),
@@ -580,30 +621,45 @@ class _ExploreScreenState extends State<ExploreScreen>
               ),
             ),
 
-            // Radius slider (visible when expanded)
-            if (_mapExpanded)
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 4),
+            // Radius slider — appears below header when map is expanded
+            AnimatedCrossFade(
+              firstChild: Container(
+                padding: const EdgeInsets.fromLTRB(14, 0, 14, 6),
+                decoration: BoxDecoration(
+                  border: Border(
+                    top: BorderSide(
+                      color: theme.colorScheme.outlineVariant.withValues(
+                        alpha: 0.25,
+                      ),
+                    ),
+                  ),
+                ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.radar_rounded,
-                      size: 16,
-                      color: theme.colorScheme.primary.withValues(alpha: 0.7),
+                    Text(
+                      'Radius',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.45,
+                        ),
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.3,
+                      ),
                     ),
+                    const SizedBox(width: 4),
                     Expanded(
                       child: SliderTheme(
                         data: SliderThemeData(
                           activeTrackColor: theme.colorScheme.primary,
                           inactiveTrackColor: theme.colorScheme.primary
-                              .withValues(alpha: 0.15),
+                              .withValues(alpha: 0.12),
                           thumbColor: theme.colorScheme.primary,
                           overlayColor: theme.colorScheme.primary.withValues(
-                            alpha: 0.12,
+                            alpha: 0.1,
                           ),
-                          trackHeight: 3,
+                          trackHeight: 2.5,
                           thumbShape: const RoundSliderThumbShape(
-                            enabledThumbRadius: 7,
+                            enabledThumbRadius: 6,
                           ),
                         ),
                         child: Slider(
@@ -616,20 +672,12 @@ class _ExploreScreenState extends State<ExploreScreen>
                         ),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 3,
-                      ),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.primaryContainer.withValues(
-                          alpha: 0.5,
-                        ),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
+                    SizedBox(
+                      width: 38,
                       child: Text(
-                        '${_radiusKm.round()} km',
-                        style: theme.textTheme.labelSmall?.copyWith(
+                        '${_radiusKm.round()}',
+                        textAlign: TextAlign.center,
+                        style: theme.textTheme.labelMedium?.copyWith(
                           color: theme.colorScheme.primary,
                           fontWeight: FontWeight.w700,
                         ),
@@ -638,6 +686,13 @@ class _ExploreScreenState extends State<ExploreScreen>
                   ],
                 ),
               ),
+              secondChild: const SizedBox.shrink(),
+              crossFadeState: _mapExpanded
+                  ? CrossFadeState.showFirst
+                  : CrossFadeState.showSecond,
+              duration: const Duration(milliseconds: 200),
+              sizeCurve: Curves.easeInOut,
+            ),
 
             // Map body
             AnimatedCrossFade(
