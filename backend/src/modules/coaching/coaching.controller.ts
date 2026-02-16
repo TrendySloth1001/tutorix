@@ -205,6 +205,25 @@ export class CoachingController {
         }
     }
 
+    // GET /coaching/explore - Find nearby coachings by lat/lng/radius
+    async explore(req: Request, res: Response) {
+        try {
+            const lat = parseFloat(req.query.lat as string);
+            const lng = parseFloat(req.query.lng as string);
+            if (isNaN(lat) || isNaN(lng)) {
+                return res.status(400).json({ message: 'lat and lng query params are required' });
+            }
+            const radius = parseFloat(req.query.radius as string) || 20;
+            const page = parseInt(req.query.page as string) || 1;
+            const limit = parseInt(req.query.limit as string) || 20;
+
+            const result = await coachingService.findNearby(lat, lng, radius, page, limit);
+            res.json(result);
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
     // GET /coaching/:id/members - Get all members of a coaching
     async getMembers(req: Request, res: Response) {
         try {

@@ -11,6 +11,7 @@ const invitationController = new InvitationController();
 // Public routes
 router.get('/', coachingController.list.bind(coachingController));
 router.get('/masters', coachingController.getMasters.bind(coachingController));
+router.get('/explore', coachingController.explore.bind(coachingController));
 router.get('/check-slug/:slug', coachingController.checkSlug.bind(coachingController));
 router.get('/slug/:slug', coachingController.getBySlug.bind(coachingController));
 

@@ -258,6 +258,82 @@ export class CoachingService {
         };
     }
 
+    /**
+     * Find coachings near a location using the Haversine formula.
+     * Returns coachings within `radiusKm` of the given lat/lng,
+     * sorted by distance ascending.
+     */
+    async findNearby(lat: number, lng: number, radiusKm: number = 20, page: number = 1, limit: number = 20) {
+        // Pull all active coachings that have an address with coordinates
+        const coachings = await prisma.coaching.findMany({
+            where: {
+                status: 'active',
+                onboardingComplete: true,
+                address: {
+                    latitude: { not: null },
+                    longitude: { not: null },
+                },
+            },
+            include: {
+                owner: {
+                    select: { id: true, name: true, email: true, picture: true },
+                },
+                address: true,
+                _count: { select: { members: true } },
+            },
+        });
+
+        // Haversine distance in km
+        const toRad = (deg: number) => (deg * Math.PI) / 180;
+        const haversine = (lat1: number, lon1: number, lat2: number, lon2: number) => {
+            const R = 6371; // Earth radius in km
+            const dLat = toRad(lat2 - lat1);
+            const dLon = toRad(lon2 - lon1);
+            const a =
+                Math.sin(dLat / 2) ** 2 +
+                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLon / 2) ** 2;
+            return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+        };
+
+        // Filter + compute distance
+        const withDistance = coachings
+            .map((c) => {
+                const addr = c.address!;
+                const dist = haversine(lat, lng, addr.latitude!, addr.longitude!);
+                return { coaching: c, distance: Math.round(dist * 10) / 10 };
+            })
+            .filter((c) => c.distance <= radiusKm)
+            .sort((a, b) => a.distance - b.distance);
+
+        const total = withDistance.length;
+        const skip = (page - 1) * limit;
+        const paged = withDistance.slice(skip, skip + limit);
+
+        return {
+            coachings: paged.map(({ coaching, distance }) => ({
+                id: coaching.id,
+                name: coaching.name,
+                slug: coaching.slug,
+                description: coaching.description,
+                logo: coaching.logo,
+                coverImage: coaching.coverImage,
+                status: coaching.status,
+                ownerId: coaching.ownerId,
+                owner: coaching.owner,
+                createdAt: coaching.createdAt,
+                updatedAt: coaching.updatedAt,
+                memberCount: coaching._count.members,
+                category: coaching.category,
+                subjects: coaching.subjects,
+                isVerified: coaching.isVerified,
+                tagline: coaching.tagline,
+                address: coaching.address,
+                distance,
+            })),
+            pagination: { page, limit, total, totalPages: Math.ceil(total / limit) },
+        };
+    }
+
     async getMembers(coachingId: string) {
         const members = await prisma.coachingMember.findMany({
             where: { coachingId },

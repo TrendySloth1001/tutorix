@@ -1,7 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:latlong2/latlong.dart';
+import '../../../core/constants/api_constants.dart';
 import '../../../shared/models/user_model.dart';
+import '../../../shared/widgets/app_alert.dart';
+import '../../coaching/models/coaching_model.dart';
+import '../services/explore_service.dart';
 
-/// Explore screen — discover coaching institutes, browse subjects, etc.
 class ExploreScreen extends StatefulWidget {
   final UserModel user;
   final ValueChanged<UserModel>? onUserUpdated;
@@ -12,59 +19,1184 @@ class ExploreScreen extends StatefulWidget {
   State<ExploreScreen> createState() => _ExploreScreenState();
 }
 
-class _ExploreScreenState extends State<ExploreScreen> {
+class _ExploreScreenState extends State<ExploreScreen>
+    with TickerProviderStateMixin {
+  final ExploreService _service = ExploreService();
+  final MapController _mapController = MapController();
+
+  // Location state
+  LatLng? _userLocation;
+  bool _locationLoading = true;
+  String? _locationError;
+
+  // Data
+  List<NearbyCoaching> _coachings = [];
+  bool _dataLoading = false;
+  StreamSubscription? _dataSub;
+
+  // Radius
+  double _radiusKm = 20;
+  static const List<double> _radiusOptions = [5, 10, 20, 50, 100];
+
+  // Map
+  bool _mapExpanded = false;
+  NearbyCoaching? _selectedCoaching;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchLocation();
+  }
+
+  @override
+  void dispose() {
+    _dataSub?.cancel();
+    _mapController.dispose();
+    super.dispose();
+  }
+
+  // ── Location ──────────────────────────────────────────────────────────
+
+  Future<void> _fetchLocation() async {
+    setState(() {
+      _locationLoading = true;
+      _locationError = null;
+    });
+
+    try {
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) {
+        setState(() {
+          _locationLoading = false;
+          _locationError = 'Location services are disabled';
+        });
+        return;
+      }
+
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          setState(() {
+            _locationLoading = false;
+            _locationError = 'Location permission denied';
+          });
+          return;
+        }
+      }
+
+      if (permission == LocationPermission.deniedForever) {
+        setState(() {
+          _locationLoading = false;
+          _locationError = 'Location permission permanently denied';
+        });
+        return;
+      }
+
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+          timeLimit: Duration(seconds: 15),
+        ),
+      );
+
+      setState(() {
+        _userLocation = LatLng(position.latitude, position.longitude);
+        _locationLoading = false;
+      });
+      _loadNearby();
+    } catch (e) {
+      setState(() {
+        _locationLoading = false;
+        _locationError = 'Could not get your location';
+      });
+    }
+  }
+
+  // ── Data ───────────────────────────────────────────────────────────────
+
+  void _loadNearby() {
+    if (_userLocation == null) return;
+    _dataSub?.cancel();
+    setState(() => _dataLoading = _coachings.isEmpty);
+
+    _dataSub = _service
+        .watchNearby(
+          lat: _userLocation!.latitude,
+          lng: _userLocation!.longitude,
+          radiusKm: _radiusKm,
+        )
+        .listen(
+          (list) {
+            if (!mounted) return;
+            setState(() {
+              _coachings = list;
+              _dataLoading = false;
+            });
+          },
+          onError: (e) {
+            if (!mounted) return;
+            setState(() => _dataLoading = false);
+            AppAlert.error(context, e);
+          },
+        );
+  }
+
+  void _onRadiusChanged(double radius) {
+    setState(() {
+      _radiusKm = radius;
+      _selectedCoaching = null;
+    });
+    _loadNearby();
+  }
+
+  // ── Build ──────────────────────────────────────────────────────────────
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
-      appBar: AppBar(
-        title: Text(
-          'Explore',
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
+      body: CustomScrollView(
+        slivers: [
+          // ── App Bar ──────────────────────────────────────────────────
+          SliverAppBar(
+            expandedHeight: 70,
+            floating: true,
+            pinned: true,
+            backgroundColor: theme.colorScheme.surface,
+            surfaceTintColor: Colors.transparent,
+            elevation: 0,
+            flexibleSpace: FlexibleSpaceBar(
+              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+              title: Text(
+                'Explore',
+                style: theme.textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.bold,
+                  color: theme.colorScheme.onSurface,
+                ),
+              ),
+            ),
+          ),
+
+          // ── Content ────────────────────────────────────────────────
+          if (_locationLoading)
+            const SliverFillRemaining(child: _LocationLoadingView())
+          else if (_locationError != null)
+            SliverFillRemaining(
+              child: _LocationErrorView(
+                error: _locationError!,
+                onRetry: _fetchLocation,
+                onOpenSettings: () => Geolocator.openAppSettings(),
+              ),
+            )
+          else ...[
+            // Map card
+            SliverToBoxAdapter(
+              child: _MapCard(
+                userLocation: _userLocation!,
+                coachings: _coachings,
+                radiusKm: _radiusKm,
+                mapController: _mapController,
+                expanded: _mapExpanded,
+                selectedCoaching: _selectedCoaching,
+                onToggleExpand: () =>
+                    setState(() => _mapExpanded = !_mapExpanded),
+                onMarkerTap: (c) => setState(() => _selectedCoaching = c),
+                onDismissSelection: () =>
+                    setState(() => _selectedCoaching = null),
+              ),
+            ),
+
+            // Radius chips
+            SliverToBoxAdapter(
+              child: _RadiusSelector(
+                current: _radiusKm,
+                options: _radiusOptions,
+                onChanged: _onRadiusChanged,
+              ),
+            ),
+
+            // Section header
+            SliverToBoxAdapter(
+              child: Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                child: Row(
+                  children: [
+                    Icon(Icons.near_me_rounded,
+                        size: 18,
+                        color: theme.colorScheme.primary
+                            .withValues(alpha: 0.6)),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Nearby Coachings',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w600,
+                        color: theme.colorScheme.primary
+                            .withValues(alpha: 0.8),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    if (!_dataLoading)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primary
+                              .withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text(
+                          '${_coachings.length}',
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+
+            // List
+            if (_dataLoading)
+              const SliverToBoxAdapter(
+                child: Padding(
+                  padding: EdgeInsets.only(top: 60),
+                  child: Center(child: CircularProgressIndicator()),
+                ),
+              )
+            else if (_coachings.isEmpty)
+              SliverFillRemaining(
+                hasScrollBody: false,
+                child: _EmptyNearbyView(radiusKm: _radiusKm),
+              )
+            else
+              SliverPadding(
+                padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+                sliver: SliverList.builder(
+                  itemCount: _coachings.length,
+                  itemBuilder: (context, index) {
+                    final item = _coachings[index];
+                    return _NearbyCoachingCard(
+                      item: item,
+                      isSelected: _selectedCoaching?.coaching.id ==
+                          item.coaching.id,
+                      onTap: () {
+                        setState(() => _selectedCoaching = item);
+                        final addr = item.coaching.address;
+                        if (addr?.latitude != null && addr?.longitude != null) {
+                          _mapController.move(
+                            LatLng(addr!.latitude!, addr.longitude!),
+                            14,
+                          );
+                          if (!_mapExpanded) {
+                            setState(() => _mapExpanded = true);
+                          }
+                        }
+                      },
+                    );
+                  },
+                ),
+              ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  MAP CARD
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _MapCard extends StatelessWidget {
+  final LatLng userLocation;
+  final List<NearbyCoaching> coachings;
+  final double radiusKm;
+  final MapController mapController;
+  final bool expanded;
+  final NearbyCoaching? selectedCoaching;
+  final VoidCallback onToggleExpand;
+  final ValueChanged<NearbyCoaching> onMarkerTap;
+  final VoidCallback onDismissSelection;
+
+  const _MapCard({
+    required this.userLocation,
+    required this.coachings,
+    required this.radiusKm,
+    required this.mapController,
+    required this.expanded,
+    required this.selectedCoaching,
+    required this.onToggleExpand,
+    required this.onMarkerTap,
+    required this.onDismissSelection,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final mapHeight = expanded ? 380.0 : 220.0;
+
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeInOut,
+        height: mapHeight + (selectedCoaching != null ? 80 : 0),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 0.08),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: theme.shadowColor.withValues(alpha: 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            // Map
+            SizedBox(
+              height: mapHeight,
+              child: FlutterMap(
+                mapController: mapController,
+                options: MapOptions(
+                  initialCenter: userLocation,
+                  initialZoom: _zoomForRadius(radiusKm),
+                  interactionOptions: const InteractionOptions(
+                    flags: InteractiveFlag.all & ~InteractiveFlag.rotate,
+                  ),
+                  onTap: (_, _) => onDismissSelection(),
+                ),
+                children: [
+                  TileLayer(
+                    urlTemplate:
+                        'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                    userAgentPackageName: 'com.tutorix.app',
+                    maxZoom: 19,
+                  ),
+
+                  // Radius circle
+                  CircleLayer(
+                    circles: [
+                      CircleMarker(
+                        point: userLocation,
+                        radius: radiusKm * 1000,
+                        useRadiusInMeter: true,
+                        color: theme.colorScheme.primary
+                            .withValues(alpha: 0.06),
+                        borderColor: theme.colorScheme.primary
+                            .withValues(alpha: 0.25),
+                        borderStrokeWidth: 1.5,
+                      ),
+                    ],
+                  ),
+
+                  // Coaching markers
+                  MarkerLayer(
+                    markers: [
+                      // User marker
+                      Marker(
+                        point: userLocation,
+                        width: 36,
+                        height: 36,
+                        child: _UserLocationDot(
+                            color: theme.colorScheme.primary),
+                      ),
+                      // Coaching markers
+                      ...coachings.map((c) {
+                        final addr = c.coaching.address;
+                        if (addr?.latitude == null ||
+                            addr?.longitude == null) {
+                          return null;
+                        }
+                        final isSelected =
+                            selectedCoaching?.coaching.id == c.coaching.id;
+                        return Marker(
+                          point: LatLng(addr!.latitude!, addr.longitude!),
+                          width: isSelected ? 48 : 40,
+                          height: isSelected ? 48 : 40,
+                          child: GestureDetector(
+                            onTap: () => onMarkerTap(c),
+                            child: _CoachingMarkerPin(
+                              coaching: c.coaching,
+                              isSelected: isSelected,
+                            ),
+                          ),
+                        );
+                      }).nonNulls,
+                    ],
+                  ),
+                ],
+              ),
+            ),
+
+            // Expand / collapse
+            Positioned(
+              top: 12,
+              right: 12,
+              child: _MapActionButton(
+                icon: expanded
+                    ? Icons.fullscreen_exit_rounded
+                    : Icons.fullscreen_rounded,
+                onTap: onToggleExpand,
+              ),
+            ),
+
+            // Re-center
+            Positioned(
+              top: 12,
+              left: 12,
+              child: _MapActionButton(
+                icon: Icons.my_location_rounded,
+                onTap: () => mapController.move(
+                  userLocation,
+                  _zoomForRadius(radiusKm),
+                ),
+              ),
+            ),
+
+            // Selected coaching preview
+            if (selectedCoaching != null)
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: _MapPreviewCard(item: selectedCoaching!),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  double _zoomForRadius(double km) {
+    if (km <= 5) return 13;
+    if (km <= 10) return 12;
+    if (km <= 20) return 11;
+    if (km <= 50) return 10;
+    return 9;
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  MAP HELPER WIDGETS
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _UserLocationDot extends StatelessWidget {
+  final Color color;
+  const _UserLocationDot({required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: Container(
+        width: 18,
+        height: 18,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white, width: 3),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.4),
+              blurRadius: 10,
+              spreadRadius: 4,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _CoachingMarkerPin extends StatelessWidget {
+  final CoachingModel coaching;
+  final bool isSelected;
+
+  const _CoachingMarkerPin(
+      {required this.coaching, required this.isSelected});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final bgColor = isSelected
+        ? theme.colorScheme.primary
+        : theme.colorScheme.surface;
+    final fgColor = isSelected
+        ? theme.colorScheme.onPrimary
+        : theme.colorScheme.primary;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 200),
+      decoration: BoxDecoration(
+        color: bgColor,
+        shape: BoxShape.circle,
+        border: Border.all(
+          color: isSelected
+              ? theme.colorScheme.primary
+              : theme.colorScheme.primary.withValues(alpha: 0.3),
+          width: isSelected ? 2.5 : 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: (isSelected
+                    ? theme.colorScheme.primary
+                    : Colors.black)
+                .withValues(alpha: isSelected ? 0.35 : 0.15),
+            blurRadius: isSelected ? 12 : 6,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: coaching.logo != null
+          ? ClipOval(
+              child: Image.network(
+                '${ApiConstants.baseUrl}/upload/assets/coaching-logos/${coaching.logo}',
+                width: isSelected ? 48 : 40,
+                height: isSelected ? 48 : 40,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Icon(
+                  Icons.school_rounded,
+                  size: isSelected ? 22 : 18,
+                  color: fgColor,
+                ),
+              ),
+            )
+          : Icon(
+              Icons.school_rounded,
+              size: isSelected ? 22 : 18,
+              color: fgColor,
+            ),
+    );
+  }
+}
+
+class _MapActionButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onTap;
+
+  const _MapActionButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: theme.colorScheme.primary.withValues(alpha: 0.1),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Icon(icon, size: 20, color: theme.colorScheme.primary),
+      ),
+    );
+  }
+}
+
+class _MapPreviewCard extends StatelessWidget {
+  final NearbyCoaching item;
+  const _MapPreviewCard({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final coaching = item.coaching;
+
+    return Container(
+      height: 80,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        border: Border(
+          top: BorderSide(
+            color:
+                theme.colorScheme.primary.withValues(alpha: 0.08),
           ),
         ),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
       ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(40),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(32),
+      child: Row(
+        children: [
+          // Logo
+          Container(
+            width: 48,
+            height: 48,
+            decoration: BoxDecoration(
+              color:
+                  theme.colorScheme.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: coaching.logo != null
+                ? ClipRRect(
+                    borderRadius: BorderRadius.circular(14),
+                    child: Image.network(
+                      '${ApiConstants.baseUrl}/upload/assets/coaching-logos/${coaching.logo}',
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => Icon(
+                        Icons.school_rounded,
+                        color: theme.colorScheme.primary,
+                      ),
+                    ),
+                  )
+                : Icon(Icons.school_rounded,
+                    color: theme.colorScheme.primary),
+          ),
+          const SizedBox(width: 12),
+          // Info
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  coaching.name,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  [
+                    if (coaching.address?.city != null)
+                      coaching.address!.city,
+                    '${item.distanceKm} km away',
+                  ].join(' · '),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.secondary
+                        .withValues(alpha: 0.7),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Distance badge
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+            decoration: BoxDecoration(
+              color:
+                  theme.colorScheme.primary.withValues(alpha: 0.08),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Text(
+              '${item.distanceKm} km',
+              style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  RADIUS SELECTOR
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _RadiusSelector extends StatelessWidget {
+  final double current;
+  final List<double> options;
+  final ValueChanged<double> onChanged;
+
+  const _RadiusSelector({
+    required this.current,
+    required this.options,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 4, 16, 12),
+      child: SizedBox(
+        height: 38,
+        child: ListView.separated(
+          scrollDirection: Axis.horizontal,
+          itemCount: options.length,
+          separatorBuilder: (_, _) => const SizedBox(width: 8),
+          itemBuilder: (context, index) {
+            final r = options[index];
+            final selected = r == current;
+            return GestureDetector(
+              onTap: () => onChanged(r),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
+                  color: selected
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.surface,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(
+                    color: selected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.primary
+                            .withValues(alpha: 0.15),
+                    width: selected ? 1.5 : 1,
+                  ),
+                  boxShadow: selected
+                      ? [
+                          BoxShadow(
+                            color: theme.colorScheme.primary
+                                .withValues(alpha: 0.25),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          )
+                        ]
+                      : null,
+                ),
+                child: Text(
+                  '${r.toInt()} km',
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.w600,
+                    color: selected
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.primary
+                            .withValues(alpha: 0.7),
+                  ),
+                ),
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  NEARBY COACHING CARD
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _NearbyCoachingCard extends StatelessWidget {
+  final NearbyCoaching item;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _NearbyCoachingCard({
+    required this.item,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final coaching = item.coaching;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: GestureDetector(
+        onTap: onTap,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: isSelected
+                  ? theme.colorScheme.primary.withValues(alpha: 0.3)
+                  : theme.colorScheme.primary
+                      .withValues(alpha: 0.05),
+              width: isSelected ? 1.5 : 1,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: (isSelected
+                        ? theme.colorScheme.primary
+                        : theme.shadowColor)
+                    .withValues(alpha: isSelected ? 0.1 : 0.05),
+                blurRadius: isSelected ? 16 : 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
+          ),
+          child: Row(
+            children: [
+              // Logo
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary
+                      .withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: theme.colorScheme.primary
+                        .withValues(alpha: 0.06),
+                  ),
+                ),
+                child: coaching.logo != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(16),
+                        child: Image.network(
+                          '${ApiConstants.baseUrl}/upload/assets/coaching-logos/${coaching.logo}',
+                          fit: BoxFit.cover,
+                          errorBuilder: (_, _, _) => Icon(
+                            Icons.school_rounded,
+                            color: theme.colorScheme.primary,
+                            size: 26,
+                          ),
+                        ),
+                      )
+                    : Icon(
+                        Icons.school_rounded,
+                        color: theme.colorScheme.primary,
+                        size: 26,
+                      ),
+              ),
+              const SizedBox(width: 14),
+              // Content
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Name + verified
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            coaching.name,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style:
+                                theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w600,
+                              letterSpacing: -0.3,
+                            ),
+                          ),
+                        ),
+                        if (coaching.isVerified) ...[
+                          const SizedBox(width: 4),
+                          Icon(Icons.verified_rounded,
+                              size: 16,
+                              color: theme.colorScheme.primary),
+                        ],
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    // Category + City
+                    Text(
+                      [
+                        if (coaching.category != null)
+                          coaching.category!,
+                        if (coaching.address?.city != null)
+                          coaching.address!.city,
+                      ].join(' · '),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.secondary
+                            .withValues(alpha: 0.65),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    // Stats row
+                    Row(
+                      children: [
+                        _StatChip(
+                          icon: Icons.group_rounded,
+                          label: '${coaching.memberCount}',
+                          theme: theme,
+                        ),
+                        const SizedBox(width: 8),
+                        _StatChip(
+                          icon: Icons.near_me_rounded,
+                          label: '${item.distanceKm} km',
+                          theme: theme,
+                        ),
+                        if (coaching.subjects.isNotEmpty) ...[
+                          const SizedBox(width: 8),
+                          Flexible(
+                            child: _StatChip(
+                              icon: Icons.menu_book_rounded,
+                              label: coaching.subjects.length > 2
+                                  ? '${coaching.subjects.take(2).join(", ")}…'
+                                  : coaching.subjects.join(", "),
+                              theme: theme,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              // Arrow
+              Container(
+                width: 32,
+                height: 32,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary
+                      .withValues(alpha: 0.06),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
-                  Icons.explore_outlined,
-                  size: 80,
-                  color: theme.colorScheme.primary.withValues(alpha: 0.4),
-                ),
-              ),
-              const SizedBox(height: 32),
-              Text(
-                'Explore Coming Soon',
-                style: theme.textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Discover coaching institutes, browse subjects, and find the perfect match for your learning goals.',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodyLarge?.copyWith(
-                  color: theme.colorScheme.secondary.withValues(alpha: 0.6),
-                  height: 1.5,
+                  Icons.arrow_forward_ios_rounded,
+                  size: 13,
+                  color: theme.colorScheme.primary
+                      .withValues(alpha: 0.3),
                 ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _StatChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final ThemeData theme;
+
+  const _StatChip({
+    required this.icon,
+    required this.label,
+    required this.theme,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon,
+            size: 13,
+            color:
+                theme.colorScheme.secondary.withValues(alpha: 0.5)),
+        const SizedBox(width: 3),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelSmall?.copyWith(
+              fontSize: 11,
+              color: theme.colorScheme.secondary
+                  .withValues(alpha: 0.65),
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  EMPTY / ERROR / LOADING STATES
+// ═══════════════════════════════════════════════════════════════════════════
+
+class _LocationLoadingView extends StatelessWidget {
+  const _LocationLoadingView();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              color:
+                  theme.colorScheme.primary.withValues(alpha: 0.06),
+              shape: BoxShape.circle,
+            ),
+            child: SizedBox(
+              width: 32,
+              height: 32,
+              child: CircularProgressIndicator(
+                strokeWidth: 3,
+                color: theme.colorScheme.primary,
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Getting your location…',
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'This helps us find coachings near you',
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.secondary
+                  .withValues(alpha: 0.6),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _LocationErrorView extends StatelessWidget {
+  final String error;
+  final VoidCallback onRetry;
+  final VoidCallback onOpenSettings;
+
+  const _LocationErrorView({
+    required this.error,
+    required this.onRetry,
+    required this.onOpenSettings,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final isPermanent = error.contains('permanently');
+
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.primary
+                  .withValues(alpha: 0.06),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.location_off_rounded,
+              size: 56,
+              color: theme.colorScheme.primary
+                  .withValues(alpha: 0.4),
+            ),
+          ),
+          const SizedBox(height: 28),
+          Text(
+            'Location Needed',
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            isPermanent
+                ? 'Location permission was permanently denied. Please enable it from your device settings to discover nearby coachings.'
+                : error,
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyLarge?.copyWith(
+              color: theme.colorScheme.secondary
+                  .withValues(alpha: 0.6),
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 28),
+          if (isPermanent)
+            FilledButton.icon(
+              onPressed: onOpenSettings,
+              icon: const Icon(Icons.settings_rounded, size: 18),
+              label: const Text('Open Settings'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            )
+          else
+            FilledButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded, size: 18),
+              label: const Text('Try Again'),
+              style: FilledButton.styleFrom(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 24, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+class _EmptyNearbyView extends StatelessWidget {
+  final double radiusKm;
+  const _EmptyNearbyView({required this.radiusKm});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.all(40),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(28),
+            decoration: BoxDecoration(
+              color: theme.colorScheme.tertiary
+                  .withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.explore_off_rounded,
+              size: 56,
+              color: theme.colorScheme.primary
+                  .withValues(alpha: 0.35),
+            ),
+          ),
+          const SizedBox(height: 28),
+          Text(
+            'No Coachings Found',
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'No coaching institutes found within ${radiusKm.toInt()} km. Try expanding the search radius.',
+            textAlign: TextAlign.center,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.secondary
+                  .withValues(alpha: 0.6),
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }

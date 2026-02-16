@@ -5,6 +5,8 @@ import { authMiddleware } from '../../shared/middleware/auth.middleware.js';
 
 const ALLOWED_IMAGE_TYPES = [
     'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+    'image/bmp', 'image/tiff', 'image/avif', 'image/heic', 'image/heif',
+    'image/x-icon', 'image/vnd.microsoft.icon',
 ];
 const ALLOWED_DOC_TYPES = [
     ...ALLOWED_IMAGE_TYPES,
@@ -13,12 +15,17 @@ const ALLOWED_DOC_TYPES = [
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.ms-powerpoint',
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+    'application/vnd.ms-excel',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    'text/csv',
     'text/plain',
+    'application/zip',
+    'application/x-zip-compressed',
 ];
 
 const imageFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) cb(null, true);
-    else cb(new Error('Only image files (JPEG, PNG, GIF, WebP, SVG) are allowed'));
+    else cb(new Error('Only image files (JPEG, PNG, GIF, WebP, SVG, BMP, TIFF, AVIF, HEIC, HEIF, ICO) are allowed'));
 };
 const docFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     if (ALLOWED_DOC_TYPES.includes(file.mimetype)) cb(null, true);
