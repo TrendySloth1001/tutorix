@@ -426,10 +426,41 @@ class _SubmissionStatus extends StatelessWidget {
           if (s.files.isNotEmpty) ...[
             const SizedBox(height: 8),
             Text(
-              '${s.files.length} file(s) submitted',
+              'Submitted Files',
               style: theme.textTheme.labelSmall?.copyWith(
+                fontWeight: FontWeight.w600,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
+            ),
+            const SizedBox(height: 6),
+            Wrap(
+              spacing: 6,
+              runSpacing: 4,
+              children: s.files.map((f) {
+                final isPDF = f.fileName.toLowerCase().endsWith('.pdf');
+                return InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => FileViewerScreen(
+                          url: f.url,
+                          fileName: f.fileName,
+                          isPDF: isPDF,
+                        ),
+                      ),
+                    );
+                  },
+                  child: Chip(
+                    avatar: Icon(
+                      isPDF ? Icons.picture_as_pdf_outlined : Icons.image_outlined,
+                      size: 14,
+                    ),
+                    label: Text(f.fileName, style: theme.textTheme.labelSmall),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                );
+              }).toList(),
             ),
           ],
         ],

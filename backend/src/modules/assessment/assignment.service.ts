@@ -1,4 +1,5 @@
 import prisma from '../../infra/prisma.js';
+import { onAssignmentCreated } from '../notification/notification.hooks.js';
 
 // ─── DTOs ────────────────────────────────────────────────────────────
 
@@ -58,7 +59,7 @@ class AssignmentService {
         dto: CreateAssignmentDto,
         fileUrls?: { url: string; fileName: string; fileType: string; fileSize: number; mimeType?: string }[]
     ) {
-        return prisma.assignment.create({
+        const result = await prisma.assignment.create({
             data: {
                 coachingId,
                 batchId,
@@ -74,6 +75,11 @@ class AssignmentService {
             },
             select: ASSIGNMENT_LIST_SELECT,
         });
+
+        // Fire notification for new assignment
+        onAssignmentCreated(result.id, dto.title, batchId, coachingId);
+
+        return result;
     }
 
     // ── List assignments for a batch ──

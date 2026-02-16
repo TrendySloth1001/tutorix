@@ -44,6 +44,11 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
   int _unreadNotifications = 0;
   bool _isLoading = true;
 
+  // Dashboard feed data
+  List<dynamic> _feedAssessments = [];
+  List<dynamic> _feedAssignments = [];
+  List<dynamic> _feedNotices = [];
+
   final List<StreamSubscription> _subs = [];
 
   @override
@@ -70,7 +75,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
     int completed = 0;
     void checkDone() {
       completed++;
-      if (completed >= 4 && mounted) setState(() => _isLoading = false);
+      if (completed >= 5 && mounted) setState(() => _isLoading = false);
     }
 
     _subs.add(
@@ -101,6 +106,23 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
     _subs.add(
       _batchService.watchRecentNotes(widget.coaching.id).listen((list) {
         if (mounted) setState(() => _recentNotes = list);
+        checkDone();
+      }, onError: (_) => checkDone()),
+    );
+
+    // Dashboard feed (assessments, assignments, notices)
+    _subs.add(
+      _batchService.watchDashboardFeed(widget.coaching.id).listen((data) {
+        if (mounted) {
+          setState(() {
+            _feedAssessments =
+                (data['assessments'] as List<dynamic>?) ?? [];
+            _feedAssignments =
+                (data['assignments'] as List<dynamic>?) ?? [];
+            _feedNotices =
+                (data['notices'] as List<dynamic>?) ?? [];
+          });
+        }
         checkDone();
       }, onError: (_) => checkDone()),
     );
@@ -243,6 +265,43 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                     ),
                   ],
 
+                  // ── Swipeable Notices (for students/teachers) ──
+                  if (!_canManageMembers && _feedNotices.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(
+                      title: 'Notices',
+                      icon: Icons.campaign_rounded,
+                    ),
+                    const SizedBox(height: 8),
+                    _SwipeableNoticesSection(notices: _feedNotices),
+                  ],
+
+                  // ── New Quizzes (for students/teachers) ──
+                  if (!_canManageMembers && _feedAssessments.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(
+                      title: 'New Quizzes',
+                      icon: Icons.quiz_rounded,
+                    ),
+                    const SizedBox(height: 8),
+                    ..._feedAssessments.map(
+                      (a) => _FeedAssessmentCard(assessment: a),
+                    ),
+                  ],
+
+                  // ── New Assignments (for students/teachers) ──
+                  if (!_canManageMembers && _feedAssignments.isNotEmpty) ...[
+                    const SizedBox(height: 24),
+                    _SectionHeader(
+                      title: 'New Assignments',
+                      icon: Icons.assignment_rounded,
+                    ),
+                    const SizedBox(height: 8),
+                    ..._feedAssignments.map(
+                      (a) => _FeedAssignmentCard(assignment: a),
+                    ),
+                  ],
+
                   // ── Recent Notes (priority for students) ──
                   if (_recentNotes.isNotEmpty) ...[
                     const SizedBox(height: 24),
@@ -282,7 +341,11 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                   ],
 
                   // ── Student/Teacher Empty state ──
-                  if (!_canManageMembers && _recentNotes.isEmpty) ...[
+                  if (!_canManageMembers &&
+                      _recentNotes.isEmpty &&
+                      _feedAssessments.isEmpty &&
+                      _feedAssignments.isEmpty &&
+                      _feedNotices.isEmpty) ...[
                     const SizedBox(height: 60),
                     Center(
                       child: Column(
@@ -1412,6 +1475,455 @@ class _DescriptionCardState extends State<_DescriptionCard> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ── DASHBOARD FEED WIDGETS
+// ═══════════════════════════════════════════════════════════════════════════
+
+/// Swipeable notices carousel with PageView + dots indicator.
+class _SwipeableNoticesSection extends StatefulWidget {
+  final List<dynamic> notices;
+  const _SwipeableNoticesSection({required this.notices});
+
+  @override
+  State<_SwipeableNoticesSection> createState() =>
+      _SwipeableNoticesSectionState();
+}
+
+class _SwipeableNoticesSectionState extends State<_SwipeableNoticesSection> {
+  int _currentPage = 0;
+  late final PageController _pageController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      children: [
+        SizedBox(
+          height: 130,
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: widget.notices.length,
+            onPageChanged: (i) => setState(() => _currentPage = i),
+            itemBuilder: (context, index) {
+              final notice = widget.notices[index] as Map<String, dynamic>;
+              final title = notice['title'] as String? ?? '';
+              final message = notice['message'] as String? ?? '';
+              final batch = notice['batch'] as Map<String, dynamic>?;
+              final batchName = batch?['name'] as String? ?? '';
+              final sentBy = notice['sentBy'] as Map<String, dynamic>?;
+              final senderName = sentBy?['name'] as String? ?? '';
+              final createdAt = notice['createdAt'] != null
+                  ? DateTime.tryParse(notice['createdAt'] as String)
+                  : null;
+
+              return Container(
+                margin: const EdgeInsets.symmetric(horizontal: 4),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [
+                      theme.colorScheme.primaryContainer.withValues(alpha: 0.6),
+                      theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(
+                          Icons.campaign_rounded,
+                          size: 18,
+                          color: theme.colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            title,
+                            style: theme.textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        if (createdAt != null)
+                          Text(
+                            _timeAgo(createdAt),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontSize: 11,
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.5,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Expanded(
+                      child: Text(
+                        message,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.7,
+                          ),
+                          height: 1.4,
+                        ),
+                        maxLines: 3,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        if (batchName.isNotEmpty) ...[
+                          Icon(
+                            Icons.class_outlined,
+                            size: 12,
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.6,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            batchName,
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.primary,
+                              fontWeight: FontWeight.w600,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                        const Spacer(),
+                        if (senderName.isNotEmpty)
+                          Text(
+                            '— $senderName',
+                            style: theme.textTheme.labelSmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.4,
+                              ),
+                              fontSize: 11,
+                              fontStyle: FontStyle.italic,
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+        if (widget.notices.length > 1) ...[
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: List.generate(widget.notices.length, (i) {
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                margin: const EdgeInsets.symmetric(horizontal: 3),
+                width: _currentPage == i ? 18 : 6,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: _currentPage == i
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.primary.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(3),
+                ),
+              );
+            }),
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+/// Card for a new quiz/assessment in the dashboard feed.
+class _FeedAssessmentCard extends StatelessWidget {
+  final dynamic assessment;
+  const _FeedAssessmentCard({required this.assessment});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final a = assessment as Map<String, dynamic>;
+    final title = a['title'] as String? ?? 'Untitled Quiz';
+    final type = a['type'] as String? ?? 'QUIZ';
+    final batch = a['batch'] as Map<String, dynamic>?;
+    final batchName = batch?['name'] as String? ?? '';
+    final questionCount =
+        (a['_count'] as Map<String, dynamic>?)?['questions'] as int? ?? 0;
+    final duration = a['durationMinutes'] as int? ?? 0;
+    final totalMarks = a['totalMarks'];
+    final createdAt = a['createdAt'] != null
+        ? DateTime.tryParse(a['createdAt'] as String)
+        : null;
+
+    final isQuiz = type == 'QUIZ';
+    final color = isQuiz ? const Color(0xFF4A90A4) : const Color(0xFF6B5B95);
+    final icon = isQuiz ? Icons.quiz_rounded : Icons.assignment_turned_in_rounded;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: color.withValues(alpha: 0.15),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (batchName.isNotEmpty) ...[
+                    Text(
+                      batchName,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                  ],
+                  Text(
+                    title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      _FeedMeta(
+                        icon: Icons.help_outline_rounded,
+                        text: '$questionCount Q${questionCount != 1 ? 's' : ''}',
+                      ),
+                      if (duration > 0) ...[
+                        const SizedBox(width: 12),
+                        _FeedMeta(
+                          icon: Icons.timer_outlined,
+                          text: '${duration}m',
+                        ),
+                      ],
+                      if (totalMarks != null) ...[
+                        const SizedBox(width: 12),
+                        _FeedMeta(
+                          icon: Icons.star_outline_rounded,
+                          text: '$totalMarks marks',
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (createdAt != null)
+              Text(
+                _timeAgo(createdAt),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 11,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Card for a new assignment in the dashboard feed.
+class _FeedAssignmentCard extends StatelessWidget {
+  final dynamic assignment;
+  const _FeedAssignmentCard({required this.assignment});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final a = assignment as Map<String, dynamic>;
+    final title = a['title'] as String? ?? 'Untitled Assignment';
+    final batch = a['batch'] as Map<String, dynamic>?;
+    final batchName = batch?['name'] as String? ?? '';
+    final totalMarks = a['totalMarks'];
+    final dueDate = a['dueDate'] != null
+        ? DateTime.tryParse(a['dueDate'] as String)
+        : null;
+    final createdAt = a['createdAt'] != null
+        ? DateTime.tryParse(a['createdAt'] as String)
+        : null;
+
+    const color = Color(0xFF5B8C5A);
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: color.withValues(alpha: 0.15),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: color.withValues(alpha: 0.06),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(
+                Icons.assignment_outlined,
+                color: color,
+                size: 22,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (batchName.isNotEmpty) ...[
+                    Text(
+                      batchName,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: color,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 11,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                  ],
+                  Text(
+                    title,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  const SizedBox(height: 4),
+                  Row(
+                    children: [
+                      if (dueDate != null) ...[
+                        _FeedMeta(
+                          icon: Icons.event_outlined,
+                          text: 'Due ${DateFormat('MMM dd').format(dueDate)}',
+                        ),
+                        const SizedBox(width: 12),
+                      ],
+                      if (totalMarks != null)
+                        _FeedMeta(
+                          icon: Icons.star_outline_rounded,
+                          text: '$totalMarks marks',
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (createdAt != null)
+              Text(
+                _timeAgo(createdAt),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: 11,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// Small metadata chip used inside feed cards.
+class _FeedMeta extends StatelessWidget {
+  final IconData icon;
+  final String text;
+  const _FeedMeta({required this.icon, required this.text});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(
+          icon,
+          size: 13,
+          color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
+        ),
+        const SizedBox(width: 3),
+        Text(
+          text,
+          style: theme.textTheme.bodySmall?.copyWith(
+            fontSize: 11,
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 }

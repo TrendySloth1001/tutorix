@@ -306,6 +306,20 @@ class BatchService {
   Future<List<BatchNoteModel>> getRecentNotes(String coachingId) =>
       watchRecentNotes(coachingId).last;
 
+  /// GET /coaching/:coachingId/batches/dashboard-feed
+  /// Returns { assessments, assignments, notices } from last 7 days.
+  Stream<Map<String, dynamic>> watchDashboardFeed(String coachingId) {
+    final key = 'batch:$coachingId:dashboard-feed';
+    return _cache.swr<Map<String, dynamic>>(
+      key,
+      () => _api.getAuthenticated(ApiConstants.dashboardFeed(coachingId)),
+      (raw) => raw,
+    );
+  }
+
+  Future<Map<String, dynamic>> getDashboardFeed(String coachingId) =>
+      watchDashboardFeed(coachingId).last;
+
   /// DELETE /coaching/:coachingId/batches/:batchId/notes/:noteId
   Future<bool> deleteNote(
     String coachingId,

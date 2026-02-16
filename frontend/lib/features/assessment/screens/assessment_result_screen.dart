@@ -229,6 +229,33 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
     );
   }
 
+  void _viewStudentResult(AttemptLeaderboardEntry entry) async {
+    try {
+      final result = await _service.getAttemptResult(
+        widget.coachingId,
+        widget.batchId,
+        entry.id,
+      );
+      if (!mounted) return;
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => _StudentResponseSheet(
+            studentName: entry.user?.name ?? 'Unknown',
+            result: result,
+            assessment: widget.assessment,
+          ),
+        ),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error loading response: $e')),
+        );
+      }
+    }
+  }
+
   // ── Teacher Leaderboard View ──
 
   Widget _buildTeacherView() {
@@ -303,8 +330,11 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                   padding: const EdgeInsets.all(16),
                   itemCount: _attempts.length,
                   separatorBuilder: (_, __) => const SizedBox(height: 8),
-                  itemBuilder: (_, i) =>
-                      _LeaderboardTile(rank: i + 1, entry: _attempts[i]),
+                  itemBuilder: (_, i) => _LeaderboardTile(
+                    rank: i + 1,
+                    entry: _attempts[i],
+                    onTap: () => _viewStudentResult(_attempts[i]),
+                  ),
                 ),
         ),
       ],
@@ -439,6 +469,12 @@ class _QuestionResult extends StatelessWidget {
             ],
           ),
 
+          // Show NAT answer
+          if (question.isNAT) ...[
+            const SizedBox(height: 8),
+            _buildNATAnswer(theme),
+          ],
+
           // Show correct answer for MCQ/MSQ
           if (question.isMCQ || question.isMSQ) ...[
             const SizedBox(height: 8),
@@ -515,6 +551,100 @@ class _QuestionResult extends StatelessWidget {
     );
   }
 
+  Widget _buildNATAnswer(ThemeData theme) {
+    final correct = question.correctAnswer;
+    final studentAns = answer?.answer;
+
+    String correctText = '';
+    String studentText = 'Skipped';
+    String toleranceText = '';
+
+    if (correct is Map) {
+      correctText = '${correct['value']}';
+      if (correct['tolerance'] != null && (correct['tolerance'] as num) > 0) {
+        toleranceText = ' (±${correct['tolerance']})';
+      }
+    } else {
+      correctText = '$correct';
+    }
+
+    if (studentAns != null) {
+      if (studentAns is Map) {
+        studentText = '${studentAns['value']}';
+      } else if (studentAns is num) {
+        studentText = '$studentAns';
+      } else {
+        studentText = '$studentAns';
+      }
+    }
+
+    final isCorrect = answer?.isCorrect ?? false;
+    final isSkipped = answer == null;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Student's answer
+        Row(
+          children: [
+            Icon(
+              isSkipped
+                  ? Icons.remove_circle_outline
+                  : isCorrect
+                      ? Icons.check_circle_rounded
+                      : Icons.cancel_rounded,
+              size: 16,
+              color: isSkipped
+                  ? Colors.grey
+                  : isCorrect
+                      ? Colors.green
+                      : Colors.red,
+            ),
+            const SizedBox(width: 6),
+            Text(
+              'Your answer: ',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            Text(
+              studentText,
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: isSkipped
+                    ? Colors.grey
+                    : isCorrect
+                        ? Colors.green.shade700
+                        : Colors.red.shade700,
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 4),
+        // Correct answer
+        Row(
+          children: [
+            const Icon(Icons.check_circle_rounded, size: 16, color: Colors.green),
+            const SizedBox(width: 6),
+            Text(
+              'Correct answer: ',
+              style: theme.textTheme.bodySmall?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            Text(
+              '$correctText$toleranceText',
+              style: theme.textTheme.bodySmall?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: Colors.green.shade700,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
   bool _isCorrectOption(String optId) {
     final correct = question.correctAnswer;
     if (correct is String) return correct == optId;
@@ -534,8 +664,9 @@ class _QuestionResult extends StatelessWidget {
 class _LeaderboardTile extends StatelessWidget {
   final int rank;
   final AttemptLeaderboardEntry entry;
+  final VoidCallback? onTap;
 
-  const _LeaderboardTile({required this.rank, required this.entry});
+  const _LeaderboardTile({required this.rank, required this.entry, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -547,7 +678,10 @@ class _LeaderboardTile extends StatelessWidget {
       _ => null,
     };
 
-    return Container(
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
@@ -606,7 +740,7 @@ class _LeaderboardTile extends StatelessWidget {
             ),
           ),
 
-          // Score
+          // Score + chevron
           Column(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -625,6 +759,132 @@ class _LeaderboardTile extends StatelessWidget {
               ),
             ],
           ),
+          const SizedBox(width: 4),
+          Icon(
+            Icons.chevron_right_rounded,
+            size: 20,
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ],
+      ),
+    ),
+    );
+  }
+}
+
+// ─── Student Response Sheet (Teacher viewing a student's answers) ───
+
+class _StudentResponseSheet extends StatelessWidget {
+  final String studentName;
+  final AttemptResultModel result;
+  final AssessmentModel assessment;
+
+  const _StudentResponseSheet({
+    required this.studentName,
+    required this.result,
+    required this.assessment,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final r = result;
+    final passed = assessment.passingMarks != null &&
+        r.totalScore >= assessment.passingMarks!;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(studentName, style: const TextStyle(fontSize: 16)),
+      ),
+      body: ListView(
+        padding: const EdgeInsets.all(16),
+        children: [
+          // Score summary card
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: passed
+                    ? [Colors.green.shade50, Colors.green.shade100]
+                    : [Colors.blue.shade50, Colors.blue.shade100],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${r.percentage.toStringAsFixed(1)}%',
+                        style: theme.textTheme.headlineMedium?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          color: passed ? Colors.green.shade700 : Colors.blue.shade700,
+                        ),
+                      ),
+                      Text(
+                        '${r.totalScore.toStringAsFixed(1)} / ${r.maxScore.toStringAsFixed(1)} marks',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: passed ? Colors.green.shade600 : Colors.blue.shade600,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (assessment.passingMarks != null)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: (passed ? Colors.green : Colors.red).withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      passed ? 'PASSED' : 'FAILED',
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: passed ? Colors.green.shade700 : Colors.red,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // Stats row
+          Row(
+            children: [
+              _StatBox(label: 'Correct', value: '${r.correctCount}', color: Colors.green),
+              const SizedBox(width: 8),
+              _StatBox(label: 'Wrong', value: '${r.wrongCount}', color: Colors.red),
+              const SizedBox(width: 8),
+              _StatBox(label: 'Skipped', value: '${r.skippedCount}', color: Colors.grey),
+            ],
+          ),
+
+          const SizedBox(height: 20),
+
+          // Question-by-question breakdown
+          Text(
+            'Response Sheet',
+            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+          ),
+          const SizedBox(height: 10),
+          if (r.assessment != null)
+            ...List.generate(r.assessment!.questions.length, (i) {
+              final q = r.assessment!.questions[i];
+              final ans = r.answers.where((a) => a.questionId == q.id);
+              final studentAnswer = ans.isNotEmpty ? ans.first : null;
+              return _QuestionResult(
+                index: i,
+                question: q,
+                answer: studentAnswer,
+              );
+            }),
         ],
       ),
     );

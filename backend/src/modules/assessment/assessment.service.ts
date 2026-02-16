@@ -1,4 +1,5 @@
 import prisma from '../../infra/prisma.js';
+import { onAssessmentPublished } from '../notification/notification.hooks.js';
 
 // ─── DTOs ────────────────────────────────────────────────────────────
 
@@ -217,11 +218,18 @@ class AssessmentService {
 
     // ── Publish / Close assessment ──
     async updateStatus(id: string, status: string) {
-        return prisma.assessment.update({
+        const result = await prisma.assessment.update({
             where: { id },
             data: { status },
             select: ASSESSMENT_LIST_SELECT,
         });
+
+        // Fire notification when assessment is published
+        if (status === 'PUBLISHED') {
+            onAssessmentPublished(id);
+        }
+
+        return result;
     }
 
     // ── Delete assessment ──

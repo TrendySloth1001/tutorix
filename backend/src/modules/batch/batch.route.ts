@@ -15,6 +15,7 @@ router.post('/', authMiddleware, ctrl.create.bind(ctrl));
 router.get('/', authMiddleware, ctrl.list.bind(ctrl));
 router.get('/my', authMiddleware, ctrl.getMyBatches.bind(ctrl));
 router.get('/recent-notes', authMiddleware, ctrl.getRecentNotes.bind(ctrl));
+router.get('/dashboard-feed', authMiddleware, ctrl.getDashboardFeed.bind(ctrl));
 router.get('/storage', authMiddleware, ctrl.getStorage.bind(ctrl)); // Storage usage
 router.get('/:batchId', authMiddleware, ctrl.getById.bind(ctrl));
 router.patch('/:batchId', authMiddleware, ctrl.update.bind(ctrl));

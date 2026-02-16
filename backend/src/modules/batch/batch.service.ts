@@ -1,4 +1,5 @@
 import prisma from '../../infra/prisma.js';
+import { onNoticeCreated } from '../notification/notification.hooks.js';
 
 // ─── DTOs ────────────────────────────────────────────────────────────
 
@@ -362,6 +363,10 @@ export class BatchService {
             include: {
                 sentBy: { select: { id: true, name: true, picture: true } },
             },
+        }).then((result) => {
+            // Fire notification for new notice
+            onNoticeCreated(result.id, data.title, batchId);
+            return result;
         });
     }
 
@@ -470,5 +475,104 @@ export class BatchService {
             select: BATCH_LIST_SELECT,
             orderBy: { createdAt: 'desc' },
         });
+    }
+
+    /**
+     * Dashboard feed — recent assessments, assignments, and notices
+     * across all batches the user belongs to in a coaching.
+     */
+    async getDashboardFeed(userId: string, coachingId: string) {
+        // Get user's wards
+        const userWards = await prisma.ward.findMany({
+            where: { parentId: userId },
+            select: { id: true },
+        });
+        const wardIds = userWards.map((w) => w.id);
+
+        const whereConditions: any[] = [{ userId }];
+        if (wardIds.length > 0) {
+            whereConditions.push({ wardId: { in: wardIds } });
+        }
+
+        const memberIds = (await prisma.coachingMember.findMany({
+            where: { coachingId, OR: whereConditions },
+            select: { id: true },
+        })).map((m) => m.id);
+
+        if (memberIds.length === 0) return { assessments: [], assignments: [], notices: [] };
+
+        const batchIds = (await prisma.batchMember.findMany({
+            where: { memberId: { in: memberIds } },
+            select: { batchId: true },
+        })).map((b) => b.batchId);
+
+        if (batchIds.length === 0) return { assessments: [], assignments: [], notices: [] };
+
+        const sevenDaysAgo = new Date();
+        sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+
+        // Fetch all three in parallel
+        const [assessments, assignments, notices] = await Promise.all([
+            // Recent published assessments
+            prisma.assessment.findMany({
+                where: {
+                    batchId: { in: batchIds },
+                    status: 'PUBLISHED',
+                    createdAt: { gte: sevenDaysAgo },
+                },
+                select: {
+                    id: true,
+                    title: true,
+                    type: true,
+                    totalMarks: true,
+                    durationMinutes: true,
+                    createdAt: true,
+                    batchId: true,
+                    batch: { select: { id: true, name: true } },
+                    _count: { select: { questions: true } },
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 10,
+            }),
+            // Recent assignments
+            prisma.assignment.findMany({
+                where: {
+                    batchId: { in: batchIds },
+                    status: 'ACTIVE',
+                    createdAt: { gte: sevenDaysAgo },
+                },
+                select: {
+                    id: true,
+                    title: true,
+                    dueDate: true,
+                    totalMarks: true,
+                    createdAt: true,
+                    batchId: true,
+                    batch: { select: { id: true, name: true } },
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 10,
+            }),
+            // Recent notices
+            prisma.batchNotice.findMany({
+                where: {
+                    batchId: { in: batchIds },
+                    createdAt: { gte: sevenDaysAgo },
+                },
+                select: {
+                    id: true,
+                    title: true,
+                    message: true,
+                    createdAt: true,
+                    batchId: true,
+                    batch: { select: { id: true, name: true } },
+                    sentBy: { select: { id: true, name: true } },
+                },
+                orderBy: { createdAt: 'desc' },
+                take: 10,
+            }),
+        ]);
+
+        return { assessments, assignments, notices };
     }
 }
