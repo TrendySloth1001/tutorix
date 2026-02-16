@@ -530,7 +530,12 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
           body: TabBarView(
             controller: _tabCtrl,
             children: [
-              _OverviewTab(batch: b, members: _members),
+              _OverviewTab(
+                batch: b,
+                members: _members,
+                notices: _notices,
+                isTeacher: _isTeacherOrAdmin,
+              ),
               _MembersTab(
                 members: _members,
                 isAdmin: _isAdmin,
@@ -585,13 +590,76 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
 class _OverviewTab extends StatelessWidget {
   final BatchModel batch;
   final List<BatchMemberModel> members;
-  const _OverviewTab({required this.batch, required this.members});
+  final List<BatchNoticeModel> notices;
+  final bool isTeacher;
+  const _OverviewTab({
+    required this.batch,
+    required this.members,
+    required this.notices,
+    required this.isTeacher,
+  });
+
+  /// Calculate the next upcoming class from the batch schedule.
+  /// Returns (dayName, date, startTime) or null if no schedule.
+  (String, DateTime, String)? _nextClass() {
+    if (batch.days.isEmpty || batch.startTime == null) return null;
+
+    final now = DateTime.now();
+    // Parse startTime
+    final parts = batch.startTime!.split(':');
+    if (parts.length < 2) return null;
+    final hour = int.tryParse(parts[0]) ?? 0;
+    final minute = int.tryParse(parts[1]) ?? 0;
+
+    const dayMap = {
+      'MON': DateTime.monday,
+      'TUE': DateTime.tuesday,
+      'WED': DateTime.wednesday,
+      'THU': DateTime.thursday,
+      'FRI': DateTime.friday,
+      'SAT': DateTime.saturday,
+      'SUN': DateTime.sunday,
+    };
+
+    // Get weekday numbers for batch days
+    final batchWeekdays = <int>[];
+    for (final d in batch.days) {
+      final wd = dayMap[d.toUpperCase()];
+      if (wd != null) batchWeekdays.add(wd);
+    }
+    if (batchWeekdays.isEmpty) return null;
+
+    // Check today first
+    if (batchWeekdays.contains(now.weekday)) {
+      final todayClass = DateTime(now.year, now.month, now.day, hour, minute);
+      if (todayClass.isAfter(now)) {
+        return (BatchModel.shortDay(batch.days[
+            batchWeekdays.indexOf(now.weekday)]), todayClass, batch.startTime!);
+      }
+    }
+
+    // Find next upcoming day
+    for (int offset = 1; offset <= 7; offset++) {
+      final candidate = now.add(Duration(days: offset));
+      if (batchWeekdays.contains(candidate.weekday)) {
+        final classTime = DateTime(
+          candidate.year, candidate.month, candidate.day, hour, minute);
+        // Find the day string
+        final dayIndex = batchWeekdays.indexOf(candidate.weekday);
+        final dayStr = batch.days[dayIndex];
+        return (BatchModel.shortDay(dayStr), classTime, batch.startTime!);
+      }
+    }
+    return null;
+  }
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final teachers = members.where((m) => m.role == 'TEACHER').toList();
     final students = members.where((m) => m.role == 'STUDENT').toList();
+    final nextClass = _nextClass();
+    final recentNotices = notices.take(3).toList();
 
     // Capacity calculation
     final capacity = batch.maxStudents > 0
@@ -601,6 +669,48 @@ class _OverviewTab extends StatelessWidget {
     return ListView(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 40),
       children: [
+        // ── Next upcoming class
+        if (nextClass != null && batch.isActive) ...[
+          _NextClassCard(
+            dayName: nextClass.$1,
+            classDate: nextClass.$2,
+            startTime: nextClass.$3,
+            endTime: batch.endTime,
+          ),
+          const SizedBox(height: 14),
+        ],
+
+        // ── Recent notices
+        if (recentNotices.isNotEmpty) ...[
+          Padding(
+            padding: const EdgeInsets.only(bottom: 10, top: 4),
+            child: Row(
+              children: [
+                Icon(
+                  Icons.campaign_rounded,
+                  size: 18,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Recent Notices',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ...recentNotices.map(
+            (n) => _NoticeCard(
+              notice: n,
+              canDelete: false,
+              onDelete: () {},
+            ),
+          ),
+          const SizedBox(height: 14),
+        ],
+
         // ── Capacity progress (if maxStudents > 0)
         if (batch.maxStudents > 0) ...[
           _GlassCard(
@@ -789,6 +899,138 @@ class _GlassCard extends StatelessWidget {
 }
 
 // Removed _OverviewStat — stat cards no longer shown
+
+/// Prominent card showing the next upcoming class with day, date and time.
+class _NextClassCard extends StatelessWidget {
+  final String dayName;
+  final DateTime classDate;
+  final String startTime;
+  final String? endTime;
+  const _NextClassCard({
+    required this.dayName,
+    required this.classDate,
+    required this.startTime,
+    this.endTime,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final now = DateTime.now();
+    final isToday = classDate.year == now.year &&
+        classDate.month == now.month &&
+        classDate.day == now.day;
+    final isTomorrow = classDate
+        .difference(DateTime(now.year, now.month, now.day))
+        .inDays ==
+        1;
+    final dayLabel = isToday
+        ? 'Today'
+        : isTomorrow
+            ? 'Tomorrow'
+            : '$dayName, ${classDate.day}/${classDate.month}';
+    const color = Color(0xFF10B981); // green
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            color.withValues(alpha: 0.08),
+            color.withValues(alpha: 0.03),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: 0.15)),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          // Calendar-style icon
+          Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [
+                  color.withValues(alpha: 0.2),
+                  color.withValues(alpha: 0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: color.withValues(alpha: 0.15)),
+            ),
+            child: Icon(
+              Icons.play_circle_outline_rounded,
+              color: color,
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Next Class',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 11,
+                    letterSpacing: 0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  dayLabel,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  endTime != null ? '$startTime – $endTime' : startTime,
+                  style: theme.textTheme.bodyMedium?.copyWith(
+                    color:
+                        theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (isToday)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                startTime,
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                  color: color,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
 
 // ═══════════════════════════════════════════════════════════════════════════
 // ── MEMBERS TAB
@@ -1389,7 +1631,17 @@ class _NoticeCard extends StatelessWidget {
     required this.onDelete,
   });
 
-  static const _priorityConfig = {
+  // Type-based config: (icon, color)
+  static const _typeConfig = <String, (IconData, Color)>{
+    'general': (Icons.campaign_rounded, Color(0xFF3B82F6)),
+    'timetable_update': (Icons.schedule_rounded, Color(0xFF8B5CF6)),
+    'event': (Icons.event_rounded, Color(0xFF10B981)),
+    'exam': (Icons.quiz_rounded, Color(0xFFEF4444)),
+    'holiday': (Icons.beach_access_rounded, Color(0xFFF59E0B)),
+    'assignment': (Icons.assignment_rounded, Color(0xFF0EA5E9)),
+  };
+
+  static const _priorityConfig = <String, (Color, IconData)>{
     'urgent': (Color(0xFFEF4444), Icons.priority_high_rounded),
     'high': (Color(0xFFF59E0B), Icons.arrow_upward_rounded),
     'normal': (Color(0xFF3B82F6), Icons.remove_rounded),
@@ -1399,28 +1651,36 @@ class _NoticeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final config =
-        _priorityConfig[notice.priority] ??
+    final typeConf = _typeConfig[notice.type] ??
+        (Icons.campaign_rounded, const Color(0xFF3B82F6));
+    final icon = typeConf.$1;
+    final color = typeConf.$2;
+    final prioConf = _priorityConfig[notice.priority] ??
         (const Color(0xFF3B82F6), Icons.remove_rounded);
-    final color = config.$1;
+    final prioColor = prioConf.$1;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: 14),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(18),
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: notice.isImportant
-              ? color.withValues(alpha: 0.2)
-              : theme.colorScheme.onSurface.withValues(alpha: 0.05),
+              ? prioColor.withValues(alpha: 0.18)
+              : theme.colorScheme.onSurface.withValues(alpha: 0.08),
+          width: 1,
         ),
         boxShadow: [
-          if (notice.isImportant)
-            BoxShadow(
-              color: color.withValues(alpha: 0.06),
-              blurRadius: 10,
-              offset: const Offset(0, 3),
-            ),
+          BoxShadow(
+            color: color.withValues(alpha: 0.06),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
+          ),
+          BoxShadow(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.02),
+            blurRadius: 8,
+            offset: const Offset(0, 1),
+          ),
         ],
       ),
       child: Column(
@@ -1432,10 +1692,10 @@ class _NoticeCard extends StatelessWidget {
               height: 3,
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(18),
+                  top: Radius.circular(20),
                 ),
                 gradient: LinearGradient(
-                  colors: [color, color.withValues(alpha: 0.4)],
+                  colors: [prioColor, prioColor.withValues(alpha: 0.3)],
                 ),
               ),
             ),
@@ -1444,24 +1704,185 @@ class _NoticeCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // ── Header row: gradient icon + title + time
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Gradient icon container (matching _NoteCard style)
+                    Container(
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            color.withValues(alpha: 0.18),
+                            color.withValues(alpha: 0.08),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: color.withValues(alpha: 0.12),
+                          width: 1,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: color.withValues(alpha: 0.1),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
+                      ),
+                      child: Icon(icon, color: color, size: 26),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            notice.title,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: -0.3,
+                              height: 1.3,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            notice.message,
+                            maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.55,
+                              ),
+                              height: 1.5,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        if (notice.createdAt != null)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.04,
+                              ),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: Text(
+                              _timeAgo(notice.createdAt!),
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w500,
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.45,
+                                ),
+                              ),
+                            ),
+                          ),
+                        if (canDelete) ...[
+                          const SizedBox(height: 8),
+                          Container(
+                            decoration: BoxDecoration(
+                              color: Colors.red.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: IconButton(
+                              icon: Icon(
+                                Icons.delete_outline_rounded,
+                                size: 20,
+                                color: Colors.red.shade600,
+                              ),
+                              onPressed: onDelete,
+                              constraints: const BoxConstraints(
+                                minWidth: 40,
+                                minHeight: 40,
+                              ),
+                              padding: EdgeInsets.zero,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
+
+                // ── Schedule info chips (for timetable_update, event, exam)
+                if (notice.hasScheduleInfo) ...[
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    children: [
+                      if (notice.date != null)
+                        _InfoChip(
+                          icon: Icons.calendar_today_rounded,
+                          label:
+                              '${notice.date!.day}/${notice.date!.month}/${notice.date!.year}',
+                          color: color,
+                        ),
+                      if (notice.day != null)
+                        _InfoChip(
+                          icon: Icons.today_rounded,
+                          label: notice.day!,
+                          color: color,
+                        ),
+                      if (notice.startTime != null)
+                        _InfoChip(
+                          icon: Icons.access_time_rounded,
+                          label: notice.endTime != null
+                              ? '${notice.startTime} – ${notice.endTime}'
+                              : notice.startTime!,
+                          color: color,
+                        ),
+                      if (notice.location != null)
+                        _InfoChip(
+                          icon: Icons.location_on_rounded,
+                          label: notice.location!,
+                          color: color,
+                        ),
+                    ],
+                  ),
+                ],
+
+                // ── Footer: type badge + priority + sender
+                const SizedBox(height: 12),
                 Row(
                   children: [
+                    // Type badge
                     Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 10,
-                        vertical: 4,
+                        vertical: 5,
                       ),
                       decoration: BoxDecoration(
                         color: color.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: color.withValues(alpha: 0.15),
+                          width: 1,
+                        ),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          Icon(config.$2, size: 12, color: color),
+                          Icon(icon, size: 12, color: color),
                           const SizedBox(width: 4),
                           Text(
-                            notice.priorityLabel,
+                            notice.typeLabel,
                             style: TextStyle(
                               fontSize: 11,
                               fontWeight: FontWeight.w700,
@@ -1471,71 +1892,51 @@ class _NoticeCard extends StatelessWidget {
                         ],
                       ),
                     ),
-                    const Spacer(),
-                    if (notice.createdAt != null)
-                      Text(
-                        _timeAgo(notice.createdAt!),
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: 11,
-                          color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.3,
-                          ),
+                    if (notice.isImportant) ...[
+                      const SizedBox(width: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
                         ),
-                      ),
-                    if (canDelete)
-                      Padding(
-                        padding: const EdgeInsets.only(left: 8),
-                        child: InkWell(
-                          onTap: onDelete,
+                        decoration: BoxDecoration(
+                          color: prioColor.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(8),
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: Icon(
-                              Icons.delete_outline_rounded,
-                              size: 16,
-                              color: Colors.red.withValues(alpha: 0.4),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(prioConf.$2, size: 10, color: prioColor),
+                            const SizedBox(width: 3),
+                            Text(
+                              notice.priorityLabel,
+                              style: TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w700,
+                                color: prioColor,
+                              ),
                             ),
-                          ),
+                          ],
                         ),
                       ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  notice.title,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    height: 1.3,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                Text(
-                  notice.message,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
-                    height: 1.6,
-                  ),
-                ),
-                if (notice.sentBy != null) ...[
-                  const SizedBox(height: 12),
-                  Row(
-                    children: [
+                    ],
+                    const Spacer(),
+                    // Sender
+                    if (notice.sentBy != null) ...[
                       CircleAvatar(
-                        radius: 11,
-                        backgroundImage: notice.sentBy!.picture != null
-                            ? NetworkImage(notice.sentBy!.picture!)
-                            : null,
+                        radius: 12,
                         backgroundColor: theme.colorScheme.primary.withValues(
                           alpha: 0.1,
                         ),
+                        backgroundImage: notice.sentBy!.picture != null
+                            ? NetworkImage(notice.sentBy!.picture!)
+                            : null,
                         child: notice.sentBy!.picture == null
-                            ? Text(
-                                (notice.sentBy!.name ?? 'T')[0].toUpperCase(),
-                                style: TextStyle(
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w600,
-                                  color: theme.colorScheme.primary,
-                                ),
+                            ? Icon(
+                                Icons.person_rounded,
+                                size: 14,
+                                color: theme.colorScheme.primary
+                                    .withValues(alpha: 0.7),
                               )
                             : null,
                       ),
@@ -1544,16 +1945,59 @@ class _NoticeCard extends StatelessWidget {
                         notice.sentBy!.name ?? 'Teacher',
                         style: theme.textTheme.bodySmall?.copyWith(
                           fontWeight: FontWeight.w500,
-                          fontSize: 11,
+                          fontSize: 13,
                           color: theme.colorScheme.onSurface.withValues(
-                            alpha: 0.45,
+                            alpha: 0.7,
                           ),
                         ),
                       ),
                     ],
-                  ),
-                ],
+                  ],
+                ),
               ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Small info chip for schedule data (date, time, location, day).
+class _InfoChip extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  const _InfoChip({
+    required this.icon,
+    required this.label,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(
+          color: color.withValues(alpha: 0.1),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color.withValues(alpha: 0.7)),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.65),
             ),
           ),
         ],

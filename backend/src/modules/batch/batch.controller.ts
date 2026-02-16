@@ -270,13 +270,13 @@ export class BatchController {
                 return res.status(403).json({ message: 'Only teachers/admins can send notices' });
             }
 
-            const { title, message, priority } = req.body;
+            const { title, message, priority, type, date, startTime, endTime, day, location } = req.body;
             if (!title || !message) {
                 return res.status(400).json({ message: 'Title and message are required' });
             }
 
             const notice = await batchService.createNotice(batchId, userId, {
-                title, message, priority,
+                title, message, priority, type, date, startTime, endTime, day, location,
             });
             res.status(201).json({ notice });
         } catch (error: any) {

@@ -405,6 +405,14 @@ model BatchNotice {
   title    String
   message  String
   priority String @default("normal") // low, normal, high, urgent
+  type     String @default("general") // general, timetable_update, event, exam, holiday, assignment
+
+  // Structured data for specific notice types
+  date      DateTime? // date for events/exams/holidays
+  startTime String?   // e.g. "09:00"
+  endTime   String?   // e.g. "10:30"
+  day       String?   // e.g. "MON"
+  location  String?   // e.g. "Room 201"
 
   sentById String
   sentBy   User   @relation("NoticeSender", fields: [sentById], references: [id])

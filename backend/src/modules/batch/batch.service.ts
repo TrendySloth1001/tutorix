@@ -359,13 +359,29 @@ export class BatchService {
         title: string;
         message: string;
         priority?: string;
+        type?: string;
+        date?: string;
+        startTime?: string;
+        endTime?: string;
+        day?: string;
+        location?: string;
     }) {
+        const createData: Record<string, any> = {
+            batchId,
+            sentById,
+            title: data.title,
+            message: data.message,
+        };
+        if (data.priority) createData.priority = data.priority;
+        if (data.type) createData.type = data.type;
+        if (data.date) createData.date = new Date(data.date);
+        if (data.startTime) createData.startTime = data.startTime;
+        if (data.endTime) createData.endTime = data.endTime;
+        if (data.day) createData.day = data.day;
+        if (data.location) createData.location = data.location;
+
         return prisma.batchNotice.create({
-            data: {
-                batchId,
-                sentById,
-                ...data,
-            },
+            data: createData as any,
             include: {
                 sentBy: { select: { id: true, name: true, picture: true } },
             },

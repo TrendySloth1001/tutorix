@@ -253,10 +253,28 @@ class BatchService {
     required String title,
     required String message,
     String priority = 'normal',
+    String type = 'general',
+    String? date,
+    String? startTime,
+    String? endTime,
+    String? day,
+    String? location,
   }) async {
+    final body = <String, dynamic>{
+      'title': title,
+      'message': message,
+      'priority': priority,
+      'type': type,
+    };
+    if (date != null) body['date'] = date;
+    if (startTime != null) body['startTime'] = startTime;
+    if (endTime != null) body['endTime'] = endTime;
+    if (day != null) body['day'] = day;
+    if (location != null) body['location'] = location;
+
     final data = await _api.postAuthenticated(
       ApiConstants.batchNotices(coachingId, batchId),
-      body: {'title': title, 'message': message, 'priority': priority},
+      body: body,
     );
     return BatchNoticeModel.fromJson(data['notice'] as Map<String, dynamic>);
   }
