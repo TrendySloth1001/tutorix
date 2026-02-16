@@ -26,11 +26,11 @@ export class AuthService {
             const user = await prisma.user.upsert({
                 where: { googleId: payload.sub },
                 update: {
+                    // Only update email on login (don't overwrite user's custom name/picture)
                     email: payload.email!,
-                    name: payload.name ?? null,
-                    picture: payload.picture ?? null,
                 },
                 create: {
+                    // On first signup, use Google data as defaults
                     googleId: payload.sub,
                     email: payload.email!,
                     name: payload.name ?? null,
