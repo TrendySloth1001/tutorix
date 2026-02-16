@@ -222,31 +222,36 @@ class _ExploreScreenState extends State<ExploreScreen>
             // Section header
             SliverToBoxAdapter(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
-                    Icon(Icons.near_me_rounded,
-                        size: 18,
-                        color: theme.colorScheme.primary
-                            .withValues(alpha: 0.6)),
+                    Icon(
+                      Icons.near_me_rounded,
+                      size: 18,
+                      color: theme.colorScheme.primary.withValues(alpha: 0.6),
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Nearby Coachings',
                       style: theme.textTheme.titleSmall?.copyWith(
                         fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.primary
-                            .withValues(alpha: 0.8),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.8),
                       ),
                     ),
                     const SizedBox(width: 8),
                     if (!_dataLoading)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
+                          horizontal: 8,
+                          vertical: 2,
+                        ),
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary
-                              .withValues(alpha: 0.08),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.08,
+                          ),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text(
@@ -284,8 +289,8 @@ class _ExploreScreenState extends State<ExploreScreen>
                     final item = _coachings[index];
                     return _NearbyCoachingCard(
                       item: item,
-                      isSelected: _selectedCoaching?.coaching.id ==
-                          item.coaching.id,
+                      isSelected:
+                          _selectedCoaching?.coaching.id == item.coaching.id,
                       onTap: () {
                         setState(() => _selectedCoaching = item);
                         final addr = item.coaching.address;
@@ -392,10 +397,12 @@ class _MapCard extends StatelessWidget {
                         point: userLocation,
                         radius: radiusKm * 1000,
                         useRadiusInMeter: true,
-                        color: theme.colorScheme.primary
-                            .withValues(alpha: 0.06),
-                        borderColor: theme.colorScheme.primary
-                            .withValues(alpha: 0.25),
+                        color: theme.colorScheme.primary.withValues(
+                          alpha: 0.06,
+                        ),
+                        borderColor: theme.colorScheme.primary.withValues(
+                          alpha: 0.25,
+                        ),
                         borderStrokeWidth: 1.5,
                       ),
                     ],
@@ -410,13 +417,13 @@ class _MapCard extends StatelessWidget {
                         width: 36,
                         height: 36,
                         child: _UserLocationDot(
-                            color: theme.colorScheme.primary),
+                          color: theme.colorScheme.primary,
+                        ),
                       ),
                       // Coaching markers
                       ...coachings.map((c) {
                         final addr = c.coaching.address;
-                        if (addr?.latitude == null ||
-                            addr?.longitude == null) {
+                        if (addr?.latitude == null || addr?.longitude == null) {
                           return null;
                         }
                         final isSelected =
@@ -458,10 +465,8 @@ class _MapCard extends StatelessWidget {
               left: 12,
               child: _MapActionButton(
                 icon: Icons.my_location_rounded,
-                onTap: () => mapController.move(
-                  userLocation,
-                  _zoomForRadius(radiusKm),
-                ),
+                onTap: () =>
+                    mapController.move(userLocation, _zoomForRadius(radiusKm)),
               ),
             ),
 
@@ -530,8 +535,7 @@ class _CoachingMarkerPin extends StatelessWidget {
   final CoachingModel coaching;
   final bool isSelected;
 
-  const _CoachingMarkerPin(
-      {required this.coaching, required this.isSelected});
+  const _CoachingMarkerPin({required this.coaching, required this.isSelected});
 
   @override
   Widget build(BuildContext context) {
@@ -555,15 +559,10 @@ class _CoachingMarkerPin extends StatelessWidget {
             borderRadius: BorderRadius.circular(pinSize / 2).copyWith(
               bottomRight: Radius.circular(isSelected ? 4 : pinSize / 2),
             ),
-            border: Border.all(
-              color: borderColor,
-              width: isSelected ? 3 : 2,
-            ),
+            border: Border.all(color: borderColor, width: isSelected ? 3 : 2),
             boxShadow: [
               BoxShadow(
-                color: (isSelected
-                        ? theme.colorScheme.primary
-                        : Colors.black)
+                color: (isSelected ? theme.colorScheme.primary : Colors.black)
                     .withValues(alpha: isSelected ? 0.35 : 0.18),
                 blurRadius: isSelected ? 14 : 8,
                 offset: const Offset(0, 4),
@@ -572,25 +571,25 @@ class _CoachingMarkerPin extends StatelessWidget {
           ),
           child: Center(
             child: ClipRRect(
-                    borderRadius: BorderRadius.circular(logoSize / 2),
-                    child: _getFullUrl(coaching.logo) != null
-                        ? Image.network(
-                            _getFullUrl(coaching.logo)!,
-                            width: logoSize,
-                            height: logoSize,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Icon(
-                              Icons.school_rounded,
-                              size: logoSize * 0.55,
-                              color: theme.colorScheme.primary,
-                            ),
-                          )
-                        : Icon(
-                            Icons.school_rounded,
-                            size: logoSize * 0.55,
-                            color: theme.colorScheme.primary,
-                          ),
-                  ),
+              borderRadius: BorderRadius.circular(logoSize / 2),
+              child: _getFullUrl(coaching.logo) != null
+                  ? Image.network(
+                      _getFullUrl(coaching.logo)!,
+                      width: logoSize,
+                      height: logoSize,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => Icon(
+                        Icons.school_rounded,
+                        size: logoSize * 0.55,
+                        color: theme.colorScheme.primary,
+                      ),
+                    )
+                  : Icon(
+                      Icons.school_rounded,
+                      size: logoSize * 0.55,
+                      color: theme.colorScheme.primary,
+                    ),
+            ),
           ),
         ),
         // Pin tail triangle
@@ -693,19 +692,21 @@ class _MapPreviewCard extends StatelessWidget {
               borderRadius: BorderRadius.circular(14),
             ),
             child: ClipRRect(
-                    borderRadius: BorderRadius.circular(14),
-                    child: _getFullUrl(coaching.logo) != null
-                        ? Image.network(
-                            _getFullUrl(coaching.logo)!,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, _, _) => Icon(
-                              Icons.school_rounded,
-                              color: theme.colorScheme.primary,
-                            ),
-                          )
-                        : Icon(Icons.school_rounded,
-                            color: theme.colorScheme.primary),
-                  ),
+              borderRadius: BorderRadius.circular(14),
+              child: _getFullUrl(coaching.logo) != null
+                  ? Image.network(
+                      _getFullUrl(coaching.logo)!,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, _, _) => Icon(
+                        Icons.school_rounded,
+                        color: theme.colorScheme.primary,
+                      ),
+                    )
+                  : Icon(
+                      Icons.school_rounded,
+                      color: theme.colorScheme.primary,
+                    ),
+            ),
           ),
           const SizedBox(width: 10),
           // Info
@@ -726,15 +727,13 @@ class _MapPreviewCard extends StatelessWidget {
                 const SizedBox(height: 2),
                 Text(
                   [
-                    if (coaching.address?.city != null)
-                      coaching.address!.city,
+                    if (coaching.address?.city != null) coaching.address!.city,
                     '${item.distanceKm} km away',
                   ].join(' · '),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.secondary
-                        .withValues(alpha: 0.7),
+                    color: theme.colorScheme.secondary.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -788,7 +787,9 @@ class _RadiusSelector extends StatelessWidget {
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 16, vertical: 8),
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 decoration: BoxDecoration(
                   color: selected
                       ? theme.colorScheme.primary
@@ -797,18 +798,18 @@ class _RadiusSelector extends StatelessWidget {
                   border: Border.all(
                     color: selected
                         ? theme.colorScheme.primary
-                        : theme.colorScheme.primary
-                            .withValues(alpha: 0.15),
+                        : theme.colorScheme.primary.withValues(alpha: 0.15),
                     width: selected ? 1.5 : 1,
                   ),
                   boxShadow: selected
                       ? [
                           BoxShadow(
-                            color: theme.colorScheme.primary
-                                .withValues(alpha: 0.25),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.25,
+                            ),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
-                          )
+                          ),
                         ]
                       : null,
                 ),
@@ -818,8 +819,7 @@ class _RadiusSelector extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                     color: selected
                         ? theme.colorScheme.onPrimary
-                        : theme.colorScheme.primary
-                            .withValues(alpha: 0.7),
+                        : theme.colorScheme.primary.withValues(alpha: 0.7),
                   ),
                 ),
               ),
@@ -868,10 +868,9 @@ class _NearbyCoachingCard extends StatelessWidget {
             ),
             boxShadow: [
               BoxShadow(
-                color: (isSelected
-                        ? theme.colorScheme.primary
-                        : theme.shadowColor)
-                    .withValues(alpha: isSelected ? 0.12 : 0.06),
+                color:
+                    (isSelected ? theme.colorScheme.primary : theme.shadowColor)
+                        .withValues(alpha: isSelected ? 0.12 : 0.06),
                 blurRadius: isSelected ? 18 : 12,
                 offset: const Offset(0, 5),
               ),
@@ -919,7 +918,9 @@ class _NearbyCoachingCard extends StatelessWidget {
                       right: 10,
                       child: Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 10, vertical: 5),
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.black.withValues(alpha: 0.45),
                           borderRadius: BorderRadius.circular(10),
@@ -927,8 +928,11 @@ class _NearbyCoachingCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.near_me_rounded,
-                                size: 12, color: Colors.white),
+                            const Icon(
+                              Icons.near_me_rounded,
+                              size: 12,
+                              color: Colors.white,
+                            ),
                             const SizedBox(width: 4),
                             Text(
                               '${item.distanceKm} km',
@@ -949,7 +953,9 @@ class _NearbyCoachingCard extends StatelessWidget {
                         left: 10,
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 4),
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.9),
                             borderRadius: BorderRadius.circular(8),
@@ -957,9 +963,11 @@ class _NearbyCoachingCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.verified_rounded,
-                                  size: 13,
-                                  color: theme.colorScheme.primary),
+                              Icon(
+                                Icons.verified_rounded,
+                                size: 13,
+                                color: theme.colorScheme.primary,
+                              ),
                               const SizedBox(width: 3),
                               Text(
                                 'Verified',
@@ -1005,20 +1013,23 @@ class _NearbyCoachingCard extends StatelessWidget {
                           ],
                         ),
                         child: ClipRRect(
-                                borderRadius: BorderRadius.circular(11),
-                                child: _getFullUrl(coaching.logo) != null
-                                    ? Image.network(
-                                        _getFullUrl(coaching.logo)!,
-                                        fit: BoxFit.cover,
-                                        errorBuilder: (_, _, _) => Icon(
-                                          Icons.school_rounded,
-                                          color: theme.colorScheme.primary,
-                                          size: 24,
-                                        ),
-                                      )
-                                    : Icon(Icons.school_rounded,
-                                        color: theme.colorScheme.primary, size: 24),
-                              ),
+                          borderRadius: BorderRadius.circular(11),
+                          child: _getFullUrl(coaching.logo) != null
+                              ? Image.network(
+                                  _getFullUrl(coaching.logo)!,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (_, _, _) => Icon(
+                                    Icons.school_rounded,
+                                    color: theme.colorScheme.primary,
+                                    size: 24,
+                                  ),
+                                )
+                              : Icon(
+                                  Icons.school_rounded,
+                                  color: theme.colorScheme.primary,
+                                  size: 24,
+                                ),
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -1041,16 +1052,16 @@ class _NearbyCoachingCard extends StatelessWidget {
                           // Category + City
                           Text(
                             [
-                              if (coaching.category != null)
-                                coaching.category!,
+                              if (coaching.category != null) coaching.category!,
                               if (coaching.address?.city != null)
                                 coaching.address!.city,
                             ].join(' · '),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: theme.textTheme.bodySmall?.copyWith(
-                              color: theme.colorScheme.secondary
-                                  .withValues(alpha: 0.65),
+                              color: theme.colorScheme.secondary.withValues(
+                                alpha: 0.65,
+                              ),
                             ),
                           ),
                           const SizedBox(height: 8),
@@ -1149,10 +1160,12 @@ class _DirectionsButton extends StatelessWidget {
     }
     // Google Maps universal link — works on both Android (opens app) & iOS (opens in browser or app)
     final gMapsUrl = Uri.parse(
-        'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
+      'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng',
+    );
     // Apple Maps (iOS fallback)
     final aMapsUrl = Uri.parse(
-        'https://maps.apple.com/?daddr=$lat,$lng&dirflg=d');
+      'https://maps.apple.com/?daddr=$lat,$lng&dirflg=d',
+    );
 
     try {
       // Launch directly — canLaunchUrl fails on Android 11+ without <queries>
@@ -1191,8 +1204,11 @@ class _DirectionsButton extends StatelessWidget {
               ),
             ],
           ),
-          child: const Icon(Icons.directions_rounded,
-              size: 18, color: Colors.white),
+          child: const Icon(
+            Icons.directions_rounded,
+            size: 18,
+            color: Colors.white,
+          ),
         ),
       );
     }
@@ -1212,8 +1228,11 @@ class _DirectionsButton extends StatelessWidget {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.directions_rounded,
-                size: 14, color: theme.colorScheme.primary),
+            Icon(
+              Icons.directions_rounded,
+              size: 14,
+              color: theme.colorScheme.primary,
+            ),
             const SizedBox(width: 4),
             Text(
               'Directions',
@@ -1246,10 +1265,11 @@ class _StatChip extends StatelessWidget {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Icon(icon,
-            size: 13,
-            color:
-                theme.colorScheme.secondary.withValues(alpha: 0.5)),
+        Icon(
+          icon,
+          size: 13,
+          color: theme.colorScheme.secondary.withValues(alpha: 0.5),
+        ),
         const SizedBox(width: 3),
         Flexible(
           child: Text(
@@ -1258,8 +1278,7 @@ class _StatChip extends StatelessWidget {
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.labelSmall?.copyWith(
               fontSize: 11,
-              color: theme.colorScheme.secondary
-                  .withValues(alpha: 0.65),
+              color: theme.colorScheme.secondary.withValues(alpha: 0.65),
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -1286,8 +1305,7 @@ class _LocationLoadingView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(24),
             decoration: BoxDecoration(
-              color:
-                  theme.colorScheme.primary.withValues(alpha: 0.06),
+              color: theme.colorScheme.primary.withValues(alpha: 0.06),
               shape: BoxShape.circle,
             ),
             child: SizedBox(
@@ -1310,8 +1328,7 @@ class _LocationLoadingView extends StatelessWidget {
           Text(
             'This helps us find coachings near you',
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.secondary
-                  .withValues(alpha: 0.6),
+              color: theme.colorScheme.secondary.withValues(alpha: 0.6),
             ),
           ),
         ],
@@ -1344,15 +1361,13 @@ class _LocationErrorView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: theme.colorScheme.primary
-                  .withValues(alpha: 0.06),
+              color: theme.colorScheme.primary.withValues(alpha: 0.06),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.location_off_rounded,
               size: 56,
-              color: theme.colorScheme.primary
-                  .withValues(alpha: 0.4),
+              color: theme.colorScheme.primary.withValues(alpha: 0.4),
             ),
           ),
           const SizedBox(height: 28),
@@ -1369,8 +1384,7 @@ class _LocationErrorView extends StatelessWidget {
                 : error,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyLarge?.copyWith(
-              color: theme.colorScheme.secondary
-                  .withValues(alpha: 0.6),
+              color: theme.colorScheme.secondary.withValues(alpha: 0.6),
               height: 1.5,
             ),
           ),
@@ -1382,7 +1396,9 @@ class _LocationErrorView extends StatelessWidget {
               label: const Text('Open Settings'),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 14),
+                  horizontal: 24,
+                  vertical: 14,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -1395,7 +1411,9 @@ class _LocationErrorView extends StatelessWidget {
               label: const Text('Try Again'),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
-                    horizontal: 24, vertical: 14),
+                  horizontal: 24,
+                  vertical: 14,
+                ),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(14),
                 ),
@@ -1422,15 +1440,13 @@ class _EmptyNearbyView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(28),
             decoration: BoxDecoration(
-              color: theme.colorScheme.tertiary
-                  .withValues(alpha: 0.1),
+              color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(
               Icons.explore_off_rounded,
               size: 56,
-              color: theme.colorScheme.primary
-                  .withValues(alpha: 0.35),
+              color: theme.colorScheme.primary.withValues(alpha: 0.35),
             ),
           ),
           const SizedBox(height: 28),
@@ -1445,8 +1461,7 @@ class _EmptyNearbyView extends StatelessWidget {
             'No coaching institutes found within ${radiusKm.toInt()} km. Try expanding the search radius.',
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyMedium?.copyWith(
-              color: theme.colorScheme.secondary
-                  .withValues(alpha: 0.6),
+              color: theme.colorScheme.secondary.withValues(alpha: 0.6),
               height: 1.5,
             ),
           ),
