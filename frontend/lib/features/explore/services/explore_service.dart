@@ -35,17 +35,16 @@ class ExploreService {
     final key = 'explore:$lat:$lng:$radiusKm:$page';
     final url =
         '${ApiConstants.coachingExplore}?lat=$lat&lng=$lng&radius=$radiusKm&page=$page&limit=$limit';
-    return _cache.swr<List<NearbyCoaching>>(
-      key,
-      () => _api.getPublic(url),
-      (raw) {
-        final list = (raw['coachings'] as List<dynamic>?) ?? [];
-        return list
-            .map((e) =>
-                NearbyCoaching.fromJson(Map<String, dynamic>.from(e as Map)))
-            .toList();
-      },
-    );
+    return _cache.swr<List<NearbyCoaching>>(key, () => _api.getPublic(url), (
+      raw,
+    ) {
+      final list = (raw['coachings'] as List<dynamic>?) ?? [];
+      return list
+          .map(
+            (e) => NearbyCoaching.fromJson(Map<String, dynamic>.from(e as Map)),
+          )
+          .toList();
+    });
   }
 
   Future<List<NearbyCoaching>> getNearby({
@@ -54,6 +53,11 @@ class ExploreService {
     double radiusKm = 20,
     int page = 1,
     int limit = 50,
-  }) =>
-      watchNearby(lat: lat, lng: lng, radiusKm: radiusKm, page: page, limit: limit).last;
+  }) => watchNearby(
+    lat: lat,
+    lng: lng,
+    radiusKm: radiusKm,
+    page: page,
+    limit: limit,
+  ).last;
 }
