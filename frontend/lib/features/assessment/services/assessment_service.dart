@@ -70,7 +70,7 @@ class AssessmentService {
       () {
         var url = ApiConstants.assessments(coachingId, batchId);
         if (role != null) url += '?role=$role';
-        return _api.getAuthenticated(url);
+        return _api.getAuthenticatedRaw(url);
       },
       (raw) {
         final list = (raw as List<dynamic>?) ?? [];
@@ -319,7 +319,7 @@ class AssessmentService {
       () {
         var url = ApiConstants.assignments(coachingId, batchId);
         if (role != null) url += '?role=$role';
-        return _api.getAuthenticated(url);
+        return _api.getAuthenticatedRaw(url);
       },
       (raw) {
         final list = (raw as List<dynamic>?) ?? [];

@@ -195,6 +195,7 @@ class OptionModel {
 
 /// Attempt summary attached to assessment list items.
 class AttemptSummary {
+  final String? id;
   final String? assessmentId;
   final String status;
   final double? totalScore;
@@ -202,6 +203,7 @@ class AttemptSummary {
   final DateTime? submittedAt;
 
   const AttemptSummary({
+    this.id,
     this.assessmentId,
     this.status = 'IN_PROGRESS',
     this.totalScore,
@@ -211,6 +213,7 @@ class AttemptSummary {
 
   factory AttemptSummary.fromJson(Map<String, dynamic> json) {
     return AttemptSummary(
+      id: json['id'] as String?,
       assessmentId: json['assessmentId'] as String?,
       status: json['status'] as String? ?? 'IN_PROGRESS',
       totalScore: (json['totalScore'] as num?)?.toDouble(),

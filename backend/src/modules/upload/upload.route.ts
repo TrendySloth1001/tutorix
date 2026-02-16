@@ -149,14 +149,14 @@ router.post('/notes', authMiddleware, uploadLarge.array('files', 10), async (req
     }
 });
 
-// GET /upload/assets/:bucket/:key - Proxy assets from MinIO
+// GET /upload/assets/:bucket/* - Proxy assets from MinIO (supports nested paths)
 const ALLOWED_BUCKETS = new Set(['avatars', 'coaching-logos', 'batch-notes']);
-router.get('/assets/:bucket/:key', async (req, res) => {
+router.get(/^\/assets\/([^\/]+)\/(.+)$/, async (req, res) => {
     try {
-        const bucket = req.params.bucket;
-        const key = req.params.key;
+        const bucket = req.params[0] as string;
+        const key = req.params[1] as string;
 
-        if (!key || !ALLOWED_BUCKETS.has(bucket)) {
+        if (!key || !bucket || !ALLOWED_BUCKETS.has(bucket)) {
             return res.status(400).json({ message: 'Invalid bucket or key' });
         }
         // Prevent path traversal

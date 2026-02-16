@@ -172,6 +172,7 @@ class AssessmentService {
                     userId,
                 },
                 select: {
+                    id: true,
                     assessmentId: true,
                     status: true,
                     totalScore: true,

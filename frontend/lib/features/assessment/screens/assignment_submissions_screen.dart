@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/assignment_model.dart';
 import '../services/assessment_service.dart';
+import 'file_viewer_screen.dart';
 
 /// Screen for teachers to view all submissions for an assignment and grade them.
 class AssignmentSubmissionsScreen extends StatefulWidget {
@@ -285,16 +286,29 @@ class _SubmissionCard extends StatelessWidget {
                 runSpacing: 4,
                 children: s.files.map((f) {
                   final isPDF = f.fileName.toLowerCase().endsWith('.pdf');
-                  return Chip(
-                    avatar: Icon(
-                      isPDF
-                          ? Icons.picture_as_pdf_outlined
-                          : Icons.image_outlined,
-                      size: 14,
+                  return InkWell(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => FileViewerScreen(
+                            url: f.url,
+                            fileName: f.fileName,
+                            isPDF: isPDF,
+                          ),
+                        ),
+                      );
+                    },
+                    child: Chip(
+                      avatar: Icon(
+                        isPDF
+                            ? Icons.picture_as_pdf_outlined
+                            : Icons.image_outlined,
+                        size: 14,
+                      ),
+                      label: Text(f.fileName, style: theme.textTheme.labelSmall),
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      visualDensity: VisualDensity.compact,
                     ),
-                    label: Text(f.fileName, style: theme.textTheme.labelSmall),
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    visualDensity: VisualDensity.compact,
                   );
                 }).toList(),
               ),

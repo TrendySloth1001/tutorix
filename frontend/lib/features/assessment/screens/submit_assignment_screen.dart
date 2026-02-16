@@ -3,6 +3,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import '../models/assignment_model.dart';
 import '../services/assessment_service.dart';
+import 'file_viewer_screen.dart';
 
 /// Screen for students to view assignment details and submit files (images/PDFs).
 class SubmitAssignmentScreen extends StatefulWidget {
@@ -176,6 +177,17 @@ class _SubmitAssignmentScreenState extends State<SubmitAssignmentScreen> {
                 title: Text(att.fileName, style: theme.textTheme.bodySmall),
                 dense: true,
                 contentPadding: EdgeInsets.zero,
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => FileViewerScreen(
+                        url: att.url,
+                        fileName: att.fileName,
+                        isPDF: att.fileType != 'image',
+                      ),
+                    ),
+                  );
+                },
               ),
             ),
           ],

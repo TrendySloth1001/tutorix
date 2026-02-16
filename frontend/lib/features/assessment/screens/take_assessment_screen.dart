@@ -726,7 +726,9 @@ class _QuestionWidget extends StatelessWidget {
 
   Widget _buildNATInput(ThemeData theme) {
     final current = answer is Map ? answer['value'] : null;
-    return TextField(
+    return TextFormField(
+      key: ValueKey('nat_${question.id}'),
+      initialValue: current != null ? current.toString() : '',
       decoration: const InputDecoration(
         labelText: 'Enter your answer',
         border: OutlineInputBorder(),
@@ -735,9 +737,6 @@ class _QuestionWidget extends StatelessWidget {
       keyboardType: const TextInputType.numberWithOptions(
         decimal: true,
         signed: true,
-      ),
-      controller: TextEditingController(
-        text: current != null ? current.toString() : '',
       ),
       onChanged: (v) {
         final parsed = double.tryParse(v);
