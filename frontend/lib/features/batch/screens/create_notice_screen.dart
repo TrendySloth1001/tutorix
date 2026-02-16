@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../services/batch_service.dart';
 
@@ -150,9 +151,7 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to create notice');
       }
     }
     if (mounted) setState(() => _isSaving = false);

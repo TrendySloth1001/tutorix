@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../shared/models/user_model.dart';
+import '../../../shared/widgets/app_alert.dart';
+import '../../../shared/widgets/app_shimmer.dart';
 import '../../profile/screens/profile_screen.dart';
 import '../models/coaching_model.dart';
 import '../services/coaching_service.dart';
@@ -40,9 +42,7 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
       _coachings = await _coachingService.getMyCoachings();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load coachings: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to load coachings');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -148,7 +148,7 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const GenericListShimmer()
           : _coachings.isEmpty
           ? _EmptyState(onGetStarted: _navigateToCreate)
           : RefreshIndicator(

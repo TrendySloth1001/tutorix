@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../services/batch_service.dart';
 
@@ -186,21 +187,14 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
       );
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      _showError('$e');
+      _showError('Failed to save note');
     }
     if (mounted) setState(() => _isSaving = false);
   }
 
   void _showError(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: Colors.red.shade700,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
+    AppAlert.error(context, msg);
   }
 
   String _formatBytes(int bytes) {

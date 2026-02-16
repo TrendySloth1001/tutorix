@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../shared/services/invitation_service.dart';
 import '../../../shared/widgets/accept_invite_sheet.dart';
+import '../../../shared/widgets/app_alert.dart';
+import '../../../shared/widgets/app_shimmer.dart';
 
 class MyInvitationsScreen extends StatefulWidget {
   const MyInvitationsScreen({super.key});
@@ -60,24 +62,15 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
     try {
       await _invitationService.respondToInvitation(invitationId, accept);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              accept ? 'Invitation accepted!' : 'Invitation declined.',
-            ),
-            backgroundColor: accept ? Colors.green : Colors.grey,
-          ),
+        AppAlert.success(
+          context,
+          accept ? 'Invitation accepted!' : 'Invitation declined.',
         );
         _loadInvitations();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppAlert.error(context, e);
       }
     }
   }
@@ -89,7 +82,7 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('My Invitations'), centerTitle: true),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const InvitationsShimmer()
           : _invitations.isEmpty
           ? _buildEmptyState(theme)
           : RefreshIndicator(

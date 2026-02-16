@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../shared/models/user_model.dart';
+import '../../../shared/widgets/app_alert.dart';
+import '../../../shared/widgets/app_shimmer.dart';
 import '../models/coaching_model.dart';
 import '../models/member_model.dart';
 import '../models/invitation_model.dart';
@@ -75,9 +77,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
       _invitations = results[1] as List<InvitationModel>;
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to load members');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -131,19 +131,12 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
     try {
       await _memberService.removeMember(widget.coaching.id, member.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Member removed'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        AppAlert.success(context, 'Member removed');
         _loadData();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
-        );
+        AppAlert.error(context, e, fallback: 'Failed to remove member');
       }
     }
   }
@@ -158,19 +151,12 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
     try {
       await _memberService.cancelInvitation(widget.coaching.id, inv.id);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Invitation cancelled'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        AppAlert.success(context, 'Invitation cancelled');
         _loadData();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: $e'), backgroundColor: Colors.red),
-        );
+        AppAlert.error(context, e, fallback: 'Failed to cancel invitation');
       }
     }
   }
@@ -364,7 +350,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
           // ── Body ──
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const MembersShimmer()
                 : TabBarView(
                     controller: _tabController,
                     children: [

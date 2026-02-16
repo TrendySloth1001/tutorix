@@ -54,7 +54,6 @@ class AuthController extends ChangeNotifier {
         await _checkPendingInvitations();
       }
     } catch (e) {
-      debugPrint('Sign in error: $e');
       rethrow;
     } finally {
       _isLoading = false;
@@ -81,7 +80,7 @@ class AuthController extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      debugPrint('Refresh user error: $e');
+      // ignore
     }
   }
 
@@ -90,7 +89,6 @@ class AuthController extends ChangeNotifier {
       _pendingInvitations = await _invitationService.getMyInvitations();
       _invitationsChecked = true;
     } catch (e) {
-      debugPrint('Check invitations error: $e');
       _pendingInvitations = [];
       _invitationsChecked = true;
     }

@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../shared/models/user_model.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../services/upload_service.dart';
 import '../services/user_service.dart';
 
@@ -46,15 +47,11 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
       if (updated != null && mounted) {
         setState(() => _currentUser = updated);
         widget.onUserUpdated?.call(updated);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile picture updated')),
-        );
+        AppAlert.success(context, 'Profile picture updated');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to update avatar: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to update avatar');
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -68,16 +65,12 @@ class _PhotoViewerScreenState extends State<PhotoViewerScreen> {
       if (updated != null && mounted) {
         setState(() => _currentUser = updated);
         widget.onUserUpdated?.call(updated);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile picture removed')),
-        );
+        AppAlert.success(context, 'Profile picture removed');
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to remove avatar: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to remove avatar');
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);

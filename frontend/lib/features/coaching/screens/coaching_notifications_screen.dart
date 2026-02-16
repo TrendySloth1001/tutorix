@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../../shared/models/notification_model.dart';
 import '../../../../shared/services/notification_service.dart';
+import '../../../../shared/widgets/app_alert.dart';
+import '../../../../shared/widgets/app_shimmer.dart';
 import '../services/member_service.dart';
 
 class CoachingNotificationsScreen extends StatefulWidget {
@@ -21,7 +23,6 @@ class _CoachingNotificationsScreenState
 
   List<NotificationModel> _notifications = [];
   bool _isLoading = true;
-  String? _error;
 
   @override
   void initState() {
@@ -44,8 +45,8 @@ class _CoachingNotificationsScreenState
       });
     } catch (e) {
       if (mounted) {
+        AppAlert.error(context, e, fallback: 'Failed to load notifications');
         setState(() {
-          _error = e.toString();
           _isLoading = false;
         });
       }
@@ -80,12 +81,7 @@ class _CoachingNotificationsScreenState
       if (mounted) {
         // If archive fails, reload to get accurate state
         _load();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to archive: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppAlert.error(context, e, fallback: 'Failed to archive');
       }
     }
   }
@@ -180,24 +176,14 @@ class _CoachingNotificationsScreenState
         }
 
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text(
-                'Member removed successfully. They have been notified.',
-              ),
-              backgroundColor: Colors.green,
-              duration: Duration(seconds: 3),
-            ),
+          AppAlert.success(
+            context,
+            'Member removed successfully. They have been notified.',
           );
         }
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Failed to remove member: $e'),
-              backgroundColor: Colors.red,
-            ),
-          );
+          AppAlert.error(context, e, fallback: 'Failed to remove member');
         }
       }
     } else if (action == 'ok') {
@@ -206,12 +192,7 @@ class _CoachingNotificationsScreenState
         await _archive(notificationId);
       }
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Notification dismissed'),
-            duration: Duration(seconds: 1),
-          ),
-        );
+        AppAlert.success(context, 'Notification dismissed');
       }
     }
   }
@@ -221,9 +202,7 @@ class _CoachingNotificationsScreenState
     return Scaffold(
       appBar: AppBar(title: const Text('Notifications'), centerTitle: true),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(child: Text('Error: $_error'))
+          ? const NotificationsShimmer()
           : _notifications.isEmpty
           ? const Center(child: Text('No notifications'))
           : ListView.separated(

@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'secure_storage_service.dart';
 
@@ -153,8 +152,6 @@ class ApiClient {
         data['message'] ??
         data['error'] ??
         'Request failed (${response.statusCode})';
-    debugPrint('ApiClient error ${response.statusCode}: $message');
-    debugPrint('Full response: ${response.body}');
     throw Exception(message);
   }
 
@@ -168,7 +165,6 @@ class ApiClient {
     final message = data is Map
         ? (data['message'] ?? 'Request failed (${response.statusCode})')
         : 'Request failed (${response.statusCode})';
-    debugPrint('ApiClient error ${response.statusCode}: $message');
     throw Exception(message);
   }
 }

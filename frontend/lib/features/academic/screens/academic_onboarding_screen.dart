@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../shared/widgets/app_alert.dart';
+import '../../../shared/widgets/app_shimmer.dart';
 import '../models/academic_masters.dart';
 import '../services/academic_service.dart';
 
@@ -130,9 +132,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
       widget.onComplete();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to save profile: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to save profile');
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -145,9 +145,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
       widget.onRemindLater();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppAlert.error(context, e, fallback: 'Something went wrong');
       }
     }
   }
@@ -160,7 +158,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: colorScheme.surface,
-        body: const Center(child: CircularProgressIndicator()),
+        body: const GenericListShimmer(),
       );
     }
 

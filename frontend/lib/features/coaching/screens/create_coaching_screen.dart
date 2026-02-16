@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../shared/models/user_model.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../../profile/services/user_service.dart';
 import '../models/coaching_model.dart';
 import '../services/coaching_service.dart';
@@ -47,31 +48,13 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
           if (widget.onCoachingCreated != null && updatedUser != null) {
             widget.onCoachingCreated!(coaching, updatedUser);
           }
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('${coaching.name} created successfully!'),
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
-              ),
-              backgroundColor: Theme.of(context).colorScheme.primary,
-            ),
-          );
+          AppAlert.success(context, '${coaching.name} created successfully!');
           Navigator.pop(context, coaching);
         }
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to create coaching: $e'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
+        AppAlert.error(context, e, fallback: 'Failed to create coaching');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

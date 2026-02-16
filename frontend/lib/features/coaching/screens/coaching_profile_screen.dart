@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../shared/models/user_model.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../models/coaching_model.dart';
 import '../services/coaching_service.dart';
 import '../services/coaching_onboarding_service.dart';
@@ -164,9 +165,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       try {
         await onSave(result);
         await _refreshCoaching();
-        if (mounted) _showSuccess('Updated successfully');
+        if (mounted) AppAlert.success(context, 'Updated successfully');
       } catch (e) {
-        if (mounted) _showError('Update failed');
+        if (mounted) AppAlert.error(context, e, fallback: 'Update failed');
       } finally {
         if (mounted) setState(() => _isLoading = false);
       }
@@ -174,28 +175,11 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
   }
 
   void _showSuccess(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: Colors.green,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        duration: const Duration(seconds: 2),
-      ),
-    );
+    AppAlert.success(context, msg);
   }
 
   void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        backgroundColor: Colors.red,
-        behavior: SnackBarBehavior.floating,
-        margin: const EdgeInsets.all(16),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-      ),
-    );
+    AppAlert.error(context, msg);
   }
 
   void _editTagline() => _editField(

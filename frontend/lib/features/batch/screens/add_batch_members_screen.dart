@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../shared/widgets/app_alert.dart';
+import '../../../shared/widgets/app_shimmer.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../services/batch_service.dart';
 
@@ -68,9 +70,7 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
       _availableTeachers = results[1];
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to load members');
       }
     }
     if (mounted) setState(() => _isLoading = false);
@@ -99,9 +99,7 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to add members');
       }
     }
     if (mounted) setState(() => _isSaving = false);
@@ -141,7 +139,7 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const AddMembersShimmer()
           : Column(
               children: [
                 // Selection count banner

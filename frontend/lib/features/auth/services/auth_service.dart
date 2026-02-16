@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../core/utils/device_info_helper.dart';
@@ -43,7 +42,6 @@ class AuthService {
 
       return user;
     } catch (e) {
-      debugPrint('Sign-in error: $e');
       rethrow;
     }
   }

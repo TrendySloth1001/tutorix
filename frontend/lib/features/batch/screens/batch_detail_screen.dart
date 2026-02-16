@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../shared/models/user_model.dart';
+import '../../../shared/widgets/app_alert.dart';
+import '../../../shared/widgets/app_shimmer.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../models/batch_model.dart';
 import '../models/batch_member_model.dart';
@@ -81,9 +83,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       _notices = results[3] as List<BatchNoticeModel>;
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to load batch details');
       }
     }
     if (mounted) setState(() => _isLoading = false);
@@ -132,9 +132,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to delete batch');
       }
     }
   }
@@ -152,9 +150,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       _loadAll();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to update status');
       }
     }
   }
@@ -206,9 +202,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       _loadAll();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to remove: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to remove member');
       }
     }
   }
@@ -260,9 +254,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       _loadAll();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to delete note');
       }
     }
   }
@@ -314,9 +306,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       _loadAll();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to delete: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to delete notice');
       }
     }
   }
@@ -328,7 +318,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
     if (_isLoading && _batch == null) {
       return Scaffold(
         appBar: AppBar(leading: const BackButton()),
-        body: const Center(child: CircularProgressIndicator()),
+        body: const BatchDetailShimmer(),
       );
     }
 

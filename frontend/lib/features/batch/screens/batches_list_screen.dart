@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../shared/models/user_model.dart';
+import '../../../shared/widgets/app_alert.dart';
+import '../../../shared/widgets/app_shimmer.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../models/batch_model.dart';
 import '../services/batch_service.dart';
@@ -53,9 +55,7 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load batches: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to load batches');
       }
     }
     if (mounted) setState(() => _isLoading = false);
@@ -251,7 +251,7 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
           // ── Content
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? const BatchListShimmer()
                 : _batches.isEmpty
                 ? _EmptyState(isAdmin: _isAdmin, onTap: _openCreateBatch)
                 : RefreshIndicator(

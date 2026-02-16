@@ -34,7 +34,7 @@ class DeviceInfoHelper {
           description = 'Tutorix-${defaultTargetPlatform.name} ($osVersion)';
       }
     } catch (e) {
-      debugPrint('DeviceInfoHelper plugin error (using fallback): $e');
+      // ignore
     }
 
     return description;

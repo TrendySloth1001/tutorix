@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../shared/services/invitation_service.dart';
+import '../../../shared/widgets/app_alert.dart';
 
 /// Invite member — card-based flow, tuned for cream/olive palette.
 class InviteMemberScreen extends StatefulWidget {
@@ -84,24 +85,16 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
             : null,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              isResolved ? 'Invitation sent!' : 'Pending invite created',
-            ),
-            backgroundColor: const Color(0xFF2E7D32),
-          ),
+        final isResolved = _lookupResult?['found'] == true;
+        AppAlert.success(
+          context,
+          isResolved ? 'Invitation sent!' : 'Pending invite created',
         );
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: const Color(0xFFC62828),
-          ),
-        );
+        AppAlert.error(context, e);
       }
     } finally {
       if (mounted) setState(() => _isSending = false);

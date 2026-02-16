@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../shared/services/invitation_service.dart';
 import '../../../shared/widgets/accept_invite_sheet.dart';
+import '../../../shared/widgets/app_alert.dart';
+import '../../../shared/widgets/app_shimmer.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -57,23 +59,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     try {
       await _invitationService.respondToInvitation(id, accept);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(accept ? 'Accepted!' : 'Declined.'),
-            backgroundColor: accept ? Colors.green : Colors.grey,
-          ),
-        );
+        AppAlert.success(context, accept ? 'Accepted!' : 'Declined.');
         _load();
         context.read<AuthController>().refreshInvitations();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppAlert.error(context, e);
       }
     } finally {
       if (mounted) setState(() => _responding.remove(id));
@@ -87,7 +79,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     return Scaffold(
       appBar: AppBar(title: const Text('Notifications'), centerTitle: true),
       body: _loading
-          ? const Center(child: CircularProgressIndicator())
+          ? const NotificationsShimmer()
           : _invitations.isEmpty
           ? _buildEmpty(theme)
           : RefreshIndicator(

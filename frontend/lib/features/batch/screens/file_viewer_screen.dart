@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../shared/widgets/app_alert.dart';
 import '../models/batch_note_model.dart';
 
 /// Enhanced file viewer for documents and images.
@@ -239,9 +240,7 @@ class _ImageViewerState extends State<_ImageViewer>
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else if (context.mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Could not open file')));
+      AppAlert.error(context, 'Could not open file');
     }
   }
 }
@@ -308,7 +307,7 @@ class _EnhancedPdfViewerState extends State<_EnhancedPdfViewer> {
 
       await Share.shareXFiles([XFile(file.path)]);
     } catch (e) {
-      debugPrint('❌ Share error: $e');
+      // ignore
     }
   }
 
@@ -402,7 +401,6 @@ class _EnhancedPdfViewerState extends State<_EnhancedPdfViewer> {
             enableTextSelection: true,
             onDocumentLoaded: (details) {
               setState(() => _totalPages = details.document.pages.count);
-              debugPrint('✅ PDF loaded: $_totalPages pages');
             },
             onPageChanged: (details) {
               setState(() => _currentPage = details.newPageNumber);
@@ -555,13 +553,7 @@ class _DocumentViewerState extends State<_DocumentViewer> {
 
   void _showError(String msg) {
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(msg),
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
+    AppAlert.error(context, msg);
   }
 
   @override

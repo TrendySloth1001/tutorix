@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import '../../features/coaching/models/coaching_model.dart';
 import 'ward_model.dart';
 
@@ -65,8 +64,6 @@ class UserModel {
             [],
       );
     } catch (e) {
-      debugPrint('Error parsing UserModel from JSON: $e');
-      debugPrint('JSON data: $json');
       rethrow;
     }
   }

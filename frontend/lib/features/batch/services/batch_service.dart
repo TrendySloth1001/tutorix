@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../shared/services/api_client.dart';
 import '../models/batch_model.dart';
@@ -232,7 +231,6 @@ class BatchService {
           .map((e) => BatchNoteModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      debugPrint('Error in getRecentNotes: $e');
       return [];
     }
   }

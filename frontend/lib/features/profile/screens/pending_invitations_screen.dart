@@ -4,6 +4,7 @@ import '../../auth/controllers/auth_controller.dart';
 
 import '../../../shared/services/invitation_service.dart';
 import '../../../shared/widgets/accept_invite_sheet.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/invitation_card.dart';
 
 class PendingInvitationsScreen extends StatefulWidget {
@@ -44,22 +45,15 @@ class _PendingInvitationsScreenState extends State<PendingInvitationsScreen> {
     try {
       await _invitationService.respondToInvitation(id, accept);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(accept ? 'Invitation accepted!' : 'Declined.'),
-            backgroundColor: accept ? Colors.green : Colors.grey,
-          ),
+        AppAlert.success(
+          context,
+          accept ? 'Invitation accepted!' : 'Declined.',
         );
         await context.read<AuthController>().refreshInvitations();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppAlert.error(context, e);
       }
     } finally {
       if (mounted) setState(() => _responding.remove(id));

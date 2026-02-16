@@ -3,6 +3,8 @@ import 'package:provider/provider.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/services/notification_service.dart';
+import '../../../shared/widgets/app_alert.dart';
+import '../../../shared/widgets/app_shimmer.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../../coaching/screens/coaching_onboarding_screen.dart';
 import '../../coaching/screens/coaching_shell.dart';
@@ -60,7 +62,10 @@ class _HomeScreenState extends State<HomeScreen> {
       ]);
       _myCoachings = results[0];
       _joinedCoachings = results[1];
-    } catch (_) {}
+    } catch (e) {
+      if (mounted)
+        AppAlert.error(context, e, fallback: 'Failed to load coachings');
+    }
     if (mounted) setState(() => _isLoading = false);
   }
 
@@ -118,9 +123,7 @@ class _HomeScreenState extends State<HomeScreen> {
               onNotificationTap: _navigateToNotifications,
             ),
             if (_isLoading)
-              const SliverFillRemaining(
-                child: Center(child: CircularProgressIndicator()),
-              )
+              const SliverFillRemaining(child: HomeShimmer())
             else if (!hasAny)
               SliverFillRemaining(hasScrollBody: false, child: _EmptyState())
             else
@@ -138,18 +141,17 @@ class _HomeScreenState extends State<HomeScreen> {
                           icon: Icons.school_rounded,
                         ),
                         const SizedBox(height: 4),
-                        ...List.generate(_myCoachings.length, (i) {
-                          final coaching = _myCoachings[i];
-                          return Padding(
+                        for (int i = 0; i < _myCoachings.length; i++) ...[
+                          Padding(
                             padding: EdgeInsets.only(
                               bottom: i < _myCoachings.length - 1 ? 12 : 0,
                             ),
                             child: CoachingCoverCard(
-                              coaching: coaching,
-                              onTap: () => _navigateToCoaching(coaching),
+                              coaching: _myCoachings[i],
+                              onTap: () => _navigateToCoaching(_myCoachings[i]),
                             ),
-                          );
-                        }),
+                          ),
+                        ],
                       ],
 
                       // Joined section
@@ -160,19 +162,19 @@ class _HomeScreenState extends State<HomeScreen> {
                           count: _joinedCoachings.length,
                           icon: Icons.group_rounded,
                         ),
-                        ...List.generate(_joinedCoachings.length, (i) {
-                          final coaching = _joinedCoachings[i];
-                          return Padding(
+                        for (int i = 0; i < _joinedCoachings.length; i++) ...[
+                          Padding(
                             padding: EdgeInsets.only(
                               bottom: i < _joinedCoachings.length - 1 ? 12 : 0,
                             ),
                             child: CoachingCoverCard(
-                              coaching: coaching,
-                              onTap: () => _navigateToCoaching(coaching),
-                              isOwner: false, // Explicitly set false for joined
+                              coaching: _joinedCoachings[i],
+                              onTap: () =>
+                                  _navigateToCoaching(_joinedCoachings[i]),
+                              isOwner: false,
                             ),
-                          );
-                        }),
+                          ),
+                        ],
                       ],
                     ],
                   ),

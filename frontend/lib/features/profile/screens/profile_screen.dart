@@ -2,6 +2,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../shared/models/user_model.dart';
+import '../../../shared/widgets/app_alert.dart';
+import '../../../shared/widgets/app_shimmer.dart';
 import '../../../shared/widgets/setting_tile.dart';
 import '../../academic/models/academic_masters.dart';
 import '../../academic/models/academic_profile.dart';
@@ -49,15 +51,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadAcademicData() async {
     try {
-      final status = await _academicService.getOnboardingStatus();
-      final masters = await _academicService.getMasters();
-      final profile = await _academicService.getProfile();
+      final results = await Future.wait([
+        _academicService.getOnboardingStatus(),
+        _academicService.getMasters(),
+        _academicService.getProfile(),
+      ]);
 
       if (mounted) {
+        final status = results[0] as dynamic;
         setState(() {
           _isStudentSomewhere = status.reason != 'not_a_student';
-          _academicMasters = masters;
-          _academicProfile = profile;
+          _academicMasters = results[1] as AcademicMasters?;
+          _academicProfile = results[2] as AcademicProfile?;
           _loadingAcademic = false;
         });
       }
@@ -84,15 +89,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final updated = await _uploadService.uploadAvatar(File(image.path));
       if (updated != null && mounted) {
         widget.onUserUpdated?.call(updated);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile picture updated successfully')),
-        );
+        AppAlert.success(context, 'Profile picture updated successfully');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to update avatar: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to update avatar');
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -106,15 +107,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final updated = await userService.updateProfile(picture: null);
       if (updated != null && mounted) {
         widget.onUserUpdated?.call(updated);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile picture removed')),
-        );
+        AppAlert.success(context, 'Profile picture removed');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to remove avatar: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to remove avatar');
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -306,18 +303,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to update privacy: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to update privacy');
       }
     }
   }
 
   Widget _buildAcademicSection(ThemeData theme) {
     if (_loadingAcademic) {
-      return const SizedBox(
-        height: 100,
-        child: Center(child: CircularProgressIndicator()),
+      return const ShimmerWrap(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            ShimmerBox(width: 160, height: 14),
+            SizedBox(height: 12),
+            ShimmerBox(height: 48),
+            SizedBox(height: 8),
+            ShimmerBox(height: 48),
+          ],
+        ),
       );
     }
 

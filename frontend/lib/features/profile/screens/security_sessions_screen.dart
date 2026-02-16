@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import '../../../shared/models/login_session.dart';
+import '../../../shared/widgets/app_alert.dart';
+import '../../../shared/widgets/app_shimmer.dart';
 import '../services/user_service.dart';
 
 class SecuritySessionsScreen extends StatefulWidget {
@@ -28,9 +30,7 @@ class _SecuritySessionsScreenState extends State<SecuritySessionsScreen> {
       _sessions = await _userService.getSessions();
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed to load sessions: $e')));
+        AppAlert.error(context, e, fallback: 'Failed to load sessions');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -62,7 +62,7 @@ class _SecuritySessionsScreenState extends State<SecuritySessionsScreen> {
         ),
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
+          ? const SessionsShimmer()
           : _sessions.isEmpty
           ? _EmptyState()
           : RefreshIndicator(

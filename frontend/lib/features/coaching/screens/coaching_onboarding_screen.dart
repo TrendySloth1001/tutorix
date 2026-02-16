@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../shared/widgets/app_alert.dart';
+import '../../../shared/widgets/app_shimmer.dart';
 import '../models/coaching_address.dart';
 import '../models/coaching_masters.dart';
 import '../models/coaching_model.dart';
@@ -186,7 +188,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
           );
           setState(() => _coaching = coaching);
         } catch (e) {
-          _showError('Failed to create coaching: $e');
+          _showError('Failed to create coaching');
           setState(() => _isSaving = false);
           return;
         }
@@ -223,7 +225,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
           foundedYear: _foundedYear,
         );
       } catch (e) {
-        _showError('Failed to save details: $e');
+        _showError('Failed to save details');
         setState(() => _isSaving = false);
         return;
       }
@@ -271,7 +273,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
           workingDays: _selectedWorkingDays.toList(),
         );
       } catch (e) {
-        _showError('Failed to save address: $e');
+        _showError('Failed to save address');
         setState(() => _isSaving = false);
         return;
       }
@@ -305,16 +307,15 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
       await _service.completeOnboarding(_coaching!.id);
       widget.onComplete();
     } catch (e) {
-      _showError('Failed to complete setup: $e');
+      _showError('Failed to complete setup');
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
   }
 
   void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.redAccent),
-    );
+    if (!mounted) return;
+    AppAlert.error(context, message);
   }
 
   Future<void> _fetchCurrentLocation() async {
@@ -365,12 +366,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Location captured successfully!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        AppAlert.success(context, 'Location captured successfully!');
       }
     } catch (e) {
       if (mounted) {
@@ -438,7 +434,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
     if (_isLoading) {
       return Scaffold(
         backgroundColor: colorScheme.surface,
-        body: const Center(child: CircularProgressIndicator()),
+        body: const GenericListShimmer(),
       );
     }
 
@@ -1116,7 +1112,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
               );
               setState(() => _branches.add(newBranch));
             } catch (e) {
-              _showError('Failed to add branch: $e');
+              _showError('Failed to add branch');
             }
           }
         },
@@ -1742,10 +1738,9 @@ class _AddBranchSheetState extends State<_AddBranchSheet> {
                       _cityController.text.isEmpty ||
                       _selectedState == null ||
                       _pincodeController.text.isEmpty) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Please fill all required fields'),
-                      ),
+                    AppAlert.warning(
+                      context,
+                      'Please fill all required fields',
                     );
                     return;
                   }

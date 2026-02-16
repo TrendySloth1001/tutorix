@@ -7,6 +7,8 @@ import '../../../shared/models/notification_model.dart';
 import '../../../shared/services/invitation_service.dart';
 import '../../../shared/services/notification_service.dart';
 import '../../../shared/widgets/accept_invite_sheet.dart';
+import '../../../shared/widgets/app_alert.dart';
+import '../../../shared/widgets/app_shimmer.dart';
 import '../../../shared/widgets/invitation_card.dart';
 
 class PersonalNotificationsScreen extends StatefulWidget {
@@ -26,7 +28,6 @@ class _PersonalNotificationsScreenState
   List<dynamic> _items =
       []; // Combined list of NotificationModel and Invitation Maps
   bool _isLoading = true;
-  String? _error;
   int _unreadCount = 0;
 
   @override
@@ -86,8 +87,8 @@ class _PersonalNotificationsScreenState
       }
     } catch (e) {
       if (mounted) {
+        AppAlert.error(context, e, fallback: 'Failed to load notifications');
         setState(() {
-          _error = e.toString();
           _isLoading = false;
         });
       }
@@ -132,12 +133,7 @@ class _PersonalNotificationsScreenState
     } catch (e) {
       if (mounted) {
         _load(); // Reload on failure
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to archive: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppAlert.error(context, e, fallback: 'Failed to archive');
       }
     }
   }
@@ -168,11 +164,9 @@ class _PersonalNotificationsScreenState
     try {
       await _invitationService.respondToInvitation(id, accept);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(accept ? 'Invitation accepted!' : 'Declined.'),
-            backgroundColor: accept ? Colors.green : Colors.grey,
-          ),
+        AppAlert.success(
+          context,
+          accept ? 'Invitation accepted!' : 'Declined.',
         );
         // Refresh list to remove the processed invitation
         _load();
@@ -183,12 +177,7 @@ class _PersonalNotificationsScreenState
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(e.toString().replaceFirst('Exception: ', '')),
-            backgroundColor: Colors.red,
-          ),
-        );
+        AppAlert.error(context, e);
       }
     } finally {
       if (mounted) setState(() => _responding.remove(id));
@@ -268,28 +257,7 @@ class _PersonalNotificationsScreenState
         ],
       ),
       body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 48,
-                    color: theme.colorScheme.error.withValues(alpha: 0.5),
-                  ),
-                  const SizedBox(height: 16),
-                  Text('Error: $_error'),
-                  const SizedBox(height: 16),
-                  TextButton.icon(
-                    onPressed: _load,
-                    icon: const Icon(Icons.refresh),
-                    label: const Text('Retry'),
-                  ),
-                ],
-              ),
-            )
+          ? const NotificationsShimmer()
           : _items.isEmpty
           ? RefreshIndicator(
               onRefresh: _load,

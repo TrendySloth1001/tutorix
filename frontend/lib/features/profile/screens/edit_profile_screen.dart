@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../shared/models/user_model.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../services/user_service.dart';
 
 class EditProfileScreen extends StatefulWidget {
@@ -52,30 +53,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (updatedUser != null && mounted) {
         widget.onUserUpdated(updatedUser);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Profile updated successfully'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            backgroundColor: Theme.of(context).colorScheme.primary,
-          ),
-        );
+        AppAlert.success(context, 'Profile updated successfully');
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to update profile: $e'),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
-            ),
-            backgroundColor: Colors.redAccent,
-          ),
-        );
+        AppAlert.error(context, e, fallback: 'Failed to update profile');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

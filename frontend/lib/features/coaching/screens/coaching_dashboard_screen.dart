@@ -4,9 +4,11 @@ import '../models/coaching_model.dart';
 import '../models/member_model.dart';
 import '../models/invitation_model.dart';
 import '../services/member_service.dart';
-import 'coaching_notifications_screen.dart'; // Import the new screen (same directory)
-import '../../../shared/services/notification_service.dart'; // Correct path
+import 'coaching_notifications_screen.dart';
+import '../../../shared/services/notification_service.dart';
 import '../../../shared/models/user_model.dart';
+import '../../../shared/widgets/app_alert.dart';
+import '../../../shared/widgets/app_shimmer.dart';
 import '../../batch/services/batch_service.dart';
 import '../../batch/models/batch_note_model.dart';
 import '../../batch/screens/note_detail_screen.dart';
@@ -73,7 +75,8 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
           (results[2] as Map<String, dynamic>)['unreadCount'] ?? 0;
       _recentNotes = results[3] as List<BatchNoteModel>;
     } catch (e) {
-      debugPrint('Error loading dashboard data: $e');
+      if (mounted)
+        AppAlert.error(context, e, fallback: 'Failed to load dashboard');
     }
     if (mounted) setState(() => _isLoading = false);
   }
@@ -115,7 +118,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
     final c = widget.coaching;
 
     if (_isLoading) {
-      return const Scaffold(body: Center(child: CircularProgressIndicator()));
+      return const Scaffold(body: DashboardShimmer());
     }
 
     return Scaffold(
