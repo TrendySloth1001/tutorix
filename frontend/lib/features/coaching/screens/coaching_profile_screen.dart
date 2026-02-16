@@ -1159,14 +1159,12 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                             decoration: BoxDecoration(
                               color: theme.colorScheme.primary,
                               shape: BoxShape.circle,
-                              border: Border.all(
-                                color: Colors.white,
-                                width: 3,
-                              ),
+                              border: Border.all(color: Colors.white, width: 3),
                               boxShadow: [
                                 BoxShadow(
-                                  color: theme.colorScheme.primary
-                                      .withValues(alpha: 0.4),
+                                  color: theme.colorScheme.primary.withValues(
+                                    alpha: 0.4,
+                                  ),
                                   blurRadius: 10,
                                   offset: const Offset(0, 3),
                                 ),
@@ -1200,7 +1198,8 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                   bottom: 10,
                   right: 10,
                   child: GestureDetector(
-                    onTap: () => _openDirections(addr.latitude!, addr.longitude!),
+                    onTap: () =>
+                        _openDirections(addr.latitude!, addr.longitude!),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
@@ -1211,8 +1210,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                         borderRadius: BorderRadius.circular(12),
                         boxShadow: [
                           BoxShadow(
-                            color: theme.colorScheme.primary
-                                .withValues(alpha: 0.35),
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.35,
+                            ),
                             blurRadius: 8,
                             offset: const Offset(0, 2),
                           ),
@@ -1221,8 +1221,11 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.directions_rounded,
-                              size: 16, color: Colors.white),
+                          const Icon(
+                            Icons.directions_rounded,
+                            size: 16,
+                            color: Colors.white,
+                          ),
                           const SizedBox(width: 5),
                           Text(
                             'Directions',
@@ -1262,9 +1265,11 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
 
   Future<void> _openDirections(double lat, double lng) async {
     final gMapsUrl = Uri.parse(
-        'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng');
+      'https://www.google.com/maps/dir/?api=1&destination=$lat,$lng',
+    );
     final aMapsUrl = Uri.parse(
-        'https://maps.apple.com/?daddr=$lat,$lng&dirflg=d');
+      'https://maps.apple.com/?daddr=$lat,$lng&dirflg=d',
+    );
     try {
       await launchUrl(gMapsUrl, mode: LaunchMode.externalApplication);
     } catch (_) {

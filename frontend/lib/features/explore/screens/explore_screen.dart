@@ -206,10 +206,8 @@ class _ExploreScreenState extends State<ExploreScreen>
   void _openCoachingProfile(CoachingModel coaching) {
     Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => CoachingProfileScreen(
-          coaching: coaching,
-          user: widget.user,
-        ),
+        builder: (_) =>
+            CoachingProfileScreen(coaching: coaching, user: widget.user),
       ),
     );
   }
@@ -233,205 +231,219 @@ class _ExploreScreenState extends State<ExploreScreen>
       body: Stack(
         children: [
           CustomScrollView(
-        slivers: [
-          // ── App Bar ──────────────────────────────────────────────────
-          SliverAppBar(
-            expandedHeight: 70,
-            floating: true,
-            pinned: true,
-            backgroundColor: theme.colorScheme.surface,
-            surfaceTintColor: Colors.transparent,
-            elevation: 0,
-            flexibleSpace: FlexibleSpaceBar(
-              titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
-              title: Text(
-                'Explore',
-                style: theme.textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: theme.colorScheme.onSurface,
-                ),
-              ),
-            ),
-          ),
-
-          // ── Search Bar ─────────────────────────────────────────────
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-              child: Container(
-                height: 48,
-                decoration: BoxDecoration(
-                  color: theme.colorScheme.primary.withValues(alpha: 0.04),
-                  borderRadius: BorderRadius.circular(14),
-                  border: Border.all(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  ),
-                ),
-                child: TextField(
-                  controller: _searchController,
-                  focusNode: _searchFocus,
-                  onChanged: _onSearchChanged,
-                  style: theme.textTheme.bodyMedium,
-                  decoration: InputDecoration(
-                    hintText: 'Search coachings by name…',
-                    hintStyle: theme.textTheme.bodyMedium?.copyWith(
-                      color: theme.colorScheme.onSurface.withValues(alpha: 0.35),
+            slivers: [
+              // ── App Bar ──────────────────────────────────────────────────
+              SliverAppBar(
+                expandedHeight: 70,
+                floating: true,
+                pinned: true,
+                backgroundColor: theme.colorScheme.surface,
+                surfaceTintColor: Colors.transparent,
+                elevation: 0,
+                flexibleSpace: FlexibleSpaceBar(
+                  titlePadding: const EdgeInsets.only(left: 20, bottom: 16),
+                  title: Text(
+                    'Explore',
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      color: theme.colorScheme.onSurface,
                     ),
-                    prefixIcon: Icon(
-                      Icons.search_rounded,
-                      size: 20,
-                      color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                    ),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? GestureDetector(
-                            onTap: _dismissSearch,
-                            child: Icon(
-                              Icons.close_rounded,
-                              size: 18,
-                              color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                            ),
-                          )
-                        : null,
-                    border: InputBorder.none,
-                    contentPadding: const EdgeInsets.symmetric(vertical: 14),
                   ),
                 ),
               ),
-            ),
-          ),
 
-          // ── Content ────────────────────────────────────────────────
-          if (_locationLoading)
-            const SliverFillRemaining(child: _LocationLoadingView())
-          else if (_locationError != null)
-            SliverFillRemaining(
-              child: _LocationErrorView(
-                error: _locationError!,
-                onRetry: _fetchLocation,
-                onOpenSettings: () => Geolocator.openAppSettings(),
-              ),
-            )
-          else ...[
-            // Map card
-            SliverToBoxAdapter(
-              child: _MapCard(
-                userLocation: _userLocation!,
-                coachings: _coachings,
-                radiusKm: _radiusKm,
-                mapController: _mapController,
-                expanded: _mapExpanded,
-                selectedCoaching: _selectedCoaching,
-                onToggleExpand: () =>
-                    setState(() => _mapExpanded = !_mapExpanded),
-                onMarkerTap: (c) => setState(() => _selectedCoaching = c),
-                onDismissSelection: () =>
-                    setState(() => _selectedCoaching = null),
-                onOpenCoaching: _openCoachingProfile,
-              ),
-            ),
-
-            // Radius chips
-            SliverToBoxAdapter(
-              child: _RadiusSelector(
-                current: _radiusKm,
-                options: _radiusOptions,
-                onChanged: _onRadiusChanged,
-              ),
-            ),
-
-            // Section header
-            SliverToBoxAdapter(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 8,
-                ),
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.near_me_rounded,
-                      size: 18,
-                      color: theme.colorScheme.primary.withValues(alpha: 0.6),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      'Nearby Coachings',
-                      style: theme.textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.w600,
-                        color: theme.colorScheme.primary.withValues(alpha: 0.8),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    if (!_dataLoading)
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 2,
-                        ),
-                        decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(
-                            alpha: 0.08,
-                          ),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text(
-                          '${_coachings.length}',
-                          style: theme.textTheme.labelSmall?.copyWith(
-                            fontWeight: FontWeight.w600,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ),
-
-            // List
-            if (_dataLoading)
-              const SliverToBoxAdapter(
+              // ── Search Bar ─────────────────────────────────────────────
+              SliverToBoxAdapter(
                 child: Padding(
-                  padding: EdgeInsets.only(top: 60),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
-              )
-            else if (_coachings.isEmpty)
-              SliverFillRemaining(
-                hasScrollBody: false,
-                child: _EmptyNearbyView(radiusKm: _radiusKm),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
-                sliver: SliverList.builder(
-                  itemCount: _coachings.length,
-                  itemBuilder: (context, index) {
-                    final item = _coachings[index];
-                    return _NearbyCoachingCard(
-                      item: item,
-                      isSelected:
-                          _selectedCoaching?.coaching.id == item.coaching.id,
-                      onTap: () {
-                        setState(() => _selectedCoaching = item);
-                        final addr = item.coaching.address;
-                        if (addr?.latitude != null && addr?.longitude != null) {
-                          _mapController.move(
-                            LatLng(addr!.latitude!, addr.longitude!),
-                            14,
-                          );
-                          if (!_mapExpanded) {
-                            setState(() => _mapExpanded = true);
-                          }
-                        }
-                      },
-                      onOpen: () => _openCoachingProfile(item.coaching),
-                    );
-                  },
+                  padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: theme.colorScheme.primary.withValues(alpha: 0.04),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: TextField(
+                      controller: _searchController,
+                      focusNode: _searchFocus,
+                      onChanged: _onSearchChanged,
+                      style: theme.textTheme.bodyMedium,
+                      decoration: InputDecoration(
+                        hintText: 'Search coachings by name…',
+                        hintStyle: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurface.withValues(
+                            alpha: 0.35,
+                          ),
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search_rounded,
+                          size: 20,
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.5,
+                          ),
+                        ),
+                        suffixIcon: _searchController.text.isNotEmpty
+                            ? GestureDetector(
+                                onTap: _dismissSearch,
+                                child: Icon(
+                                  Icons.close_rounded,
+                                  size: 18,
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.4,
+                                  ),
+                                ),
+                              )
+                            : null,
+                        border: InputBorder.none,
+                        contentPadding: const EdgeInsets.symmetric(
+                          vertical: 14,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
-          ],
-        ],
-      ),
+
+              // ── Content ────────────────────────────────────────────────
+              if (_locationLoading)
+                const SliverFillRemaining(child: _LocationLoadingView())
+              else if (_locationError != null)
+                SliverFillRemaining(
+                  child: _LocationErrorView(
+                    error: _locationError!,
+                    onRetry: _fetchLocation,
+                    onOpenSettings: () => Geolocator.openAppSettings(),
+                  ),
+                )
+              else ...[
+                // Map card
+                SliverToBoxAdapter(
+                  child: _MapCard(
+                    userLocation: _userLocation!,
+                    coachings: _coachings,
+                    radiusKm: _radiusKm,
+                    mapController: _mapController,
+                    expanded: _mapExpanded,
+                    selectedCoaching: _selectedCoaching,
+                    onToggleExpand: () =>
+                        setState(() => _mapExpanded = !_mapExpanded),
+                    onMarkerTap: (c) => setState(() => _selectedCoaching = c),
+                    onDismissSelection: () =>
+                        setState(() => _selectedCoaching = null),
+                    onOpenCoaching: _openCoachingProfile,
+                  ),
+                ),
+
+                // Radius chips
+                SliverToBoxAdapter(
+                  child: _RadiusSelector(
+                    current: _radiusKm,
+                    options: _radiusOptions,
+                    onChanged: _onRadiusChanged,
+                  ),
+                ),
+
+                // Section header
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.near_me_rounded,
+                          size: 18,
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.6,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Text(
+                          'Nearby Coachings',
+                          style: theme.textTheme.titleSmall?.copyWith(
+                            fontWeight: FontWeight.w600,
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.8,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        if (!_dataLoading)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: theme.colorScheme.primary.withValues(
+                                alpha: 0.08,
+                              ),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Text(
+                              '${_coachings.length}',
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                fontWeight: FontWeight.w600,
+                                color: theme.colorScheme.primary,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+
+                // List
+                if (_dataLoading)
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.only(top: 60),
+                      child: Center(child: CircularProgressIndicator()),
+                    ),
+                  )
+                else if (_coachings.isEmpty)
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _EmptyNearbyView(radiusKm: _radiusKm),
+                  )
+                else
+                  SliverPadding(
+                    padding: const EdgeInsets.fromLTRB(16, 4, 16, 100),
+                    sliver: SliverList.builder(
+                      itemCount: _coachings.length,
+                      itemBuilder: (context, index) {
+                        final item = _coachings[index];
+                        return _NearbyCoachingCard(
+                          item: item,
+                          isSelected:
+                              _selectedCoaching?.coaching.id ==
+                              item.coaching.id,
+                          onTap: () {
+                            setState(() => _selectedCoaching = item);
+                            final addr = item.coaching.address;
+                            if (addr?.latitude != null &&
+                                addr?.longitude != null) {
+                              _mapController.move(
+                                LatLng(addr!.latitude!, addr.longitude!),
+                                14,
+                              );
+                              if (!_mapExpanded) {
+                                setState(() => _mapExpanded = true);
+                              }
+                            }
+                          },
+                          onOpen: () => _openCoachingProfile(item.coaching),
+                        );
+                      },
+                    ),
+                  ),
+              ],
+            ],
+          ),
 
           // ── Search results overlay ────────────────────────────────
           if (_showSearch)
@@ -819,84 +831,85 @@ class _MapPreviewCard extends StatelessWidget {
     return GestureDetector(
       onTap: onOpen,
       child: Container(
-      height: 86,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        border: Border(
-          top: BorderSide(
-            color: theme.colorScheme.primary.withValues(alpha: 0.08),
+        height: 86,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          border: Border(
+            top: BorderSide(
+              color: theme.colorScheme.primary.withValues(alpha: 0.08),
+            ),
           ),
         ),
-      ),
-      child: Row(
-        children: [
-          // Logo
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: theme.colorScheme.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(14),
-              child: _getFullUrl(coaching.logo) != null
-                  ? Image.network(
-                      _getFullUrl(coaching.logo)!,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, _, _) => Icon(
+        child: Row(
+          children: [
+            // Logo
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: theme.colorScheme.primary.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: _getFullUrl(coaching.logo) != null
+                    ? Image.network(
+                        _getFullUrl(coaching.logo)!,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, _, _) => Icon(
+                          Icons.school_rounded,
+                          color: theme.colorScheme.primary,
+                        ),
+                      )
+                    : Icon(
                         Icons.school_rounded,
                         color: theme.colorScheme.primary,
                       ),
-                    )
-                  : Icon(
-                      Icons.school_rounded,
-                      color: theme.colorScheme.primary,
+              ),
+            ),
+            const SizedBox(width: 10),
+            // Info
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    coaching.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: -0.3,
                     ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          // Info
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  coaching.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: -0.3,
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  [
-                    if (coaching.address?.city != null) coaching.address!.city,
-                    '${item.distanceKm} km away',
-                  ].join(' · '),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.secondary.withValues(alpha: 0.7),
+                  const SizedBox(height: 2),
+                  Text(
+                    [
+                      if (coaching.address?.city != null)
+                        coaching.address!.city,
+                      '${item.distanceKm} km away',
+                    ].join(' · '),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.secondary.withValues(alpha: 0.7),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          const SizedBox(width: 6),
-          // Directions button
-          _DirectionsButton(
-            lat: coaching.address?.latitude,
-            lng: coaching.address?.longitude,
-            label: coaching.name,
-            compact: true,
-          ),
-        ],
-      ),
+            const SizedBox(width: 6),
+            // Directions button
+            _DirectionsButton(
+              lat: coaching.address?.latitude,
+              lng: coaching.address?.longitude,
+              label: coaching.name,
+              compact: true,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1262,10 +1275,10 @@ class _NearbyCoachingCard extends StatelessWidget {
                                         'View',
                                         style: theme.textTheme.labelSmall
                                             ?.copyWith(
-                                          fontWeight: FontWeight.w600,
-                                          color: Colors.white,
-                                          fontSize: 11,
-                                        ),
+                                              fontWeight: FontWeight.w600,
+                                              color: Colors.white,
+                                              fontSize: 11,
+                                            ),
                                       ),
                                       const SizedBox(width: 2),
                                       const Icon(
@@ -1710,49 +1723,52 @@ class _SearchOverlay extends StatelessWidget {
                       ),
                     )
                   : results.isEmpty
-                      ? Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 20,
-                            vertical: 32,
+                  ? Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 20,
+                        vertical: 32,
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Icon(
+                            Icons.search_off_rounded,
+                            size: 36,
+                            color: theme.colorScheme.primary.withValues(
+                              alpha: 0.2,
+                            ),
                           ),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(
-                                Icons.search_off_rounded,
-                                size: 36,
-                                color: theme.colorScheme.primary
-                                    .withValues(alpha: 0.2),
+                          const SizedBox(height: 10),
+                          Text(
+                            'No results for "$query"',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.45,
                               ),
-                              const SizedBox(height: 10),
-                              Text(
-                                'No results for "$query"',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  color: theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.45),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
-                        )
-                      : ListView.separated(
-                          shrinkWrap: true,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          itemCount: results.length,
-                          separatorBuilder: (_, _) => Divider(
-                            height: 1,
-                            indent: 68,
-                            color: theme.colorScheme.onSurface
-                                .withValues(alpha: 0.06),
-                          ),
-                          itemBuilder: (context, index) {
-                            final r = results[index];
-                            return _SearchResultTile(
-                              result: r,
-                              onTap: () => onResultTap(r),
-                            );
-                          },
+                        ],
+                      ),
+                    )
+                  : ListView.separated(
+                      shrinkWrap: true,
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      itemCount: results.length,
+                      separatorBuilder: (_, _) => Divider(
+                        height: 1,
+                        indent: 68,
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.06,
                         ),
+                      ),
+                      itemBuilder: (context, index) {
+                        final r = results[index];
+                        return _SearchResultTile(
+                          result: r,
+                          onTap: () => onResultTap(r),
+                        );
+                      },
+                    ),
             ),
           ),
         ),

@@ -64,7 +64,8 @@ class ExploreService {
   /// Search coachings by name (real-time, no caching).
   Future<List<SearchResult>> searchCoachings(String query) async {
     if (query.trim().isEmpty) return [];
-    final url = '${ApiConstants.coachingSearch}?q=${Uri.encodeComponent(query.trim())}&limit=15';
+    final url =
+        '${ApiConstants.coachingSearch}?q=${Uri.encodeComponent(query.trim())}&limit=15';
     final raw = await _api.getPublic(url);
     final list = (raw['results'] as List<dynamic>?) ?? [];
     return list
