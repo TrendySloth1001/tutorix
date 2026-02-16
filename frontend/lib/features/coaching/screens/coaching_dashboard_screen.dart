@@ -115,12 +115,9 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
       _batchService.watchDashboardFeed(widget.coaching.id).listen((data) {
         if (mounted) {
           setState(() {
-            _feedAssessments =
-                (data['assessments'] as List<dynamic>?) ?? [];
-            _feedAssignments =
-                (data['assignments'] as List<dynamic>?) ?? [];
-            _feedNotices =
-                (data['notices'] as List<dynamic>?) ?? [];
+            _feedAssessments = (data['assessments'] as List<dynamic>?) ?? [];
+            _feedAssignments = (data['assignments'] as List<dynamic>?) ?? [];
+            _feedNotices = (data['notices'] as List<dynamic>?) ?? [];
           });
         }
         checkDone();
@@ -1685,7 +1682,9 @@ class _FeedAssessmentCard extends StatelessWidget {
 
     final isQuiz = type == 'QUIZ';
     final color = isQuiz ? const Color(0xFF4A90A4) : const Color(0xFF6B5B95);
-    final icon = isQuiz ? Icons.quiz_rounded : Icons.assignment_turned_in_rounded;
+    final icon = isQuiz
+        ? Icons.quiz_rounded
+        : Icons.assignment_turned_in_rounded;
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -1694,9 +1693,7 @@ class _FeedAssessmentCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: color.withValues(alpha: 0.15),
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
           boxShadow: [
             BoxShadow(
               color: color.withValues(alpha: 0.06),
@@ -1746,7 +1743,8 @@ class _FeedAssessmentCard extends StatelessWidget {
                     children: [
                       _FeedMeta(
                         icon: Icons.help_outline_rounded,
-                        text: '$questionCount Q${questionCount != 1 ? 's' : ''}',
+                        text:
+                            '$questionCount Q${questionCount != 1 ? 's' : ''}',
                       ),
                       if (duration > 0) ...[
                         const SizedBox(width: 12),
@@ -1811,9 +1809,7 @@ class _FeedAssignmentCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: color.withValues(alpha: 0.15),
-          ),
+          border: Border.all(color: color.withValues(alpha: 0.15)),
           boxShadow: [
             BoxShadow(
               color: color.withValues(alpha: 0.06),

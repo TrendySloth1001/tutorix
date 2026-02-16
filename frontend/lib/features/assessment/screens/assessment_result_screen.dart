@@ -249,9 +249,9 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading response: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading response: $e')));
       }
     }
   }
@@ -591,14 +591,14 @@ class _QuestionResult extends StatelessWidget {
               isSkipped
                   ? Icons.remove_circle_outline
                   : isCorrect
-                      ? Icons.check_circle_rounded
-                      : Icons.cancel_rounded,
+                  ? Icons.check_circle_rounded
+                  : Icons.cancel_rounded,
               size: 16,
               color: isSkipped
                   ? Colors.grey
                   : isCorrect
-                      ? Colors.green
-                      : Colors.red,
+                  ? Colors.green
+                  : Colors.red,
             ),
             const SizedBox(width: 6),
             Text(
@@ -614,8 +614,8 @@ class _QuestionResult extends StatelessWidget {
                 color: isSkipped
                     ? Colors.grey
                     : isCorrect
-                        ? Colors.green.shade700
-                        : Colors.red.shade700,
+                    ? Colors.green.shade700
+                    : Colors.red.shade700,
               ),
             ),
           ],
@@ -624,7 +624,11 @@ class _QuestionResult extends StatelessWidget {
         // Correct answer
         Row(
           children: [
-            const Icon(Icons.check_circle_rounded, size: 16, color: Colors.green),
+            const Icon(
+              Icons.check_circle_rounded,
+              size: 16,
+              color: Colors.green,
+            ),
             const SizedBox(width: 6),
             Text(
               'Correct answer: ',
@@ -682,92 +686,92 @@ class _LeaderboardTile extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
       child: Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.surface,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+          ),
+        ),
+        child: Row(
+          children: [
+            // Rank
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color:
+                    medalColor?.withValues(alpha: 0.15) ??
+                    theme.colorScheme.surfaceContainerHighest,
+                shape: BoxShape.circle,
+              ),
+              alignment: Alignment.center,
+              child: Text(
+                '#$rank',
+                style: theme.textTheme.labelSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                  color: medalColor ?? theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+
+            // Avatar
+            CircleAvatar(
+              radius: 16,
+              backgroundImage: entry.user?.picture != null
+                  ? NetworkImage(entry.user!.picture!)
+                  : null,
+              child: entry.user?.picture == null
+                  ? Text(
+                      entry.user?.name?.substring(0, 1).toUpperCase() ?? '?',
+                      style: theme.textTheme.labelSmall,
+                    )
+                  : null,
+            ),
+            const SizedBox(width: 10),
+
+            // Name
+            Expanded(
+              child: Text(
+                entry.user?.name ?? 'Unknown',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+
+            // Score + chevron
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '${entry.percentage.toStringAsFixed(1)}%',
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+                Text(
+                  '${entry.totalScore.toStringAsFixed(1)} / ${entry.maxScore.toStringAsFixed(1)}',
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(width: 4),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 20,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ],
         ),
       ),
-      child: Row(
-        children: [
-          // Rank
-          Container(
-            width: 32,
-            height: 32,
-            decoration: BoxDecoration(
-              color:
-                  medalColor?.withValues(alpha: 0.15) ??
-                  theme.colorScheme.surfaceContainerHighest,
-              shape: BoxShape.circle,
-            ),
-            alignment: Alignment.center,
-            child: Text(
-              '#$rank',
-              style: theme.textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.w700,
-                color: medalColor ?? theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-
-          // Avatar
-          CircleAvatar(
-            radius: 16,
-            backgroundImage: entry.user?.picture != null
-                ? NetworkImage(entry.user!.picture!)
-                : null,
-            child: entry.user?.picture == null
-                ? Text(
-                    entry.user?.name?.substring(0, 1).toUpperCase() ?? '?',
-                    style: theme.textTheme.labelSmall,
-                  )
-                : null,
-          ),
-          const SizedBox(width: 10),
-
-          // Name
-          Expanded(
-            child: Text(
-              entry.user?.name ?? 'Unknown',
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-
-          // Score + chevron
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '${entry.percentage.toStringAsFixed(1)}%',
-                style: theme.textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: theme.colorScheme.primary,
-                ),
-              ),
-              Text(
-                '${entry.totalScore.toStringAsFixed(1)} / ${entry.maxScore.toStringAsFixed(1)}',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(width: 4),
-          Icon(
-            Icons.chevron_right_rounded,
-            size: 20,
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ],
-      ),
-    ),
     );
   }
 }
@@ -789,7 +793,8 @@ class _StudentResponseSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final r = result;
-    final passed = assessment.passingMarks != null &&
+    final passed =
+        assessment.passingMarks != null &&
         r.totalScore >= assessment.passingMarks!;
 
     return Scaffold(
@@ -822,13 +827,17 @@ class _StudentResponseSheet extends StatelessWidget {
                         '${r.percentage.toStringAsFixed(1)}%',
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w800,
-                          color: passed ? Colors.green.shade700 : Colors.blue.shade700,
+                          color: passed
+                              ? Colors.green.shade700
+                              : Colors.blue.shade700,
                         ),
                       ),
                       Text(
                         '${r.totalScore.toStringAsFixed(1)} / ${r.maxScore.toStringAsFixed(1)} marks',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: passed ? Colors.green.shade600 : Colors.blue.shade600,
+                          color: passed
+                              ? Colors.green.shade600
+                              : Colors.blue.shade600,
                         ),
                       ),
                     ],
@@ -836,9 +845,14 @@ class _StudentResponseSheet extends StatelessWidget {
                 ),
                 if (assessment.passingMarks != null)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
                     decoration: BoxDecoration(
-                      color: (passed ? Colors.green : Colors.red).withValues(alpha: 0.15),
+                      color: (passed ? Colors.green : Colors.red).withValues(
+                        alpha: 0.15,
+                      ),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -858,11 +872,23 @@ class _StudentResponseSheet extends StatelessWidget {
           // Stats row
           Row(
             children: [
-              _StatBox(label: 'Correct', value: '${r.correctCount}', color: Colors.green),
+              _StatBox(
+                label: 'Correct',
+                value: '${r.correctCount}',
+                color: Colors.green,
+              ),
               const SizedBox(width: 8),
-              _StatBox(label: 'Wrong', value: '${r.wrongCount}', color: Colors.red),
+              _StatBox(
+                label: 'Wrong',
+                value: '${r.wrongCount}',
+                color: Colors.red,
+              ),
               const SizedBox(width: 8),
-              _StatBox(label: 'Skipped', value: '${r.skippedCount}', color: Colors.grey),
+              _StatBox(
+                label: 'Skipped',
+                value: '${r.skippedCount}',
+                color: Colors.grey,
+              ),
             ],
           ),
 
@@ -871,7 +897,9 @@ class _StudentResponseSheet extends StatelessWidget {
           // Question-by-question breakdown
           Text(
             'Response Sheet',
-            style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.w700),
+            style: theme.textTheme.titleSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 10),
           if (r.assessment != null)

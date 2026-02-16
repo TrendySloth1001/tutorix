@@ -452,7 +452,9 @@ class _SubmissionStatus extends StatelessWidget {
                   },
                   child: Chip(
                     avatar: Icon(
-                      isPDF ? Icons.picture_as_pdf_outlined : Icons.image_outlined,
+                      isPDF
+                          ? Icons.picture_as_pdf_outlined
+                          : Icons.image_outlined,
                       size: 14,
                     ),
                     label: Text(f.fileName, style: theme.textTheme.labelSmall),
