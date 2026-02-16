@@ -67,10 +67,7 @@ class BatchService {
 
   /// GET /coaching/:coachingId/batches
   /// Stream: emits cached list first, then fresh from network.
-  Stream<List<BatchModel>> watchBatches(
-    String coachingId, {
-    String? status,
-  }) {
+  Stream<List<BatchModel>> watchBatches(String coachingId, {String? status}) {
     final key = 'batch:$coachingId:list${status != null ? ':$status' : ''}';
     return _cache.swr<List<BatchModel>>(
       key,
@@ -90,10 +87,8 @@ class BatchService {
     );
   }
 
-  Future<List<BatchModel>> listBatches(
-    String coachingId, {
-    String? status,
-  }) => watchBatches(coachingId, status: status).last;
+  Future<List<BatchModel>> listBatches(String coachingId, {String? status}) =>
+      watchBatches(coachingId, status: status).last;
 
   /// GET /coaching/:coachingId/batches/my
   Stream<List<BatchModel>> watchMyBatches(String coachingId) {
@@ -120,12 +115,9 @@ class BatchService {
     final key = 'batch:$coachingId:$batchId';
     return _cache.swr<BatchModel>(
       key,
-      () => _api.getAuthenticated(
-        ApiConstants.batchById(coachingId, batchId),
-      ),
-      (raw) => BatchModel.fromJson(
-        Map<String, dynamic>.from(raw['batch'] as Map),
-      ),
+      () => _api.getAuthenticated(ApiConstants.batchById(coachingId, batchId)),
+      (raw) =>
+          BatchModel.fromJson(Map<String, dynamic>.from(raw['batch'] as Map)),
     );
   }
 
@@ -200,9 +192,8 @@ class BatchService {
     final key = 'batch:$coachingId:$batchId:members';
     return _cache.swr<List<BatchMemberModel>>(
       key,
-      () => _api.getAuthenticated(
-        ApiConstants.batchMembers(coachingId, batchId),
-      ),
+      () =>
+          _api.getAuthenticated(ApiConstants.batchMembers(coachingId, batchId)),
       (raw) {
         final list = (raw['members'] as List<dynamic>?) ?? [];
         return list
@@ -274,16 +265,11 @@ class BatchService {
   }
 
   /// GET /coaching/:coachingId/batches/:batchId/notes
-  Stream<List<BatchNoteModel>> watchNotes(
-    String coachingId,
-    String batchId,
-  ) {
+  Stream<List<BatchNoteModel>> watchNotes(String coachingId, String batchId) {
     final key = 'batch:$coachingId:$batchId:notes';
     return _cache.swr<List<BatchNoteModel>>(
       key,
-      () => _api.getAuthenticated(
-        ApiConstants.batchNotes(coachingId, batchId),
-      ),
+      () => _api.getAuthenticated(ApiConstants.batchNotes(coachingId, batchId)),
       (raw) {
         final list = (raw['notes'] as List<dynamic>?) ?? [];
         return list
@@ -296,10 +282,8 @@ class BatchService {
     );
   }
 
-  Future<List<BatchNoteModel>> listNotes(
-    String coachingId,
-    String batchId,
-  ) => watchNotes(coachingId, batchId).last;
+  Future<List<BatchNoteModel>> listNotes(String coachingId, String batchId) =>
+      watchNotes(coachingId, batchId).last;
 
   /// GET /coaching/:coachingId/batches/recent-notes
   Stream<List<BatchNoteModel>> watchRecentNotes(String coachingId) {
@@ -384,9 +368,8 @@ class BatchService {
     final key = 'batch:$coachingId:$batchId:notices';
     return _cache.swr<List<BatchNoticeModel>>(
       key,
-      () => _api.getAuthenticated(
-        ApiConstants.batchNotices(coachingId, batchId),
-      ),
+      () =>
+          _api.getAuthenticated(ApiConstants.batchNotices(coachingId, batchId)),
       (raw) {
         final list = (raw['notices'] as List<dynamic>?) ?? [];
         return list

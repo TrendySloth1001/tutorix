@@ -48,8 +48,7 @@ class CoachingService {
   }
 
   /// Future variant — returns the last (freshest) value from the stream.
-  Future<List<CoachingModel>> getMyCoachings() =>
-      watchMyCoachings().last;
+  Future<List<CoachingModel>> getMyCoachings() => watchMyCoachings().last;
 
   /// Stream that emits cached list first, then fresh from network.
   Stream<List<CoachingModel>> watchJoinedCoachings() {

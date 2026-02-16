@@ -52,21 +52,18 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _loadNotificationCount() {
     _notifSub?.cancel();
-    _notifSub = _notificationService
-        .watchUserNotifications(limit: 1)
-        .listen(
-      (result) {
-        if (!mounted) return;
-        final pendingInvites = context
-            .read<AuthController>()
-            .pendingInvitations
-            .length;
-        setState(() {
-          _unreadNotifications = (result['unreadCount'] ?? 0) + pendingInvites;
-        });
-      },
-      onError: (_) {},
-    );
+    _notifSub = _notificationService.watchUserNotifications(limit: 1).listen((
+      result,
+    ) {
+      if (!mounted) return;
+      final pendingInvites = context
+          .read<AuthController>()
+          .pendingInvitations
+          .length;
+      setState(() {
+        _unreadNotifications = (result['unreadCount'] ?? 0) + pendingInvites;
+      });
+    }, onError: (_) {});
   }
 
   void _loadCoachings() {

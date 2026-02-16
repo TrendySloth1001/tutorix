@@ -74,49 +74,35 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
     }
 
     _subs.add(
-      _memberService.watchMembers(widget.coaching.id).listen(
-        (list) {
-          if (mounted) setState(() => _members = list);
-          checkDone();
-        },
-        onError: (_) => checkDone(),
-      ),
+      _memberService.watchMembers(widget.coaching.id).listen((list) {
+        if (mounted) setState(() => _members = list);
+        checkDone();
+      }, onError: (_) => checkDone()),
     );
 
     _subs.add(
-      _memberService.watchInvitations(widget.coaching.id).listen(
-        (list) {
-          if (mounted) setState(() => _invitations = list);
-          checkDone();
-        },
-        onError: (_) => checkDone(),
-      ),
+      _memberService.watchInvitations(widget.coaching.id).listen((list) {
+        if (mounted) setState(() => _invitations = list);
+        checkDone();
+      }, onError: (_) => checkDone()),
     );
 
     _subs.add(
       _notificationService
           .watchCoachingNotifications(widget.coaching.id, limit: 1)
-          .listen(
-        (data) {
-          if (mounted) {
-            setState(
-              () => _unreadNotifications = data['unreadCount'] ?? 0,
-            );
-          }
-          checkDone();
-        },
-        onError: (_) => checkDone(),
-      ),
+          .listen((data) {
+            if (mounted) {
+              setState(() => _unreadNotifications = data['unreadCount'] ?? 0);
+            }
+            checkDone();
+          }, onError: (_) => checkDone()),
     );
 
     _subs.add(
-      _batchService.watchRecentNotes(widget.coaching.id).listen(
-        (list) {
-          if (mounted) setState(() => _recentNotes = list);
-          checkDone();
-        },
-        onError: (_) => checkDone(),
-      ),
+      _batchService.watchRecentNotes(widget.coaching.id).listen((list) {
+        if (mounted) setState(() => _recentNotes = list);
+        checkDone();
+      }, onError: (_) => checkDone()),
     );
   }
 

@@ -85,28 +85,27 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
     }
 
     _subs.add(
-      _memberService.watchMembers(widget.coaching.id).listen(
-        (list) {
-          if (mounted) setState(() => _members = list);
-          checkDone();
-        },
-        onError: (e) {
-          if (mounted) {
-            AppAlert.error(context, e, fallback: 'Failed to load members');
-          }
-          checkDone();
-        },
-      ),
+      _memberService
+          .watchMembers(widget.coaching.id)
+          .listen(
+            (list) {
+              if (mounted) setState(() => _members = list);
+              checkDone();
+            },
+            onError: (e) {
+              if (mounted) {
+                AppAlert.error(context, e, fallback: 'Failed to load members');
+              }
+              checkDone();
+            },
+          ),
     );
 
     _subs.add(
-      _memberService.watchInvitations(widget.coaching.id).listen(
-        (list) {
-          if (mounted) setState(() => _invitations = list);
-          checkDone();
-        },
-        onError: (_) => checkDone(),
-      ),
+      _memberService.watchInvitations(widget.coaching.id).listen((list) {
+        if (mounted) setState(() => _invitations = list);
+        checkDone();
+      }, onError: (_) => checkDone()),
     );
   }
 
@@ -385,7 +384,9 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                         onRemove: _removeMember,
                         onRefresh: () async {
                           _loadData();
-                          await Future.delayed(const Duration(milliseconds: 500));
+                          await Future.delayed(
+                            const Duration(milliseconds: 500),
+                          );
                         },
                         emptyIcon: Icons.groups_outlined,
                         emptyText: 'No members yet',
@@ -396,7 +397,9 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                         onRemove: _removeMember,
                         onRefresh: () async {
                           _loadData();
-                          await Future.delayed(const Duration(milliseconds: 500));
+                          await Future.delayed(
+                            const Duration(milliseconds: 500),
+                          );
                         },
                         emptyIcon: Icons.school_outlined,
                         emptyText: 'No teachers yet',
@@ -407,7 +410,9 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                         onCancel: _cancelInvitation,
                         onRefresh: () async {
                           _loadData();
-                          await Future.delayed(const Duration(milliseconds: 500));
+                          await Future.delayed(
+                            const Duration(milliseconds: 500),
+                          );
                         },
                       ),
                     ],

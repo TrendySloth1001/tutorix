@@ -57,15 +57,12 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
 
   void _refreshCoaching() {
     _sub?.cancel();
-    _sub = _coachingService.watchCoachingById(_coaching.id).listen(
-      (updated) {
-        if (updated != null && mounted) {
-          setState(() => _coaching = updated);
-          widget.onCoachingUpdated?.call(updated);
-        }
-      },
-      onError: (_) {},
-    );
+    _sub = _coachingService.watchCoachingById(_coaching.id).listen((updated) {
+      if (updated != null && mounted) {
+        setState(() => _coaching = updated);
+        widget.onCoachingUpdated?.call(updated);
+      }
+    }, onError: (_) {});
   }
 
   // ═══════════════════════════════════════════════════════════════════════

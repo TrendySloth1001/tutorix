@@ -44,23 +44,27 @@ class _CoachingNotificationsScreenState
     _sub = _allowNotifications
         .watchCoachingNotifications(widget.coachingId)
         .listen(
-      (result) {
-        if (!mounted) return;
-        final list = (result['notifications'] as List)
-            .map((e) => NotificationModel.fromJson(e))
-            .toList();
-        setState(() {
-          _notifications = list;
-          _isLoading = false;
-        });
-      },
-      onError: (e) {
-        if (mounted) {
-          AppAlert.error(context, e, fallback: 'Failed to load notifications');
-          setState(() => _isLoading = false);
-        }
-      },
-    );
+          (result) {
+            if (!mounted) return;
+            final list = (result['notifications'] as List)
+                .map((e) => NotificationModel.fromJson(e))
+                .toList();
+            setState(() {
+              _notifications = list;
+              _isLoading = false;
+            });
+          },
+          onError: (e) {
+            if (mounted) {
+              AppAlert.error(
+                context,
+                e,
+                fallback: 'Failed to load notifications',
+              );
+              setState(() => _isLoading = false);
+            }
+          },
+        );
   }
 
   Future<void> _markAsRead(NotificationModel notification) async {

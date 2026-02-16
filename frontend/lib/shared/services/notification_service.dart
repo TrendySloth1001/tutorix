@@ -26,7 +26,8 @@ class NotificationService {
     String coachingId, {
     int limit = 20,
     int offset = 0,
-  }) => watchCoachingNotifications(coachingId, limit: limit, offset: offset).last;
+  }) =>
+      watchCoachingNotifications(coachingId, limit: limit, offset: offset).last;
 
   /// Get personal notifications — SWR stream.
   Stream<Map<String, dynamic>> watchUserNotifications({

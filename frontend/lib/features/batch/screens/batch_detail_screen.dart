@@ -91,57 +91,52 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       _batchService
           .watchBatchById(widget.coaching.id, widget.batchId)
           .listen(
-        (batch) {
-          if (!mounted) return;
-          setState(() => _batch = batch);
-          checkDone();
-        },
-        onError: (e) {
-          if (mounted) {
-            AppAlert.error(context, e, fallback: 'Failed to load batch details');
-          }
-          checkDone();
-        },
-      ),
+            (batch) {
+              if (!mounted) return;
+              setState(() => _batch = batch);
+              checkDone();
+            },
+            onError: (e) {
+              if (mounted) {
+                AppAlert.error(
+                  context,
+                  e,
+                  fallback: 'Failed to load batch details',
+                );
+              }
+              checkDone();
+            },
+          ),
     );
 
     _subs.add(
-      _batchService
-          .watchMembers(widget.coaching.id, widget.batchId)
-          .listen(
-        (list) {
-          if (!mounted) return;
-          setState(() => _members = list);
-          checkDone();
-        },
-        onError: (_) => checkDone(),
-      ),
+      _batchService.watchMembers(widget.coaching.id, widget.batchId).listen((
+        list,
+      ) {
+        if (!mounted) return;
+        setState(() => _members = list);
+        checkDone();
+      }, onError: (_) => checkDone()),
     );
 
     _subs.add(
-      _batchService
-          .watchNotes(widget.coaching.id, widget.batchId)
-          .listen(
-        (list) {
-          if (!mounted) return;
-          setState(() => _notes = list);
-          checkDone();
-        },
-        onError: (_) => checkDone(),
-      ),
+      _batchService.watchNotes(widget.coaching.id, widget.batchId).listen((
+        list,
+      ) {
+        if (!mounted) return;
+        setState(() => _notes = list);
+        checkDone();
+      }, onError: (_) => checkDone()),
     );
 
     _subs.add(
-      _batchService
-          .watchNotices(widget.coaching.id, widget.batchId)
-          .listen(
-        (list) {
-          if (!mounted) return;
-          setState(() => _notices = list);
-          checkDone();
-        },
-        onError: (_) => checkDone(),
-      ),
+      _batchService.watchNotices(widget.coaching.id, widget.batchId).listen((
+        list,
+      ) {
+        if (!mounted) return;
+        setState(() => _notices = list);
+        checkDone();
+      }, onError: (_) => checkDone()),
     );
   }
 

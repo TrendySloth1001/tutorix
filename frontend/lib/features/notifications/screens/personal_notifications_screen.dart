@@ -68,15 +68,13 @@ class _PersonalNotificationsScreenState
             if (a is NotificationModel) {
               dateA = a.createdAt;
             } else {
-              dateA =
-                  DateTime.tryParse(a['createdAt'] ?? '') ?? DateTime.now();
+              dateA = DateTime.tryParse(a['createdAt'] ?? '') ?? DateTime.now();
             }
             DateTime dateB;
             if (b is NotificationModel) {
               dateB = b.createdAt;
             } else {
-              dateB =
-                  DateTime.tryParse(b['createdAt'] ?? '') ?? DateTime.now();
+              dateB = DateTime.tryParse(b['createdAt'] ?? '') ?? DateTime.now();
             }
             return dateB.compareTo(dateA);
           });
@@ -102,11 +100,7 @@ class _PersonalNotificationsScreenState
       },
       onError: (e) {
         if (mounted) {
-          AppAlert.error(
-            context,
-            e,
-            fallback: 'Failed to load notifications',
-          );
+          AppAlert.error(context, e, fallback: 'Failed to load notifications');
           setState(() => _isLoading = false);
         }
       },
