@@ -345,63 +345,67 @@ class _ExploreScreenState extends State<ExploreScreen>
     return Scaffold(
       body: Stack(
         children: [
-          // Main scrollable content
+          // Main scrollable content (with pull-to-refresh)
           _locationLoading
               ? _buildLocationLoading(theme)
-              : CustomScrollView(
-                  slivers: [
-                    // Top spacing for search bar
-                    SliverToBoxAdapter(
-                      child: SizedBox(height: topPadding + 72),
-                    ),
-
-                    // Fallback location banner
-                    if (_usingFallbackLocation)
-                      SliverToBoxAdapter(child: _buildFallbackBanner(theme)),
-
-                    // Map card
-                    SliverToBoxAdapter(child: _buildMapCard(theme)),
-
-                    // Selected coaching card (inline, not floating)
-                    if (_selectedCoaching != null)
+              : RefreshIndicator(
+                  onRefresh: _refresh,
+                  displacement: 80,
+                  child: CustomScrollView(
+                    slivers: [
+                      // Top spacing for search bar
                       SliverToBoxAdapter(
-                        child: Padding(
-                          padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-                          child: _buildSelectedCard(theme),
-                        ),
+                        child: SizedBox(height: topPadding + 72),
                       ),
 
-                    // Section header
-                    SliverToBoxAdapter(child: _buildSectionHeader(theme)),
+                      // Fallback location banner
+                      if (_usingFallbackLocation)
+                        SliverToBoxAdapter(child: _buildFallbackBanner(theme)),
 
-                    // Nearby coaching cards or empty/loading state
-                    if (_nearbyLoading)
-                      const SliverToBoxAdapter(
-                        child: Padding(
-                          padding: EdgeInsets.all(48),
-                          child: Center(child: CircularProgressIndicator()),
-                        ),
-                      )
-                    else if (_nearby.isEmpty)
-                      SliverToBoxAdapter(child: _buildEmptyState(theme))
-                    else
-                      SliverPadding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
-                        sliver: SliverList.separated(
-                          itemCount: _nearby.length,
-                          separatorBuilder: (_, __) =>
-                              const SizedBox(height: 12),
-                          itemBuilder: (_, i) => _NearbyCoachingCard(
-                            nearby: _nearby[i],
-                            theme: theme,
-                            getFullUrl: _getFullUrl,
-                            isHighlighted:
-                                _highlightedCardId == _nearby[i].coaching.id,
-                            onTap: () => _onCardTapped(_nearby[i]),
+                      // Map card
+                      SliverToBoxAdapter(child: _buildMapCard(theme)),
+
+                      // Selected coaching card (inline, not floating)
+                      if (_selectedCoaching != null)
+                        SliverToBoxAdapter(
+                          child: Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+                            child: _buildSelectedCard(theme),
                           ),
                         ),
-                      ),
-                  ],
+
+                      // Section header
+                      SliverToBoxAdapter(child: _buildSectionHeader(theme)),
+
+                      // Nearby coaching cards or empty/loading state
+                      if (_nearbyLoading)
+                        const SliverToBoxAdapter(
+                          child: Padding(
+                            padding: EdgeInsets.all(48),
+                            child: Center(child: CircularProgressIndicator()),
+                          ),
+                        )
+                      else if (_nearby.isEmpty)
+                        SliverToBoxAdapter(child: _buildEmptyState(theme))
+                      else
+                        SliverPadding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                          sliver: SliverList.separated(
+                            itemCount: _nearby.length,
+                            separatorBuilder: (_, __) =>
+                                const SizedBox(height: 12),
+                            itemBuilder: (_, i) => _NearbyCoachingCard(
+                              nearby: _nearby[i],
+                              theme: theme,
+                              getFullUrl: _getFullUrl,
+                              isHighlighted:
+                                  _highlightedCardId == _nearby[i].coaching.id,
+                              onTap: () => _onCardTapped(_nearby[i]),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
                 ),
 
           // Floating search bar
@@ -509,6 +513,26 @@ class _ExploreScreenState extends State<ExploreScreen>
   }
 
   // ── Map card ──────────────────────────────────────────────────────
+
+  /// Pull-to-refresh handler: refreshes location and nearby results.
+  Future<void> _refresh() async {
+    // Clear selections
+    setState(() {
+      _highlightedCardId = null;
+      _selectedCoaching = null;
+      _nearbyLoading = true;
+    });
+
+    if (_userLocation == null) {
+      await _determineLocation();
+    } else {
+      // reload nearby using current lat/lng and current radius
+      _loadNearby();
+    }
+
+    // small delay so the RefreshIndicator animation is visible
+    await Future.delayed(const Duration(milliseconds: 250));
+  }
 
   Widget _buildMapCard(ThemeData theme) {
     return Padding(
