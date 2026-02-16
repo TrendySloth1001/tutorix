@@ -86,10 +86,9 @@ export class CoachingService {
             orderBy: { createdAt: 'desc' },
             include: {
                 _count: {
-                    select: { members: true },
-                },
-                members: {
-                    select: { role: true },
+                    select: {
+                        members: true,
+                    },
                 },
                 address: true,
                 branches: {
@@ -99,27 +98,26 @@ export class CoachingService {
             },
         });
 
-        // Transform to include stats
-        return coachings.map((coaching) => {
-            const roleCounts = coaching.members.reduce(
-                (acc, m) => {
-                    acc[m.role] = (acc[m.role] || 0) + 1;
-                    return acc;
-                },
-                {} as Record<string, number>
-            );
+        // Use parallel DB-level counting per coaching instead of loading all members
+        const stats = await Promise.all(
+            coachings.map(async (c) => {
+                const [teacherCount, studentCount] = await Promise.all([
+                    prisma.coachingMember.count({ where: { coachingId: c.id, role: 'TEACHER' } }),
+                    prisma.coachingMember.count({ where: { coachingId: c.id, role: 'STUDENT' } }),
+                ]);
+                return { teacherCount, studentCount };
+            })
+        );
 
-            return {
-                ...coaching,
-                storageUsed: Number(coaching.storageUsed),
-                storageLimit: Number(coaching.storageLimit),
-                memberCount: coaching._count.members,
-                teacherCount: roleCounts['TEACHER'] || 0,
-                studentCount: roleCounts['STUDENT'] || 0,
-                members: undefined,
-                _count: undefined,
-            };
-        });
+        return coachings.map((coaching, i) => ({
+            ...coaching,
+            storageUsed: Number(coaching.storageUsed),
+            storageLimit: Number(coaching.storageLimit),
+            memberCount: coaching._count.members,
+            teacherCount: stats[i]!.teacherCount,
+            studentCount: stats[i]!.studentCount,
+            _count: undefined,
+        }));
     }
 
     /**
@@ -137,9 +135,6 @@ export class CoachingService {
                         _count: {
                             select: { members: true },
                         },
-                        members: {
-                            select: { role: true },
-                        },
                         address: true,
                         branches: {
                             where: { isActive: true },
@@ -151,39 +146,42 @@ export class CoachingService {
             orderBy: { createdAt: 'desc' },
         });
 
-        // Filter out coachings where user is owner, transform to include stats and role
-        return memberships
-            .filter((m) => m.coaching.ownerId !== userId)
-            .map((m) => {
-                const coaching = m.coaching;
-                const roleCounts = coaching.members.reduce(
-                    (acc, mem) => {
-                        acc[mem.role] = (acc[mem.role] || 0) + 1;
-                        return acc;
-                    },
-                    {} as Record<string, number>
-                );
+        // Filter out coachings where user is owner
+        const filtered = memberships.filter((m) => m.coaching.ownerId !== userId);
 
-                return {
-                    id: coaching.id,
-                    name: coaching.name,
-                    slug: coaching.slug,
-                    description: coaching.description,
-                    logo: coaching.logo,
-                    coverImage: coaching.coverImage,
-                    status: coaching.status,
-                    ownerId: coaching.ownerId,
-                    owner: coaching.owner,
-                    createdAt: coaching.createdAt,
-                    updatedAt: coaching.updatedAt,
-                    memberCount: coaching._count.members,
-                    teacherCount: roleCounts['TEACHER'] || 0,
-                    studentCount: roleCounts['STUDENT'] || 0,
-                    myRole: m.role,
-                    address: coaching.address,
-                    branches: coaching.branches,
-                };
-            });
+        // DB-level role counting instead of loading all members
+        const stats = await Promise.all(
+            filtered.map(async (m) => {
+                const [teacherCount, studentCount] = await Promise.all([
+                    prisma.coachingMember.count({ where: { coachingId: m.coaching.id, role: 'TEACHER' } }),
+                    prisma.coachingMember.count({ where: { coachingId: m.coaching.id, role: 'STUDENT' } }),
+                ]);
+                return { teacherCount, studentCount };
+            })
+        );
+
+        return filtered.map((m, i) => {
+            const coaching = m.coaching;
+            return {
+                id: coaching.id,
+                name: coaching.name,
+                slug: coaching.slug,
+                description: coaching.description,
+                logo: coaching.logo,
+                coverImage: coaching.coverImage,
+                status: coaching.status,
+                ownerId: coaching.ownerId,
+                owner: coaching.owner,
+                createdAt: coaching.createdAt,
+                updatedAt: coaching.updatedAt,
+                memberCount: coaching._count.members,
+                teacherCount: stats[i]!.teacherCount,
+                studentCount: stats[i]!.studentCount,
+                myRole: m.role,
+                address: coaching.address,
+                branches: coaching.branches,
+            };
+        });
     }
 
     async update(id: string, ownerId: string, data: UpdateCoachingDto) {
@@ -584,9 +582,9 @@ export class CoachingService {
         });
     }
 
-    async deleteBranch(branchId: string) {
+    async deleteBranch(branchId: string, coachingId: string) {
         return prisma.coachingBranch.delete({
-            where: { id: branchId },
+            where: { id: branchId, coachingId },
         });
     }
 

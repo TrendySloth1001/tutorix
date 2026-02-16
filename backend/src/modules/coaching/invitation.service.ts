@@ -374,27 +374,25 @@ export class InvitationService {
                         });
                     }
 
-                    // Create notifications for existing coachings
+                    // Create notifications for existing coachings (batch)
                     if (existingMemberships.length > 0) {
                         const userName = (await tx.user.findUnique({
                             where: { id: invitation.userId },
                             select: { name: true },
                         }))?.name || 'A member';
 
-                        for (const membership of existingMemberships) {
-                            await tx.notification.create({
+                        await tx.notification.createMany({
+                            data: existingMemberships.map((membership) => ({
+                                coachingId: membership.coachingId,
+                                type: 'MEMBER_JOINED_ANOTHER_COACHING',
+                                title: 'Member joined another coaching',
+                                message: `${userName} has joined another coaching`,
                                 data: {
-                                    coachingId: membership.coachingId,
-                                    type: 'MEMBER_JOINED_ANOTHER_COACHING',
-                                    title: 'Member joined another coaching',
-                                    message: `${userName} has joined another coaching`,
-                                    data: {
-                                        userId: invitation.userId,
-                                        memberId: membership.id,
-                                    },
+                                    userId: invitation.userId,
+                                    memberId: membership.id,
                                 },
-                            });
-                        }
+                            })),
+                        });
                     }
                 } else {
                     // Ward invitation acceptance (no user notification logic for now, or similar if needed)
@@ -444,24 +442,18 @@ export class InvitationService {
             conditions.push({ invitePhone: phone });
         }
 
-        const pendingInvitations = await prisma.invitation.findMany({
+        // Single updateMany instead of fetch + loop
+        const result = await prisma.invitation.updateMany({
             where: {
                 status: 'PENDING',
-                userId: null,   // Only unresolved invitations
+                userId: null,
                 wardId: null,
                 OR: conditions,
             },
+            data: { userId },
         });
 
-        // Link each pending invitation to the user
-        for (const inv of pendingInvitations) {
-            await prisma.invitation.update({
-                where: { id: inv.id },
-                data: { userId },
-            });
-        }
-
-        return pendingInvitations.length;
+        return result.count;
     }
 
     /**

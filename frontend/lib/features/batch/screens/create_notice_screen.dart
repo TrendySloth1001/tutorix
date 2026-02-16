@@ -94,7 +94,14 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
       firstDate: DateTime.now().subtract(const Duration(days: 1)),
       lastDate: DateTime.now().add(const Duration(days: 365)),
     );
-    if (picked != null) setState(() => _selectedDate = picked);
+    if (picked != null) {
+      setState(() {
+        _selectedDate = picked;
+        // Auto-derive day from date to avoid conflicts
+        const dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
+        _selectedDay = dayNames[picked.weekday - 1];
+      });
+    }
   }
 
   Future<void> _pickTime({required bool isStart}) async {
@@ -494,8 +501,9 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                         ),
                         const SizedBox(height: 16),
 
-                        // Day selector
-                        if (_type == 'timetable_update') ...[
+                        // Day selector — only show if no date selected (day auto-derived from date)
+                        if (_type == 'timetable_update' &&
+                            _selectedDate == null) ...[
                           _FieldLabel('Day'),
                           const SizedBox(height: 8),
                           Wrap(

@@ -40,13 +40,17 @@ export class CoachingController {
             // Generate slug from name
             let slug = coachingService.generateSlug(name);
 
-            // Ensure slug is unique
+            // Ensure slug is unique (capped at 10 attempts)
             let isAvailable = await coachingService.isSlugAvailable(slug);
             let counter = 1;
-            while (!isAvailable) {
+            const MAX_SLUG_ATTEMPTS = 10;
+            while (!isAvailable && counter <= MAX_SLUG_ATTEMPTS) {
                 slug = `${coachingService.generateSlug(name)}-${counter}`;
                 isAvailable = await coachingService.isSlugAvailable(slug);
                 counter++;
+            }
+            if (!isAvailable) {
+                return res.status(409).json({ message: 'Unable to generate a unique slug. Please try a different name.' });
             }
 
             const coaching = await coachingService.create(userId, {
@@ -391,7 +395,7 @@ export class CoachingController {
                 return res.status(403).json({ message: 'Only owner can delete branches' });
             }
 
-            await coachingService.deleteBranch(branchId);
+            await coachingService.deleteBranch(branchId, coachingId);
             res.json({ message: 'Branch deleted successfully' });
         } catch (error: any) {
             res.status(500).json({ message: error.message });

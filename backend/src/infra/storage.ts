@@ -9,6 +9,8 @@ export class StorageService {
 
     private bucketsEnsured = false;
 
+    private static PUBLIC_BUCKETS = new Set(['avatars', 'coaching-logos']);
+
     private async ensureBuckets() {
         if (this.bucketsEnsured) return;
 
@@ -17,25 +19,27 @@ export class StorageService {
                 const exists = await minioClient.bucketExists(bucket);
                 if (!exists) {
                     await minioClient.makeBucket(bucket);
-                    // Set public read policy for avatars and logos
-                    const policy = {
-                        Version: '2012-10-17',
-                        Statement: [
-                            {
-                                Effect: 'Allow',
-                                Principal: { AWS: ['*'] },
-                                Action: ['s3:GetBucketLocation', 's3:ListBucket'],
-                                Resource: [`arn:aws:s3:::${bucket}`],
-                            },
-                            {
-                                Effect: 'Allow',
-                                Principal: { AWS: ['*'] },
-                                Action: ['s3:GetObject'],
-                                Resource: [`arn:aws:s3:::${bucket}/*`],
-                            },
-                        ],
-                    };
-                    await minioClient.setBucketPolicy(bucket, JSON.stringify(policy));
+                    // Only set public read policy for avatars and logos
+                    if (StorageService.PUBLIC_BUCKETS.has(bucket)) {
+                        const policy = {
+                            Version: '2012-10-17',
+                            Statement: [
+                                {
+                                    Effect: 'Allow',
+                                    Principal: { AWS: ['*'] },
+                                    Action: ['s3:GetBucketLocation', 's3:ListBucket'],
+                                    Resource: [`arn:aws:s3:::${bucket}`],
+                                },
+                                {
+                                    Effect: 'Allow',
+                                    Principal: { AWS: ['*'] },
+                                    Action: ['s3:GetObject'],
+                                    Resource: [`arn:aws:s3:::${bucket}/*`],
+                                },
+                            ],
+                        };
+                        await minioClient.setBucketPolicy(bucket, JSON.stringify(policy));
+                    }
                 }
             }
             this.bucketsEnsured = true;

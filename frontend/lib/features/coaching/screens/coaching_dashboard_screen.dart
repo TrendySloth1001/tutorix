@@ -51,45 +51,29 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
-      // Load data with individual error handling to prevent one failure from blocking others
-      final membersResult = await _memberService
-          .getMembers(widget.coaching.id)
-          .catchError((e) {
-            print('ERROR loading members: $e');
-            return <MemberModel>[];
-          });
+      // Load all data in parallel for faster initial render
+      final results = await Future.wait([
+        _memberService
+            .getMembers(widget.coaching.id)
+            .catchError((e) => <MemberModel>[]),
+        _memberService
+            .getInvitations(widget.coaching.id)
+            .catchError((e) => <InvitationModel>[]),
+        _notificationService
+            .getCoachingNotifications(widget.coaching.id, limit: 1)
+            .catchError((e) => <String, dynamic>{'unreadCount': 0}),
+        _batchService
+            .getRecentNotes(widget.coaching.id)
+            .catchError((e) => <BatchNoteModel>[]),
+      ]);
 
-      final invitationsResult = await _memberService
-          .getInvitations(widget.coaching.id)
-          .catchError((e) {
-            print('ERROR loading invitations: $e');
-            return <InvitationModel>[];
-          });
-
-      final notificationsResult = await _notificationService
-          .getCoachingNotifications(widget.coaching.id, limit: 1)
-          .catchError((e) {
-            print('ERROR loading notifications: $e');
-            return {'unreadCount': 0};
-          });
-
-      final notesResult = await _batchService
-          .getRecentNotes(widget.coaching.id)
-          .catchError((e) {
-            print('ERROR loading recent notes: $e');
-            return <BatchNoteModel>[];
-          });
-
-      _members = membersResult;
-      _invitations = invitationsResult;
-      _unreadNotifications = notificationsResult['unreadCount'] ?? 0;
-      _recentNotes = notesResult;
-
-      print(
-        'DEBUG: Dashboard loaded - Members: ${_members.length}, Notes: ${_recentNotes.length}',
-      );
+      _members = results[0] as List<MemberModel>;
+      _invitations = results[1] as List<InvitationModel>;
+      _unreadNotifications =
+          (results[2] as Map<String, dynamic>)['unreadCount'] ?? 0;
+      _recentNotes = results[3] as List<BatchNoteModel>;
     } catch (e) {
-      print('FATAL ERROR loading dashboard data: $e');
+      debugPrint('Error loading dashboard data: $e');
     }
     if (mounted) setState(() => _isLoading = false);
   }
@@ -810,8 +794,6 @@ class _RecentNotesSection extends StatelessWidget {
     final today = DateTime(now.year, now.month, now.day);
     final yesterday = today.subtract(const Duration(days: 1));
 
-    print('DEBUG: Current date - Today: $today, Yesterday: $yesterday');
-
     for (final note in notes) {
       if (note.createdAt == null) continue;
 
@@ -823,27 +805,19 @@ class _RecentNotesSection extends StatelessWidget {
         noteDate.day,
       );
 
-      print(
-        'DEBUG: Note "${note.title}" - Created: ${note.createdAt} (UTC), Local: $noteDate, Date only: $noteDateOnly',
-      );
-
       String dateKey;
       if (noteDateOnly.isAtSameMomentAs(today)) {
         dateKey = 'Today';
-        print('DEBUG: Classified as Today');
       } else if (noteDateOnly.isAtSameMomentAs(yesterday)) {
         dateKey = 'Yesterday';
-        print('DEBUG: Classified as Yesterday');
       } else {
         dateKey = DateFormat('MMM dd, yyyy').format(noteDate);
-        print('DEBUG: Classified as $dateKey');
       }
 
       grouped.putIfAbsent(dateKey, () => []);
       grouped[dateKey]!.add(note);
     }
 
-    print('DEBUG: Final groups: ${grouped.keys.toList()}');
     return grouped;
   }
 

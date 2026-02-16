@@ -160,6 +160,9 @@ export class InvitationController {
      */
     async cancelInvitation(req: Request, res: Response) {
         try {
+            const userId = (req as any).user?.id;
+            if (!userId) return res.status(401).json({ error: 'Unauthorized' });
+
             const coachingId = req.params.id as string;
             const invitationId = req.params.invitationId as string;
 

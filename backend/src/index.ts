@@ -2,11 +2,14 @@ import express from 'express';
 import * as corsNamespace from 'cors';
 const cors = (corsNamespace as any).default || corsNamespace;
 import dotenv from 'dotenv';
+dotenv.config();
 
 // BigInt JSON serialization — Prisma returns BigInt for large numeric fields.
 // Without this, JSON.stringify throws "Do not know how to serialize a BigInt".
 (BigInt.prototype as any).toJSON = function () {
-  return Number(this);
+  const n = Number(this);
+  if (!Number.isSafeInteger(n)) return this.toString();
+  return n;
 };
 import authRoutes from './modules/auth/auth.route.js';
 import userRoutes from './modules/user/user.route.js';
@@ -19,18 +22,20 @@ import academicRoutes from './modules/academic/academic.route.js';
 const app = express();
 const port = process.env.PORT || 3010;
 
-app.set('trust proxy', true);
+// Only trust first proxy hop (not all)
+app.set('trust proxy', 1);
 
-app.use(cors());
-app.use(express.json());
+// CORS: restrict to known origins
+const allowedOrigins = (process.env.CORS_ORIGINS || '').split(',').filter(Boolean);
+app.use(cors(allowedOrigins.length > 0 ? {
+  origin: allowedOrigins,
+  credentials: true,
+} : undefined));
+app.use(express.json({ limit: '100kb' }));
 
-// Request logger - log ALL incoming requests
+// Lightweight request logger — never log sensitive body fields
 app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`, {
-    body: req.body,
-    query: req.query,
-    params: req.params,
-  });
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
   next();
 });
 

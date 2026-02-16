@@ -15,7 +15,6 @@ router.use(authMiddleware);
 router.get('/me', userController.getMe.bind(userController));
 router.patch('/me', userController.updateMe.bind(userController));
 router.get('/me/sessions', userController.getSessions.bind(userController));
-router.patch('/me/roles', userController.updateRoles.bind(userController));
 router.post('/me/onboarding', userController.completeOnboarding.bind(userController));
 
 // User invitation routes
@@ -25,10 +24,14 @@ router.post('/invitations/:invitationId/respond', invitationController.respondTo
 // Ward management
 router.use('/wards', wardRoutes);
 
-// Admin routes
-router.get('/', userController.list.bind(userController));
-router.get('/:id', userController.getById.bind(userController));
-router.delete('/:id', userController.delete.bind(userController));
+// Admin routes — require isAdmin flag on authenticated user
+const adminOnly = (req: any, res: any, next: any) => {
+    if (!req.user?.isAdmin) return res.status(403).json({ message: 'Admin access required' });
+    next();
+};
+router.get('/', adminOnly, userController.list.bind(userController));
+router.get('/:id', adminOnly, userController.getById.bind(userController));
+router.delete('/:id', adminOnly, userController.delete.bind(userController));
 
 export default router;
 

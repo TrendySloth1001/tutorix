@@ -237,60 +237,39 @@ export class BatchService {
     }
 
     async getRecentNotes(userId: string, coachingId: string) {
-        console.log(`[getRecentNotes] userId: ${userId}, coachingId: ${coachingId}`);
-        
-        // Get user's wards (students managed by this user)
+        // Get user's wards in parallel with nothing (prep step)
         const userWards = await prisma.ward.findMany({
             where: { parentId: userId },
             select: { id: true },
         });
         const wardIds = userWards.map((w) => w.id);
-        console.log(`[getRecentNotes] Found ${userWards.length} wards for user`);
 
-        // Get coaching members for both:
-        // 1. Direct user membership (teachers/admins)
-        // 2. Ward membership (students)
+        // Get coaching members for both user + wards
         const whereConditions: any[] = [{ userId }];
         if (wardIds.length > 0) {
             whereConditions.push({ wardId: { in: wardIds } });
         }
-        
-        const coachingMembers = await prisma.coachingMember.findMany({
-            where: {
-                coachingId,
-                OR: whereConditions,
-            },
+
+        // Single query: get batch IDs through coaching members → batch members
+        const memberIds = (await prisma.coachingMember.findMany({
+            where: { coachingId, OR: whereConditions },
             select: { id: true },
-        });
+        })).map((m) => m.id);
 
-        const memberIds = coachingMembers.map((m) => m.id);
-        console.log(`[getRecentNotes] Found ${coachingMembers.length} coaching members`);
+        if (memberIds.length === 0) return [];
 
-        if (memberIds.length === 0) {
-            console.log(`[getRecentNotes] No coaching members found, returning empty array`);
-            return [];
-        }
-
-        // Get batches where these members are enrolled
-        const userBatches = await prisma.batchMember.findMany({
+        const batchIds = (await prisma.batchMember.findMany({
             where: { memberId: { in: memberIds } },
             select: { batchId: true },
-        });
+        })).map((b) => b.batchId);
 
-        const batchIds = userBatches.map((b) => b.batchId);
-        console.log(`[getRecentNotes] Found ${userBatches.length} batch enrollments, batchIds:`, batchIds);
+        if (batchIds.length === 0) return [];
 
-        if (batchIds.length === 0) {
-            console.log(`[getRecentNotes] No batches found, returning empty array`);
-            return [];
-        }
-
-        // Get notes from last 7 days (increased from 2 days)
+        // Get notes from last 7 days
         const sevenDaysAgo = new Date();
         sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
-        console.log(`[getRecentNotes] Looking for notes after:`, sevenDaysAgo);
 
-        const notes = await prisma.batchNote.findMany({
+        return prisma.batchNote.findMany({
             where: {
                 batchId: { in: batchIds },
                 createdAt: { gte: sevenDaysAgo },
@@ -301,10 +280,8 @@ export class BatchService {
                 batch: { select: { id: true, name: true, subject: true } },
             },
             orderBy: { createdAt: 'desc' },
+            take: 20,  // Limit results for performance
         });
-        
-        console.log(`[getRecentNotes] Found ${notes.length} notes`);
-        return notes;
     }
 
     async deleteNote(noteId: string) {
@@ -424,7 +401,7 @@ export class BatchService {
         return adminMember ? batch : null;
     }
 
-    /** Verify a user is a TEACHER assigned to this batch */
+    /** Verify a user is a TEACHER assigned to this batch (single query) */
     async verifyBatchTeacher(batchId: string, userId: string) {
         const batch = await prisma.batch.findUnique({
             where: { id: batchId },
@@ -439,21 +416,19 @@ export class BatchService {
         // Owner has full access
         if (batch.coaching.ownerId === userId) return batch;
 
-        // Check admin
-        const adminMember = await prisma.coachingMember.findFirst({
-            where: { coachingId: batch.coachingId, userId, role: 'ADMIN', status: 'active' },
-        });
-        if (adminMember) return batch;
-
-        // Check if teacher in batch
-        const teacherInBatch = await prisma.batchMember.findFirst({
+        // Single query: check if user is admin OR teacher in batch
+        const member = await prisma.coachingMember.findFirst({
             where: {
-                batchId,
-                role: 'TEACHER',
-                member: { userId, status: 'active' },
+                coachingId: batch.coachingId,
+                userId,
+                status: 'active',
+                OR: [
+                    { role: 'ADMIN' },
+                    { batchMembers: { some: { batchId, role: 'TEACHER' } } },
+                ],
             },
         });
-        return teacherInBatch ? batch : null;
+        return member ? batch : null;
     }
 
     /** Verify a user has ANY access to this batch (admin, teacher, or student) */

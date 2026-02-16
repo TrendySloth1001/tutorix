@@ -78,7 +78,14 @@ export class WardController {
                 return res.status(403).json({ message: 'Forbidden' });
             }
 
-            const updatedWard = await wardService.update(wardId, req.body);
+            const updateData: Record<string, any> = {};
+            if (req.body.name !== undefined) updateData.name = req.body.name;
+            if (req.body.picture !== undefined) updateData.picture = req.body.picture;
+            if (req.body.dob !== undefined) updateData.dob = req.body.dob;
+            if (req.body.school !== undefined) updateData.school = req.body.school;
+            if (req.body.class !== undefined) updateData.class = req.body.class;
+
+            const updatedWard = await wardService.update(wardId, updateData);
             res.json({ ward: updatedWard });
         } catch (error: any) {
             res.status(500).json({ message: error.message });

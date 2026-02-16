@@ -74,6 +74,12 @@ export class NotificationController {
     async markAsRead(req: Request, res: Response) {
         try {
             const { id } = req.params as { id: string };
+            const userId = (req as any).user?.id;
+            // Verify ownership
+            const notification = await prisma.notification.findUnique({ where: { id }, select: { userId: true, coachingId: true } });
+            if (!notification) return res.status(404).json({ error: 'Not found' });
+            if (notification.userId && notification.userId !== userId) return res.status(403).json({ error: 'Forbidden' });
+
             const result = await notificationService.markAsRead(id);
             return res.json(result);
         } catch (error: any) {
@@ -88,6 +94,11 @@ export class NotificationController {
     async delete(req: Request, res: Response) {
         try {
             const { id } = req.params as { id: string };
+            const userId = (req as any).user?.id;
+            const notification = await prisma.notification.findUnique({ where: { id }, select: { userId: true, coachingId: true } });
+            if (!notification) return res.status(404).json({ error: 'Not found' });
+            if (notification.userId && notification.userId !== userId) return res.status(403).json({ error: 'Forbidden' });
+
             await notificationService.deleteNotification(id);
             return res.json({ success: true });
         } catch (error: any) {
@@ -102,6 +113,11 @@ export class NotificationController {
     async archive(req: Request, res: Response) {
         try {
             const { id } = req.params as { id: string };
+            const userId = (req as any).user?.id;
+            const notification = await prisma.notification.findUnique({ where: { id }, select: { userId: true, coachingId: true } });
+            if (!notification) return res.status(404).json({ error: 'Not found' });
+            if (notification.userId && notification.userId !== userId) return res.status(403).json({ error: 'Forbidden' });
+
             const result = await notificationService.archiveNotification(id);
             return res.json(result);
         } catch (error: any) {

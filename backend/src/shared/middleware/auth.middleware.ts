@@ -25,7 +25,13 @@ export const authMiddleware = async (req: Request, res: Response, next: NextFunc
             return res.status(401).json({ message: 'Invalid token format' });
         }
 
-        const decoded = jwt.verify(token, (process.env.JWT_SECRET as string) || 'default_secret') as any as {
+        const jwtSecret = process.env.JWT_SECRET;
+        if (!jwtSecret) {
+            console.error('FATAL: JWT_SECRET environment variable is not set');
+            return res.status(500).json({ message: 'Server configuration error' });
+        }
+
+        const decoded = jwt.verify(token, jwtSecret) as any as {
             id: string;
             email: string;
         };

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import '../../../core/constants/api_constants.dart';
 import '../../../shared/services/api_client.dart';
 import '../models/batch_model.dart';
@@ -226,14 +227,12 @@ class BatchService {
       final data = await _api.getAuthenticated(
         ApiConstants.recentNotes(coachingId),
       );
-      print('DEBUG: Recent notes API response: $data');
       final list = data['notes'] as List<dynamic>;
-      print('DEBUG: Parsed ${list.length} notes');
       return list
           .map((e) => BatchNoteModel.fromJson(e as Map<String, dynamic>))
           .toList();
     } catch (e) {
-      print('ERROR in getRecentNotes: $e');
+      debugPrint('Error in getRecentNotes: $e');
       return [];
     }
   }

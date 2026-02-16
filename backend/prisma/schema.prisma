@@ -218,6 +218,8 @@ model CoachingMember {
   @@unique([coachingId, userId])
   @@unique([coachingId, wardId])
   @@index([coachingId])
+  @@index([coachingId, status])
+  @@index([coachingId, role])
   @@index([userId])
   @@index([wardId])
 }
@@ -277,6 +279,8 @@ model Notification {
 
   @@index([coachingId])
   @@index([userId])
+  @@index([coachingId, archived])
+  @@index([userId, read])
 }
 
 model AcademicProfile {
@@ -308,6 +312,7 @@ model AcademicProfile {
   updatedAt DateTime @updatedAt
 
   @@index([userId])
+  @@index([status, remindAt])
 }
 
 // ─── Batch Management ────────────────────────────────────────────────
@@ -340,6 +345,7 @@ model Batch {
   updatedAt DateTime @updatedAt
 
   @@index([coachingId])
+  @@index([coachingId, status])
 }
 
 model BatchMember {
@@ -377,6 +383,7 @@ model BatchNote {
   updatedAt DateTime @updatedAt
 
   @@index([batchId])
+  @@index([batchId, createdAt])
   @@index([uploadedById])
 }
 
@@ -420,5 +427,6 @@ model BatchNotice {
   createdAt DateTime @default(now())
 
   @@index([batchId])
+  @@index([batchId, createdAt])
   @@index([sentById])
 }
