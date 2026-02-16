@@ -121,52 +121,62 @@ class ApiConstants {
     String coachingId,
     String batchId,
     String assessmentId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/$assessmentId';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/$assessmentId';
   static String assessmentStatus(
     String coachingId,
     String batchId,
     String assessmentId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/$assessmentId/status';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/$assessmentId/status';
   static String assessmentQuestions(
     String coachingId,
     String batchId,
     String assessmentId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/$assessmentId/questions';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/$assessmentId/questions';
   static String deleteQuestion(
     String coachingId,
     String batchId,
     String questionId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/questions/$questionId';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/questions/$questionId';
   static String startAttempt(
     String coachingId,
     String batchId,
     String assessmentId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/$assessmentId/start';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/$assessmentId/start';
   static String saveAnswer(
     String coachingId,
     String batchId,
     String attemptId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/attempts/$attemptId/answer';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/attempts/$attemptId/answer';
   static String submitAttempt(
     String coachingId,
     String batchId,
     String attemptId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/attempts/$attemptId/submit';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/attempts/$attemptId/submit';
   static String attemptResult(
     String coachingId,
     String batchId,
     String attemptId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/attempts/$attemptId/result';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/attempts/$attemptId/result';
   static String attemptAnswers(
     String coachingId,
     String batchId,
     String attemptId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/attempts/$attemptId/answers';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/attempts/$attemptId/answers';
   static String assessmentAttempts(
     String coachingId,
     String batchId,
     String assessmentId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/$assessmentId/attempts';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assessments/$assessmentId/attempts';
 
   // Assignments
   static String assignments(String coachingId, String batchId) =>
@@ -175,32 +185,38 @@ class ApiConstants {
     String coachingId,
     String batchId,
     String assignmentId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assignments/$assignmentId';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assignments/$assignmentId';
   static String assignmentStatus(
     String coachingId,
     String batchId,
     String assignmentId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assignments/$assignmentId/status';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assignments/$assignmentId/status';
   static String submitAssignment(
     String coachingId,
     String batchId,
     String assignmentId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assignments/$assignmentId/submit';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assignments/$assignmentId/submit';
   static String assignmentSubmissions(
     String coachingId,
     String batchId,
     String assignmentId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assignments/$assignmentId/submissions';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assignments/$assignmentId/submissions';
   static String myAssignmentSubmission(
     String coachingId,
     String batchId,
     String assignmentId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assignments/$assignmentId/my-submission';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assignments/$assignmentId/my-submission';
   static String gradeSubmission(
     String coachingId,
     String batchId,
     String submissionId,
-  ) => '$baseUrl/coaching/$coachingId/batches/$batchId/assignments/submissions/$submissionId/grade';
+  ) =>
+      '$baseUrl/coaching/$coachingId/batches/$batchId/assignments/submissions/$submissionId/grade';
 
   // Google
   static const String googleClientId =

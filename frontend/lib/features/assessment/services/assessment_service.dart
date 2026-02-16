@@ -63,7 +63,8 @@ class AssessmentService {
     String batchId, {
     String? role,
   }) {
-    final key = 'assess:$coachingId:$batchId:list${role != null ? ':$role' : ''}';
+    final key =
+        'assess:$coachingId:$batchId:list${role != null ? ':$role' : ''}';
     return _cache.swr<List<AssessmentModel>>(
       key,
       () {
@@ -74,8 +75,10 @@ class AssessmentService {
       (raw) {
         final list = (raw as List<dynamic>?) ?? [];
         return list
-            .map((e) => AssessmentModel.fromJson(
-                Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) =>
+                  AssessmentModel.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
             .toList();
       },
     );
@@ -230,8 +233,11 @@ class AssessmentService {
       ApiConstants.assessmentAttempts(coachingId, batchId, assessmentId),
     );
     return (data as List<dynamic>)
-        .map((e) => AttemptLeaderboardEntry.fromJson(
-            Map<String, dynamic>.from(e as Map)))
+        .map(
+          (e) => AttemptLeaderboardEntry.fromJson(
+            Map<String, dynamic>.from(e as Map),
+          ),
+        )
         .toList();
   }
 
@@ -270,8 +276,7 @@ class AssessmentService {
 
       request.fields['data'] = jsonEncode(body);
       for (final path in filePaths) {
-        request.files
-            .add(await http.MultipartFile.fromPath('files', path));
+        request.files.add(await http.MultipartFile.fromPath('files', path));
       }
 
       final streamed = await request.send();
@@ -319,8 +324,10 @@ class AssessmentService {
       (raw) {
         final list = (raw as List<dynamic>?) ?? [];
         return list
-            .map((e) => AssignmentModel.fromJson(
-                Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) =>
+                  AssignmentModel.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
             .toList();
       },
     );
@@ -384,12 +391,12 @@ class AssessmentService {
     final request = http.MultipartRequest(
       'POST',
       Uri.parse(
-          ApiConstants.submitAssignment(coachingId, batchId, assignmentId)),
+        ApiConstants.submitAssignment(coachingId, batchId, assignmentId),
+      ),
     )..headers['Authorization'] = 'Bearer $token';
 
     for (final path in filePaths) {
-      request.files
-          .add(await http.MultipartFile.fromPath('files', path));
+      request.files.add(await http.MultipartFile.fromPath('files', path));
     }
 
     final streamed = await request.send();
@@ -413,8 +420,9 @@ class AssessmentService {
       ApiConstants.assignmentSubmissions(coachingId, batchId, assignmentId),
     );
     return (data as List<dynamic>)
-        .map((e) =>
-            SubmissionModel.fromJson(Map<String, dynamic>.from(e as Map)))
+        .map(
+          (e) => SubmissionModel.fromJson(Map<String, dynamic>.from(e as Map)),
+        )
         .toList();
   }
 

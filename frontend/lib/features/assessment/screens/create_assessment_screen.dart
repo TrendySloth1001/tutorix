@@ -77,29 +77,32 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
         return;
       }
       if (q.type == 'MCQ' || q.type == 'MSQ') {
-        final validOptions =
-            q.options.where((o) => o.text.trim().isNotEmpty).toList();
+        final validOptions = q.options
+            .where((o) => o.text.trim().isNotEmpty)
+            .toList();
         if (validOptions.length < 2) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content:
-                    Text('Question ${i + 1} needs at least 2 options')),
+              content: Text('Question ${i + 1} needs at least 2 options'),
+            ),
           );
           return;
         }
         if (q.type == 'MCQ' && q.selectedOptions.isEmpty) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(
-                    'Question ${i + 1}: select the correct answer')),
+              content: Text('Question ${i + 1}: select the correct answer'),
+            ),
           );
           return;
         }
         if (q.type == 'MSQ' && q.selectedOptions.length < 2) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-                content: Text(
-                    'Question ${i + 1}: select at least 2 correct answers')),
+              content: Text(
+                'Question ${i + 1}: select at least 2 correct answers',
+              ),
+            ),
           );
           return;
         }
@@ -107,8 +110,8 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
       if (q.type == 'NAT' && q.natAnswerCtrl.text.trim().isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-              content: Text(
-                  'Question ${i + 1}: enter the numerical answer')),
+            content: Text('Question ${i + 1}: enter the numerical answer'),
+          ),
         );
         return;
       }
@@ -134,10 +137,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
           final options = <Map<String, dynamic>>[];
           for (int j = 0; j < q.options.length; j++) {
             if (q.options[j].text.trim().isEmpty) continue;
-            options.add({
-              'id': 'opt_$j',
-              'text': q.options[j].text.trim(),
-            });
+            options.add({'id': 'opt_$j', 'text': q.options[j].text.trim()});
           }
           qMap['options'] = options;
 
@@ -152,8 +152,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
             'value': double.tryParse(q.natAnswerCtrl.text) ?? 0,
           };
           if (q.natToleranceCtrl.text.trim().isNotEmpty) {
-            natMap['tolerance'] =
-                double.tryParse(q.natToleranceCtrl.text) ?? 0;
+            natMap['tolerance'] = double.tryParse(q.natToleranceCtrl.text) ?? 0;
           }
           qMap['correctAnswer'] = natMap;
         }
@@ -172,8 +171,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
         durationMinutes: int.tryParse(_durationCtrl.text),
         passingMarks: int.tryParse(_passingCtrl.text),
         maxAttempts: int.tryParse(_attemptsCtrl.text) ?? 1,
-        negativeMarking:
-            double.tryParse(_negativeCtrl.text) ?? 0,
+        negativeMarking: double.tryParse(_negativeCtrl.text) ?? 0,
         shuffleQuestions: _shuffleQuestions,
         shuffleOptions: _shuffleOptions,
         showResultAfter: _showResultAfter,
@@ -183,9 +181,9 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -206,8 +204,8 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child:
-                        CircularProgressIndicator(strokeWidth: 2))
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(Icons.check_rounded, size: 18),
             label: const Text('Save'),
           ),
@@ -250,16 +248,14 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                       border: OutlineInputBorder(),
                     ),
                     items: const [
+                      DropdownMenuItem(value: 'QUIZ', child: Text('Quiz')),
+                      DropdownMenuItem(value: 'TEST', child: Text('Test')),
                       DropdownMenuItem(
-                          value: 'QUIZ', child: Text('Quiz')),
-                      DropdownMenuItem(
-                          value: 'TEST', child: Text('Test')),
-                      DropdownMenuItem(
-                          value: 'PRACTICE',
-                          child: Text('Practice')),
+                        value: 'PRACTICE',
+                        child: Text('Practice'),
+                      ),
                     ],
-                    onChanged: (v) =>
-                        setState(() => _type = v ?? 'QUIZ'),
+                    onChanged: (v) => setState(() => _type = v ?? 'QUIZ'),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -325,14 +321,16 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                     ),
                     items: const [
                       DropdownMenuItem(
-                          value: 'SUBMIT',
-                          child: Text('After submit')),
+                        value: 'SUBMIT',
+                        child: Text('After submit'),
+                      ),
                       DropdownMenuItem(
-                          value: 'MANUAL',
-                          child: Text('Manually')),
+                        value: 'MANUAL',
+                        child: Text('Manually'),
+                      ),
                     ],
-                    onChanged: (v) => setState(
-                        () => _showResultAfter = v ?? 'SUBMIT'),
+                    onChanged: (v) =>
+                        setState(() => _showResultAfter = v ?? 'SUBMIT'),
                   ),
                 ),
               ],
@@ -345,8 +343,10 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                     value: _shuffleQuestions,
                     onChanged: (v) =>
                         setState(() => _shuffleQuestions = v ?? false),
-                    title: Text('Shuffle questions',
-                        style: theme.textTheme.bodySmall),
+                    title: Text(
+                      'Shuffle questions',
+                      style: theme.textTheme.bodySmall,
+                    ),
                     dense: true,
                     contentPadding: EdgeInsets.zero,
                     controlAffinity: ListTileControlAffinity.leading,
@@ -357,8 +357,10 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                     value: _shuffleOptions,
                     onChanged: (v) =>
                         setState(() => _shuffleOptions = v ?? false),
-                    title: Text('Shuffle options',
-                        style: theme.textTheme.bodySmall),
+                    title: Text(
+                      'Shuffle options',
+                      style: theme.textTheme.bodySmall,
+                    ),
                     dense: true,
                     contentPadding: EdgeInsets.zero,
                     controlAffinity: ListTileControlAffinity.leading,
@@ -399,14 +401,18 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                 child: Center(
                   child: Column(
                     children: [
-                      Icon(Icons.help_outline_rounded,
-                          size: 48,
-                          color: theme.colorScheme.outlineVariant),
+                      Icon(
+                        Icons.help_outline_rounded,
+                        size: 48,
+                        color: theme.colorScheme.outlineVariant,
+                      ),
                       const SizedBox(height: 8),
-                      Text('No questions added yet',
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          )),
+                      Text(
+                        'No questions added yet',
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -504,8 +510,7 @@ class _QuestionEditorState extends State<_QuestionEditor> {
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest
-            .withValues(alpha: 0.3),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
@@ -518,11 +523,9 @@ class _QuestionEditorState extends State<_QuestionEditor> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.primary
-                      .withValues(alpha: 0.1),
+                  color: theme.colorScheme.primary.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -540,12 +543,9 @@ class _QuestionEditorState extends State<_QuestionEditor> {
                   isDense: true,
                   underline: const SizedBox(),
                   items: const [
-                    DropdownMenuItem(
-                        value: 'MCQ', child: Text('MCQ')),
-                    DropdownMenuItem(
-                        value: 'MSQ', child: Text('MSQ')),
-                    DropdownMenuItem(
-                        value: 'NAT', child: Text('NAT')),
+                    DropdownMenuItem(value: 'MCQ', child: Text('MCQ')),
+                    DropdownMenuItem(value: 'MSQ', child: Text('MSQ')),
+                    DropdownMenuItem(value: 'NAT', child: Text('NAT')),
                   ],
                   onChanged: (v) {
                     setState(() => q.type = v ?? 'MCQ');
@@ -562,7 +562,9 @@ class _QuestionEditorState extends State<_QuestionEditor> {
                     border: OutlineInputBorder(),
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 8),
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
                   ),
                   keyboardType: TextInputType.number,
                   style: theme.textTheme.bodySmall,
@@ -571,9 +573,11 @@ class _QuestionEditorState extends State<_QuestionEditor> {
               const SizedBox(width: 4),
               IconButton(
                 onPressed: widget.onRemove,
-                icon: Icon(Icons.close_rounded,
-                    size: 18,
-                    color: theme.colorScheme.error),
+                icon: Icon(
+                  Icons.close_rounded,
+                  size: 18,
+                  color: theme.colorScheme.error,
+                ),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
               ),
@@ -651,8 +655,7 @@ class _QuestionEditorState extends State<_QuestionEditor> {
                         q.selectedOptions = {v!};
                       });
                     },
-                    materialTapTargetSize:
-                        MaterialTapTargetSize.shrinkWrap,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     visualDensity: VisualDensity.compact,
                   )
                 else
@@ -667,8 +670,7 @@ class _QuestionEditorState extends State<_QuestionEditor> {
                         }
                       });
                     },
-                    materialTapTargetSize:
-                        MaterialTapTargetSize.shrinkWrap,
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     visualDensity: VisualDensity.compact,
                   ),
                 const SizedBox(width: 4),
@@ -680,7 +682,9 @@ class _QuestionEditorState extends State<_QuestionEditor> {
                       border: const OutlineInputBorder(),
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 10, vertical: 8),
+                        horizontal: 10,
+                        vertical: 8,
+                      ),
                     ),
                     style: theme.textTheme.bodySmall,
                   ),
@@ -689,10 +693,11 @@ class _QuestionEditorState extends State<_QuestionEditor> {
                   const SizedBox(width: 4),
                   GestureDetector(
                     onTap: () => _removeOption(i),
-                    child: Icon(Icons.remove_circle_outline_rounded,
-                        size: 16,
-                        color: theme.colorScheme.error
-                            .withValues(alpha: 0.6)),
+                    child: Icon(
+                      Icons.remove_circle_outline_rounded,
+                      size: 16,
+                      color: theme.colorScheme.error.withValues(alpha: 0.6),
+                    ),
                   ),
                 ],
               ],
@@ -706,8 +711,7 @@ class _QuestionEditorState extends State<_QuestionEditor> {
             icon: const Icon(Icons.add_rounded, size: 16),
             label: const Text('Add option'),
             style: TextButton.styleFrom(
-              padding:
-                  const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               textStyle: theme.textTheme.labelSmall,
             ),
           ),
@@ -727,8 +731,7 @@ class _QuestionEditorState extends State<_QuestionEditor> {
               labelText: 'Correct answer *',
               border: OutlineInputBorder(),
             ),
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
         ),
         const SizedBox(width: 12),
@@ -740,8 +743,7 @@ class _QuestionEditorState extends State<_QuestionEditor> {
               border: OutlineInputBorder(),
               hintText: '0',
             ),
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
         ),
       ],
@@ -760,9 +762,9 @@ class _SectionLabel extends StatelessWidget {
     return Text(
       text,
       style: Theme.of(context).textTheme.titleSmall?.copyWith(
-            fontWeight: FontWeight.w700,
-            color: Theme.of(context).colorScheme.primary,
-          ),
+        fontWeight: FontWeight.w700,
+        color: Theme.of(context).colorScheme.primary,
+      ),
     );
   }
 }

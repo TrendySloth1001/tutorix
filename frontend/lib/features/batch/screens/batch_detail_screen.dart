@@ -564,8 +564,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
                 ),
                 tabs: [
                   const Tab(text: 'Overview'),
-                  if (_isAdmin)
-                    Tab(text: 'Members (${_members.length})'),
+                  if (_isAdmin) Tab(text: 'Members (${_members.length})'),
                   const Tab(text: 'Assessment'),
                   Tab(text: 'Notes (${_notes.length})'),
                   Tab(text: 'Notices (${_notices.length})'),

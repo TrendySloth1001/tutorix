@@ -13,8 +13,7 @@ class CreateAssignmentScreen extends StatefulWidget {
   });
 
   @override
-  State<CreateAssignmentScreen> createState() =>
-      _CreateAssignmentScreenState();
+  State<CreateAssignmentScreen> createState() => _CreateAssignmentScreenState();
 }
 
 class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
@@ -63,7 +62,12 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
     if (_dueDate == null) return null;
     final t = _dueTime ?? const TimeOfDay(hour: 23, minute: 59);
     return DateTime(
-        _dueDate!.year, _dueDate!.month, _dueDate!.day, t.hour, t.minute);
+      _dueDate!.year,
+      _dueDate!.month,
+      _dueDate!.day,
+      t.hour,
+      t.minute,
+    );
   }
 
   Future<void> _save() async {
@@ -86,9 +90,9 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     } finally {
       if (mounted) setState(() => _saving = false);
@@ -109,7 +113,8 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                 ? const SizedBox(
                     width: 16,
                     height: 16,
-                    child: CircularProgressIndicator(strokeWidth: 2))
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
                 : const Icon(Icons.check_rounded, size: 18),
             label: const Text('Save'),
           ),
@@ -173,8 +178,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
               value: _allowLate,
               onChanged: (v) => setState(() => _allowLate = v),
               title: const Text('Allow late submissions'),
-              subtitle: const Text(
-                  'Students can submit after the due date'),
+              subtitle: const Text('Students can submit after the due date'),
               contentPadding: EdgeInsets.zero,
             ),
           ],

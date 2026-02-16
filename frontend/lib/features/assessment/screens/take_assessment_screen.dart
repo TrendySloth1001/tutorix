@@ -92,9 +92,9 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
       setState(() => _loading = false);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
         Navigator.pop(context);
       }
     }
@@ -130,7 +130,8 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
 
   void _toggleMSQOption(String questionId, String optionId) {
     final current = List<String>.from(
-        (_answers[questionId] as List<dynamic>?) ?? []);
+      (_answers[questionId] as List<dynamic>?) ?? [],
+    );
     if (current.contains(optionId)) {
       current.remove(optionId);
     } else {
@@ -193,8 +194,9 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
     if (_attemptId == null) return;
 
     if (!timedOut) {
-      final unanswered =
-          _questions.where((q) => !_answers.containsKey(q.id)).length;
+      final unanswered = _questions
+          .where((q) => !_answers.containsKey(q.id))
+          .length;
       final confirm = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
@@ -206,11 +208,13 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
           ),
           actions: [
             TextButton(
-                onPressed: () => Navigator.pop(ctx, false),
-                child: const Text('Cancel')),
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
             FilledButton(
-                onPressed: () => Navigator.pop(ctx, true),
-                child: const Text('Submit')),
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('Submit'),
+            ),
           ],
         ),
       );
@@ -244,9 +248,9 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
         setState(() => _submitting = false);
       }
     }
@@ -280,14 +284,17 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
           builder: (ctx) => AlertDialog(
             title: const Text('Leave Assessment?'),
             content: const Text(
-                'Your progress is saved. You can resume later if time permits.'),
+              'Your progress is saved. You can resume later if time permits.',
+            ),
             actions: [
               TextButton(
-                  onPressed: () => Navigator.pop(ctx, false),
-                  child: const Text('Stay')),
+                onPressed: () => Navigator.pop(ctx, false),
+                child: const Text('Stay'),
+              ),
               TextButton(
-                  onPressed: () => Navigator.pop(ctx, true),
-                  child: const Text('Leave')),
+                onPressed: () => Navigator.pop(ctx, true),
+                child: const Text('Leave'),
+              ),
             ],
           ),
         );
@@ -307,34 +314,34 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
                 child: Center(
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 5),
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: _remainingSeconds < 300
                           ? Colors.red.withValues(alpha: 0.15)
-                          : theme.colorScheme.primary
-                              .withValues(alpha: 0.1),
+                          : theme.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(Icons.timer_outlined,
-                            size: 16,
-                            color: _remainingSeconds < 300
-                                ? Colors.red
-                                : theme.colorScheme.primary),
+                        Icon(
+                          Icons.timer_outlined,
+                          size: 16,
+                          color: _remainingSeconds < 300
+                              ? Colors.red
+                              : theme.colorScheme.primary,
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           _timerText,
-                          style:
-                              theme.textTheme.labelMedium?.copyWith(
+                          style: theme.textTheme.labelMedium?.copyWith(
                             color: _remainingSeconds < 300
                                 ? Colors.red
                                 : theme.colorScheme.primary,
                             fontWeight: FontWeight.w700,
-                            fontFeatures: [
-                              const FontFeature.tabularFigures()
-                            ],
+                            fontFeatures: [const FontFeature.tabularFigures()],
                           ),
                         ),
                       ],
@@ -348,7 +355,8 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
                   ? const SizedBox(
                       width: 16,
                       height: 16,
-                      child: CircularProgressIndicator(strokeWidth: 2))
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
                   : const Text('Submit'),
             ),
           ],
@@ -375,10 +383,8 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
                   total: _questions.length,
                   answer: _answers[question.id],
                   isMarked: _markedForReview.contains(question.id),
-                  onSelectAnswer: (value) =>
-                      _selectAnswer(question.id, value),
-                  onToggleMSQ: (optId) =>
-                      _toggleMSQOption(question.id, optId),
+                  onSelectAnswer: (value) => _selectAnswer(question.id, value),
+                  onToggleMSQ: (optId) => _toggleMSQOption(question.id, optId),
                   onClear: () => _clearAnswer(question.id),
                   onToggleReview: () => _toggleReview(question.id),
                   onNATChanged: (value) =>
@@ -390,9 +396,7 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
             // Bottom navigation
             _BottomNav(
               onPrevious: _currentIndex > 0 ? _previous : null,
-              onNext: _currentIndex < _questions.length - 1
-                  ? _next
-                  : null,
+              onNext: _currentIndex < _questions.length - 1 ? _next : null,
             ),
           ],
         ),
@@ -426,12 +430,11 @@ class _QuestionNavigator extends StatelessWidget {
     return Container(
       height: 44,
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest
-            .withValues(alpha: 0.3),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         border: Border(
           bottom: BorderSide(
-              color: theme.colorScheme.outlineVariant
-                  .withValues(alpha: 0.3)),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+          ),
         ),
       ),
       child: ListView.builder(
@@ -528,11 +531,9 @@ class _QuestionWidget extends StatelessWidget {
             ),
             const SizedBox(width: 8),
             Container(
-              padding: const EdgeInsets.symmetric(
-                  horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: theme.colorScheme.primary
-                    .withValues(alpha: 0.1),
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(4),
               ),
               child: Text(
@@ -607,11 +608,11 @@ class _QuestionWidget extends StatelessWidget {
                     : Icons.bookmark_outline_rounded,
                 size: 16,
               ),
-              label: Text(
-                  isMarked ? 'Remove review' : 'Mark for review'),
+              label: Text(isMarked ? 'Remove review' : 'Mark for review'),
               style: TextButton.styleFrom(
-                foregroundColor:
-                    isMarked ? Colors.orange : theme.colorScheme.primary,
+                foregroundColor: isMarked
+                    ? Colors.orange
+                    : theme.colorScheme.primary,
               ),
             ),
           ],
@@ -628,8 +629,7 @@ class _QuestionWidget extends StatelessWidget {
           onTap: () => onSelectAnswer(opt.id),
           child: Container(
             margin: const EdgeInsets.only(bottom: 8),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: selected
                   ? theme.colorScheme.primary.withValues(alpha: 0.08)
@@ -638,8 +638,7 @@ class _QuestionWidget extends StatelessWidget {
               border: Border.all(
                 color: selected
                     ? theme.colorScheme.primary
-                    : theme.colorScheme.outlineVariant
-                        .withValues(alpha: 0.5),
+                    : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
                 width: selected ? 1.5 : 1,
               ),
             ),
@@ -659,8 +658,9 @@ class _QuestionWidget extends StatelessWidget {
                   child: Text(
                     opt.text,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight:
-                          selected ? FontWeight.w500 : FontWeight.normal,
+                      fontWeight: selected
+                          ? FontWeight.w500
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
@@ -673,8 +673,7 @@ class _QuestionWidget extends StatelessWidget {
   }
 
   Widget _buildMSQOptions(ThemeData theme) {
-    final selectedList =
-        List<String>.from((answer as List<dynamic>?) ?? []);
+    final selectedList = List<String>.from((answer as List<dynamic>?) ?? []);
     return Column(
       children: question.options.map((opt) {
         final selected = selectedList.contains(opt.id);
@@ -682,8 +681,7 @@ class _QuestionWidget extends StatelessWidget {
           onTap: () => onToggleMSQ(opt.id),
           child: Container(
             margin: const EdgeInsets.only(bottom: 8),
-            padding:
-                const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               color: selected
                   ? theme.colorScheme.primary.withValues(alpha: 0.08)
@@ -692,8 +690,7 @@ class _QuestionWidget extends StatelessWidget {
               border: Border.all(
                 color: selected
                     ? theme.colorScheme.primary
-                    : theme.colorScheme.outlineVariant
-                        .withValues(alpha: 0.5),
+                    : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
                 width: selected ? 1.5 : 1,
               ),
             ),
@@ -713,8 +710,9 @@ class _QuestionWidget extends StatelessWidget {
                   child: Text(
                     opt.text,
                     style: theme.textTheme.bodyMedium?.copyWith(
-                      fontWeight:
-                          selected ? FontWeight.w500 : FontWeight.normal,
+                      fontWeight: selected
+                          ? FontWeight.w500
+                          : FontWeight.normal,
                     ),
                   ),
                 ),
@@ -734,10 +732,13 @@ class _QuestionWidget extends StatelessWidget {
         border: OutlineInputBorder(),
         hintText: 'Numerical value',
       ),
-      keyboardType:
-          const TextInputType.numberWithOptions(decimal: true, signed: true),
+      keyboardType: const TextInputType.numberWithOptions(
+        decimal: true,
+        signed: true,
+      ),
       controller: TextEditingController(
-          text: current != null ? current.toString() : ''),
+        text: current != null ? current.toString() : '',
+      ),
       onChanged: (v) {
         final parsed = double.tryParse(v);
         if (parsed != null) onNATChanged(parsed);
@@ -763,8 +764,8 @@ class _BottomNav extends StatelessWidget {
         color: theme.colorScheme.surface,
         border: Border(
           top: BorderSide(
-              color: theme.colorScheme.outlineVariant
-                  .withValues(alpha: 0.3)),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+          ),
         ),
       ),
       child: SafeArea(

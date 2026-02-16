@@ -69,16 +69,16 @@ class _AssignmentSubmissionsScreenState
         feedback: result['feedback'] as String?,
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Graded successfully')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Graded successfully')));
         _load();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error: $e')));
       }
     }
   }
@@ -93,8 +93,7 @@ class _AssignmentSubmissionsScreenState
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(36),
           child: Padding(
-            padding:
-                const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
             child: Row(
               children: [
                 Text(
@@ -141,13 +140,18 @@ class _AssignmentSubmissionsScreenState
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.inbox_outlined,
-                size: 48, color: theme.colorScheme.onSurfaceVariant),
+            Icon(
+              Icons.inbox_outlined,
+              size: 48,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 8),
-            Text('No submissions yet',
-                style: theme.textTheme.bodyMedium?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                )),
+            Text(
+              'No submissions yet',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
           ],
         ),
       );
@@ -159,11 +163,10 @@ class _AssignmentSubmissionsScreenState
         padding: const EdgeInsets.all(16),
         itemCount: _submissions!.length,
         separatorBuilder: (_, __) => const SizedBox(height: 10),
-        itemBuilder: (_, i) =>
-            _SubmissionCard(
-              submission: _submissions![i],
-              onGrade: () => _gradeSubmission(_submissions![i]),
-            ),
+        itemBuilder: (_, i) => _SubmissionCard(
+          submission: _submissions![i],
+          onGrade: () => _gradeSubmission(_submissions![i]),
+        ),
       ),
     );
   }
@@ -173,10 +176,7 @@ class _SubmissionCard extends StatelessWidget {
   final SubmissionModel submission;
   final VoidCallback onGrade;
 
-  const _SubmissionCard({
-    required this.submission,
-    required this.onGrade,
-  });
+  const _SubmissionCard({required this.submission, required this.onGrade});
 
   @override
   Widget build(BuildContext context) {
@@ -193,7 +193,8 @@ class _SubmissionCard extends StatelessWidget {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
         side: BorderSide(
-            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -205,8 +206,7 @@ class _SubmissionCard extends StatelessWidget {
               children: [
                 CircleAvatar(
                   radius: 16,
-                  backgroundColor:
-                      theme.colorScheme.primaryContainer,
+                  backgroundColor: theme.colorScheme.primaryContainer,
                   child: Text(
                     (s.user?.name ?? '?')[0].toUpperCase(),
                     style: theme.textTheme.labelMedium?.copyWith(
@@ -238,7 +238,9 @@ class _SubmissionCard extends StatelessWidget {
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 8, vertical: 3),
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(6),
@@ -259,12 +261,18 @@ class _SubmissionCard extends StatelessWidget {
               const SizedBox(height: 6),
               Row(
                 children: [
-                  Icon(Icons.warning_amber_rounded,
-                      size: 14, color: Colors.orange),
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    size: 14,
+                    color: Colors.orange,
+                  ),
                   const SizedBox(width: 4),
-                  Text('Submitted late',
-                      style: theme.textTheme.labelSmall
-                          ?.copyWith(color: Colors.orange)),
+                  Text(
+                    'Submitted late',
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: Colors.orange,
+                    ),
+                  ),
                 ],
               ),
             ],
@@ -276,8 +284,7 @@ class _SubmissionCard extends StatelessWidget {
                 spacing: 6,
                 runSpacing: 4,
                 children: s.files.map((f) {
-                  final isPDF =
-                      f.fileName.toLowerCase().endsWith('.pdf');
+                  final isPDF = f.fileName.toLowerCase().endsWith('.pdf');
                   return Chip(
                     avatar: Icon(
                       isPDF
@@ -285,10 +292,8 @@ class _SubmissionCard extends StatelessWidget {
                           : Icons.image_outlined,
                       size: 14,
                     ),
-                    label: Text(f.fileName,
-                        style: theme.textTheme.labelSmall),
-                    materialTapTargetSize:
-                        MaterialTapTargetSize.shrinkWrap,
+                    label: Text(f.fileName, style: theme.textTheme.labelSmall),
+                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     visualDensity: VisualDensity.compact,
                   );
                 }).toList(),
@@ -298,16 +303,17 @@ class _SubmissionCard extends StatelessWidget {
             // Marks & feedback
             if (s.marks != null) ...[
               const SizedBox(height: 8),
-              Text('Marks: ${s.marks}',
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                    color: Colors.green.shade700,
-                  )),
+              Text(
+                'Marks: ${s.marks}',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green.shade700,
+                ),
+              ),
             ],
             if (s.feedback != null && s.feedback!.isNotEmpty) ...[
               const SizedBox(height: 4),
-              Text('Feedback: ${s.feedback}',
-                  style: theme.textTheme.bodySmall),
+              Text('Feedback: ${s.feedback}', style: theme.textTheme.bodySmall),
             ],
 
             // Grade button
@@ -322,8 +328,7 @@ class _SubmissionCard extends StatelessWidget {
                       : Icons.grading_rounded,
                   size: 16,
                 ),
-                label: Text(
-                    s.status == 'GRADED' ? 'Update Grade' : 'Grade'),
+                label: Text(s.status == 'GRADED' ? 'Update Grade' : 'Grade'),
               ),
             ),
           ],
@@ -351,9 +356,11 @@ class _GradeDialogState extends State<_GradeDialog> {
   void initState() {
     super.initState();
     _marksCtl = TextEditingController(
-        text: widget.submission.marks?.toString() ?? '');
-    _feedbackCtl =
-        TextEditingController(text: widget.submission.feedback ?? '');
+      text: widget.submission.marks?.toString() ?? '',
+    );
+    _feedbackCtl = TextEditingController(
+      text: widget.submission.feedback ?? '',
+    );
   }
 
   @override
@@ -372,8 +379,7 @@ class _GradeDialogState extends State<_GradeDialog> {
         children: [
           TextField(
             controller: _marksCtl,
-            keyboardType:
-                const TextInputType.numberWithOptions(decimal: true),
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
             decoration: InputDecoration(
               labelText: 'Marks',
               hintText: widget.totalMarks != null
@@ -385,9 +391,7 @@ class _GradeDialogState extends State<_GradeDialog> {
           TextField(
             controller: _feedbackCtl,
             maxLines: 3,
-            decoration: const InputDecoration(
-              labelText: 'Feedback (optional)',
-            ),
+            decoration: const InputDecoration(labelText: 'Feedback (optional)'),
           ),
         ],
       ),

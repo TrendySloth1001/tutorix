@@ -35,16 +35,21 @@ class _CoachingAssessmentScreenState extends State<CoachingAssessmentScreen> {
   @override
   void initState() {
     super.initState();
-    _sub = _batchService.watchMyBatches(widget.coaching.id).listen((list) {
-      if (mounted) {
-        setState(() {
-          _batches = list;
-          _loading = false;
-        });
-      }
-    }, onError: (_) {
-      if (mounted) setState(() => _loading = false);
-    });
+    _sub = _batchService
+        .watchMyBatches(widget.coaching.id)
+        .listen(
+          (list) {
+            if (mounted) {
+              setState(() {
+                _batches = list;
+                _loading = false;
+              });
+            }
+          },
+          onError: (_) {
+            if (mounted) setState(() => _loading = false);
+          },
+        );
   }
 
   @override
@@ -81,42 +86,44 @@ class _CoachingAssessmentScreenState extends State<CoachingAssessmentScreen> {
       body: _loading
           ? const _BatchListShimmer()
           : _batches.isEmpty
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(Icons.quiz_outlined,
-                          size: 56,
-                          color: theme.colorScheme.onSurfaceVariant),
-                      const SizedBox(height: 12),
-                      Text(
-                        'No batches yet',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Join a batch to see assessments',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.quiz_outlined,
+                    size: 56,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
-                )
-              : ListView.separated(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: _batches.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 10),
-                  itemBuilder: (_, i) {
-                    final batch = _batches[i];
-                    return _BatchAssessmentCard(
-                      batch: batch,
-                      onTap: () => _openBatchAssessments(batch),
-                    );
-                  },
-                ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'No batches yet',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    'Join a batch to see assessments',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : ListView.separated(
+              padding: const EdgeInsets.all(16),
+              itemCount: _batches.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              itemBuilder: (_, i) {
+                final batch = _batches[i];
+                return _BatchAssessmentCard(
+                  batch: batch,
+                  onTap: () => _openBatchAssessments(batch),
+                );
+              },
+            ),
     );
   }
 }

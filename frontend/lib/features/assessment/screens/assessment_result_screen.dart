@@ -22,8 +22,7 @@ class AssessmentResultScreen extends StatefulWidget {
   });
 
   @override
-  State<AssessmentResultScreen> createState() =>
-      _AssessmentResultScreenState();
+  State<AssessmentResultScreen> createState() => _AssessmentResultScreenState();
 }
 
 class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
@@ -62,8 +61,8 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
         _attempts = results[0] as List<AttemptLeaderboardEntry>;
         _detail = results[1] as AssessmentModel;
       } else {
-        final attemptId = widget.attemptId ??
-            widget.assessment.bestAttempt?.assessmentId;
+        final attemptId =
+            widget.attemptId ?? widget.assessment.bestAttempt?.assessmentId;
         if (attemptId != null) {
           _result = await _service.getAttemptResult(
             widget.coachingId,
@@ -74,9 +73,9 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading results: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Error loading results: $e')));
       }
     }
     if (mounted) setState(() => _loading = false);
@@ -85,14 +84,12 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.assessment.title),
-      ),
+      appBar: AppBar(title: Text(widget.assessment.title)),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : widget.isTeacher
-              ? _buildTeacherView()
-              : _buildStudentView(),
+          ? _buildTeacherView()
+          : _buildStudentView(),
     );
   }
 
@@ -106,7 +103,8 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
     }
 
     final r = _result!;
-    final passed = widget.assessment.passingMarks != null &&
+    final passed =
+        widget.assessment.passingMarks != null &&
         r.totalScore >= widget.assessment.passingMarks!;
 
     return ListView(
@@ -145,10 +143,13 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                 const SizedBox(height: 8),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 4),
+                    horizontal: 12,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
-                    color: (passed ? Colors.green : Colors.red)
-                        .withValues(alpha: 0.15),
+                    color: (passed ? Colors.green : Colors.red).withValues(
+                      alpha: 0.15,
+                    ),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
@@ -239,8 +240,9 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
         // Assessment info header
         Container(
           padding: const EdgeInsets.all(16),
-          color: theme.colorScheme.surfaceContainerHighest
-              .withValues(alpha: 0.3),
+          color: theme.colorScheme.surfaceContainerHighest.withValues(
+            alpha: 0.3,
+          ),
           child: Row(
             children: [
               Expanded(
@@ -285,20 +287,23 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.leaderboard_outlined,
-                          size: 56,
-                          color: theme.colorScheme.outlineVariant),
+                      Icon(
+                        Icons.leaderboard_outlined,
+                        size: 56,
+                        color: theme.colorScheme.outlineVariant,
+                      ),
                       const SizedBox(height: 8),
-                      Text('No submissions yet',
-                          style: theme.textTheme.bodyMedium),
+                      Text(
+                        'No submissions yet',
+                        style: theme.textTheme.bodyMedium,
+                      ),
                     ],
                   ),
                 )
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: _attempts.length,
-                  separatorBuilder: (_, __) =>
-                      const SizedBox(height: 8),
+                  separatorBuilder: (_, __) => const SizedBox(height: 8),
                   itemBuilder: (_, i) =>
                       _LeaderboardTile(rank: i + 1, entry: _attempts[i]),
                 ),
@@ -381,8 +386,8 @@ class _QuestionResult extends StatelessWidget {
           color: isSkipped
               ? Colors.grey.withValues(alpha: 0.3)
               : isCorrect
-                  ? Colors.green.withValues(alpha: 0.4)
-                  : Colors.red.withValues(alpha: 0.4),
+              ? Colors.green.withValues(alpha: 0.4)
+              : Colors.red.withValues(alpha: 0.4),
         ),
       ),
       child: Column(
@@ -391,15 +396,15 @@ class _QuestionResult extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                    horizontal: 7, vertical: 3),
+                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
                 decoration: BoxDecoration(
-                  color: (isSkipped
-                          ? Colors.grey
-                          : isCorrect
+                  color:
+                      (isSkipped
+                              ? Colors.grey
+                              : isCorrect
                               ? Colors.green
                               : Colors.red)
-                      .withValues(alpha: 0.1),
+                          .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -409,8 +414,8 @@ class _QuestionResult extends StatelessWidget {
                     color: isSkipped
                         ? Colors.grey
                         : isCorrect
-                            ? Colors.green
-                            : Colors.red,
+                        ? Colors.green
+                        : Colors.red,
                   ),
                 ),
               ),
@@ -418,8 +423,9 @@ class _QuestionResult extends StatelessWidget {
               Expanded(
                 child: Text(
                   question.question,
-                  style: theme.textTheme.bodySmall
-                      ?.copyWith(fontWeight: FontWeight.w500),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w500,
+                  ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -448,14 +454,14 @@ class _QuestionResult extends StatelessWidget {
                       isCorrectOpt
                           ? Icons.check_circle_rounded
                           : isStudentOpt
-                              ? Icons.cancel_rounded
-                              : Icons.circle_outlined,
+                          ? Icons.cancel_rounded
+                          : Icons.circle_outlined,
                       size: 16,
                       color: isCorrectOpt
                           ? Colors.green
                           : isStudentOpt
-                              ? Colors.red
-                              : theme.colorScheme.outlineVariant,
+                          ? Colors.red
+                          : theme.colorScheme.outlineVariant,
                     ),
                     const SizedBox(width: 6),
                     Expanded(
@@ -465,9 +471,7 @@ class _QuestionResult extends StatelessWidget {
                           fontWeight: isCorrectOpt
                               ? FontWeight.w600
                               : FontWeight.normal,
-                          color: isCorrectOpt
-                              ? Colors.green.shade700
-                              : null,
+                          color: isCorrectOpt ? Colors.green.shade700 : null,
                         ),
                       ),
                     ),
@@ -489,8 +493,11 @@ class _QuestionResult extends StatelessWidget {
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Icon(Icons.lightbulb_outline_rounded,
-                      size: 14, color: Colors.blue),
+                  const Icon(
+                    Icons.lightbulb_outline_rounded,
+                    size: 14,
+                    color: Colors.blue,
+                  ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
@@ -557,7 +564,8 @@ class _LeaderboardTile extends StatelessWidget {
             width: 32,
             height: 32,
             decoration: BoxDecoration(
-              color: medalColor?.withValues(alpha: 0.15) ??
+              color:
+                  medalColor?.withValues(alpha: 0.15) ??
                   theme.colorScheme.surfaceContainerHighest,
               shape: BoxShape.circle,
             ),
@@ -591,8 +599,9 @@ class _LeaderboardTile extends StatelessWidget {
           Expanded(
             child: Text(
               entry.user?.name ?? 'Unknown',
-              style: theme.textTheme.bodyMedium
-                  ?.copyWith(fontWeight: FontWeight.w500),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w500,
+              ),
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),

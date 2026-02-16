@@ -79,14 +79,14 @@ class AssessmentModel {
           : null,
       questionCount: count?['questions'] as int? ?? 0,
       attemptCount: count?['attempts'] as int? ?? 0,
-      questions: qList
-              ?.map((e) =>
-                  QuestionModel.fromJson(e as Map<String, dynamic>))
+      questions:
+          qList
+              ?.map((e) => QuestionModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      myAttempts: aList
-              ?.map((e) =>
-                  AttemptSummary.fromJson(e as Map<String, dynamic>))
+      myAttempts:
+          aList
+              ?.map((e) => AttemptSummary.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );
@@ -109,18 +109,15 @@ class AssessmentModel {
   /// Whether the student can still attempt this assessment.
   bool get canAttempt {
     if (!isAvailable) return false;
-    final submitted =
-        myAttempts.where((a) => a.status == 'SUBMITTED').length;
+    final submitted = myAttempts.where((a) => a.status == 'SUBMITTED').length;
     return submitted < maxAttempts;
   }
 
   /// Best attempt score, if any.
   AttemptSummary? get bestAttempt {
-    final submitted =
-        myAttempts.where((a) => a.status == 'SUBMITTED').toList();
+    final submitted = myAttempts.where((a) => a.status == 'SUBMITTED').toList();
     if (submitted.isEmpty) return null;
-    submitted.sort(
-        (a, b) => (b.percentage ?? 0).compareTo(a.percentage ?? 0));
+    submitted.sort((a, b) => (b.percentage ?? 0).compareTo(a.percentage ?? 0));
     return submitted.first;
   }
 }
@@ -156,7 +153,8 @@ class QuestionModel {
       type: json['type'] as String,
       question: json['question'] as String,
       imageUrl: json['imageUrl'] as String?,
-      options: opts
+      options:
+          opts
               ?.map((e) => OptionModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -178,11 +176,7 @@ class OptionModel {
   final String text;
   final String? imageUrl;
 
-  const OptionModel({
-    required this.id,
-    required this.text,
-    this.imageUrl,
-  });
+  const OptionModel({required this.id, required this.text, this.imageUrl});
 
   factory OptionModel.fromJson(Map<String, dynamic> json) {
     return OptionModel(
@@ -193,10 +187,10 @@ class OptionModel {
   }
 
   Map<String, dynamic> toJson() => {
-        'id': id,
-        'text': text,
-        if (imageUrl != null) 'imageUrl': imageUrl,
-      };
+    'id': id,
+    'text': text,
+    if (imageUrl != null) 'imageUrl': imageUrl,
+  };
 }
 
 /// Attempt summary attached to assessment list items.
@@ -280,14 +274,15 @@ class AttemptResultModel {
       user: json['user'] != null
           ? CreatorInfo.fromJson(json['user'] as Map<String, dynamic>)
           : null,
-      answers: aList
-              ?.map(
-                  (e) => AnswerModel.fromJson(e as Map<String, dynamic>))
+      answers:
+          aList
+              ?.map((e) => AnswerModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       assessment: json['assessment'] != null
           ? AssessmentResultInfo.fromJson(
-              json['assessment'] as Map<String, dynamic>)
+              json['assessment'] as Map<String, dynamic>,
+            )
           : null,
     );
   }
@@ -312,11 +307,10 @@ class AssessmentResultInfo {
     return AssessmentResultInfo(
       title: json['title'] as String? ?? '',
       showResultAfter: json['showResultAfter'] as String? ?? 'SUBMIT',
-      negativeMarking:
-          (json['negativeMarking'] as num?)?.toDouble() ?? 0,
-      questions: qList
-              ?.map((e) =>
-                  QuestionModel.fromJson(e as Map<String, dynamic>))
+      negativeMarking: (json['negativeMarking'] as num?)?.toDouble() ?? 0,
+      questions:
+          qList
+              ?.map((e) => QuestionModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );

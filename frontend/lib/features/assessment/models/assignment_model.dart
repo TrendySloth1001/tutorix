@@ -50,15 +50,16 @@ class AssignmentModel {
       createdBy: json['createdBy'] != null
           ? CreatorInfo.fromJson(json['createdBy'] as Map<String, dynamic>)
           : null,
-      attachments: attachList
-              ?.map((e) =>
-                  AttachmentModel.fromJson(e as Map<String, dynamic>))
+      attachments:
+          attachList
+              ?.map((e) => AttachmentModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       submissionCount: count?['submissions'] as int? ?? 0,
       mySubmission: json['mySubmission'] != null
           ? SubmissionSummary.fromJson(
-              json['mySubmission'] as Map<String, dynamic>)
+              json['mySubmission'] as Map<String, dynamic>,
+            )
           : null,
     );
   }
@@ -175,9 +176,11 @@ class SubmissionModel {
       user: json['user'] != null
           ? CreatorInfo.fromJson(json['user'] as Map<String, dynamic>)
           : null,
-      files: fList
-              ?.map((e) =>
-                  SubmissionFileModel.fromJson(e as Map<String, dynamic>))
+      files:
+          fList
+              ?.map(
+                (e) => SubmissionFileModel.fromJson(e as Map<String, dynamic>),
+              )
               .toList() ??
           [],
     );
