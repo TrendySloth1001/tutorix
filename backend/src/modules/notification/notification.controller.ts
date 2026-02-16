@@ -13,7 +13,7 @@ export class NotificationController {
             const coachingId = req.params.id as string;
             const { limit, offset } = req.query;
 
-            // Authorization check: User must be admin/owner of coaching
+            // Authorization check: User must be a member of the coaching or owner
             const userId = (req as any).user.id;
             const member = await prisma.coachingMember.findUnique({
                 where: {
@@ -21,11 +21,10 @@ export class NotificationController {
                 },
             });
 
-            if (!member || (member.role !== 'ADMIN' && member.role !== 'TEACHER')) {
-                // Allow teachers too? Generally admins. Let's stick to ADMIN for now or owner.
-                // Re-checking coaching owner
+            if (!member) {
+                // Not a member — check if owner
                 const coaching = await prisma.coaching.findUnique({ where: { id: coachingId } });
-                if (coaching?.ownerId !== userId && member?.role !== 'ADMIN') {
+                if (coaching?.ownerId !== userId) {
                     return res.status(403).json({ error: 'Not authorized' });
                 }
             }

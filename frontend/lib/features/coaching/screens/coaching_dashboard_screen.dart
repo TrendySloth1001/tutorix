@@ -12,6 +12,10 @@ import '../../../shared/widgets/app_shimmer.dart';
 import '../../batch/services/batch_service.dart';
 import '../../batch/models/batch_note_model.dart';
 import '../../batch/screens/note_detail_screen.dart';
+import '../../assessment/models/assessment_model.dart';
+import '../../assessment/models/assignment_model.dart';
+import '../../assessment/screens/take_assessment_screen.dart';
+import '../../assessment/screens/submit_assignment_screen.dart';
 
 /// Coaching dashboard — compact, data-driven overview.
 class CoachingDashboardScreen extends StatefulWidget {
@@ -140,6 +144,42 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => NoteDetailScreen(note: note)),
+    );
+  }
+
+  void _onAssessmentTap(dynamic assessmentData) {
+    final a = assessmentData as Map<String, dynamic>;
+    final batchId = a['batchId'] as String? ?? '';
+    if (batchId.isEmpty) return;
+
+    final assessment = AssessmentModel.fromJson(a);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => TakeAssessmentScreen(
+          coachingId: widget.coaching.id,
+          batchId: batchId,
+          assessment: assessment,
+        ),
+      ),
+    );
+  }
+
+  void _onAssignmentTap(dynamic assignmentData) {
+    final a = assignmentData as Map<String, dynamic>;
+    final batchId = a['batchId'] as String? ?? '';
+    if (batchId.isEmpty) return;
+
+    final assignment = AssignmentModel.fromJson(a);
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SubmitAssignmentScreen(
+          coachingId: widget.coaching.id,
+          batchId: batchId,
+          assignment: assignment,
+        ),
+      ),
     );
   }
 
@@ -281,8 +321,12 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                       icon: Icons.quiz_rounded,
                     ),
                     const SizedBox(height: 8),
-                    ..._feedAssessments.map(
-                      (a) => _FeedAssessmentCard(assessment: a),
+                    _DateGroupedFeedSection(
+                      items: _feedAssessments,
+                      itemBuilder: (a) => _FeedAssessmentCard(
+                        assessment: a,
+                        onTap: () => _onAssessmentTap(a),
+                      ),
                     ),
                   ],
 
@@ -294,8 +338,12 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                       icon: Icons.assignment_rounded,
                     ),
                     const SizedBox(height: 8),
-                    ..._feedAssignments.map(
-                      (a) => _FeedAssignmentCard(assignment: a),
+                    _DateGroupedFeedSection(
+                      items: _feedAssignments,
+                      itemBuilder: (a) => _FeedAssignmentCard(
+                        assignment: a,
+                        onTap: () => _onAssignmentTap(a),
+                      ),
                     ),
                   ],
 
@@ -1480,6 +1528,101 @@ class _DescriptionCardState extends State<_DescriptionCard> {
 // ── DASHBOARD FEED WIDGETS
 // ═══════════════════════════════════════════════════════════════════════════
 
+/// Groups feed items by date (Today, Yesterday, date) with dividers.
+class _DateGroupedFeedSection extends StatelessWidget {
+  final List<dynamic> items;
+  final Widget Function(dynamic item) itemBuilder;
+
+  const _DateGroupedFeedSection({
+    required this.items,
+    required this.itemBuilder,
+  });
+
+  Map<String, List<dynamic>> _groupByDate() {
+    final grouped = <String, List<dynamic>>{};
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final yesterday = today.subtract(const Duration(days: 1));
+
+    for (final item in items) {
+      final raw = (item as Map<String, dynamic>)['createdAt'];
+      if (raw == null) continue;
+      final dt = DateTime.tryParse(raw as String);
+      if (dt == null) continue;
+
+      final local = dt.toLocal();
+      final dateOnly = DateTime(local.year, local.month, local.day);
+
+      String dateKey;
+      if (dateOnly.isAtSameMomentAs(today)) {
+        dateKey = 'Today';
+      } else if (dateOnly.isAtSameMomentAs(yesterday)) {
+        dateKey = 'Yesterday';
+      } else {
+        dateKey = DateFormat('MMM dd, yyyy').format(local);
+      }
+
+      grouped.putIfAbsent(dateKey, () => []);
+      grouped[dateKey]!.add(item);
+    }
+    return grouped;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final grouped = _groupByDate();
+
+    // If all items are same date, show without dividers
+    if (grouped.length <= 1) {
+      return Column(
+        children: items.map((item) => itemBuilder(item)).toList(),
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: grouped.entries.expand((entry) {
+        return [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Divider(
+                    color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                    thickness: 1,
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  child: Text(
+                    entry.key,
+                    style: theme.textTheme.labelMedium?.copyWith(
+                      color: theme.colorScheme.onSurface.withValues(
+                        alpha: 0.5,
+                      ),
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+                Expanded(
+                  child: Divider(
+                    color: theme.colorScheme.outline.withValues(alpha: 0.2),
+                    thickness: 1,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          ...entry.value.map((item) => itemBuilder(item)),
+        ];
+      }).toList(),
+    );
+  }
+}
+
 /// Swipeable notices carousel with PageView + dots indicator.
 class _SwipeableNoticesSection extends StatefulWidget {
   final List<dynamic> notices;
@@ -1662,7 +1805,8 @@ class _SwipeableNoticesSectionState extends State<_SwipeableNoticesSection> {
 /// Card for a new quiz/assessment in the dashboard feed.
 class _FeedAssessmentCard extends StatelessWidget {
   final dynamic assessment;
-  const _FeedAssessmentCard({required this.assessment});
+  final VoidCallback? onTap;
+  const _FeedAssessmentCard({required this.assessment, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1676,9 +1820,6 @@ class _FeedAssessmentCard extends StatelessWidget {
         (a['_count'] as Map<String, dynamic>?)?['questions'] as int? ?? 0;
     final duration = a['durationMinutes'] as int? ?? 0;
     final totalMarks = a['totalMarks'];
-    final createdAt = a['createdAt'] != null
-        ? DateTime.tryParse(a['createdAt'] as String)
-        : null;
 
     final isQuiz = type == 'QUIZ';
     final color = isQuiz ? const Color(0xFF4A90A4) : const Color(0xFF6B5B95);
@@ -1688,92 +1829,89 @@ class _FeedAssessmentCard extends StatelessWidget {
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
+      child: Material(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha: 0.15)),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: color.withValues(alpha: 0.15)),
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(icon, color: color, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (batchName.isNotEmpty) ...[
-                    Text(
-                      batchName,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                  ],
-                  Text(
-                    title,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
+                  child: Icon(icon, color: color, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      _FeedMeta(
-                        icon: Icons.help_outline_rounded,
-                        text:
-                            '$questionCount Q${questionCount != 1 ? 's' : ''}',
+                      if (batchName.isNotEmpty) ...[
+                        Text(
+                          batchName,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 2),
+                      ],
+                      Text(
+                        title,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      if (duration > 0) ...[
-                        const SizedBox(width: 12),
-                        _FeedMeta(
-                          icon: Icons.timer_outlined,
-                          text: '${duration}m',
-                        ),
-                      ],
-                      if (totalMarks != null) ...[
-                        const SizedBox(width: 12),
-                        _FeedMeta(
-                          icon: Icons.star_outline_rounded,
-                          text: '$totalMarks marks',
-                        ),
-                      ],
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          _FeedMeta(
+                            icon: Icons.help_outline_rounded,
+                            text:
+                                '$questionCount Q${questionCount != 1 ? 's' : ''}',
+                          ),
+                          if (duration > 0) ...[
+                            const SizedBox(width: 12),
+                            _FeedMeta(
+                              icon: Icons.timer_outlined,
+                              text: '${duration}m',
+                            ),
+                          ],
+                          if (totalMarks != null) ...[
+                            const SizedBox(width: 12),
+                            _FeedMeta(
+                              icon: Icons.star_outline_rounded,
+                              text: '$totalMarks marks',
+                            ),
+                          ],
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            if (createdAt != null)
-              Text(
-                _timeAgo(createdAt),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontSize: 11,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
-              ),
-          ],
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );
@@ -1783,7 +1921,8 @@ class _FeedAssessmentCard extends StatelessWidget {
 /// Card for a new assignment in the dashboard feed.
 class _FeedAssignmentCard extends StatelessWidget {
   final dynamic assignment;
-  const _FeedAssignmentCard({required this.assignment});
+  final VoidCallback? onTap;
+  const _FeedAssignmentCard({required this.assignment, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -1796,97 +1935,91 @@ class _FeedAssignmentCard extends StatelessWidget {
     final dueDate = a['dueDate'] != null
         ? DateTime.tryParse(a['dueDate'] as String)
         : null;
-    final createdAt = a['createdAt'] != null
-        ? DateTime.tryParse(a['createdAt'] as String)
-        : null;
 
     const color = Color(0xFF5B8C5A);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: theme.colorScheme.surface,
+      child: Material(
+        color: theme.colorScheme.surface,
+        borderRadius: BorderRadius.circular(14),
+        child: InkWell(
+          onTap: onTap,
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: color.withValues(alpha: 0.15)),
-          boxShadow: [
-            BoxShadow(
-              color: color.withValues(alpha: 0.06),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: color.withValues(alpha: 0.15)),
             ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(
-                Icons.assignment_outlined,
-                color: color,
-                size: 22,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  if (batchName.isNotEmpty) ...[
-                    Text(
-                      batchName,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 11,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 2),
-                  ],
-                  Text(
-                    title,
-                    style: theme.textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: color.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
                   ),
-                  const SizedBox(height: 4),
-                  Row(
+                  child: const Icon(
+                    Icons.assignment_outlined,
+                    color: color,
+                    size: 22,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      if (dueDate != null) ...[
-                        _FeedMeta(
-                          icon: Icons.event_outlined,
-                          text: 'Due ${DateFormat('MMM dd').format(dueDate)}',
+                      if (batchName.isNotEmpty) ...[
+                        Text(
+                          batchName,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(height: 2),
                       ],
-                      if (totalMarks != null)
-                        _FeedMeta(
-                          icon: Icons.star_outline_rounded,
-                          text: '$totalMarks marks',
+                      Text(
+                        title,
+                        style: theme.textTheme.titleSmall?.copyWith(
+                          fontWeight: FontWeight.w700,
                         ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          if (dueDate != null) ...[
+                            _FeedMeta(
+                              icon: Icons.event_outlined,
+                              text: 'Due ${DateFormat('MMM dd').format(dueDate)}',
+                            ),
+                            const SizedBox(width: 12),
+                          ],
+                          if (totalMarks != null)
+                            _FeedMeta(
+                              icon: Icons.star_outline_rounded,
+                              text: '$totalMarks marks',
+                            ),
+                        ],
+                      ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            if (createdAt != null)
-              Text(
-                _timeAgo(createdAt),
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontSize: 11,
-                  color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
                 ),
-              ),
-          ],
+                Icon(
+                  Icons.chevron_right_rounded,
+                  size: 20,
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.3),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

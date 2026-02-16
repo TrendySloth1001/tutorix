@@ -109,84 +109,105 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
-        // Score card
-        Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: passed
-                  ? [Colors.green.shade50, Colors.green.shade100]
-                  : [Colors.blue.shade50, Colors.blue.shade100],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-            ),
-            borderRadius: BorderRadius.circular(16),
-          ),
+        // Simplified Score Section
+        const SizedBox(height: 24),
+        Center(
           child: Column(
             children: [
               Text(
-                '${r.percentage.toStringAsFixed(1)}%',
-                style: theme.textTheme.displaySmall?.copyWith(
-                  fontWeight: FontWeight.w800,
-                  color: passed ? Colors.green.shade700 : Colors.blue.shade700,
+                'YOUR SCORE',
+                style: theme.textTheme.labelMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  letterSpacing: 1.5,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: 12),
               Text(
-                '${r.totalScore.toStringAsFixed(1)} / ${r.maxScore.toStringAsFixed(1)}',
-                style: theme.textTheme.titleMedium?.copyWith(
-                  color: passed ? Colors.green.shade600 : Colors.blue.shade600,
+                '${r.percentage.toStringAsFixed(1)}%',
+                style: theme.textTheme.displayLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  color: passed ? Colors.green : theme.colorScheme.onSurface,
+                  height: 1.0,
+                  letterSpacing: -1.0,
                 ),
               ),
-              if (widget.assessment.passingMarks != null) ...[
-                const SizedBox(height: 8),
+              const SizedBox(height: 8),
+              if (widget.assessment.passingMarks != null)
                 Container(
+                  margin: const EdgeInsets.only(bottom: 12),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 4,
+                    horizontal: 16,
+                    vertical: 6,
                   ),
                   decoration: BoxDecoration(
                     color: (passed ? Colors.green : Colors.red).withValues(
-                      alpha: 0.15,
+                      alpha: 0.1,
                     ),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(100),
                   ),
                   child: Text(
                     passed ? 'PASSED' : 'FAILED',
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: passed ? Colors.green.shade700 : Colors.red,
+                      color: passed
+                          ? Colors.green.shade700
+                          : Colors.red.shade700,
                       fontWeight: FontWeight.w700,
+                      letterSpacing: 1.0,
                     ),
                   ),
                 ),
-              ],
+              Text(
+                '${r.totalScore.toStringAsFixed(1)} / ${r.maxScore.toStringAsFixed(1)} Marks',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
             ],
           ),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 48),
 
-        // Stats row
-        Row(
-          children: [
-            _StatBox(
-              label: 'Correct',
-              value: '${r.correctCount}',
-              color: Colors.green,
+        // Simplified Stats Row
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surfaceContainerLowest,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
             ),
-            const SizedBox(width: 8),
-            _StatBox(
-              label: 'Wrong',
-              value: '${r.wrongCount}',
-              color: Colors.red,
-            ),
-            const SizedBox(width: 8),
-            _StatBox(
-              label: 'Skipped',
-              value: '${r.skippedCount}',
-              color: Colors.grey,
-            ),
-          ],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _buildStatItem(
+                theme,
+                'Correct',
+                '${r.correctCount}',
+                Colors.green,
+              ),
+              Container(
+                width: 1,
+                height: 40,
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+              ),
+              _buildStatItem(theme, 'Wrong', '${r.wrongCount}', Colors.red),
+              Container(
+                width: 1,
+                height: 40,
+                color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+              ),
+              _buildStatItem(
+                theme,
+                'Skipped',
+                '${r.skippedCount}',
+                Colors.grey,
+              ),
+            ],
+          ),
         ),
 
         const SizedBox(height: 20),
@@ -343,6 +364,34 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
 }
 
 // ─── Helper Widgets ──────────────────────────────────────────────────
+
+Widget _buildStatItem(
+  ThemeData theme,
+  String label,
+  String value,
+  Color color,
+) {
+  return Column(
+    children: [
+      Text(
+        value,
+        style: theme.textTheme.headlineMedium?.copyWith(
+          fontWeight: FontWeight.w700,
+          color: color,
+          height: 1.0,
+        ),
+      ),
+      const SizedBox(height: 4),
+      Text(
+        label,
+        style: theme.textTheme.bodySmall?.copyWith(
+          color: theme.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+    ],
+  );
+}
 
 class _StatBox extends StatelessWidget {
   final String label;
