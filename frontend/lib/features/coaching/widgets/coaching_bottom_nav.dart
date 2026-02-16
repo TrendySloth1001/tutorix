@@ -7,18 +7,23 @@ import 'package:flutter/material.dart';
 class CoachingBottomNav extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onItemSelected;
+  final bool isAdmin;
 
   const CoachingBottomNav({
     super.key,
     required this.selectedIndex,
     required this.onItemSelected,
+    this.isAdmin = false,
   });
 
-  static const _items = [
-    _NavDef(icon: Icons.dashboard_rounded, label: 'Dashboard'),
-    _NavDef(icon: Icons.people_rounded, label: 'Members'),
-    _NavDef(icon: Icons.group_work_rounded, label: 'Batches'),
-    _NavDef(icon: Icons.school_rounded, label: 'Profile'),
+  List<_NavDef> get _items => [
+    const _NavDef(icon: Icons.dashboard_rounded, label: 'Dashboard'),
+    if (isAdmin)
+      const _NavDef(icon: Icons.people_rounded, label: 'Members')
+    else
+      const _NavDef(icon: Icons.quiz_rounded, label: 'Assessment'),
+    const _NavDef(icon: Icons.group_work_rounded, label: 'Batches'),
+    const _NavDef(icon: Icons.school_rounded, label: 'Profile'),
   ];
 
   @override

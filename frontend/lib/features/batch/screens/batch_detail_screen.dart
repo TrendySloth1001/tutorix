@@ -14,6 +14,7 @@ import 'add_batch_members_screen.dart';
 import 'create_note_screen.dart';
 import 'create_notice_screen.dart';
 import 'note_detail_screen.dart';
+import '../../assessment/screens/assessment_tab_screen.dart';
 
 /// Full batch detail — overview, members, notes, notices via TabBar.
 /// Premium design with layered header, rich cards, and polished interactions.
@@ -61,7 +62,9 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
   @override
   void initState() {
     super.initState();
-    _tabCtrl = TabController(length: 4, vsync: this);
+    // Admin: Overview, Members, Assessment, Notes, Notices (5 tabs)
+    // Non-admin: Overview, Assessment, Notes, Notices (4 tabs)
+    _tabCtrl = TabController(length: _isAdmin ? 5 : 4, vsync: this);
     _loadAll();
   }
 
@@ -561,7 +564,9 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
                 ),
                 tabs: [
                   const Tab(text: 'Overview'),
-                  Tab(text: 'Members (${_members.length})'),
+                  if (_isAdmin)
+                    Tab(text: 'Members (${_members.length})'),
+                  const Tab(text: 'Assessment'),
                   Tab(text: 'Notes (${_notes.length})'),
                   Tab(text: 'Notices (${_notices.length})'),
                 ],
@@ -578,11 +583,17 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
                 isTeacher: _isTeacherOrAdmin,
                 isAdmin: _isAdmin,
               ),
-              _MembersTab(
-                members: _members,
-                isAdmin: _isAdmin,
-                onAdd: _addMembers,
-                onRemove: _removeMember,
+              if (_isAdmin)
+                _MembersTab(
+                  members: _members,
+                  isAdmin: _isAdmin,
+                  onAdd: _addMembers,
+                  onRemove: _removeMember,
+                ),
+              AssessmentTabScreen(
+                coachingId: widget.coaching.id,
+                batchId: widget.batchId,
+                isTeacher: _isTeacherOrAdmin,
               ),
               _NotesTab(
                 notes: _notes,
@@ -1871,9 +1882,7 @@ class _NoticeCard extends StatelessWidget {
                     maxLines: 1,
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontSize: 11,
-                      color: theme.colorScheme.onSurface.withValues(
-                        alpha: 0.5,
-                      ),
+                      color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
                     ),
                   ),
                 ),
@@ -2028,7 +2037,11 @@ class _MemberTile extends StatelessWidget {
   final BatchMemberModel member;
   final VoidCallback? onRemove;
   final bool showEmail;
-  const _MemberTile({required this.member, this.onRemove, this.showEmail = false});
+  const _MemberTile({
+    required this.member,
+    this.onRemove,
+    this.showEmail = false,
+  });
 
   @override
   Widget build(BuildContext context) {

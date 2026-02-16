@@ -49,6 +49,10 @@ model User {
   uploadedNotes       BatchNote[]       @relation("NoteUploader")
   sentNotices         BatchNotice[]     @relation("NoticeSender")
   savedCoachings      SavedCoaching[]   @relation("UserSavedCoachings")
+  createdAssessments  Assessment[]      @relation("AssessmentCreator")
+  assessmentAttempts  AssessmentAttempt[] @relation("AssessmentAttempts")
+  createdAssignments  Assignment[]      @relation("AssignmentCreator")
+  assignmentSubmissions AssignmentSubmission[] @relation("AssignmentSubmissions")
 }
 
 model Ward {
@@ -130,6 +134,8 @@ model Coaching {
   branches      CoachingBranch[]
   batches       Batch[]
   savedByUsers  SavedCoaching[]   @relation("SavedByUsers")
+  assessments   Assessment[]
+  assignments   Assignment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -342,6 +348,8 @@ model Batch {
   members BatchMember[]
   notes   BatchNote[]
   notices BatchNotice[]
+  assessments Assessment[]
+  assignments Assignment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -447,4 +455,235 @@ model SavedCoaching {
   @@unique([userId, coachingId])
   @@index([userId])
   @@index([coachingId])
+}
+
+// ─── Assessment System ────────────────────────────────────────────────
+
+model Assessment {
+  id         String   @id @default(uuid())
+  batchId    String
+  batch      Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  coachingId String
+  coaching   Coaching @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+  type        String  @default("QUIZ") // QUIZ, TEST, PRACTICE
+
+  // Timing
+  durationMinutes Int?     // null = unlimited
+  startTime       DateTime? // scheduled start (null = available immediately)
+  endTime         DateTime? // deadline (null = no deadline)
+
+  // Settings
+  totalMarks      Int      @default(0) // auto-calculated from questions
+  passingMarks    Int?
+  shuffleQuestions Boolean @default(false)
+  shuffleOptions   Boolean @default(false)
+  showResultAfter  String  @default("SUBMIT") // SUBMIT, MANUAL (teacher releases)
+  maxAttempts      Int     @default(1)
+  negativeMarking  Float   @default(0) // 0 = no negative, 0.25 = quarter, etc.
+
+  status String @default("DRAFT") // DRAFT, PUBLISHED, CLOSED
+
+  createdById String
+  createdBy   User   @relation("AssessmentCreator", fields: [createdById], references: [id])
+
+  // Relations
+  questions AssessmentQuestion[]
+  attempts  AssessmentAttempt[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([batchId])
+  @@index([coachingId])
+  @@index([batchId, status])
+  @@index([createdById])
+}
+
+model AssessmentQuestion {
+  id           String     @id @default(uuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+
+  type     String // MCQ, MSQ, NAT (Numerical Answer Type)
+  question String // question text
+  imageUrl String? // optional question image
+
+  // Options stored as JSON array: [{ id, text, imageUrl? }]
+  // For NAT type this is null
+  options Json?
+
+  // Correct answer:
+  // MCQ → single option id string e.g. "opt_1"
+  // MSQ → JSON array of option ids e.g. ["opt_1","opt_3"]
+  // NAT → JSON { value: number, tolerance?: number }
+  correctAnswer Json
+
+  marks         Int @default(1)
+  orderIndex    Int @default(0) // display order
+
+  // Optional explanation shown after submission
+  explanation String?
+
+  // Relations
+  answers AssessmentAnswer[]
+
+  createdAt DateTime @default(now())
+
+  @@index([assessmentId])
+  @@index([assessmentId, orderIndex])
+}
+
+model AssessmentAttempt {
+  id           String     @id @default(uuid())
+  assessmentId String
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation("AssessmentAttempts", fields: [userId], references: [id], onDelete: Cascade)
+
+  startedAt   DateTime  @default(now())
+  submittedAt DateTime?
+
+  // Calculated after submit
+  totalScore    Float?
+  maxScore      Float?
+  percentage    Float?
+  correctCount  Int?
+  wrongCount    Int?
+  skippedCount  Int?
+
+  status String @default("IN_PROGRESS") // IN_PROGRESS, SUBMITTED, TIMED_OUT
+
+  // Relations
+  answers AssessmentAnswer[]
+
+  createdAt DateTime @default(now())
+
+  @@unique([assessmentId, userId, startedAt]) // allow multiple attempts
+  @@index([assessmentId])
+  @@index([userId])
+  @@index([assessmentId, userId])
+  @@index([assessmentId, status])
+}
+
+model AssessmentAnswer {
+  id        String            @id @default(uuid())
+  attemptId String
+  attempt   AssessmentAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+
+  questionId String
+  question   AssessmentQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  // Student's answer:
+  // MCQ → option id string
+  // MSQ → JSON array of option ids
+  // NAT → JSON { value: number }
+  answer Json?
+
+  isCorrect Boolean?
+  marksAwarded Float @default(0)
+
+  answeredAt DateTime @default(now())
+
+  @@unique([attemptId, questionId])
+  @@index([attemptId])
+  @@index([questionId])
+}
+
+// ─── Assignment System ────────────────────────────────────────────────
+
+model Assignment {
+  id         String   @id @default(uuid())
+  batchId    String
+  batch      Batch    @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  coachingId String
+  coaching   Coaching @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+
+  title       String
+  description String?
+
+  dueDate            DateTime?
+  allowLateSubmission Boolean @default(false)
+
+  // Attachments from teacher (instructions/reference)
+  totalMarks Int?
+
+  status String @default("ACTIVE") // ACTIVE, CLOSED
+
+  createdById String
+  createdBy   User   @relation("AssignmentCreator", fields: [createdById], references: [id])
+
+  // Relations
+  attachments    AssignmentAttachment[]
+  submissions    AssignmentSubmission[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([batchId])
+  @@index([coachingId])
+  @@index([batchId, status])
+  @@index([createdById])
+}
+
+model AssignmentAttachment {
+  id           String     @id @default(uuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+
+  url      String
+  fileName String?
+  fileType String  @default("pdf") // pdf, image
+  fileSize Int     @default(0)
+  mimeType String?
+
+  createdAt DateTime @default(now())
+
+  @@index([assignmentId])
+}
+
+model AssignmentSubmission {
+  id           String     @id @default(uuid())
+  assignmentId String
+  assignment   Assignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User       @relation("AssignmentSubmissions", fields: [userId], references: [id], onDelete: Cascade)
+
+  // Teacher grading
+  marks    Float?
+  feedback String?
+  gradedAt DateTime?
+
+  isLate Boolean @default(false)
+
+  status String @default("SUBMITTED") // SUBMITTED, GRADED, RETURNED
+
+  // Relations
+  files AssignmentSubmissionFile[]
+
+  submittedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([assignmentId, userId]) // one submission per student
+  @@index([assignmentId])
+  @@index([userId])
+  @@index([assignmentId, status])
+}
+
+model AssignmentSubmissionFile {
+  id           String               @id @default(uuid())
+  submissionId String
+  submission   AssignmentSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  url      String
+  fileName String?
+  fileType String  @default("image") // image, pdf
+  fileSize Int     @default(0)
+  mimeType String?
+
+  createdAt DateTime @default(now())
+
+  @@index([submissionId])
 }

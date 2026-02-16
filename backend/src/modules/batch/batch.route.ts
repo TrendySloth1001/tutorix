@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { BatchController } from './batch.controller.js';
 import { authMiddleware } from '../../shared/middleware/auth.middleware.js';
+import assessmentRoutes from '../assessment/assessment.route.js';
+import assignmentRoutes from '../assessment/assignment.route.js';
 
 const router = Router({ mergeParams: true }); // mergeParams to access :coachingId from parent
 const ctrl = new BatchController();
@@ -33,5 +35,9 @@ router.delete('/:batchId/notes/:noteId', authMiddleware, ctrl.deleteNote.bind(ct
 router.post('/:batchId/notices', authMiddleware, ctrl.createNotice.bind(ctrl));
 router.get('/:batchId/notices', authMiddleware, ctrl.listNotices.bind(ctrl));
 router.delete('/:batchId/notices/:noticeId', authMiddleware, ctrl.deleteNotice.bind(ctrl));
+
+// Assessment & Assignment sub-routes
+router.use('/:batchId/assessments', assessmentRoutes);
+router.use('/:batchId/assignments', assignmentRoutes);
 
 export default router;
