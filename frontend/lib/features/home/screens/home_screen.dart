@@ -163,9 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
               user: widget.user,
               unreadCount: _unreadNotifications,
               onNotificationTap: _navigateToNotifications,
-              onCreateCoaching: widget.user.isTeacher
-                  ? _navigateToCreate
-                  : null,
+              onCreateCoaching: !widget.user.isWard ? _navigateToCreate : null,
             ),
             if (_isLoading)
               const SliverFillRemaining(child: HomeShimmer())

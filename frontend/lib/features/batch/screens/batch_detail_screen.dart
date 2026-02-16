@@ -561,16 +561,21 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
               ),
               bottom: TabBar(
                 controller: _tabCtrl,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
                 indicatorSize: TabBarIndicatorSize.label,
+                indicatorColor: Colors.white,
+                labelColor: Colors.white,
+                unselectedLabelColor: Colors.white70,
                 dividerColor: Colors.transparent,
                 indicatorWeight: 3,
                 labelStyle: const TextStyle(
                   fontWeight: FontWeight.w700,
-                  fontSize: 12.5,
+                  fontSize: 14,
                 ),
                 unselectedLabelStyle: const TextStyle(
                   fontWeight: FontWeight.w500,
-                  fontSize: 12.5,
+                  fontSize: 14,
                 ),
                 tabs: [
                   const Tab(text: 'Overview'),

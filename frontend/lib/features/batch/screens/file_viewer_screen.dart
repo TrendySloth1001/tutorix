@@ -305,6 +305,7 @@ class _EnhancedPdfViewerState extends State<_EnhancedPdfViewer> {
         await file.writeAsBytes(response.bodyBytes);
       }
 
+      // ignore: deprecated_member_use
       await Share.shareXFiles([XFile(file.path)]);
     } catch (e) {
       // ignore

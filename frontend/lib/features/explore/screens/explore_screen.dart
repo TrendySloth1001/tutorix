@@ -392,7 +392,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                           padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
                           sliver: SliverList.separated(
                             itemCount: _nearby.length,
-                            separatorBuilder: (_, __) =>
+                            separatorBuilder: (_, _) =>
                                 const SizedBox(height: 12),
                             itemBuilder: (_, i) => _NearbyCoachingCard(
                               nearby: _nearby[i],
@@ -796,7 +796,7 @@ class _ExploreScreenState extends State<ExploreScreen>
         initialZoom: 13,
         minZoom: 4,
         maxZoom: 18,
-        onTap: (_, __) {
+        onTap: (_, pos) {
           if (_selectedCoaching != null) {
             setState(() => _selectedCoaching = null);
           }
@@ -884,7 +884,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                     ? Image.network(
                         logoUrl,
                         fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Icon(
+                        errorBuilder: (context, error, stackTrace) => Icon(
                           Icons.school_rounded,
                           size: size * 0.5,
                           color: theme.colorScheme.primary,
@@ -1057,7 +1057,7 @@ class _ExploreScreenState extends State<ExploreScreen>
       padding: const EdgeInsets.symmetric(vertical: 8),
       shrinkWrap: true,
       itemCount: _searchResults.length,
-      separatorBuilder: (_, __) => Divider(
+      separatorBuilder: (_, _) => Divider(
         height: 1,
         indent: 68,
         color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
@@ -1372,7 +1372,8 @@ class _NearbyCoachingCard extends StatelessWidget {
                   Image.network(
                     coverUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (_, __, ___) => _buildPlaceholderBg(theme),
+                    errorBuilder: (context, error, stackTrace) =>
+                        _buildPlaceholderBg(theme),
                   )
                 else
                   _buildPlaceholderBg(theme),
@@ -1500,7 +1501,7 @@ class _NearbyCoachingCard extends StatelessWidget {
                                 child: Image.network(
                                   logoUrl,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) =>
+                                  errorBuilder: (context, error, stackTrace) =>
                                       _buildLogoPlaceholder(theme),
                                 ),
                               )

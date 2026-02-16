@@ -163,7 +163,7 @@ class _AssignmentSubmissionsScreenState
       child: ListView.separated(
         padding: const EdgeInsets.all(16),
         itemCount: _submissions!.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 10),
+        separatorBuilder: (_, _) => const SizedBox(height: 10),
         itemBuilder: (_, i) => _SubmissionCard(
           submission: _submissions![i],
           onGrade: () => _gradeSubmission(_submissions![i]),

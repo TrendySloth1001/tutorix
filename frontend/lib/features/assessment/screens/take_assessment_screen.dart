@@ -571,7 +571,8 @@ class _QuestionWidget extends StatelessWidget {
               question.imageUrl!,
               fit: BoxFit.contain,
               height: 200,
-              errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              errorBuilder: (context, error, stackTrace) =>
+                  const SizedBox.shrink(),
             ),
           ),
         ],

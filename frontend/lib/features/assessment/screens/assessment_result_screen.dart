@@ -350,7 +350,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
               : ListView.separated(
                   padding: const EdgeInsets.all(16),
                   itemCount: _attempts.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) => const SizedBox(height: 8),
                   itemBuilder: (_, i) => _LeaderboardTile(
                     rank: i + 1,
                     entry: _attempts[i],

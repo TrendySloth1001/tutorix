@@ -645,11 +645,14 @@ class _QuestionEditorState extends State<_QuestionEditor> {
             child: Row(
               children: [
                 if (q.type == 'MCQ')
+                  // ignore: deprecated_member_use
                   Radio<String>(
                     value: optId,
+                    // ignore: deprecated_member_use
                     groupValue: q.selectedOptions.isEmpty
                         ? null
                         : q.selectedOptions.first,
+                    // ignore: deprecated_member_use
                     onChanged: (v) {
                       setState(() {
                         q.selectedOptions = {v!};
