@@ -1,4 +1,5 @@
 import prisma from '../../infra/prisma.js';
+import redis from '../../infra/redis.js';
 
 export interface CreateCoachingDto {
     name: string;
@@ -360,41 +361,68 @@ export class CoachingService {
 
     /**
      * Search active coachings by name (prefix / contains).
-     * Lightweight: only returns fields needed for search results.
+     * Uses Redis cache to avoid DB hits on every keystroke.
+     * All searchable coachings are cached in Redis for 5 min,
+     * then filtered in-memory per query.
      */
     async search(query: string, limit: number = 15) {
         const safeLimit = Math.min(Math.max(limit, 1), 50);
-        const coachings = await prisma.coaching.findMany({
-            where: {
-                status: 'active',
-                onboardingComplete: true,
-                name: { contains: query, mode: 'insensitive' },
-            },
-            select: {
-                id: true,
-                name: true,
-                slug: true,
-                logo: true,
-                category: true,
-                isVerified: true,
-                address: { select: { city: true, state: true } },
-                _count: { select: { members: true } },
-            },
-            take: safeLimit,
-            orderBy: { name: 'asc' },
-        });
+        const CACHE_KEY = 'coaching:searchable';
+        const CACHE_TTL = 300; // 5 minutes
 
-        return coachings.map((c) => ({
-            id: c.id,
-            name: c.name,
-            slug: c.slug,
-            logo: c.logo,
-            category: c.category,
-            isVerified: c.isVerified,
-            city: c.address?.city ?? null,
-            state: c.address?.state ?? null,
-            memberCount: c._count.members,
-        }));
+        let all: any[] | null = null;
+
+        // 1. Try Redis cache first
+        try {
+            const cached = await redis.get(CACHE_KEY);
+            if (cached) {
+                all = JSON.parse(cached);
+            }
+        } catch { /* Redis miss or error — fall through to DB */ }
+
+        // 2. Cache miss — load all searchable coachings from DB
+        if (!all) {
+            const coachings = await prisma.coaching.findMany({
+                where: {
+                    status: 'active',
+                    onboardingComplete: true,
+                },
+                select: {
+                    id: true,
+                    name: true,
+                    slug: true,
+                    logo: true,
+                    category: true,
+                    isVerified: true,
+                    address: { select: { city: true, state: true, latitude: true, longitude: true } },
+                    _count: { select: { members: true } },
+                },
+                orderBy: { name: 'asc' },
+            });
+
+            all = coachings.map((c) => ({
+                id: c.id,
+                name: c.name,
+                slug: c.slug,
+                logo: c.logo,
+                category: c.category,
+                isVerified: c.isVerified,
+                city: c.address?.city ?? null,
+                state: c.address?.state ?? null,
+                latitude: c.address?.latitude ?? null,
+                longitude: c.address?.longitude ?? null,
+                memberCount: c._count.members,
+            }));
+
+            // Persist to Redis (best-effort)
+            try { await redis.set(CACHE_KEY, JSON.stringify(all), 'EX', CACHE_TTL); } catch { }
+        }
+
+        // 3. Filter in-memory and return
+        const lowerQ = query.toLowerCase();
+        return all
+            .filter((c: any) => c.name.toLowerCase().includes(lowerQ))
+            .slice(0, safeLimit);
     }
 
     async getMembers(coachingId: string) {
@@ -756,5 +784,64 @@ export class CoachingService {
                 },
             },
         });
+    }
+
+    // ── Saved / Bookmarked Coachings ──────────────────────────────────
+
+    async saveCoaching(userId: string, coachingId: string) {
+        return prisma.savedCoaching.upsert({
+            where: { userId_coachingId: { userId, coachingId } },
+            create: { userId, coachingId },
+            update: {},
+        });
+    }
+
+    async unsaveCoaching(userId: string, coachingId: string) {
+        return prisma.savedCoaching.deleteMany({
+            where: { userId, coachingId },
+        });
+    }
+
+    async getSavedCoachings(userId: string) {
+        const saved = await prisma.savedCoaching.findMany({
+            where: { userId },
+            include: {
+                coaching: {
+                    select: {
+                        id: true,
+                        name: true,
+                        slug: true,
+                        logo: true,
+                        category: true,
+                        isVerified: true,
+                        address: { select: { city: true, state: true, latitude: true, longitude: true } },
+                        _count: { select: { members: true } },
+                    },
+                },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        return saved.map((s) => ({
+            id: s.coaching.id,
+            name: s.coaching.name,
+            slug: s.coaching.slug,
+            logo: s.coaching.logo,
+            category: s.coaching.category,
+            isVerified: s.coaching.isVerified,
+            city: s.coaching.address?.city ?? null,
+            state: s.coaching.address?.state ?? null,
+            latitude: s.coaching.address?.latitude ?? null,
+            longitude: s.coaching.address?.longitude ?? null,
+            memberCount: s.coaching._count.members,
+            savedAt: s.createdAt,
+        }));
+    }
+
+    async isCoachingSaved(userId: string, coachingId: string): Promise<boolean> {
+        const saved = await prisma.savedCoaching.findUnique({
+            where: { userId_coachingId: { userId, coachingId } },
+        });
+        return !!saved;
     }
 }

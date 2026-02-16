@@ -48,6 +48,7 @@ model User {
   academicProfile     AcademicProfile?
   uploadedNotes       BatchNote[]       @relation("NoteUploader")
   sentNotices         BatchNotice[]     @relation("NoticeSender")
+  savedCoachings      SavedCoaching[]   @relation("UserSavedCoachings")
 }
 
 model Ward {
@@ -128,6 +129,7 @@ model Coaching {
   address       CoachingAddress?
   branches      CoachingBranch[]
   batches       Batch[]
+  savedByUsers  SavedCoaching[]   @relation("SavedByUsers")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -429,4 +431,20 @@ model BatchNotice {
   @@index([batchId])
   @@index([batchId, createdAt])
   @@index([sentById])
+}
+
+// ─── Saved / Bookmarked Coachings ─────────────────────────────────────
+
+model SavedCoaching {
+  id         String   @id @default(uuid())
+  userId     String
+  user       User     @relation("UserSavedCoachings", fields: [userId], references: [id], onDelete: Cascade)
+  coachingId String
+  coaching   Coaching @relation("SavedByUsers", fields: [coachingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, coachingId])
+  @@index([userId])
+  @@index([coachingId])
 }

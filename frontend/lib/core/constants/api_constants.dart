@@ -28,6 +28,8 @@ class ApiConstants {
   static const String coachingMasters = '$baseUrl/coaching/masters';
   static const String coachingExplore = '$baseUrl/coaching/explore';
   static const String coachingSearch = '$baseUrl/coaching/search';
+  static const String coachingSaved = '$baseUrl/coaching/saved';
+  static String coachingSave(String id) => '$baseUrl/coaching/$id/save';
   static String coachingMy = '$baseUrl/coaching/my';
   static String coachingJoined = '$baseUrl/coaching/joined';
   static String coachingById(String id) => '$baseUrl/coaching/$id';

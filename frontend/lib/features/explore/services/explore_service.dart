@@ -72,6 +72,27 @@ class ExploreService {
         .map((e) => SearchResult.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
   }
+
+  // ── Saved / Bookmarked ──────────────────────────────────────────────
+
+  /// Get the user's saved coachings.
+  Future<List<SearchResult>> getSavedCoachings() async {
+    final raw = await _api.getAuthenticated(ApiConstants.coachingSaved);
+    final list = (raw['saved'] as List<dynamic>?) ?? [];
+    return list
+        .map((e) => SearchResult.fromJson(Map<String, dynamic>.from(e as Map)))
+        .toList();
+  }
+
+  /// Save a coaching (bookmark).
+  Future<void> saveCoaching(String coachingId) async {
+    await _api.postAuthenticated(ApiConstants.coachingSave(coachingId), body: {});
+  }
+
+  /// Unsave a coaching (un-bookmark).
+  Future<void> unsaveCoaching(String coachingId) async {
+    await _api.deleteAuthenticated(ApiConstants.coachingSave(coachingId));
+  }
 }
 
 /// Lightweight search result (no full CoachingModel needed).
@@ -84,6 +105,8 @@ class SearchResult {
   final bool isVerified;
   final String? city;
   final String? state;
+  final double? latitude;
+  final double? longitude;
   final int memberCount;
 
   const SearchResult({
@@ -95,6 +118,8 @@ class SearchResult {
     this.isVerified = false,
     this.city,
     this.state,
+    this.latitude,
+    this.longitude,
     this.memberCount = 0,
   });
 
@@ -108,6 +133,8 @@ class SearchResult {
       isVerified: json['isVerified'] as bool? ?? false,
       city: json['city'] as String?,
       state: json['state'] as String?,
+      latitude: (json['latitude'] as num?)?.toDouble(),
+      longitude: (json['longitude'] as num?)?.toDouble(),
       memberCount: json['memberCount'] as int? ?? 0,
     );
   }

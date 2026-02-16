@@ -20,8 +20,11 @@ router.get('/slug/:slug', coachingController.getBySlug.bind(coachingController))
 router.post('/', authMiddleware, coachingController.create.bind(coachingController));
 router.get('/my', authMiddleware, coachingController.getMyCoachings.bind(coachingController));
 router.get('/joined', authMiddleware, coachingController.getJoinedCoachings.bind(coachingController));
+router.get('/saved', authMiddleware, coachingController.getSavedCoachings.bind(coachingController));
 router.patch('/:id', authMiddleware, coachingController.update.bind(coachingController));
 router.delete('/:id', authMiddleware, coachingController.delete.bind(coachingController));
+router.post('/:id/save', authMiddleware, coachingController.saveCoaching.bind(coachingController));
+router.delete('/:id/save', authMiddleware, coachingController.unsaveCoaching.bind(coachingController));
 
 // Onboarding routes (protected)
 router.post('/:id/onboarding/profile', authMiddleware, coachingController.updateOnboardingProfile.bind(coachingController));

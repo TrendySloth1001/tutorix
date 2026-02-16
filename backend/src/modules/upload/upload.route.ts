@@ -1,12 +1,13 @@
 import { Router } from 'express';
 import multer from 'multer';
+import path from 'path';
 import { uploadService } from './upload.service.js';
 import { authMiddleware } from '../../shared/middleware/auth.middleware.js';
 
 const ALLOWED_IMAGE_TYPES = [
     'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
     'image/bmp', 'image/tiff', 'image/avif', 'image/heic', 'image/heif',
-    'image/x-icon', 'image/vnd.microsoft.icon',
+    'image/x-icon', 'image/vnd.microsoft.icon', 'image/jpg',
 ];
 const ALLOWED_DOC_TYPES = [
     ...ALLOWED_IMAGE_TYPES,
@@ -23,12 +24,36 @@ const ALLOWED_DOC_TYPES = [
     'application/x-zip-compressed',
 ];
 
+// Extension → MIME type fallback for when clients send application/octet-stream
+const IMAGE_EXTENSIONS = new Set([
+    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.tif',
+    '.avif', '.heic', '.heif', '.ico',
+]);
+const DOC_EXTENSIONS = new Set([
+    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.tiff', '.tif',
+    '.avif', '.heic', '.heif', '.ico',
+    '.pdf', '.doc', '.docx', '.ppt', '.pptx', '.xls', '.xlsx',
+    '.csv', '.txt', '.zip',
+]);
+
+/** Check MIME type first, then fall back to extension from originalname */
+const isAllowedImage = (file: Express.Multer.File): boolean => {
+    if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) return true;
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    return IMAGE_EXTENSIONS.has(ext);
+};
+const isAllowedDoc = (file: Express.Multer.File): boolean => {
+    if (ALLOWED_DOC_TYPES.includes(file.mimetype)) return true;
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    return DOC_EXTENSIONS.has(ext);
+};
+
 const imageFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    if (ALLOWED_IMAGE_TYPES.includes(file.mimetype)) cb(null, true);
-    else cb(new Error('Only image files (JPEG, PNG, GIF, WebP, SVG, BMP, TIFF, AVIF, HEIC, HEIF, ICO) are allowed'));
+    if (isAllowedImage(file)) cb(null, true);
+    else cb(new Error('Only image files (JPEG, PNG, GIF, WebP, SVG, BMP, TIFF, AVIF, HEIC, HEIF, ICO, JPG) are allowed'));
 };
 const docFilter = (_req: any, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    if (ALLOWED_DOC_TYPES.includes(file.mimetype)) cb(null, true);
+    if (isAllowedDoc(file)) cb(null, true);
     else cb(new Error('Unsupported file type'));
 };
 

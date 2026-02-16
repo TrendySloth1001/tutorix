@@ -477,4 +477,47 @@ export class CoachingController {
             res.status(500).json({ message: error.message });
         }
     }
+
+    // ── Saved / Bookmarked Coachings ──────────────────────────────────
+
+    // GET /coaching/saved - Get user's saved coachings
+    async getSavedCoachings(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+            const saved = await coachingService.getSavedCoachings(userId);
+            res.json({ saved });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // POST /coaching/:id/save - Save / bookmark a coaching
+    async saveCoaching(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+            const coachingId = req.params.id as string;
+            await coachingService.saveCoaching(userId, coachingId);
+            res.json({ saved: true });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
+
+    // DELETE /coaching/:id/save - Unsave a coaching
+    async unsaveCoaching(req: Request, res: Response) {
+        try {
+            const userId = (req as any).user?.id;
+            if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+            const coachingId = req.params.id as string;
+            await coachingService.unsaveCoaching(userId, coachingId);
+            res.json({ saved: false });
+        } catch (error: any) {
+            res.status(500).json({ message: error.message });
+        }
+    }
 }
