@@ -75,8 +75,9 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
           (results[2] as Map<String, dynamic>)['unreadCount'] ?? 0;
       _recentNotes = results[3] as List<BatchNoteModel>;
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         AppAlert.error(context, e, fallback: 'Failed to load dashboard');
+      }
     }
     if (mounted) setState(() => _isLoading = false);
   }

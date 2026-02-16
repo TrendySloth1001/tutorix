@@ -11,6 +11,7 @@ import '../../academic/screens/academic_onboarding_screen.dart';
 import '../../academic/services/academic_service.dart';
 import '../services/upload_service.dart';
 import '../services/user_service.dart';
+import '../../settings/screens/settings_screen.dart';
 import 'edit_profile_screen.dart';
 import 'photo_viewer_screen.dart';
 import 'security_sessions_screen.dart';
@@ -217,6 +218,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () => _navigateTo(const SecuritySessionsScreen()),
               ),
               SettingTile(
+                icon: Icons.settings_outlined,
+                title: 'Settings',
+                subtitle: 'Privacy, offline cache & data',
+                onTap: () => _navigateTo(
+                  SettingsScreen(
+                    user: widget.user,
+                    onUserUpdated: widget.onUserUpdated,
+                  ),
+                ),
+              ),
+              SettingTile(
                 icon: Icons.notifications_none_rounded,
                 title: 'Notifications',
                 subtitle: 'Configure your alert preferences',
@@ -235,49 +247,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 _buildAcademicSection(theme),
               ],
 
-              const SizedBox(height: 28),
-
-              // ── Search Privacy ───────────────────────────────
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Search Privacy',
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: -0.3,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 4),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Control what others see when they search for you to send an invite',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.secondary.withValues(alpha: 0.6),
-                  ),
-                ),
-              ),
-              const SizedBox(height: 12),
-              _PrivacyToggle(
-                icon: Icons.email_outlined,
-                title: 'Show email',
-                value: user.showEmailInSearch,
-                onChanged: (v) => _updatePrivacy(showEmailInSearch: v),
-              ),
-              _PrivacyToggle(
-                icon: Icons.phone_outlined,
-                title: 'Show phone number',
-                value: user.showPhoneInSearch,
-                onChanged: (v) => _updatePrivacy(showPhoneInSearch: v),
-              ),
-              _PrivacyToggle(
-                icon: Icons.child_care_rounded,
-                title: 'Show student profiles',
-                value: user.showWardsInSearch,
-                onChanged: (v) => _updatePrivacy(showWardsInSearch: v),
-              ),
-
               const SizedBox(height: 40),
             ],
           ),
@@ -286,27 +255,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 
-  Future<void> _updatePrivacy({
-    bool? showEmailInSearch,
-    bool? showPhoneInSearch,
-    bool? showWardsInSearch,
-  }) async {
-    try {
-      final userService = UserService();
-      final updated = await userService.updatePrivacy(
-        showEmailInSearch: showEmailInSearch,
-        showPhoneInSearch: showPhoneInSearch,
-        showWardsInSearch: showWardsInSearch,
-      );
-      if (updated != null && mounted) {
-        widget.onUserUpdated?.call(updated);
-      }
-    } catch (e) {
-      if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to update privacy');
-      }
-    }
-  }
 
   Widget _buildAcademicSection(ThemeData theme) {
     if (_loadingAcademic) {
@@ -737,51 +685,6 @@ class _PhotoOptionsSheet extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-}
-
-class _PrivacyToggle extends StatelessWidget {
-  final IconData icon;
-  final String title;
-  final bool value;
-  final ValueChanged<bool> onChanged;
-
-  const _PrivacyToggle({
-    required this.icon,
-    required this.title,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 20,
-            color: theme.colorScheme.secondary.withValues(alpha: 0.6),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              title,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-          Switch.adaptive(
-            value: value,
-            onChanged: onChanged,
-            activeTrackColor: theme.colorScheme.primary,
-          ),
         ],
       ),
     );

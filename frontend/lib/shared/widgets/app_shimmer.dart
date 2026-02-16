@@ -12,10 +12,13 @@ class ShimmerWrap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final base = Theme.of(context).colorScheme.surfaceContainerHighest;
+    final surface = Theme.of(context).colorScheme.surface;
+    // Blend towards grey so shimmer is visible on any surface color
+    final baseColor = Color.lerp(surface, Colors.grey, 0.25)!;
+    final highlightColor = Color.lerp(surface, Colors.white, 0.15)!;
     return Shimmer.fromColors(
-      baseColor: base.withValues(alpha: 0.4),
-      highlightColor: base.withValues(alpha: 0.15),
+      baseColor: baseColor,
+      highlightColor: highlightColor,
       child: child,
     );
   }

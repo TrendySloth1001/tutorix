@@ -11,6 +11,7 @@ import '../../coaching/screens/coaching_shell.dart';
 import '../../coaching/services/coaching_service.dart';
 import '../../coaching/widgets/coaching_cover_card.dart';
 import '../../notifications/screens/personal_notifications_screen.dart';
+import '../../settings/screens/settings_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   final UserModel user;
@@ -63,8 +64,9 @@ class _HomeScreenState extends State<HomeScreen> {
       _myCoachings = results[0];
       _joinedCoachings = results[1];
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         AppAlert.error(context, e, fallback: 'Failed to load coachings');
+      }
     }
     if (mounted) setState(() => _isLoading = false);
   }
@@ -105,6 +107,18 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadNotificationCount();
   }
 
+  void _navigateToSettings() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => SettingsScreen(
+          user: widget.user,
+          onUserUpdated: widget.onUserUpdated,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final hasAny = _myCoachings.isNotEmpty || _joinedCoachings.isNotEmpty;
@@ -121,6 +135,7 @@ class _HomeScreenState extends State<HomeScreen> {
               user: widget.user,
               unreadCount: _unreadNotifications,
               onNotificationTap: _navigateToNotifications,
+              onSettingsTap: _navigateToSettings,
             ),
             if (_isLoading)
               const SliverFillRemaining(child: HomeShimmer())
@@ -198,11 +213,13 @@ class _HomeHeader extends StatelessWidget {
   final UserModel user;
   final int unreadCount;
   final VoidCallback onNotificationTap;
+  final VoidCallback onSettingsTap;
 
   const _HomeHeader({
     required this.user,
     required this.unreadCount,
     required this.onNotificationTap,
+    required this.onSettingsTap,
   });
 
   String get _greeting {
@@ -300,6 +317,11 @@ class _HomeHeader extends StatelessWidget {
                       ),
                     ),
                 ],
+              ),
+              IconButton(
+                icon: const Icon(Icons.settings_outlined),
+                onPressed: onSettingsTap,
+                color: theme.colorScheme.primary.withValues(alpha: 0.7),
               ),
             ],
           ),
