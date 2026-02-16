@@ -305,7 +305,10 @@ class _SubmissionCard extends StatelessWidget {
                             : Icons.image_outlined,
                         size: 14,
                       ),
-                      label: Text(f.fileName, style: theme.textTheme.labelSmall),
+                      label: Text(
+                        f.fileName,
+                        style: theme.textTheme.labelSmall,
+                      ),
                       materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                       visualDensity: VisualDensity.compact,
                     ),

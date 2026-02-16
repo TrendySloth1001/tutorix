@@ -61,8 +61,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
         _attempts = results[0] as List<AttemptLeaderboardEntry>;
         _detail = results[1] as AssessmentModel;
       } else {
-        final attemptId =
-            widget.attemptId ?? widget.assessment.bestAttempt?.id;
+        final attemptId = widget.attemptId ?? widget.assessment.bestAttempt?.id;
         if (attemptId != null) {
           _result = await _service.getAttemptResult(
             widget.coachingId,

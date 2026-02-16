@@ -38,7 +38,7 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    
+
     return Scaffold(
       appBar: AppBar(
         title: Text(
@@ -51,7 +51,9 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
       ),
       body: _headers == null
           ? const Center(child: CircularProgressIndicator())
-          : widget.isPDF ? _buildPDFViewer() : _buildImageViewer(theme),
+          : widget.isPDF
+          ? _buildPDFViewer()
+          : _buildImageViewer(theme),
     );
   }
 
@@ -80,7 +82,7 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
               child: CircularProgressIndicator(
                 value: loadingProgress.expectedTotalBytes != null
                     ? loadingProgress.cumulativeBytesLoaded /
-                        loadingProgress.expectedTotalBytes!
+                          loadingProgress.expectedTotalBytes!
                     : null,
               ),
             );
