@@ -9,9 +9,9 @@ import '../../academic/models/academic_masters.dart';
 import '../../academic/models/academic_profile.dart';
 import '../../academic/screens/academic_onboarding_screen.dart';
 import '../../academic/services/academic_service.dart';
+import '../../settings/screens/settings_screen.dart';
 import '../services/upload_service.dart';
 import '../services/user_service.dart';
-import '../../settings/screens/settings_screen.dart';
 import 'edit_profile_screen.dart';
 import 'photo_viewer_screen.dart';
 import 'security_sessions_screen.dart';
@@ -218,17 +218,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onTap: () => _navigateTo(const SecuritySessionsScreen()),
               ),
               SettingTile(
-                icon: Icons.settings_outlined,
-                title: 'Settings',
-                subtitle: 'Privacy, offline cache & data',
-                onTap: () => _navigateTo(
-                  SettingsScreen(
-                    user: widget.user,
-                    onUserUpdated: widget.onUserUpdated,
-                  ),
-                ),
-              ),
-              SettingTile(
                 icon: Icons.notifications_none_rounded,
                 title: 'Notifications',
                 subtitle: 'Configure your alert preferences',
@@ -239,6 +228,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 title: 'Help & Support',
                 subtitle: 'Documentation and direct help',
                 onTap: () {},
+              ),
+              SettingTile(
+                icon: Icons.settings_outlined,
+                title: 'Settings',
+                subtitle: 'Privacy and offline storage',
+                onTap: () => _navigateTo(
+                  SettingsScreen(
+                    user: user,
+                    onUserUpdated: widget.onUserUpdated,
+                  ),
+                ),
               ),
 
               // ── Academic Information (only for students) ───────────────
@@ -254,7 +254,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
     );
   }
-
 
   Widget _buildAcademicSection(ThemeData theme) {
     if (_loadingAcademic) {

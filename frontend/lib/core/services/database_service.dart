@@ -19,11 +19,7 @@ class DatabaseService {
   Future<Database> get database async {
     if (_db != null) return _db!;
     final dbPath = join(await getDatabasesPath(), _dbName);
-    _db = await openDatabase(
-      dbPath,
-      version: _dbVersion,
-      onCreate: _onCreate,
-    );
+    _db = await openDatabase(dbPath, version: _dbVersion, onCreate: _onCreate);
     return _db!;
   }
 
@@ -48,15 +44,11 @@ class DatabaseService {
   /// Store a JSON-encodable value under [key].
   Future<void> put(String key, dynamic value) async {
     final db = await database;
-    await db.insert(
-      'cache',
-      {
-        'key': key,
-        'value': jsonEncode(value),
-        'ts': DateTime.now().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('cache', {
+      'key': key,
+      'value': jsonEncode(value),
+      'ts': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   /// Retrieve a previously cached value. Returns `null` if not found or
@@ -118,11 +110,10 @@ class DatabaseService {
 
   Future<void> setSetting(String key, String value) async {
     final db = await database;
-    await db.insert(
-      'settings',
-      {'key': key, 'value': value},
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    await db.insert('settings', {
+      'key': key,
+      'value': value,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
   }
 
   Future<String?> getSetting(String key) async {

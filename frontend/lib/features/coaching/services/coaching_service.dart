@@ -40,8 +40,10 @@ class CoachingService {
       if (cached != null) {
         final list = (cached['coachings'] as List<dynamic>);
         return list
-            .map((e) => CoachingModel.fromJson(
-                Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) =>
+                  CoachingModel.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
             .toList();
       }
       rethrow;
@@ -63,8 +65,10 @@ class CoachingService {
       if (cached != null) {
         final list = (cached['coachings'] as List<dynamic>);
         return list
-            .map((e) => CoachingModel.fromJson(
-                Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) =>
+                  CoachingModel.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
             .toList();
       }
       rethrow;
@@ -82,7 +86,8 @@ class CoachingService {
       final cached = await _cache.get(key);
       if (cached != null) {
         return CoachingModel.fromJson(
-            Map<String, dynamic>.from(cached['coaching'] as Map));
+          Map<String, dynamic>.from(cached['coaching'] as Map),
+        );
       }
       return null;
     }

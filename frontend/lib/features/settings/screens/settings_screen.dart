@@ -12,11 +12,7 @@ class SettingsScreen extends StatefulWidget {
   final UserModel user;
   final ValueChanged<UserModel>? onUserUpdated;
 
-  const SettingsScreen({
-    super.key,
-    required this.user,
-    this.onUserUpdated,
-  });
+  const SettingsScreen({super.key, required this.user, this.onUserUpdated});
 
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
@@ -202,8 +198,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             subtitle: _loadingCacheSetting
                 ? 'Loading…'
                 : _offlineCacheEnabled
-                    ? '$_cacheEntries entries · $_cacheSize'
-                    : 'Disabled — data loaded from server every time',
+                ? '$_cacheEntries entries · $_cacheSize'
+                : 'Disabled — data loaded from server every time',
             value: _offlineCacheEnabled,
             onChanged: _toggleOfflineCache,
           ),
@@ -400,8 +396,7 @@ class _ActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accent =
-        isDestructive ? Colors.redAccent : theme.colorScheme.primary;
+    final accent = isDestructive ? Colors.redAccent : theme.colorScheme.primary;
 
     return InkWell(
       onTap: onTap,
@@ -443,8 +438,7 @@ class _ActionTile extends StatelessWidget {
                   Text(
                     subtitle,
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color:
-                          theme.colorScheme.secondary.withValues(alpha: 0.6),
+                      color: theme.colorScheme.secondary.withValues(alpha: 0.6),
                     ),
                   ),
                 ],

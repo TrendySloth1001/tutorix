@@ -26,8 +26,9 @@ class MemberService {
       if (cached != null) {
         final list = (cached['members'] as List<dynamic>);
         return list
-            .map((e) =>
-                MemberModel.fromJson(Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) => MemberModel.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
             .toList();
       }
       rethrow;
@@ -90,8 +91,10 @@ class MemberService {
           list = [];
         }
         return list
-            .map((e) =>
-                InvitationModel.fromJson(Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) =>
+                  InvitationModel.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
             .toList();
       }
       rethrow;

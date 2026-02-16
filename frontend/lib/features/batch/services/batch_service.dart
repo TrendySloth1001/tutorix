@@ -85,8 +85,9 @@ class BatchService {
       if (cached != null) {
         final list = (cached['batches'] as List<dynamic>);
         return list
-            .map((e) =>
-                BatchModel.fromJson(Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) => BatchModel.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
             .toList();
       }
       rethrow;
@@ -110,8 +111,9 @@ class BatchService {
       if (cached != null) {
         final list = (cached['batches'] as List<dynamic>);
         return list
-            .map((e) =>
-                BatchModel.fromJson(Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) => BatchModel.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
             .toList();
       }
       rethrow;
@@ -131,7 +133,8 @@ class BatchService {
       final cached = await _cache.get(key);
       if (cached != null) {
         return BatchModel.fromJson(
-            Map<String, dynamic>.from(cached['batch'] as Map));
+          Map<String, dynamic>.from(cached['batch'] as Map),
+        );
       }
       rethrow;
     }
@@ -170,8 +173,9 @@ class BatchService {
 
   /// DELETE /coaching/:coachingId/batches/:batchId
   Future<bool> deleteBatch(String coachingId, String batchId) async {
-    final ok =
-        await _api.deleteAuthenticated(ApiConstants.batchById(coachingId, batchId));
+    final ok = await _api.deleteAuthenticated(
+      ApiConstants.batchById(coachingId, batchId),
+    );
     if (ok) await _cache.invalidatePrefix('batch:$coachingId');
     return ok;
   }
@@ -216,8 +220,11 @@ class BatchService {
       if (cached != null) {
         final list = (cached['members'] as List<dynamic>);
         return list
-            .map((e) => BatchMemberModel.fromJson(
-                Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) => BatchMemberModel.fromJson(
+                Map<String, dynamic>.from(e as Map),
+              ),
+            )
             .toList();
       }
       rethrow;
@@ -296,8 +303,10 @@ class BatchService {
       if (cached != null) {
         final list = (cached['notes'] as List<dynamic>);
         return list
-            .map((e) => BatchNoteModel.fromJson(
-                Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) =>
+                  BatchNoteModel.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
             .toList();
       }
       rethrow;
@@ -321,8 +330,10 @@ class BatchService {
       if (cached != null) {
         final list = (cached['notes'] as List<dynamic>);
         return list
-            .map((e) => BatchNoteModel.fromJson(
-                Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) =>
+                  BatchNoteModel.fromJson(Map<String, dynamic>.from(e as Map)),
+            )
             .toList();
       }
       return [];
@@ -330,7 +341,11 @@ class BatchService {
   }
 
   /// DELETE /coaching/:coachingId/batches/:batchId/notes/:noteId
-  Future<bool> deleteNote(String coachingId, String batchId, String noteId) async {
+  Future<bool> deleteNote(
+    String coachingId,
+    String batchId,
+    String noteId,
+  ) async {
     final ok = await _api.deleteAuthenticated(
       ApiConstants.deleteBatchNote(coachingId, batchId, noteId),
     );
@@ -399,8 +414,11 @@ class BatchService {
       if (cached != null) {
         final list = (cached['notices'] as List<dynamic>);
         return list
-            .map((e) => BatchNoticeModel.fromJson(
-                Map<String, dynamic>.from(e as Map)))
+            .map(
+              (e) => BatchNoticeModel.fromJson(
+                Map<String, dynamic>.from(e as Map),
+              ),
+            )
             .toList();
       }
       rethrow;
