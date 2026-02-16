@@ -49,7 +49,12 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
 
   static const _types = [
     ('general', 'General', Color(0xFF3B82F6), Icons.campaign_rounded),
-    ('timetable_update', 'Timetable', Color(0xFF8B5CF6), Icons.schedule_rounded),
+    (
+      'timetable_update',
+      'Timetable',
+      Color(0xFF8B5CF6),
+      Icons.schedule_rounded,
+    ),
     ('event', 'Event', Color(0xFF10B981), Icons.event_rounded),
     ('exam', 'Exam', Color(0xFFEF4444), Icons.quiz_rounded),
     ('holiday', 'Holiday', Color(0xFFF59E0B), Icons.beach_access_rounded),
@@ -124,13 +129,16 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
         priority: _priority,
         type: _type,
         date: _selectedDate?.toIso8601String(),
-        startTime:
-            _selectedStartTime != null ? _formatTime(_selectedStartTime!) : null,
-        endTime:
-            _selectedEndTime != null ? _formatTime(_selectedEndTime!) : null,
+        startTime: _selectedStartTime != null
+            ? _formatTime(_selectedStartTime!)
+            : null,
+        endTime: _selectedEndTime != null
+            ? _formatTime(_selectedEndTime!)
+            : null,
         day: _selectedDay,
-        location:
-            _locationCtrl.text.trim().isNotEmpty ? _locationCtrl.text.trim() : null,
+        location: _locationCtrl.text.trim().isNotEmpty
+            ? _locationCtrl.text.trim()
+            : null,
       );
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
@@ -191,8 +199,9 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                           border: Border.all(
                             color: selected
                                 ? t.$3.withValues(alpha: 0.5)
-                                : theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.04),
+                                : theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.04,
+                                  ),
                             width: selected ? 1.5 : 1,
                           ),
                           boxShadow: selected
@@ -213,8 +222,9 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                               size: 16,
                               color: selected
                                   ? t.$3
-                                  : theme.colorScheme.onSurface
-                                        .withValues(alpha: 0.3),
+                                  : theme.colorScheme.onSurface.withValues(
+                                      alpha: 0.3,
+                                    ),
                             ),
                             const SizedBox(width: 6),
                             Text(
@@ -226,8 +236,9 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                                     : FontWeight.w500,
                                 color: selected
                                     ? t.$3
-                                    : theme.colorScheme.onSurface
-                                          .withValues(alpha: 0.5),
+                                    : theme.colorScheme.onSurface.withValues(
+                                        alpha: 0.5,
+                                      ),
                               ),
                             ),
                           ],
@@ -361,8 +372,9 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                       color: theme.colorScheme.surfaceContainerLowest,
                       borderRadius: BorderRadius.circular(16),
                       border: Border.all(
-                        color: theme.colorScheme.onSurface
-                            .withValues(alpha: 0.06),
+                        color: theme.colorScheme.onSurface.withValues(
+                          alpha: 0.06,
+                        ),
                       ),
                     ),
                     child: Column(
@@ -373,8 +385,9 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                             Icon(
                               Icons.event_note_rounded,
                               size: 18,
-                              color: theme.colorScheme.onSurface
-                                  .withValues(alpha: 0.5),
+                              color: theme.colorScheme.onSurface.withValues(
+                                alpha: 0.5,
+                              ),
                             ),
                             const SizedBox(width: 8),
                             Text(
@@ -402,8 +415,9 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                               color: theme.colorScheme.surface,
                               borderRadius: BorderRadius.circular(14),
                               border: Border.all(
-                                color: theme.colorScheme.onSurface
-                                    .withValues(alpha: 0.06),
+                                color: theme.colorScheme.onSurface.withValues(
+                                  alpha: 0.06,
+                                ),
                               ),
                             ),
                             child: Row(
@@ -411,14 +425,16 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                                 Icon(
                                   Icons.calendar_today_rounded,
                                   size: 18,
-                                  color: theme.colorScheme.onSurface
-                                      .withValues(alpha: 0.4),
+                                  color: theme.colorScheme.onSurface.withValues(
+                                    alpha: 0.4,
+                                  ),
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
                                   _selectedDate != null
-                                      ? DateFormat('dd MMM yyyy')
-                                            .format(_selectedDate!)
+                                      ? DateFormat(
+                                          'dd MMM yyyy',
+                                        ).format(_selectedDate!)
                                       : 'Select date',
                                   style: TextStyle(
                                     color: _selectedDate != null
@@ -489,8 +505,9 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                               final sel = _selectedDay == d;
                               final short = _shortDay(d);
                               return GestureDetector(
-                                onTap: () => setState(() =>
-                                    _selectedDay = sel ? null : d),
+                                onTap: () => setState(
+                                  () => _selectedDay = sel ? null : d,
+                                ),
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 150),
                                   padding: const EdgeInsets.symmetric(
@@ -499,16 +516,17 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                                   ),
                                   decoration: BoxDecoration(
                                     color: sel
-                                        ? theme.colorScheme.primary
-                                            .withValues(alpha: 0.15)
+                                        ? theme.colorScheme.primary.withValues(
+                                            alpha: 0.15,
+                                          )
                                         : theme.colorScheme.surface,
                                     borderRadius: BorderRadius.circular(10),
                                     border: Border.all(
                                       color: sel
                                           ? theme.colorScheme.primary
-                                              .withValues(alpha: 0.4)
+                                                .withValues(alpha: 0.4)
                                           : theme.colorScheme.onSurface
-                                              .withValues(alpha: 0.08),
+                                                .withValues(alpha: 0.08),
                                     ),
                                   ),
                                   child: Text(
@@ -521,7 +539,7 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                                       color: sel
                                           ? theme.colorScheme.primary
                                           : theme.colorScheme.onSurface
-                                              .withValues(alpha: 0.5),
+                                                .withValues(alpha: 0.5),
                                     ),
                                   ),
                                 ),

@@ -633,8 +633,11 @@ class _OverviewTab extends StatelessWidget {
     if (batchWeekdays.contains(now.weekday)) {
       final todayClass = DateTime(now.year, now.month, now.day, hour, minute);
       if (todayClass.isAfter(now)) {
-        return (BatchModel.shortDay(batch.days[
-            batchWeekdays.indexOf(now.weekday)]), todayClass, batch.startTime!);
+        return (
+          BatchModel.shortDay(batch.days[batchWeekdays.indexOf(now.weekday)]),
+          todayClass,
+          batch.startTime!,
+        );
       }
     }
 
@@ -643,7 +646,12 @@ class _OverviewTab extends StatelessWidget {
       final candidate = now.add(Duration(days: offset));
       if (batchWeekdays.contains(candidate.weekday)) {
         final classTime = DateTime(
-          candidate.year, candidate.month, candidate.day, hour, minute);
+          candidate.year,
+          candidate.month,
+          candidate.day,
+          hour,
+          minute,
+        );
         // Find the day string
         final dayIndex = batchWeekdays.indexOf(candidate.weekday);
         final dayStr = batch.days[dayIndex];
@@ -702,11 +710,7 @@ class _OverviewTab extends StatelessWidget {
             ),
           ),
           ...recentNotices.map(
-            (n) => _NoticeCard(
-              notice: n,
-              canDelete: false,
-              onDelete: () {},
-            ),
+            (n) => _NoticeCard(notice: n, canDelete: false, onDelete: () {}),
           ),
           const SizedBox(height: 14),
         ],
@@ -917,18 +921,18 @@ class _NextClassCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final now = DateTime.now();
-    final isToday = classDate.year == now.year &&
+    final isToday =
+        classDate.year == now.year &&
         classDate.month == now.month &&
         classDate.day == now.day;
-    final isTomorrow = classDate
-        .difference(DateTime(now.year, now.month, now.day))
-        .inDays ==
+    final isTomorrow =
+        classDate.difference(DateTime(now.year, now.month, now.day)).inDays ==
         1;
     final dayLabel = isToday
         ? 'Today'
         : isTomorrow
-            ? 'Tomorrow'
-            : '$dayName, ${classDate.day}/${classDate.month}';
+        ? 'Tomorrow'
+        : '$dayName, ${classDate.day}/${classDate.month}';
     const color = Color(0xFF10B981); // green
 
     return Container(
@@ -1002,8 +1006,7 @@ class _NextClassCard extends StatelessWidget {
                 Text(
                   endTime != null ? '$startTime – $endTime' : startTime,
                   style: theme.textTheme.bodyMedium?.copyWith(
-                    color:
-                        theme.colorScheme.onSurface.withValues(alpha: 0.6),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -1651,11 +1654,13 @@ class _NoticeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final typeConf = _typeConfig[notice.type] ??
+    final typeConf =
+        _typeConfig[notice.type] ??
         (Icons.campaign_rounded, const Color(0xFF3B82F6));
     final icon = typeConf.$1;
     final color = typeConf.$2;
-    final prioConf = _priorityConfig[notice.priority] ??
+    final prioConf =
+        _priorityConfig[notice.priority] ??
         (const Color(0xFF3B82F6), Icons.remove_rounded);
     final prioColor = prioConf.$1;
 
@@ -1935,8 +1940,9 @@ class _NoticeCard extends StatelessWidget {
                             ? Icon(
                                 Icons.person_rounded,
                                 size: 14,
-                                color: theme.colorScheme.primary
-                                    .withValues(alpha: 0.7),
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.7,
+                                ),
                               )
                             : null,
                       ),
@@ -1982,10 +1988,7 @@ class _InfoChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.06),
         borderRadius: BorderRadius.circular(10),
-        border: Border.all(
-          color: color.withValues(alpha: 0.1),
-          width: 1,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.1), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,

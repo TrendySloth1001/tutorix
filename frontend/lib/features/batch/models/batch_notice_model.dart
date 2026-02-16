@@ -5,7 +5,8 @@ class BatchNoticeModel {
   final String title;
   final String message;
   final String priority; // low, normal, high, urgent
-  final String type; // general, timetable_update, event, exam, holiday, assignment
+  final String
+  type; // general, timetable_update, event, exam, holiday, assignment
   final String sentById;
   final NoticeSender? sentBy;
   final DateTime? createdAt;
