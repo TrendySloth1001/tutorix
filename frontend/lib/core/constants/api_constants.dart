@@ -220,6 +220,30 @@ class ApiConstants {
   ) =>
       '$baseUrl/coaching/$coachingId/batches/$batchId/assignments/submissions/$submissionId/grade';
 
+  // Fee Management
+  static String feeStructures(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/fee/structures';
+  static String feeStructureById(String coachingId, String structureId) =>
+      '$baseUrl/coaching/$coachingId/fee/structures/$structureId';
+  static String assignFees(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/fee/assign';
+  static String feeRecords(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/fee/records';
+  static String feeSummary(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/fee/summary';
+  static String feeRecordById(String coachingId, String recordId) =>
+      '$baseUrl/coaching/$coachingId/fee/records/$recordId';
+  static String feeRecordPay(String coachingId, String recordId) =>
+      '$baseUrl/coaching/$coachingId/fee/records/$recordId/pay';
+  static String feeRecordRemind(String coachingId, String recordId) =>
+      '$baseUrl/coaching/$coachingId/fee/records/$recordId/remind';
+  static String feeRecordWaive(String coachingId, String recordId) =>
+      '$baseUrl/coaching/$coachingId/fee/records/$recordId/waive';
+  static String feeMember(String coachingId, String memberId) =>
+      '$baseUrl/coaching/$coachingId/fee/members/$memberId';
+  static String feesMy(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/fee/my';
+
   // Google
   static const String googleClientId =
       '299795936862-s70dge4e1k99b3db0faqss8qrcrjj12b.apps.googleusercontent.com';

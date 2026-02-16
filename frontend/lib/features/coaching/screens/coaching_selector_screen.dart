@@ -123,6 +123,12 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
         elevation: 0,
         centerTitle: true,
         actions: [
+          IconButton.filledTonal(
+            onPressed: _navigateToCreate,
+            icon: const Icon(Icons.add_rounded),
+            tooltip: 'Create Coaching',
+          ),
+          const SizedBox(width: 8),
           IconButton(
             onPressed: _navigateToProfile,
             icon: Hero(
@@ -180,14 +186,6 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
                 ),
               ),
             ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _navigateToCreate,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Launch Institute'),
-        elevation: 0,
-        highlightElevation: 0,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      ),
     );
   }
 }

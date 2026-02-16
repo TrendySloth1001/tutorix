@@ -317,7 +317,7 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
         itemCount: _assessments.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        separatorBuilder: (_, _) => const SizedBox(height: 8),
         itemBuilder: (_, i) => _AssessmentCard(
           assessment: _assessments[i],
           isTeacher: widget.isTeacher,
@@ -354,7 +354,7 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
       child: ListView.separated(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
         itemCount: _assignments.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 8),
+        separatorBuilder: (_, _) => const SizedBox(height: 8),
         itemBuilder: (_, i) => _AssignmentCard(
           assignment: _assignments[i],
           isTeacher: widget.isTeacher,
@@ -1005,8 +1005,8 @@ class _ShimmerList extends StatelessWidget {
     return ListView.separated(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
       itemCount: 4,
-      separatorBuilder: (_, __) => const SizedBox(height: 8),
-      itemBuilder: (_, __) => const ShimmerWrap(
+      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      itemBuilder: (_, _) => const ShimmerWrap(
         child: SizedBox(height: 100, width: double.infinity),
       ),
     );

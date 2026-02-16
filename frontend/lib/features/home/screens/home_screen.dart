@@ -163,6 +163,7 @@ class _HomeScreenState extends State<HomeScreen> {
               user: widget.user,
               unreadCount: _unreadNotifications,
               onNotificationTap: _navigateToNotifications,
+              onCreateCoaching: widget.user.isTeacher ? _navigateToCreate : null,
             ),
             if (_isLoading)
               const SliverFillRemaining(child: HomeShimmer())
@@ -225,11 +226,6 @@ class _HomeScreenState extends State<HomeScreen> {
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _navigateToCreate,
-        icon: const Icon(Icons.add_rounded),
-        label: const Text('Create Coaching'),
-      ),
     );
   }
 }
@@ -240,11 +236,13 @@ class _HomeHeader extends StatelessWidget {
   final UserModel user;
   final int unreadCount;
   final VoidCallback onNotificationTap;
+  final VoidCallback? onCreateCoaching;
 
   const _HomeHeader({
     required this.user,
     required this.unreadCount,
     required this.onNotificationTap,
+    this.onCreateCoaching,
   });
 
   String get _greeting {
@@ -309,6 +307,13 @@ class _HomeHeader extends StatelessWidget {
                   ],
                 ),
               ),
+              if (onCreateCoaching != null)
+                IconButton.filledTonal(
+                  icon: const Icon(Icons.add_rounded),
+                  onPressed: onCreateCoaching,
+                  tooltip: 'Create Coaching',
+                ),
+              const SizedBox(width: 4),
               Stack(
                 children: [
                   IconButton(
