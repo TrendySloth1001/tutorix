@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
-import 'fee_member_profile_screen.dart';
+
 import 'fee_record_detail_screen.dart';
 
 /// Lists all fee records for a coaching (admin view).
@@ -335,47 +335,31 @@ class _RecordTile extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Avatar + Navigation to Profile
-                GestureDetector(
-                  onTap: record.memberId.isNotEmpty
-                      ? () => Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => FeeMemberProfileScreen(
-                              coachingId: coachingId,
-                              memberId: record.memberId,
-                              memberName: memberName,
+                // Avatar (Display only)
+                Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: AppColors.mutedOlive.withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: CircleAvatar(
+                    radius: 22,
+                    backgroundColor: AppColors.softGrey.withValues(alpha: 0.5),
+                    backgroundImage: memberPic != null && memberPic.isNotEmpty
+                        ? NetworkImage(memberPic)
+                        : null,
+                    child: memberPic == null || memberPic.isEmpty
+                        ? Text(
+                            memberName.isNotEmpty
+                                ? memberName[0].toUpperCase()
+                                : '?',
+                            style: const TextStyle(
+                              color: AppColors.darkOlive,
+                              fontWeight: FontWeight.w700,
                             ),
-                          ),
-                        )
-                      : null,
-                  child: Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: AppColors.mutedOlive.withValues(alpha: 0.2),
-                      ),
-                    ),
-                    child: CircleAvatar(
-                      radius: 22,
-                      backgroundColor: AppColors.softGrey.withValues(
-                        alpha: 0.5,
-                      ),
-                      backgroundImage: memberPic != null && memberPic.isNotEmpty
-                          ? NetworkImage(memberPic)
-                          : null,
-                      child: memberPic == null || memberPic.isEmpty
-                          ? Text(
-                              memberName.isNotEmpty
-                                  ? memberName[0].toUpperCase()
-                                  : '?',
-                              style: const TextStyle(
-                                color: AppColors.darkOlive,
-                                fontWeight: FontWeight.w700,
-                              ),
-                            )
-                          : null,
-                    ),
+                          )
+                        : null,
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -392,30 +376,15 @@ class _RecordTile extends StatelessWidget {
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
-                                GestureDetector(
-                                  onTap: record.memberId.isNotEmpty
-                                      ? () => Navigator.push(
-                                          context,
-                                          MaterialPageRoute(
-                                            builder: (_) =>
-                                                FeeMemberProfileScreen(
-                                                  coachingId: coachingId,
-                                                  memberId: record.memberId,
-                                                  memberName: memberName,
-                                                ),
-                                          ),
-                                        )
-                                      : null,
-                                  child: Text(
-                                    memberName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      color: AppColors.darkOlive,
-                                      fontSize: 15,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
+                                Text(
+                                  memberName,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.darkOlive,
+                                    fontSize: 15,
                                   ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                                 const SizedBox(height: 2),
                                 Text(

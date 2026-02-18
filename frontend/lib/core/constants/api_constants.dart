@@ -255,6 +255,8 @@ class ApiConstants {
       '$baseUrl/coaching/$coachingId/fee/bulk-remind';
   static String feeOverdueReport(String coachingId) =>
       '$baseUrl/coaching/$coachingId/fee/overdue-report';
+  static String feeCalendar(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/fee/calendar';
 
   // Admin / Logging
   static const String logFrontendError = '$baseUrl/api/logs/frontend';

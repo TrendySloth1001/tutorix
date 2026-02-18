@@ -99,6 +99,20 @@ export class FeeController {
         }
     }
 
+    async getFeeCalendar(req: Request, res: Response) {
+        try {
+            const { coachingId } = req.params as { coachingId: string };
+            const { from, to } = req.query as { from: string; to: string };
+
+            if (!from || !to) throw { status: 400, message: 'Missing from/to dates' };
+
+            const data = await svc.getFeeCalendar(coachingId, new Date(from), new Date(to));
+            res.json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+
     async getRecord(req: Request, res: Response) {
         try {
             const { coachingId, recordId } = req.params as { coachingId: string; recordId: string };

@@ -269,12 +269,29 @@ class FeeService {
   }) async {
     final body = <String, dynamic>{
       'statusFilter': statusFilter,
-      if (memberIds != null) 'memberIds': memberIds,
+      'memberIds': ?memberIds,
     };
     return _api.postAuthenticated(
       ApiConstants.feeBulkRemind(coachingId),
       body: body,
     );
+  }
+
+  // ── Calendar ─────────────────────────────────────────────────────────
+
+  Future<List<dynamic>> getFeeCalendarStats(
+    String coachingId,
+    DateTime from,
+    DateTime to,
+  ) async {
+    final uri = Uri.parse(ApiConstants.feeCalendar(coachingId)).replace(
+      queryParameters: {
+        'from': from.toIso8601String(),
+        'to': to.toIso8601String(),
+      },
+    );
+    final data = await _api.getAuthenticatedRaw(uri.toString());
+    return data as List<dynamic>;
   }
 
   Future<Map<String, dynamic>> getMyFees(String coachingId) async {

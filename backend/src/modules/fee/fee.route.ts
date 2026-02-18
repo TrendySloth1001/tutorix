@@ -28,6 +28,7 @@ router.post('/records/:recordId/remind', authMiddleware, ctrl.sendReminder.bind(
 // ── Summary & My Fees ────────────────────────────────────────────────
 router.get('/summary', authMiddleware, ctrl.getSummary.bind(ctrl));
 router.get('/my', authMiddleware, ctrl.getMyFees.bind(ctrl));
+router.get('/calendar', authMiddleware, ctrl.getFeeCalendar.bind(ctrl));
 
 // ── New endpoints ────────────────────────────────────────────────────
 router.patch('/assignments/:assignmentId/pause', authMiddleware, ctrl.toggleFeePause.bind(ctrl));

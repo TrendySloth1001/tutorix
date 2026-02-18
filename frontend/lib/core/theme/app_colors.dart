@@ -11,4 +11,5 @@ class AppColors {
   static const Color softGrey = Color(0xFFD9D7B6);
   static const Color mutedOlive = Color(0xFF878672);
   static const Color darkOlive = Color(0xFF545333);
+  static const Color primaryGreen = Color(0xFF4CAF50);
 }

@@ -9,6 +9,7 @@ import '../models/member_model.dart';
 import '../models/invitation_model.dart';
 import '../services/member_service.dart';
 import '../../profile/screens/invite_member_screen.dart';
+import '../../fee/screens/fee_member_profile_screen.dart';
 
 /// Members screen — premium, compact design with segmented tabs.
 class CoachingMembersScreen extends StatefulWidget {
@@ -412,6 +413,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                         emptyText: 'No members yet',
                         canManage: _canInvite,
                         showEmail: _isAdmin,
+                        coachingId: widget.coaching.id,
                       ),
                       _MemberListView(
                         members: _filter('TEACHER'),
@@ -426,6 +428,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                         emptyText: 'No teachers yet',
                         canManage: _canInvite,
                         showEmail: _isAdmin,
+                        coachingId: widget.coaching.id,
                       ),
                       _InviteListView(
                         invites: _pending,
@@ -513,6 +516,7 @@ class _MemberListView extends StatelessWidget {
   final String emptyText;
   final bool canManage;
   final bool showEmail;
+  final String coachingId;
 
   const _MemberListView({
     required this.members,
@@ -521,6 +525,7 @@ class _MemberListView extends StatelessWidget {
     required this.emptyIcon,
     required this.emptyText,
     required this.canManage,
+    required this.coachingId,
     this.showEmail = false,
   });
 
@@ -538,35 +543,57 @@ class _MemberListView extends StatelessWidget {
           onRemove: () => onRemove(members[i]),
           canRemove: canManage,
           showEmail: showEmail,
+          coachingId: coachingId,
         ),
       ),
     );
   }
 }
 
+
+
+// ... existing imports
+
 class _MemberRow extends StatelessWidget {
   final MemberModel member;
   final VoidCallback onRemove;
   final bool canRemove;
   final bool showEmail;
+  final String coachingId; // Add coachingId
 
   const _MemberRow({
     required this.member,
     required this.onRemove,
     required this.canRemove,
+    required this.coachingId, // Add coachingId
     this.showEmail = false,
   });
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.primary.withValues(alpha: 0.02),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: Row(
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => FeeMemberProfileScreen(
+              coachingId: coachingId,
+              memberId: member.id,
+              memberName: member.displayName,
+            ),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.primary.withValues(alpha: 0.02),
+          borderRadius: BorderRadius.circular(14),
+        ),
+        child: Row(
+// ... rest of the row content
+
         children: [
           // Avatar
           CircleAvatar(
@@ -667,7 +694,7 @@ class _MemberRow extends StatelessWidget {
             ),
         ],
       ),
-    );
+    ));
   }
 
   Widget _roleBadge(String role) {

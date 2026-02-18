@@ -91,10 +91,10 @@ function calcDaysOverdue(dueDate: Date): number {
 function nextDueDateFromCycle(from: Date, cycle: string): Date {
     const d = new Date(from);
     switch (cycle) {
-        case 'MONTHLY':     d.setMonth(d.getMonth() + 1);          break;
-        case 'QUARTERLY':   d.setMonth(d.getMonth() + 3);          break;
-        case 'HALF_YEARLY': d.setMonth(d.getMonth() + 6);          break;
-        case 'YEARLY':      d.setFullYear(d.getFullYear() + 1);    break;
+        case 'MONTHLY': d.setMonth(d.getMonth() + 1); break;
+        case 'QUARTERLY': d.setMonth(d.getMonth() + 3); break;
+        case 'HALF_YEARLY': d.setMonth(d.getMonth() + 6); break;
+        case 'YEARLY': d.setFullYear(d.getFullYear() + 1); break;
         default: break;
     }
     return d;
@@ -283,8 +283,8 @@ export class FeeService {
         if (!member) throw Object.assign(new Error('Member not found'), { status: 404 });
 
         const allRecords = assignments.flatMap(a => a.records);
-        const totalFee    = allRecords.reduce((s, r) => s + r.finalAmount, 0);
-        const totalPaid   = allRecords.reduce((s, r) => s + r.paidAmount, 0);
+        const totalFee = allRecords.reduce((s, r) => s + r.finalAmount, 0);
+        const totalPaid = allRecords.reduce((s, r) => s + r.paidAmount, 0);
         const totalRefund = allRecords.flatMap(r => r.refunds).reduce((s, rf) => s + rf.amount, 0);
         const nextDueBill = allRecords
             .filter(r => r.status === 'PENDING' || r.status === 'PARTIALLY_PAID')
@@ -469,10 +469,10 @@ export class FeeService {
         const isPastDue = record.dueDate < new Date();
         const newStatus =
             newPaidAmount >= record.finalAmount - 0.01 ? 'PAID'
-            : newPaidAmount <= 0 && isPastDue ? 'OVERDUE'
-            : newPaidAmount <= 0 ? 'PENDING'
-            : isPastDue ? 'OVERDUE'
-            : 'PARTIALLY_PAID';
+                : newPaidAmount <= 0 && isPastDue ? 'OVERDUE'
+                    : newPaidAmount <= 0 ? 'PENDING'
+                        : isPastDue ? 'OVERDUE'
+                            : 'PARTIALLY_PAID';
 
         await prisma.$transaction([
             prisma.feeRefund.create({
@@ -591,7 +591,7 @@ export class FeeService {
             const parts = fy.split('-');
             const startYear = parseInt(parts[0] ?? '2025', 10);
             fyStart = new Date(startYear, 3, 1);
-            fyEnd   = new Date(startYear + 1, 2, 31, 23, 59, 59);
+            fyEnd = new Date(startYear + 1, 2, 31, 23, 59, 59);
         }
         const pyWhere = { coachingId, ...(fyStart && fyEnd ? { paidAt: { gte: fyStart, lte: fyEnd } } : {}) };
         const recWhere = { coachingId, ...(fyStart && fyEnd ? { dueDate: { gte: fyStart, lte: fyEnd } } : {}) };
@@ -750,8 +750,8 @@ export class FeeService {
         return {
             records: enriched,
             summary: {
-                totalDue:     enriched.filter(r => ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'].includes(r.status)).reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0),
-                totalPaid:    enriched.reduce((s, r) => s + r.paidAmount, 0),
+                totalDue: enriched.filter(r => ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'].includes(r.status)).reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0),
+                totalPaid: enriched.reduce((s, r) => s + r.paidAmount, 0),
                 totalOverdue: enriched.filter(r => r.status === 'OVERDUE').reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0),
             },
         };
@@ -836,5 +836,58 @@ export class FeeService {
                 }
             }
         }
+    }
+
+
+    // ── Calendar ─────────────────────────────────────────────────────────
+
+    async getFeeCalendar(coachingId: string, from: Date, to: Date) {
+        // 1. Get payments in range
+        // FeePayment -> record (FeeRecord) -> assignment (FeeAssignment) -> coachingId
+        const payments = await prisma.feePayment.findMany({
+            where: {
+                record: {
+                    assignment: { coachingId, isActive: true },
+                },
+                paidAt: { gte: from, lte: to },
+            },
+            select: { amount: true, paidAt: true },
+        });
+
+        // 2. Get dues in range (records due between from/to)
+        // FeeRecord -> assignment (FeeAssignment) -> coachingId
+        const dues = await prisma.feeRecord.findMany({
+            where: {
+                assignment: { coachingId, isActive: true },
+                dueDate: { gte: from, lte: to },
+                status: { not: 'WAIVED' },
+            },
+            select: { finalAmount: true, dueDate: true },
+        });
+
+        const map = new Map<string, { collected: number; due: number }>();
+        const toKey = (d: Date) => d.toISOString().substring(0, 10);
+
+        // Process payments (COLLECTED)
+        for (const p of payments) {
+            const k = toKey(p.paidAt);
+            const e = map.get(k) || { collected: 0, due: 0 };
+            e.collected += Number(p.amount);
+            map.set(k, e);
+        }
+
+        // Process dues (DUE)
+        for (const d of dues) {
+            const k = toKey(d.dueDate);
+            const e = map.get(k) || { collected: 0, due: 0 };
+            e.due += Number(d.finalAmount);
+            map.set(k, e);
+        }
+
+        return Array.from(map.entries()).map(([date, stats]) => ({
+            date,
+            collected: stats.collected,
+            due: stats.due,
+        }));
     }
 }

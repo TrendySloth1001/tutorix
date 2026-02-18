@@ -6,6 +6,7 @@ import 'fee_records_screen.dart';
 import 'fee_structures_screen.dart';
 import 'assign_fee_screen.dart';
 import 'fee_reports_screen.dart';
+import 'fee_calendar_screen.dart';
 
 /// Admin-facing fee dashboard for a coaching.
 /// Shows summary KPIs + quick-access tabs.
@@ -506,6 +507,17 @@ class _QuickActions extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
+        _ActionTile(
+          icon: Icons.calendar_month_rounded,
+          label: 'Fee Calendar',
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => FeeCalendarScreen(coachingId: coachingId),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
         _ActionTile(
           icon: Icons.receipt_long_rounded,
           label: 'Fee Records',
