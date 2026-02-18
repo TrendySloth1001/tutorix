@@ -206,6 +206,8 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
 
 // ─── Overdue list ─────────────────────────────────────────────────────
 
+// ─── Overdue list ─────────────────────────────────────────────────────
+
 class _OverdueList extends StatelessWidget {
   final List<FeeRecordModel> records;
   final String coachingId;
@@ -226,11 +228,17 @@ class _OverdueList extends StatelessWidget {
         final r = records[i];
         return Padding(
           padding: const EdgeInsets.only(bottom: 10),
-          child: Material(
-            color: const Color(0xFFFFEBEE),
-            borderRadius: BorderRadius.circular(14),
+          child: Card(
+            elevation: 0,
+            color: AppColors.softGrey.withValues(alpha: 0.1),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+              side: BorderSide(
+                color: AppColors.mutedOlive.withValues(alpha: 0.2),
+              ),
+            ),
             child: InkWell(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(16),
               onTap: () => Navigator.push(
                 ctx,
                 MaterialPageRoute(
@@ -242,15 +250,15 @@ class _OverdueList extends StatelessWidget {
                 ),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(16),
                 child: Row(
                   children: [
                     Container(
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFCDD2),
-                        borderRadius: BorderRadius.circular(10),
+                        color: const Color(0xFFC62828).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
                         child: Text(
@@ -263,7 +271,7 @@ class _OverdueList extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -273,9 +281,10 @@ class _OverdueList extends StatelessWidget {
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
                               color: AppColors.darkOlive,
-                              fontSize: 14,
+                              fontSize: 15,
                             ),
                           ),
+                          const SizedBox(height: 2),
                           Text(
                             r.title,
                             style: const TextStyle(
@@ -283,16 +292,19 @@ class _OverdueList extends StatelessWidget {
                               fontSize: 12,
                             ),
                           ),
+                          const SizedBox(height: 2),
                           Text(
                             'Due since ${_fmtDate(r.dueDate)}',
                             style: const TextStyle(
                               color: Color(0xFFC62828),
                               fontSize: 11,
+                              fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
                       ),
                     ),
+                    const SizedBox(width: 12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -301,10 +313,11 @@ class _OverdueList extends StatelessWidget {
                           style: const TextStyle(
                             fontWeight: FontWeight.w800,
                             color: Color(0xFFC62828),
-                            fontSize: 15,
+                            fontSize: 16,
                           ),
                         ),
-                        if (r.fineAmount > 0)
+                        if (r.fineAmount > 0) ...[
+                          const SizedBox(height: 2),
                           Text(
                             '+₹${r.fineAmount.toStringAsFixed(0)} fine',
                             style: const TextStyle(
@@ -312,6 +325,7 @@ class _OverdueList extends StatelessWidget {
                               fontSize: 10,
                             ),
                           ),
+                        ],
                       ],
                     ),
                   ],
@@ -324,6 +338,8 @@ class _OverdueList extends StatelessWidget {
     );
   }
 }
+
+// ─── FY Collection report ─────────────────────────────────────────────
 
 // ─── FY Collection report ─────────────────────────────────────────────
 
@@ -342,187 +358,290 @@ class _FYReport extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ListView(
+    return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-      children: [
-        // FY selector
-        Row(
-          children: [
-            const Text(
-              'Financial Year',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                color: AppColors.darkOlive,
-                fontSize: 15,
-              ),
-            ),
-            const Spacer(),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.softGrey.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(
-                  color: AppColors.mutedOlive.withValues(alpha: 0.3),
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        children: [
+          // FY selector
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 6,
                 ),
-              ),
-              child: DropdownButton<String>(
-                value: selectedFY,
-                underline: const SizedBox.shrink(),
-                isDense: true,
-                style: const TextStyle(
-                  color: AppColors.darkOlive,
-                  fontWeight: FontWeight.w600,
-                  fontSize: 13,
-                ),
-                items: fyOptions
-                    .map(
-                      (fy) =>
-                          DropdownMenuItem(value: fy, child: Text('FY $fy')),
-                    )
-                    .toList(),
-                onChanged: (v) {
-                  if (v != null) onFYChanged(v);
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 20),
-
-        // KPI cards
-        Row(
-          children: [
-            Expanded(
-              child: _ReportKpi(
-                label: 'Collected',
-                amount: summary.totalCollected,
-                color: const Color(0xFF2E7D32),
-                bg: const Color(0xFFE8F5E9),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _ReportKpi(
-                label: 'Overdue',
-                amount: summary.totalOverdue,
-                color: const Color(0xFFC62828),
-                bg: const Color(0xFFFFEBEE),
-                badge: summary.overdueCount > 0
-                    ? '${summary.overdueCount} students'
-                    : null,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _ReportKpi(
-                label: 'Pending',
-                amount: summary.totalPending,
-                color: const Color(0xFF1565C0),
-                bg: const Color(0xFFE3F2FD),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _ReportKpi(
-                label: 'Today',
-                amount: summary.todayCollection,
-                color: const Color(0xFFE65100),
-                bg: const Color(0xFFFFF3E0),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 24),
-
-        // Monthly bar chart
-        const Text(
-          'Monthly Collection',
-          style: TextStyle(
-            fontWeight: FontWeight.w700,
-            color: AppColors.darkOlive,
-            fontSize: 15,
-          ),
-        ),
-        const SizedBox(height: 12),
-        summary.monthlyCollection.isEmpty
-            ? const Center(
-                child: Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text(
-                    'No data for this financial year',
-                    style: TextStyle(color: AppColors.mutedOlive),
+                decoration: BoxDecoration(
+                  color: AppColors.softGrey.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: AppColors.mutedOlive.withValues(alpha: 0.2),
                   ),
                 ),
-              )
-            : _MonthlyBarChart(data: summary.monthlyCollection),
-        const SizedBox(height: 32),
-      ],
+                child: DropdownButton<String>(
+                  value: selectedFY,
+                  underline: const SizedBox.shrink(),
+                  isDense: true,
+                  icon: const Icon(
+                    Icons.keyboard_arrow_down_rounded,
+                    color: AppColors.darkOlive,
+                    size: 18,
+                  ),
+                  style: const TextStyle(
+                    color: AppColors.darkOlive,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 14,
+                  ),
+                  items: fyOptions
+                      .map(
+                        (fy) =>
+                            DropdownMenuItem(value: fy, child: Text('FY $fy')),
+                      )
+                      .toList(),
+                  onChanged: (v) {
+                    if (v != null) onFYChanged(v);
+                  },
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          // Financial Overview (Same as Dashboard)
+          _FinancialOverviewCard(summary: summary),
+          const SizedBox(height: 16),
+
+          // Monthly Collection Section
+          _SectionCard(
+            title: 'Monthly Collection',
+            child: Column(
+              children: [
+                if (summary.monthlyCollection.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 24),
+                    child: Text(
+                      'No data for this financial year',
+                      style: TextStyle(color: AppColors.mutedOlive),
+                    ),
+                  )
+                else ...[
+                  AspectRatio(
+                    aspectRatio: 1.7,
+                    child: _MonthlyBarChart(data: summary.monthlyCollection),
+                  ),
+                  const SizedBox(height: 24),
+                  const Divider(height: 1),
+                  const SizedBox(height: 8),
+                  ...summary.monthlyCollection.where((d) => d.total > 0).map((
+                    d,
+                  ) {
+                    return Column(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          child: Row(
+                            children: [
+                              Text(
+                                d.month,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  color: AppColors.darkOlive,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const Spacer(),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 10,
+                                  vertical: 4,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: AppColors.softGrey.withValues(
+                                    alpha: 0.3,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(
+                                  '${d.count} txn',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: AppColors.mutedOlive,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 12),
+                              SizedBox(
+                                width: 70,
+                                child: Text(
+                                  '₹${_formatAmount(d.total)}',
+                                  textAlign: TextAlign.end,
+                                  style: const TextStyle(
+                                    fontSize: 15,
+                                    fontWeight: FontWeight.w700,
+                                    color: AppColors.darkOlive,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const Divider(height: 1),
+                      ],
+                    );
+                  }),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(height: 32),
+        ],
+      ),
     );
   }
 }
 
-class _ReportKpi extends StatelessWidget {
+// ─── Dashboard Style Components ───────────────────────────────────────
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final Widget child;
+  const _SectionCard({required this.title, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      color: AppColors.softGrey.withValues(alpha: 0.1),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: AppColors.mutedOlive.withValues(alpha: 0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.darkOlive,
+              ),
+            ),
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _FinancialOverviewCard extends StatelessWidget {
+  final FeeSummaryModel summary;
+  const _FinancialOverviewCard({required this.summary});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      color: AppColors.softGrey.withValues(alpha: 0.1),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: AppColors.mutedOlive.withValues(alpha: 0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const Text(
+              'Total Collected',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.mutedOlive,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '₹${_formatAmount(summary.totalCollected)}',
+              style: const TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.w800,
+                color: AppColors.darkOlive,
+                height: 1.0,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: _MiniStat(
+                    label: 'Today',
+                    value: '₹${_formatAmount(summary.todayCollection)}',
+                    color: AppColors.darkOlive,
+                  ),
+                ),
+                Container(width: 1, height: 30, color: AppColors.softGrey),
+                Expanded(
+                  child: _MiniStat(
+                    label: 'Pending',
+                    value: '₹${_formatAmount(summary.totalPending)}',
+                    color: AppColors.darkOlive,
+                  ),
+                ),
+                Container(width: 1, height: 30, color: AppColors.softGrey),
+                Expanded(
+                  child: _MiniStat(
+                    label: 'Overdue',
+                    value: '₹${_formatAmount(summary.totalOverdue)}',
+                    color: const Color(0xFFC62828),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
   final String label;
-  final double amount;
+  final String value;
   final Color color;
-  final Color bg;
-  final String? badge;
-  const _ReportKpi({
+  const _MiniStat({
     required this.label,
-    required this.amount,
+    required this.value,
     required this.color,
-    required this.bg,
-    this.badge,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: bg,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            '₹${_formatAmount(amount)}',
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w800,
-              fontSize: 20,
-            ),
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: color,
           ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              color: color.withValues(alpha: 0.7),
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: AppColors.mutedOlive,
           ),
-          if (badge != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              badge!,
-              style: TextStyle(
-                color: color,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ],
-      ),
+        ),
+      ],
     );
   }
 }
@@ -535,102 +654,57 @@ class _MonthlyBarChart extends StatelessWidget {
   Widget build(BuildContext context) {
     if (data.isEmpty) return const SizedBox.shrink();
     final maxVal = data.map((d) => d.total).reduce((a, b) => a > b ? a : b);
-    return Column(
-      children: [
-        SizedBox(
-          height: 120,
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: data.map((d) {
-              final ratio = maxVal > 0 ? d.total / maxVal : 0.0;
-              final month = d.month.length >= 7
-                  ? d.month.substring(5)
-                  : d.month;
-              return Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      if (d.total > 0)
-                        Text(
-                          _formatAmount(d.total),
-                          style: const TextStyle(
-                            fontSize: 8,
-                            color: AppColors.mutedOlive,
-                          ),
-                        ),
-                      const SizedBox(height: 2),
-                      Flexible(
-                        child: FractionallySizedBox(
-                          heightFactor: ratio.clamp(0.04, 1.0),
-                          child: Tooltip(
-                            message:
-                                '₹${d.total.toStringAsFixed(0)} · ${d.count} payments',
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: AppColors.darkOlive.withValues(
-                                  alpha: 0.75,
-                                ),
-                                borderRadius: BorderRadius.circular(4),
-                              ),
-                            ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: data.map((d) {
+        final ratio = maxVal > 0 ? d.total / maxVal : 0.0;
+        final month = d.month.length >= 7 ? d.month.substring(5) : d.month;
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 3),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.end,
+              children: [
+                if (d.total > 0)
+                  Text(
+                    _formatAmount(d.total),
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: AppColors.mutedOlive,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                const SizedBox(height: 4),
+                Flexible(
+                  child: FractionallySizedBox(
+                    heightFactor: ratio.clamp(0.04, 1.0),
+                    child: Tooltip(
+                      message:
+                          '₹${d.total.toStringAsFixed(0)} · ${d.count} payments',
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: AppColors.darkOlive.withValues(alpha: 0.8),
+                          borderRadius: BorderRadius.vertical(
+                            top: Radius.circular(6),
                           ),
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      Text(
-                        month,
-                        style: const TextStyle(
-                          fontSize: 9,
-                          color: AppColors.mutedOlive,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
                 ),
-              );
-            }).toList(),
-          ),
-        ),
-        const SizedBox(height: 8),
-        // Month totals table
-        ...data
-            .where((d) => d.total > 0)
-            .map(
-              (d) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 3),
-                child: Row(
-                  children: [
-                    Text(
-                      d.month,
-                      style: const TextStyle(
-                        color: AppColors.mutedOlive,
-                        fontSize: 12,
-                      ),
-                    ),
-                    const Spacer(),
-                    Text(
-                      '${d.count} payment${d.count == 1 ? '' : 's'}',
-                      style: const TextStyle(
-                        color: AppColors.mutedOlive,
-                        fontSize: 11,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Text(
-                      '₹${d.total.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.darkOlive,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+                const SizedBox(height: 6),
+                Text(
+                  month,
+                  style: const TextStyle(
+                    fontSize: 10,
+                    color: AppColors.mutedOlive,
+                  ),
                 ),
-              ),
+              ],
             ),
-      ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

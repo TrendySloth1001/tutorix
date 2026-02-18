@@ -33,11 +33,11 @@ class FeeStructureModel {
     final count = json['_count'] as Map<String, dynamic>?;
     final planJson = json['installmentPlan'] as List<dynamic>?;
     return FeeStructureModel(
-      id: json['id'] as String,
+      id: json['id'] as String? ?? '',
       coachingId: json['coachingId'] as String? ?? '',
-      name: json['name'] as String,
+      name: json['name'] as String? ?? 'Untitled Structure',
       description: json['description'] as String?,
-      amount: (json['amount'] as num).toDouble(),
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
       currency: json['currency'] as String? ?? 'INR',
       cycle: json['cycle'] as String? ?? 'MONTHLY',
       lateFinePerDay: (json['lateFinePerDay'] as num?)?.toDouble() ?? 0,
@@ -122,7 +122,7 @@ class FeeMemberInfo {
     final ward = json['ward'] as Map<String, dynamic>?;
     final parent = ward?['parent'] as Map<String, dynamic>?;
     return FeeMemberInfo(
-      memberId: json['id'] as String,
+      memberId: json['id'] as String? ?? '',
       userId: json['userId'] as String?,
       wardId: json['wardId'] as String?,
       name: user?['name'] as String? ?? ward?['name'] as String?,
@@ -157,9 +157,9 @@ class FeePaymentModel {
 
   factory FeePaymentModel.fromJson(Map<String, dynamic> json) {
     return FeePaymentModel(
-      id: json['id'] as String,
+      id: json['id'] as String? ?? '',
       amount: (json['amount'] as num).toDouble(),
-      mode: json['mode'] as String,
+      mode: json['mode'] as String? ?? 'CASH',
       transactionRef: json['transactionRef'] as String?,
       receiptNo: json['receiptNo'] as String?,
       notes: json['notes'] as String?,
@@ -248,21 +248,23 @@ class FeeRecordModel {
     final paymentsList = json['payments'] as List<dynamic>?;
     final refundsList = json['refunds'] as List<dynamic>?;
     return FeeRecordModel(
-      id: json['id'] as String,
-      coachingId: json['coachingId'] as String,
-      memberId: json['memberId'] as String,
-      assignmentId: json['assignmentId'] as String,
-      title: json['title'] as String,
-      baseAmount: (json['baseAmount'] as num).toDouble(),
+      id: json['id'] as String? ?? '',
+      coachingId: json['coachingId'] as String? ?? '',
+      memberId: json['memberId'] as String? ?? '',
+      assignmentId: json['assignmentId'] as String? ?? '',
+      title: json['title'] as String? ?? 'Untitled Fee',
+      baseAmount: (json['baseAmount'] as num?)?.toDouble() ?? 0,
       discountAmount: (json['discountAmount'] as num?)?.toDouble() ?? 0,
       fineAmount: (json['fineAmount'] as num?)?.toDouble() ?? 0,
-      finalAmount: (json['finalAmount'] as num).toDouble(),
+      finalAmount: (json['finalAmount'] as num?)?.toDouble() ?? 0,
       paidAmount: (json['paidAmount'] as num?)?.toDouble() ?? 0,
-      dueDate: DateTime.parse(json['dueDate'] as String),
+      dueDate: json['dueDate'] != null
+          ? DateTime.tryParse(json['dueDate'] as String) ?? DateTime.now()
+          : DateTime.now(),
       paidAt: json['paidAt'] != null
           ? DateTime.tryParse(json['paidAt'] as String)
           : null,
-      status: json['status'] as String,
+      status: json['status'] as String? ?? 'PENDING',
       paymentMode: json['paymentMode'] as String?,
       transactionRef: json['transactionRef'] as String?,
       receiptNo: json['receiptNo'] as String?,
@@ -313,7 +315,7 @@ class FeeRefundModel {
   });
 
   factory FeeRefundModel.fromJson(Map<String, dynamic> json) => FeeRefundModel(
-    id: json['id'] as String,
+    id: json['id'] as String? ?? '',
     amount: (json['amount'] as num).toDouble(),
     reason: json['reason'] as String?,
     mode: json['mode'] as String? ?? 'CASH',
@@ -386,7 +388,7 @@ class FeeStatusGroup {
   factory FeeStatusGroup.fromJson(Map<String, dynamic> json) {
     final sum = json['_sum'] as Map<String, dynamic>?;
     return FeeStatusGroup(
-      status: json['status'] as String,
+      status: json['status'] as String? ?? 'UNKNOWN',
       count: json['_count'] as int? ?? 0,
       totalAmount: (sum?['finalAmount'] as num?)?.toDouble() ?? 0,
     );
@@ -405,7 +407,7 @@ class FeePaymentModeGroup {
   factory FeePaymentModeGroup.fromJson(Map<String, dynamic> json) {
     final sum = json['_sum'] as Map<String, dynamic>?;
     return FeePaymentModeGroup(
-      mode: json['mode'] as String,
+      mode: json['mode'] as String? ?? 'CASH',
       count: json['_count'] as int? ?? 0,
       total: (sum?['amount'] as num?)?.toDouble() ?? 0,
     );
@@ -423,7 +425,7 @@ class FeeMonthlyData {
   });
   factory FeeMonthlyData.fromJson(Map<String, dynamic> json) {
     return FeeMonthlyData(
-      month: json['month'] as String,
+      month: json['month'] as String? ?? '',
       total: (json['total'] as num?)?.toDouble() ?? 0,
       count: json['count'] as int? ?? 0,
     );
@@ -459,14 +461,14 @@ class LedgerEntryModel {
   factory LedgerEntryModel.fromJson(Map<String, dynamic> json) =>
       LedgerEntryModel(
         date: DateTime.parse(json['date'] as String),
-        type: json['type'] as String,
-        label: json['label'] as String,
+        type: json['type'] as String? ?? 'UNKNOWN',
+        label: json['label'] as String? ?? '',
         amount: (json['amount'] as num).toDouble(),
         mode: json['mode'] as String?,
         ref: json['ref'] as String?,
         receiptNo: json['receiptNo'] as String?,
         status: json['status'] as String?,
-        recordId: json['recordId'] as String,
+        recordId: json['recordId'] as String? ?? '',
         runningBalance: (json['runningBalance'] as num).toDouble(),
       );
 }

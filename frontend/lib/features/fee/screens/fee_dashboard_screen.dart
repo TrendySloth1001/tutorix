@@ -156,32 +156,44 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (summary.overdueCount > 0)
+          if (summary.overdueCount > 0) ...[
             _OverdueBanner(
               count: summary.overdueCount,
               onRemind: onBulkRemind,
               isLoading: isSendingReminder,
             ),
-          if (summary.overdueCount > 0) const SizedBox(height: 12),
-          _SummaryCards(summary: summary),
-          const SizedBox(height: 24),
-          _SectionTitle('Payment Breakdown'),
-          const SizedBox(height: 12),
-          _PaymentModeChips(modes: summary.paymentModes),
-          const SizedBox(height: 24),
-          _SectionTitle('Monthly Collection'),
-          const SizedBox(height: 12),
-          _MonthlyChart(data: summary.monthlyCollection),
-          const SizedBox(height: 24),
-          _SectionTitle('Quick Actions'),
-          const SizedBox(height: 12),
-          _QuickActions(
-            coachingId: coachingId,
-            overdueCount: summary.overdueCount,
+            const SizedBox(height: 16),
+          ],
+
+          // Financial Overview Card
+          _FinancialOverviewCard(summary: summary),
+          const SizedBox(height: 16),
+
+          // Status Breakdown Card
+          _SectionCard(
+            title: 'Fee Status',
+            child: _StatusCountRow(breakdown: summary.statusBreakdown),
+          ),
+          const SizedBox(height: 16),
+
+          // Payment Breakdown Card
+          _SectionCard(
+            title: 'Recent Collections',
+            child: _PaymentModeList(modes: summary.paymentModes),
+          ),
+          const SizedBox(height: 16),
+
+          // Quick Actions Card
+          _SectionCard(
+            title: 'Quick Actions',
+            child: _QuickActions(
+              coachingId: coachingId,
+              overdueCount: summary.overdueCount,
+            ),
           ),
           const SizedBox(height: 32),
         ],
@@ -190,7 +202,405 @@ class _Body extends StatelessWidget {
   }
 }
 
-// ─── FY Dropdown ──────────────────────────────────────────────────────
+// ─── Cards ────────────────────────────────────────────────────────────
+
+class _FinancialOverviewCard extends StatelessWidget {
+  final FeeSummaryModel summary;
+  const _FinancialOverviewCard({required this.summary});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      color: AppColors.softGrey.withValues(alpha: 0.1),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: AppColors.mutedOlive.withValues(alpha: 0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            const Text(
+              'Total Collected',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w500,
+                color: AppColors.mutedOlive,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              '₹${_formatAmount(summary.totalCollected)}',
+              style: const TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.w800,
+                color: AppColors.darkOlive,
+                height: 1.0,
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: _MiniStat(
+                    label: 'Today',
+                    value: '₹${_formatAmount(summary.todayCollection)}',
+                    color: AppColors.darkOlive,
+                  ),
+                ),
+                Container(width: 1, height: 30, color: AppColors.softGrey),
+                Expanded(
+                  child: _MiniStat(
+                    label: 'Pending',
+                    value: '₹${_formatAmount(summary.totalPending)}',
+                    color: AppColors.darkOlive,
+                  ),
+                ),
+                Container(width: 1, height: 30, color: AppColors.softGrey),
+                Expanded(
+                  child: _MiniStat(
+                    label: 'Overdue',
+                    value: '₹${_formatAmount(summary.totalOverdue)}',
+                    color: const Color(0xFFC62828),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MiniStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+  const _MiniStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w700,
+            color: color,
+          ),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 12,
+            fontWeight: FontWeight.w500,
+            color: AppColors.mutedOlive,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SectionCard extends StatelessWidget {
+  final String title;
+  final Widget child;
+  const _SectionCard({required this.title, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      color: AppColors.softGrey.withValues(alpha: 0.1),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: AppColors.mutedOlive.withValues(alpha: 0.2)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w700,
+                color: AppColors.darkOlive,
+              ),
+            ),
+            const SizedBox(height: 16),
+            child,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+// ─── Status & Payment Rows ────────────────────────────────────────────
+
+class _StatusCountRow extends StatelessWidget {
+  final List<FeeStatusGroup> breakdown;
+  const _StatusCountRow({required this.breakdown});
+
+  int _count(String status) =>
+      breakdown.where((b) => b.status == status).fold(0, (a, b) => a + b.count);
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _SimpleStatusRow('Paid', _count('PAID')),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: Divider(height: 1),
+        ),
+        _SimpleStatusRow('Pending', _count('PENDING')),
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 12),
+          child: Divider(height: 1),
+        ),
+        _SimpleStatusRow('Overdue', _count('OVERDUE'), isAlert: true),
+      ],
+    );
+  }
+}
+
+class _SimpleStatusRow extends StatelessWidget {
+  final String label;
+  final int count;
+  final bool isAlert;
+  const _SimpleStatusRow(this.label, this.count, {this.isAlert = false});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 15, color: AppColors.darkOlive),
+        ),
+        const Spacer(),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          decoration: BoxDecoration(
+            color: isAlert
+                ? const Color(0xFFFFEBEE)
+                : AppColors.softGrey.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Text(
+            '$count Students',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              color: isAlert ? const Color(0xFFC62828) : AppColors.darkOlive,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _PaymentModeList extends StatelessWidget {
+  final List<FeePaymentModeGroup> modes;
+  const _PaymentModeList({required this.modes});
+
+  String _modeLabel(String mode) {
+    switch (mode) {
+      case 'CASH':
+        return 'Cash';
+      case 'ONLINE':
+        return 'Online';
+      case 'UPI':
+        return 'UPI';
+      case 'BANK_TRANSFER':
+        return 'Bank Transfer';
+      case 'CHEQUE':
+        return 'Cheque';
+      default:
+        return mode;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (modes.isEmpty) {
+      return const Text(
+        'No payments recorded yet',
+        style: TextStyle(color: AppColors.mutedOlive, fontSize: 13),
+      );
+    }
+    return Column(
+      children: modes.take(5).map((m) {
+        return Padding(
+          padding: const EdgeInsets.only(bottom: 12),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.softGrey.withValues(alpha: 0.3),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.payments_outlined,
+                  size: 16,
+                  color: AppColors.darkOlive,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _modeLabel(m.mode),
+                    style: const TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.darkOlive,
+                    ),
+                  ),
+                  Text(
+                    '${m.count} txns',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.mutedOlive,
+                    ),
+                  ),
+                ],
+              ),
+              const Spacer(),
+              Text(
+                '₹${_formatAmount(m.total)}',
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.darkOlive,
+                ),
+              ),
+            ],
+          ),
+        );
+      }).toList(),
+    );
+  }
+}
+
+class _QuickActions extends StatelessWidget {
+  final String coachingId;
+  final int overdueCount;
+  const _QuickActions({required this.coachingId, required this.overdueCount});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        _ActionTile(
+          icon: Icons.receipt_long_rounded,
+          label: 'Fee Records',
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => FeeRecordsScreen(coachingId: coachingId),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _ActionTile(
+          icon: Icons.bar_chart_rounded,
+          label: 'Reports',
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => FeeReportsScreen(coachingId: coachingId),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _ActionTile(
+          icon: Icons.category_rounded,
+          label: 'Fee Structures',
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => FeeStructuresScreen(coachingId: coachingId),
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+        _ActionTile(
+          icon: Icons.person_add_rounded,
+          label: 'Assign Fee',
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AssignFeeScreen(coachingId: coachingId),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _ActionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _ActionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: AppColors.darkOlive.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 20, color: AppColors.darkOlive),
+          ),
+          const SizedBox(width: 14),
+          Text(
+            label,
+            style: const TextStyle(
+              fontWeight: FontWeight.w600,
+              color: AppColors.darkOlive,
+              fontSize: 15,
+            ),
+          ),
+          const Spacer(),
+          const Icon(
+            Icons.chevron_right_rounded,
+            color: AppColors.mutedOlive,
+            size: 20,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── Shared Components ────────────────────────────────────────────────
 
 class _FYDropdown extends StatelessWidget {
   final String selected;
@@ -204,32 +614,37 @@ class _FYDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(right: 4),
-      child: DropdownButton<String>(
-        value: selected,
-        underline: const SizedBox.shrink(),
-        icon: const Icon(
-          Icons.expand_more_rounded,
-          color: AppColors.darkOlive,
-          size: 18,
+      padding: const EdgeInsets.only(right: 8),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        decoration: BoxDecoration(
+          color: AppColors.softGrey.withValues(alpha: 0.3),
+          borderRadius: BorderRadius.circular(20),
         ),
-        style: const TextStyle(
-          color: AppColors.darkOlive,
-          fontWeight: FontWeight.w600,
-          fontSize: 13,
+        child: DropdownButton<String>(
+          value: selected,
+          underline: const SizedBox.shrink(),
+          icon: const Icon(
+            Icons.keyboard_arrow_down_rounded,
+            color: AppColors.darkOlive,
+            size: 18,
+          ),
+          style: const TextStyle(
+            color: AppColors.darkOlive,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
+          items: options
+              .map((fy) => DropdownMenuItem(value: fy, child: Text('FY $fy')))
+              .toList(),
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
         ),
-        items: options
-            .map((fy) => DropdownMenuItem(value: fy, child: Text('FY $fy')))
-            .toList(),
-        onChanged: (v) {
-          if (v != null) onChanged(v);
-        },
       ),
     );
   }
 }
-
-// ─── Overdue urgency banner ───────────────────────────────────────────
 
 class _OverdueBanner extends StatelessWidget {
   final int count;
@@ -246,10 +661,7 @@ class _OverdueBanner extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: const Color(0xFFFFEBEE),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: const Color(0xFFC62828).withValues(alpha: 0.4),
-        ),
+        borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
@@ -258,14 +670,14 @@ class _OverdueBanner extends StatelessWidget {
             color: Color(0xFFC62828),
             size: 20,
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: 12),
           Expanded(
             child: Text(
               '$count student${count == 1 ? '' : 's'} have overdue fees',
               style: const TextStyle(
                 color: Color(0xFFC62828),
                 fontWeight: FontWeight.w600,
-                fontSize: 13,
+                fontSize: 14,
               ),
             ),
           ),
@@ -283,549 +695,23 @@ class _OverdueBanner extends StatelessWidget {
               onPressed: onRemind,
               style: TextButton.styleFrom(
                 foregroundColor: const Color(0xFFC62828),
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                backgroundColor: Colors.white.withValues(alpha: 0.5),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
               ),
               child: const Text(
-                'Remind All',
+                'Remind',
                 style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
               ),
             ),
         ],
-      ),
-    );
-  }
-}
-
-// ─── KPI Cards ────────────────────────────────────────────────────────
-
-class _SummaryCards extends StatelessWidget {
-  final FeeSummaryModel summary;
-  const _SummaryCards({required this.summary});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _KpiCard(
-                label: 'Collected',
-                amount: summary.totalCollected,
-                icon: Icons.account_balance_wallet_rounded,
-                color: const Color(0xFF2E7D32),
-                bgColor: const Color(0xFFE8F5E9),
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _KpiCard(
-                label: 'Today',
-                amount: summary.todayCollection,
-                icon: Icons.today_rounded,
-                color: const Color(0xFF1565C0),
-                bgColor: const Color(0xFFE3F2FD),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        Row(
-          children: [
-            Expanded(
-              child: _KpiCard(
-                label: 'Overdue',
-                amount: summary.totalOverdue,
-                icon: Icons.warning_amber_rounded,
-                color: const Color(0xFFC62828),
-                bgColor: const Color(0xFFFFEBEE),
-                badge: summary.overdueCount > 0
-                    ? '${summary.overdueCount} students'
-                    : null,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: _KpiCard(
-                label: 'Pending',
-                amount: summary.totalPending,
-                icon: Icons.schedule_rounded,
-                color: const Color(0xFFE65100),
-                bgColor: const Color(0xFFFFF3E0),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-        _StatusCountCard(breakdown: summary.statusBreakdown),
-      ],
-    );
-  }
-}
-
-class _KpiCard extends StatelessWidget {
-  final String label;
-  final double amount;
-  final IconData icon;
-  final Color color;
-  final Color bgColor;
-  final String? badge;
-  const _KpiCard({
-    required this.label,
-    required this.amount,
-    required this.icon,
-    required this.color,
-    required this.bgColor,
-    this.badge,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, size: 18, color: color),
-              ),
-              const Spacer(),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '₹${_formatAmount(amount)}',
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.w800,
-              fontSize: 20,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            label,
-            style: TextStyle(
-              color: color.withValues(alpha: 0.7),
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          if (badge != null) ...[
-            const SizedBox(height: 4),
-            Text(
-              badge!,
-              style: TextStyle(
-                color: color,
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusCountCard extends StatelessWidget {
-  final List<FeeStatusGroup> breakdown;
-  const _StatusCountCard({required this.breakdown});
-
-  int _count(String status) =>
-      breakdown.where((b) => b.status == status).fold(0, (a, b) => a + b.count);
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: AppColors.softGrey.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.mutedOlive.withValues(alpha: 0.25)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Status',
-            style: TextStyle(
-              fontWeight: FontWeight.w600,
-              fontSize: 12,
-              color: AppColors.mutedOlive,
-            ),
-          ),
-          const SizedBox(height: 10),
-          _StatusRow('Paid', _count('PAID'), const Color(0xFF2E7D32)),
-          _StatusRow('Pending', _count('PENDING'), const Color(0xFF1565C0)),
-          _StatusRow('Overdue', _count('OVERDUE'), const Color(0xFFC62828)),
-          _StatusRow('Waived', _count('WAIVED'), AppColors.mutedOlive),
-        ],
-      ),
-    );
-  }
-}
-
-class _StatusRow extends StatelessWidget {
-  final String label;
-  final int count;
-  final Color color;
-  const _StatusRow(this.label, this.count, this.color);
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          Container(
-            width: 6,
-            height: 6,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 6),
-          Text(
-            label,
-            style: const TextStyle(fontSize: 11, color: AppColors.darkOlive),
-          ),
-          const Spacer(),
-          Text(
-            '$count',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ─── Payment Modes ────────────────────────────────────────────────────
-
-class _PaymentModeChips extends StatelessWidget {
-  final List<FeePaymentModeGroup> modes;
-  const _PaymentModeChips({required this.modes});
-
-  @override
-  Widget build(BuildContext context) {
-    if (modes.isEmpty) {
-      return const _EmptyHint('No payments recorded yet');
-    }
-    return Wrap(
-      spacing: 10,
-      runSpacing: 10,
-      children: modes.map((m) {
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-          decoration: BoxDecoration(
-            color: AppColors.softGrey.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: AppColors.mutedOlive.withValues(alpha: 0.25),
-            ),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _modeLabel(m.mode),
-                style: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
-                  color: AppColors.darkOlive,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                '₹${_formatAmount(m.total)}',
-                style: const TextStyle(
-                  fontWeight: FontWeight.w800,
-                  fontSize: 16,
-                  color: AppColors.darkOlive,
-                ),
-              ),
-              Text(
-                '${m.count} txn${m.count == 1 ? '' : 's'}',
-                style: const TextStyle(
-                  fontSize: 11,
-                  color: AppColors.mutedOlive,
-                ),
-              ),
-            ],
-          ),
-        );
-      }).toList(),
-    );
-  }
-
-  String _modeLabel(String mode) {
-    switch (mode) {
-      case 'CASH':
-        return '💵 Cash';
-      case 'ONLINE':
-        return '💳 Online';
-      case 'UPI':
-        return '📱 UPI';
-      case 'BANK_TRANSFER':
-        return '🏦 Bank Transfer';
-      case 'CHEQUE':
-        return '📝 Cheque';
-      default:
-        return mode;
-    }
-  }
-}
-
-// ─── Monthly Chart (bar) ──────────────────────────────────────────────
-
-class _MonthlyChart extends StatelessWidget {
-  final List<FeeMonthlyData> data;
-  const _MonthlyChart({required this.data});
-
-  @override
-  Widget build(BuildContext context) {
-    if (data.isEmpty) return const _EmptyHint('No collections yet');
-    final maxVal = data.map((d) => d.total).reduce((a, b) => a > b ? a : b);
-    return SizedBox(
-      height: 100,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: data.map((d) {
-          final ratio = maxVal > 0 ? d.total / maxVal : 0.0;
-          final label = d.month.length >= 7 ? d.month.substring(5) : d.month;
-          return Expanded(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 2),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                children: [
-                  Flexible(
-                    child: FractionallySizedBox(
-                      heightFactor: ratio.clamp(0.04, 1.0),
-                      child: Tooltip(
-                        message: '₹${_formatAmount(d.total)}',
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: AppColors.darkOlive.withValues(alpha: 0.75),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    label,
-                    style: const TextStyle(
-                      fontSize: 9,
-                      color: AppColors.mutedOlive,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          );
-        }).toList(),
-      ),
-    );
-  }
-}
-
-// ─── Quick Actions ────────────────────────────────────────────────────
-
-class _QuickActions extends StatelessWidget {
-  final String coachingId;
-  final int overdueCount;
-  const _QuickActions({required this.coachingId, required this.overdueCount});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        _ActionTile(
-          icon: Icons.receipt_long_rounded,
-          label: 'All Fee Records',
-          subtitle: 'View, collect & manage dues',
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => FeeRecordsScreen(coachingId: coachingId),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        _ActionTile(
-          icon: Icons.bar_chart_rounded,
-          label: 'Reports',
-          subtitle: 'Overdue list, FY collection & analysis',
-          badge: overdueCount > 0 ? '$overdueCount' : null,
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => FeeReportsScreen(coachingId: coachingId),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        _ActionTile(
-          icon: Icons.category_rounded,
-          label: 'Fee Structures',
-          subtitle: 'Create and manage templates',
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => FeeStructuresScreen(coachingId: coachingId),
-            ),
-          ),
-        ),
-        const SizedBox(height: 10),
-        _ActionTile(
-          icon: Icons.person_add_rounded,
-          label: 'Assign Fee to Student',
-          subtitle: 'Map a fee structure to a member',
-          onTap: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder: (_) => AssignFeeScreen(coachingId: coachingId),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-class _ActionTile extends StatelessWidget {
-  final IconData icon;
-  final String label;
-  final String subtitle;
-  final VoidCallback onTap;
-  final String? badge;
-  const _ActionTile({
-    required this.icon,
-    required this.label,
-    required this.subtitle,
-    required this.onTap,
-    this.badge,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.softGrey.withValues(alpha: 0.28),
-      borderRadius: BorderRadius.circular(14),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(14),
-        onTap: onTap,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: AppColors.darkOlive.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: Icon(icon, size: 20, color: AppColors.darkOlive),
-              ),
-              const SizedBox(width: 14),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      label,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        color: AppColors.darkOlive,
-                        fontSize: 14,
-                      ),
-                    ),
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        color: AppColors.mutedOlive,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              if (badge != null)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFC62828),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    badge!,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                )
-              else
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: AppColors.mutedOlive,
-                ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────
-
-class _SectionTitle extends StatelessWidget {
-  final String title;
-  const _SectionTitle(this.title);
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: const TextStyle(
-        fontWeight: FontWeight.w700,
-        fontSize: 15,
-        color: AppColors.darkOlive,
-      ),
-    );
-  }
-}
-
-class _EmptyHint extends StatelessWidget {
-  final String text;
-  const _EmptyHint(this.text);
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Text(
-        text,
-        style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
       ),
     );
   }
