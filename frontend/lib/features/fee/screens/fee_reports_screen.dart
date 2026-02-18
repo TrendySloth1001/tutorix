@@ -601,6 +601,17 @@ class _FinancialOverviewCard extends StatelessWidget {
                     color: const Color(0xFFC62828),
                   ),
                 ),
+                if (summary.totalRefunded > 0) ...
+                [
+                  Container(width: 1, height: 30, color: AppColors.softGrey),
+                  Expanded(
+                    child: _MiniStat(
+                      label: 'Refunded',
+                      value: '₹${_formatAmount(summary.totalRefunded)}',
+                      color: const Color(0xFF1565C0),
+                    ),
+                  ),
+                ],
               ],
             ),
           ],

@@ -1,5 +1,8 @@
 import prisma from '../../infra/prisma.js';
 import { Prisma } from '@prisma/client';
+import { NotificationService } from '../notification/notification.service.js';
+
+const notifSvc = new NotificationService();
 
 // ─── DTOs ────────────────────────────────────────────────────────────
 
@@ -463,6 +466,14 @@ export class FeeService {
         const refundedAt = dto.refundedAt ? new Date(dto.refundedAt) : new Date();
         const newPaidAmount = record.paidAmount - dto.amount;
 
+        const isPastDue = record.dueDate < new Date();
+        const newStatus =
+            newPaidAmount >= record.finalAmount - 0.01 ? 'PAID'
+            : newPaidAmount <= 0 && isPastDue ? 'OVERDUE'
+            : newPaidAmount <= 0 ? 'PENDING'
+            : isPastDue ? 'OVERDUE'
+            : 'PARTIALLY_PAID';
+
         await prisma.$transaction([
             prisma.feeRefund.create({
                 data: {
@@ -479,7 +490,7 @@ export class FeeService {
                 where: { id: recordId },
                 data: {
                     paidAmount: newPaidAmount,
-                    status: newPaidAmount <= 0 ? 'PENDING' : newPaidAmount < record.finalAmount ? 'PARTIALLY_PAID' : 'PAID',
+                    status: newStatus,
                 },
             }),
         ]);
@@ -487,10 +498,36 @@ export class FeeService {
         return this.getRecordById(coachingId, recordId);
     }
 
-    /** Mark reminder sent + increment counter. */
+    /** Mark reminder sent + increment counter + create notification for the student/parent. */
     async sendReminder(coachingId: string, recordId: string) {
-        const record = await prisma.feeRecord.findFirst({ where: { id: recordId, coachingId } });
+        const record = await prisma.feeRecord.findFirst({
+            where: { id: recordId, coachingId },
+            include: {
+                member: {
+                    select: {
+                        userId: true,
+                        ward: { select: { parentId: true } },
+                    },
+                },
+            },
+        });
         if (!record) throw Object.assign(new Error('Record not found'), { status: 404 });
+
+        // Determine who to notify: member's own user, or the ward's parent
+        const targetUserId = record.member?.userId ?? record.member?.ward?.parentId ?? null;
+        const balance = record.finalAmount - record.paidAmount;
+
+        if (targetUserId) {
+            await notifSvc.create({
+                userId: targetUserId,
+                coachingId,
+                type: 'FEE_REMINDER',
+                title: '📋 Fee Payment Reminder',
+                message: `Your fee "${record.title}" of ₹${balance.toFixed(0)} is due. Please pay at the earliest to avoid additional fines.`,
+                data: { recordId, amount: balance, dueDate: record.dueDate },
+            });
+        }
+
         return prisma.feeRecord.update({
             where: { id: recordId },
             data: { reminderSentAt: new Date(), reminderCount: { increment: 1 } },
@@ -504,6 +541,37 @@ export class FeeService {
             status: statusFilter,
             ...(dto.memberIds?.length ? { memberId: { in: dto.memberIds } } : {}),
         };
+
+        // Fetch all matching records with member info to send targeted notifications
+        const records = await prisma.feeRecord.findMany({
+            where,
+            include: {
+                member: {
+                    select: {
+                        userId: true,
+                        ward: { select: { parentId: true } },
+                    },
+                },
+            },
+        });
+
+        // Send notifications in parallel (ignore individual failures)
+        await Promise.allSettled(
+            records.map((record) => {
+                const targetUserId = record.member?.userId ?? record.member?.ward?.parentId ?? null;
+                if (!targetUserId) return Promise.resolve();
+                const balance = record.finalAmount - record.paidAmount;
+                return notifSvc.create({
+                    userId: targetUserId,
+                    coachingId,
+                    type: 'FEE_REMINDER',
+                    title: '📋 Fee Payment Reminder',
+                    message: `Your fee "${record.title}" of ₹${balance.toFixed(0)} is due. Please pay at the earliest to avoid additional fines.`,
+                    data: { recordId: record.id, amount: balance, dueDate: record.dueDate },
+                });
+            }),
+        );
+
         const result = await prisma.feeRecord.updateMany({
             where,
             data: { reminderSentAt: new Date(), reminderCount: { increment: 1 } },
@@ -528,9 +596,12 @@ export class FeeService {
         const pyWhere = { coachingId, ...(fyStart && fyEnd ? { paidAt: { gte: fyStart, lte: fyEnd } } : {}) };
         const recWhere = { coachingId, ...(fyStart && fyEnd ? { dueDate: { gte: fyStart, lte: fyEnd } } : {}) };
 
-        const [statusGroups, totalCollected, totalPendingAgg, totalOverdueAgg, paymentModes, monthlyCollection, overdueCount, todayCollection] = await Promise.all([
+        const refundWhere = { coachingId, ...(fyStart && fyEnd ? { refundedAt: { gte: fyStart, lte: fyEnd } } : {}) };
+
+        const [statusGroups, totalCollected, totalRefunded, totalPendingAgg, totalOverdueAgg, paymentModes, monthlyCollection, overdueCount, todayCollection] = await Promise.all([
             prisma.feeRecord.groupBy({ by: ['status'], where: recWhere, _count: true, _sum: { finalAmount: true } }),
             prisma.feePayment.aggregate({ where: pyWhere, _sum: { amount: true } }),
+            prisma.feeRefund.aggregate({ where: refundWhere, _sum: { amount: true } }),
             prisma.feeRecord.aggregate({ where: { ...recWhere, status: { in: ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'] } }, _sum: { finalAmount: true } }),
             prisma.feeRecord.aggregate({ where: { ...recWhere, status: 'OVERDUE' }, _sum: { finalAmount: true } }),
             prisma.feePayment.groupBy({ by: ['mode'], where: pyWhere, _sum: { amount: true }, _count: true }),
@@ -553,7 +624,8 @@ export class FeeService {
 
         return {
             statusBreakdown: statusGroups,
-            totalCollected: totalCollected._sum.amount ?? 0,
+            totalCollected: (totalCollected._sum.amount ?? 0) - (totalRefunded._sum.amount ?? 0),
+            totalRefunded: totalRefunded._sum.amount ?? 0,
             totalPending: totalPendingAgg._sum.finalAmount ?? 0,
             totalOverdue: totalOverdueAgg._sum.finalAmount ?? 0,
             overdueCount,

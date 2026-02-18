@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
+import 'fee_member_profile_screen.dart';
 import 'fee_record_detail_screen.dart';
 
 /// Lists all fee records for a coaching (admin view).
@@ -165,6 +166,7 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
                         }
                         return _RecordTile(
                           record: _records[i],
+                          coachingId: widget.coachingId,
                           onTap: () async {
                             await Navigator.push(
                               context,
@@ -303,7 +305,12 @@ class _FilterBar extends StatelessWidget {
 class _RecordTile extends StatelessWidget {
   final FeeRecordModel record;
   final VoidCallback onTap;
-  const _RecordTile({required this.record, required this.onTap});
+  final String coachingId;
+  const _RecordTile({
+    required this.record,
+    required this.onTap,
+    required this.coachingId,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -327,12 +334,30 @@ class _RecordTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        memberName,
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.darkOlive,
-                          fontSize: 14,
+                      GestureDetector(
+                        onTap: record.memberId.isNotEmpty
+                            ? () => Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => FeeMemberProfileScreen(
+                                    coachingId: coachingId,
+                                    memberId: record.memberId,
+                                    memberName: memberName,
+                                  ),
+                                ),
+                              )
+                            : null,
+                        child: Text(
+                          memberName,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.darkOlive,
+                            fontSize: 14,
+                            decoration: record.memberId.isNotEmpty
+                                ? TextDecoration.underline
+                                : null,
+                            decorationColor: AppColors.mutedOlive,
+                          ),
                         ),
                       ),
                       const SizedBox(height: 2),

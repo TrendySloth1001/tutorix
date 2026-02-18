@@ -326,6 +326,7 @@ class FeeRefundModel {
 /// Summary / analytics response.
 class FeeSummaryModel {
   final double totalCollected;
+  final double totalRefunded;
   final double totalPending;
   final double totalOverdue;
   final int overdueCount;
@@ -337,6 +338,7 @@ class FeeSummaryModel {
 
   const FeeSummaryModel({
     required this.totalCollected,
+    this.totalRefunded = 0,
     required this.totalPending,
     required this.totalOverdue,
     this.overdueCount = 0,
@@ -350,6 +352,7 @@ class FeeSummaryModel {
   factory FeeSummaryModel.fromJson(Map<String, dynamic> json) {
     return FeeSummaryModel(
       totalCollected: (json['totalCollected'] as num?)?.toDouble() ?? 0,
+      totalRefunded: (json['totalRefunded'] as num?)?.toDouble() ?? 0,
       totalPending: (json['totalPending'] as num?)?.toDouble() ?? 0,
       totalOverdue: (json['totalOverdue'] as num?)?.toDouble() ?? 0,
       overdueCount: json['overdueCount'] as int? ?? 0,
