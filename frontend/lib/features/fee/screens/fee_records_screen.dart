@@ -9,7 +9,11 @@ import 'fee_record_detail_screen.dart';
 class FeeRecordsScreen extends StatefulWidget {
   final String coachingId;
   final String? initialMemberId;
-  const FeeRecordsScreen({super.key, required this.coachingId, this.initialMemberId});
+  const FeeRecordsScreen({
+    super.key,
+    required this.coachingId,
+    this.initialMemberId,
+  });
 
   @override
   State<FeeRecordsScreen> createState() => _FeeRecordsScreenState();
@@ -41,16 +45,27 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
   }
 
   void _onScroll() {
-    if (_scrollCtrl.position.pixels >= _scrollCtrl.position.maxScrollExtent - 100 && !_loadingMore && _hasMore) {
+    if (_scrollCtrl.position.pixels >=
+            _scrollCtrl.position.maxScrollExtent - 100 &&
+        !_loadingMore &&
+        _hasMore) {
       _load();
     }
   }
 
   Future<void> _load({bool reset = false}) async {
     if (reset) {
-      setState(() { _loading = true; _error = null; _page = 1; _records.clear(); _hasMore = true; });
+      setState(() {
+        _loading = true;
+        _error = null;
+        _page = 1;
+        _records.clear();
+        _hasMore = true;
+      });
     } else {
-      setState(() { _loadingMore = true; });
+      setState(() {
+        _loadingMore = true;
+      });
     }
     try {
       final page = reset ? 1 : _page;
@@ -71,7 +86,11 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
         _loadingMore = false;
       });
     } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; _loadingMore = false; });
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+        _loadingMore = false;
+      });
     }
   }
 
@@ -84,54 +103,74 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
         backgroundColor: cs.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: AppColors.darkOlive),
+          icon: const Icon(
+            Icons.arrow_back_ios_new_rounded,
+            color: AppColors.darkOlive,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text('Fee Records', style: TextStyle(color: AppColors.darkOlive, fontWeight: FontWeight.w700)),
+        title: const Text(
+          'Fee Records',
+          style: TextStyle(
+            color: AppColors.darkOlive,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
       ),
       body: Column(
         children: [
           _FilterBar(
             selected: _filterStatus,
-            onChanged: (s) { _filterStatus = s; _load(reset: true); },
+            onChanged: (s) {
+              _filterStatus = s;
+              _load(reset: true);
+            },
           ),
           Expanded(
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _error != null
-                    ? _ErrorRetry(error: _error!, onRetry: () => _load(reset: true))
-                    : _records.isEmpty
-                        ? const _EmptyState()
-                        : RefreshIndicator(
-                            color: AppColors.darkOlive,
-                            onRefresh: () => _load(reset: true),
-                            child: ListView.builder(
-                              controller: _scrollCtrl,
-                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                              itemCount: _records.length + (_loadingMore ? 1 : 0),
-                              itemBuilder: (ctx, i) {
-                                if (i == _records.length) {
-                                  return const Center(child: Padding(
-                                    padding: EdgeInsets.all(16),
-                                    child: CircularProgressIndicator(strokeWidth: 2),
-                                  ));
-                                }
-                                return _RecordTile(
-                                  record: _records[i],
-                                  onTap: () async {
-                                    await Navigator.push(context, MaterialPageRoute(
-                                      builder: (_) => FeeRecordDetailScreen(
-                                        coachingId: widget.coachingId,
-                                        recordId: _records[i].id,
-                                        isAdmin: true,
-                                      ),
-                                    ));
-                                    _load(reset: true);
-                                  },
-                                );
-                              },
+                ? _ErrorRetry(error: _error!, onRetry: () => _load(reset: true))
+                : _records.isEmpty
+                ? const _EmptyState()
+                : RefreshIndicator(
+                    color: AppColors.darkOlive,
+                    onRefresh: () => _load(reset: true),
+                    child: ListView.builder(
+                      controller: _scrollCtrl,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      itemCount: _records.length + (_loadingMore ? 1 : 0),
+                      itemBuilder: (ctx, i) {
+                        if (i == _records.length) {
+                          return const Center(
+                            child: Padding(
+                              padding: EdgeInsets.all(16),
+                              child: CircularProgressIndicator(strokeWidth: 2),
                             ),
-                          ),
+                          );
+                        }
+                        return _RecordTile(
+                          record: _records[i],
+                          onTap: () async {
+                            await Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => FeeRecordDetailScreen(
+                                  coachingId: widget.coachingId,
+                                  recordId: _records[i].id,
+                                  isAdmin: true,
+                                ),
+                              ),
+                            );
+                            _load(reset: true);
+                          },
+                        );
+                      },
+                    ),
+                  ),
           ),
         ],
       ),
@@ -168,12 +207,19 @@ class _FilterBar extends StatelessWidget {
               onTap: () => onChanged(e.key),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 14,
+                  vertical: 4,
+                ),
                 decoration: BoxDecoration(
-                  color: isSelected ? AppColors.darkOlive : AppColors.softGrey.withValues(alpha: 0.3),
+                  color: isSelected
+                      ? AppColors.darkOlive
+                      : AppColors.softGrey.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: isSelected ? AppColors.darkOlive : AppColors.mutedOlive.withValues(alpha: 0.3),
+                    color: isSelected
+                        ? AppColors.darkOlive
+                        : AppColors.mutedOlive.withValues(alpha: 0.3),
                   ),
                 ),
                 child: Text(
@@ -220,17 +266,35 @@ class _RecordTile extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(memberName, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkOlive, fontSize: 14)),
+                      Text(
+                        memberName,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.darkOlive,
+                          fontSize: 14,
+                        ),
+                      ),
                       const SizedBox(height: 2),
-                      Text(record.title, style: const TextStyle(color: AppColors.mutedOlive, fontSize: 12)),
+                      Text(
+                        record.title,
+                        style: const TextStyle(
+                          color: AppColors.mutedOlive,
+                          fontSize: 12,
+                        ),
+                      ),
                       const SizedBox(height: 4),
                       Row(
                         children: [
-                          _Chip(label: _statusLabel(record.status), color: statusColor),
+                          _Chip(
+                            label: _statusLabel(record.status),
+                            color: statusColor,
+                          ),
                           const SizedBox(width: 6),
                           _Chip(
                             label: 'Due ${_fmtDate(record.dueDate)}',
-                            color: record.isOverdue ? const Color(0xFFC62828) : AppColors.mutedOlive,
+                            color: record.isOverdue
+                                ? const Color(0xFFC62828)
+                                : AppColors.mutedOlive,
                           ),
                         ],
                       ),
@@ -243,12 +307,19 @@ class _RecordTile extends StatelessWidget {
                   children: [
                     Text(
                       '₹${record.finalAmount.toStringAsFixed(0)}',
-                      style: const TextStyle(fontWeight: FontWeight.w800, color: AppColors.darkOlive, fontSize: 15),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        color: AppColors.darkOlive,
+                        fontSize: 15,
+                      ),
                     ),
                     if (record.isPartial || record.isPaid)
                       Text(
                         'Paid ₹${record.paidAmount.toStringAsFixed(0)}',
-                        style: const TextStyle(color: Color(0xFF2E7D32), fontSize: 11),
+                        style: const TextStyle(
+                          color: Color(0xFF2E7D32),
+                          fontSize: 11,
+                        ),
                       ),
                   ],
                 ),
@@ -286,7 +357,14 @@ class _Chip extends StatelessWidget {
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(6),
       ),
-      child: Text(label, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600)),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
     );
   }
 }
@@ -299,9 +377,16 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.receipt_long_outlined, size: 48, color: AppColors.mutedOlive),
+          Icon(
+            Icons.receipt_long_outlined,
+            size: 48,
+            color: AppColors.mutedOlive,
+          ),
           SizedBox(height: 12),
-          Text('No fee records found', style: TextStyle(color: AppColors.mutedOlive)),
+          Text(
+            'No fee records found',
+            style: TextStyle(color: AppColors.mutedOlive),
+          ),
         ],
       ),
     );
@@ -318,9 +403,17 @@ class _ErrorRetry extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 40),
+          const Icon(
+            Icons.error_outline_rounded,
+            color: Colors.redAccent,
+            size: 40,
+          ),
           const SizedBox(height: 10),
-          Text(error, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13)),
+          Text(
+            error,
+            textAlign: TextAlign.center,
+            style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
+          ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
@@ -331,27 +424,52 @@ class _ErrorRetry extends StatelessWidget {
 
 Color _statusColor(String s) {
   switch (s) {
-    case 'PAID': return const Color(0xFF2E7D32);
-    case 'PENDING': return const Color(0xFF1565C0);
-    case 'OVERDUE': return const Color(0xFFC62828);
-    case 'PARTIALLY_PAID': return const Color(0xFFE65100);
-    case 'WAIVED': return AppColors.mutedOlive;
-    default: return AppColors.mutedOlive;
+    case 'PAID':
+      return const Color(0xFF2E7D32);
+    case 'PENDING':
+      return const Color(0xFF1565C0);
+    case 'OVERDUE':
+      return const Color(0xFFC62828);
+    case 'PARTIALLY_PAID':
+      return const Color(0xFFE65100);
+    case 'WAIVED':
+      return AppColors.mutedOlive;
+    default:
+      return AppColors.mutedOlive;
   }
 }
 
 String _statusLabel(String s) {
   switch (s) {
-    case 'PAID': return 'Paid';
-    case 'PENDING': return 'Pending';
-    case 'OVERDUE': return 'Overdue';
-    case 'PARTIALLY_PAID': return 'Partial';
-    case 'WAIVED': return 'Waived';
-    default: return s;
+    case 'PAID':
+      return 'Paid';
+    case 'PENDING':
+      return 'Pending';
+    case 'OVERDUE':
+      return 'Overdue';
+    case 'PARTIALLY_PAID':
+      return 'Partial';
+    case 'WAIVED':
+      return 'Waived';
+    default:
+      return s;
   }
 }
 
 String _fmtDate(DateTime d) {
-  final months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  final months = [
+    'Jan',
+    'Feb',
+    'Mar',
+    'Apr',
+    'May',
+    'Jun',
+    'Jul',
+    'Aug',
+    'Sep',
+    'Oct',
+    'Nov',
+    'Dec',
+  ];
   return '${d.day} ${months[d.month - 1]}';
 }

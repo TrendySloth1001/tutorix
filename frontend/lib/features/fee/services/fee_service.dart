@@ -8,7 +8,9 @@ class FeeService {
   // ── Fee Structures ───────────────────────────────────────────────
 
   Future<List<FeeStructureModel>> listStructures(String coachingId) async {
-    final data = await _api.getAuthenticatedRaw(ApiConstants.feeStructures(coachingId));
+    final data = await _api.getAuthenticatedRaw(
+      ApiConstants.feeStructures(coachingId),
+    );
     return (data as List<dynamic>)
         .map((e) => FeeStructureModel.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -29,7 +31,10 @@ class FeeService {
       'lateFinePerDay': lateFinePerDay,
       'description': ?description,
     };
-    final data = await _api.postAuthenticated(ApiConstants.feeStructures(coachingId), body: body);
+    final data = await _api.postAuthenticated(
+      ApiConstants.feeStructures(coachingId),
+      body: body,
+    );
     return FeeStructureModel.fromJson(data);
   }
 
@@ -59,7 +64,9 @@ class FeeService {
   }
 
   Future<void> deleteStructure(String coachingId, String structureId) async {
-    await _api.deleteAuthenticated(ApiConstants.feeStructureById(coachingId, structureId));
+    await _api.deleteAuthenticated(
+      ApiConstants.feeStructureById(coachingId, structureId),
+    );
   }
 
   // ── Assignments ─────────────────────────────────────────────────
@@ -83,11 +90,19 @@ class FeeService {
       if (startDate != null) 'startDate': startDate.toIso8601String(),
       if (endDate != null) 'endDate': endDate.toIso8601String(),
     };
-    await _api.postAuthenticated(ApiConstants.assignFees(coachingId), body: body);
+    await _api.postAuthenticated(
+      ApiConstants.assignFees(coachingId),
+      body: body,
+    );
   }
 
-  Future<Map<String, dynamic>> getMemberFeeProfile(String coachingId, String memberId) async {
-    final data = await _api.getAuthenticated(ApiConstants.feeMember(coachingId, memberId));
+  Future<Map<String, dynamic>> getMemberFeeProfile(
+    String coachingId,
+    String memberId,
+  ) async {
+    final data = await _api.getAuthenticated(
+      ApiConstants.feeMember(coachingId, memberId),
+    );
     return data;
   }
 
@@ -110,7 +125,9 @@ class FeeService {
       if (from != null) 'from': from.toIso8601String(),
       if (to != null) 'to': to.toIso8601String(),
     };
-    final uri = Uri.parse(ApiConstants.feeRecords(coachingId)).replace(queryParameters: params);
+    final uri = Uri.parse(
+      ApiConstants.feeRecords(coachingId),
+    ).replace(queryParameters: params);
     final data = await _api.getAuthenticated(uri.toString());
     final map = data;
     return {
@@ -124,7 +141,9 @@ class FeeService {
   }
 
   Future<FeeRecordModel> getRecord(String coachingId, String recordId) async {
-    final data = await _api.getAuthenticated(ApiConstants.feeRecordById(coachingId, recordId));
+    final data = await _api.getAuthenticated(
+      ApiConstants.feeRecordById(coachingId, recordId),
+    );
     return FeeRecordModel.fromJson(data);
   }
 
@@ -151,7 +170,11 @@ class FeeService {
     return FeeRecordModel.fromJson(data);
   }
 
-  Future<FeeRecordModel> waiveFee(String coachingId, String recordId, {String? notes}) async {
+  Future<FeeRecordModel> waiveFee(
+    String coachingId,
+    String recordId, {
+    String? notes,
+  }) async {
     final data = await _api.postAuthenticated(
       ApiConstants.feeRecordWaive(coachingId, recordId),
       body: {'notes': ?notes},
@@ -160,13 +183,18 @@ class FeeService {
   }
 
   Future<void> sendReminder(String coachingId, String recordId) async {
-    await _api.postAuthenticated(ApiConstants.feeRecordRemind(coachingId, recordId), body: {});
+    await _api.postAuthenticated(
+      ApiConstants.feeRecordRemind(coachingId, recordId),
+      body: {},
+    );
   }
 
   // ── Summary & My Fees ────────────────────────────────────────────
 
   Future<FeeSummaryModel> getSummary(String coachingId) async {
-    final data = await _api.getAuthenticated(ApiConstants.feeSummary(coachingId));
+    final data = await _api.getAuthenticated(
+      ApiConstants.feeSummary(coachingId),
+    );
     return FeeSummaryModel.fromJson(data);
   }
 

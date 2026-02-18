@@ -429,9 +429,14 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                     _QuickAction(
                       icon: Icons.account_balance_wallet_rounded,
                       label: 'Fee Management',
-                      onTap: () => Navigator.push(context, MaterialPageRoute(
-                        builder: (_) => FeeDashboardScreen(coachingId: widget.coaching.id),
-                      )),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FeeDashboardScreen(
+                            coachingId: widget.coaching.id,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
 
@@ -441,9 +446,15 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                     _QuickAction(
                       icon: Icons.receipt_rounded,
                       label: 'My Fees',
-                      onTap: () => Navigator.push(context, MaterialPageRoute(
-                        builder: (_) => MyFeesScreen(coachingId: widget.coaching.id, coachingName: widget.coaching.name),
-                      )),
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => MyFeesScreen(
+                            coachingId: widget.coaching.id,
+                            coachingName: widget.coaching.name,
+                          ),
+                        ),
+                      ),
                     ),
                   ],
 

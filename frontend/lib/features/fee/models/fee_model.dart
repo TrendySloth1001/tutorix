@@ -6,7 +6,8 @@ class FeeStructureModel {
   final String? description;
   final double amount;
   final String currency;
-  final String cycle; // ONCE | MONTHLY | QUARTERLY | HALF_YEARLY | YEARLY | CUSTOM
+  final String
+  cycle; // ONCE | MONTHLY | QUARTERLY | HALF_YEARLY | YEARLY | CUSTOM
   final double lateFinePerDay;
   final bool isActive;
   final int assignmentCount;
@@ -39,18 +40,26 @@ class FeeStructureModel {
       lateFinePerDay: (json['lateFinePerDay'] as num?)?.toDouble() ?? 0,
       isActive: json['isActive'] as bool? ?? true,
       assignmentCount: count?['assignments'] as int? ?? 0,
-      createdAt: json['createdAt'] != null ? DateTime.tryParse(json['createdAt'] as String) : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'] as String)
+          : null,
     );
   }
 
   String get cycleLabel {
     switch (cycle) {
-      case 'ONCE': return 'One-time';
-      case 'MONTHLY': return 'Monthly';
-      case 'QUARTERLY': return 'Quarterly';
-      case 'HALF_YEARLY': return 'Half-yearly';
-      case 'YEARLY': return 'Yearly';
-      default: return 'Custom';
+      case 'ONCE':
+        return 'One-time';
+      case 'MONTHLY':
+        return 'Monthly';
+      case 'QUARTERLY':
+        return 'Quarterly';
+      case 'HALF_YEARLY':
+        return 'Half-yearly';
+      case 'YEARLY':
+        return 'Yearly';
+      default:
+        return 'Custom';
     }
   }
 }
@@ -131,12 +140,18 @@ class FeePaymentModel {
 
   String get modeLabel {
     switch (mode) {
-      case 'CASH': return 'Cash';
-      case 'ONLINE': return 'Online';
-      case 'UPI': return 'UPI';
-      case 'BANK_TRANSFER': return 'Bank Transfer';
-      case 'CHEQUE': return 'Cheque';
-      default: return mode;
+      case 'CASH':
+        return 'Cash';
+      case 'ONLINE':
+        return 'Online';
+      case 'UPI':
+        return 'UPI';
+      case 'BANK_TRANSFER':
+        return 'Bank Transfer';
+      case 'CHEQUE':
+        return 'Cheque';
+      default:
+        return mode;
     }
   }
 }
@@ -210,17 +225,27 @@ class FeeRecordModel {
       finalAmount: (json['finalAmount'] as num).toDouble(),
       paidAmount: (json['paidAmount'] as num?)?.toDouble() ?? 0,
       dueDate: DateTime.parse(json['dueDate'] as String),
-      paidAt: json['paidAt'] != null ? DateTime.tryParse(json['paidAt'] as String) : null,
+      paidAt: json['paidAt'] != null
+          ? DateTime.tryParse(json['paidAt'] as String)
+          : null,
       status: json['status'] as String,
       paymentMode: json['paymentMode'] as String?,
       transactionRef: json['transactionRef'] as String?,
       receiptNo: json['receiptNo'] as String?,
       notes: json['notes'] as String?,
-      reminderSentAt: json['reminderSentAt'] != null ? DateTime.tryParse(json['reminderSentAt'] as String) : null,
+      reminderSentAt: json['reminderSentAt'] != null
+          ? DateTime.tryParse(json['reminderSentAt'] as String)
+          : null,
       reminderCount: json['reminderCount'] as int? ?? 0,
       member: memberJson != null ? FeeMemberInfo.fromJson(memberJson) : null,
-      feeStructure: structure != null ? FeeStructureModel.fromJson(structure) : null,
-      payments: paymentsList?.map((e) => FeePaymentModel.fromJson(e as Map<String, dynamic>)).toList() ?? [],
+      feeStructure: structure != null
+          ? FeeStructureModel.fromJson(structure)
+          : null,
+      payments:
+          paymentsList
+              ?.map((e) => FeePaymentModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
     );
   }
 
@@ -254,15 +279,20 @@ class FeeSummaryModel {
       totalCollected: (json['totalCollected'] as num?)?.toDouble() ?? 0,
       totalPending: (json['totalPending'] as num?)?.toDouble() ?? 0,
       totalOverdue: (json['totalOverdue'] as num?)?.toDouble() ?? 0,
-      statusBreakdown: (json['statusBreakdown'] as List<dynamic>?)
+      statusBreakdown:
+          (json['statusBreakdown'] as List<dynamic>?)
               ?.map((e) => FeeStatusGroup.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
-      paymentModes: (json['paymentModes'] as List<dynamic>?)
-              ?.map((e) => FeePaymentModeGroup.fromJson(e as Map<String, dynamic>))
+      paymentModes:
+          (json['paymentModes'] as List<dynamic>?)
+              ?.map(
+                (e) => FeePaymentModeGroup.fromJson(e as Map<String, dynamic>),
+              )
               .toList() ??
           [],
-      monthlyCollection: (json['monthlyCollection'] as List<dynamic>?)
+      monthlyCollection:
+          (json['monthlyCollection'] as List<dynamic>?)
               ?.map((e) => FeeMonthlyData.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -274,7 +304,11 @@ class FeeStatusGroup {
   final String status;
   final int count;
   final double totalAmount;
-  const FeeStatusGroup({required this.status, required this.count, required this.totalAmount});
+  const FeeStatusGroup({
+    required this.status,
+    required this.count,
+    required this.totalAmount,
+  });
   factory FeeStatusGroup.fromJson(Map<String, dynamic> json) {
     final sum = json['_sum'] as Map<String, dynamic>?;
     return FeeStatusGroup(
@@ -289,7 +323,11 @@ class FeePaymentModeGroup {
   final String mode;
   final int count;
   final double total;
-  const FeePaymentModeGroup({required this.mode, required this.count, required this.total});
+  const FeePaymentModeGroup({
+    required this.mode,
+    required this.count,
+    required this.total,
+  });
   factory FeePaymentModeGroup.fromJson(Map<String, dynamic> json) {
     final sum = json['_sum'] as Map<String, dynamic>?;
     return FeePaymentModeGroup(

@@ -29,12 +29,21 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
   }
 
   Future<void> _load() async {
-    setState(() { _loading = true; _error = null; });
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final s = await _svc.getSummary(widget.coachingId);
-      setState(() { _summary = s; _loading = false; });
+      setState(() {
+        _summary = s;
+        _loading = false;
+      });
     } catch (e) {
-      setState(() { _error = e.toString(); _loading = false; });
+      setState(() {
+        _error = e.toString();
+        _loading = false;
+      });
     }
   }
 
@@ -72,11 +81,8 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
         child: _loading
             ? const Center(child: CircularProgressIndicator())
             : _error != null
-                ? _ErrorView(error: _error!, onRetry: _load)
-                : _Body(
-                    summary: _summary!,
-                    coachingId: widget.coachingId,
-                  ),
+            ? _ErrorView(error: _error!, onRetry: _load)
+            : _Body(summary: _summary!, coachingId: widget.coachingId),
       ),
     );
   }
@@ -127,35 +133,43 @@ class _SummaryCards extends StatelessWidget {
       children: [
         Row(
           children: [
-            Expanded(child: _KpiCard(
-              label: 'Collected',
-              amount: summary.totalCollected,
-              icon: Icons.account_balance_wallet_rounded,
-              color: const Color(0xFF2E7D32),
-              bgColor: const Color(0xFFE8F5E9),
-            )),
+            Expanded(
+              child: _KpiCard(
+                label: 'Collected',
+                amount: summary.totalCollected,
+                icon: Icons.account_balance_wallet_rounded,
+                color: const Color(0xFF2E7D32),
+                bgColor: const Color(0xFFE8F5E9),
+              ),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: _KpiCard(
-              label: 'Pending',
-              amount: summary.totalPending,
-              icon: Icons.schedule_rounded,
-              color: const Color(0xFF1565C0),
-              bgColor: const Color(0xFFE3F2FD),
-            )),
+            Expanded(
+              child: _KpiCard(
+                label: 'Pending',
+                amount: summary.totalPending,
+                icon: Icons.schedule_rounded,
+                color: const Color(0xFF1565C0),
+                bgColor: const Color(0xFFE3F2FD),
+              ),
+            ),
           ],
         ),
         const SizedBox(height: 12),
         Row(
           children: [
-            Expanded(child: _KpiCard(
-              label: 'Overdue',
-              amount: summary.totalOverdue,
-              icon: Icons.warning_amber_rounded,
-              color: const Color(0xFFC62828),
-              bgColor: const Color(0xFFFFEBEE),
-            )),
+            Expanded(
+              child: _KpiCard(
+                label: 'Overdue',
+                amount: summary.totalOverdue,
+                icon: Icons.warning_amber_rounded,
+                color: const Color(0xFFC62828),
+                bgColor: const Color(0xFFFFEBEE),
+              ),
+            ),
             const SizedBox(width: 12),
-            Expanded(child: _StatusCountCard(breakdown: summary.statusBreakdown)),
+            Expanded(
+              child: _StatusCountCard(breakdown: summary.statusBreakdown),
+            ),
           ],
         ),
       ],
@@ -245,7 +259,14 @@ class _StatusCountCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('Status', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.mutedOlive)),
+          const Text(
+            'Status',
+            style: TextStyle(
+              fontWeight: FontWeight.w600,
+              fontSize: 12,
+              color: AppColors.mutedOlive,
+            ),
+          ),
           const SizedBox(height: 10),
           _StatusRow('Paid', _count('PAID'), const Color(0xFF2E7D32)),
           _StatusRow('Pending', _count('PENDING'), const Color(0xFF1565C0)),
@@ -268,11 +289,25 @@ class _StatusRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)),
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
           const SizedBox(width: 6),
-          Text(label, style: const TextStyle(fontSize: 11, color: AppColors.darkOlive)),
+          Text(
+            label,
+            style: const TextStyle(fontSize: 11, color: AppColors.darkOlive),
+          ),
           const Spacer(),
-          Text('$count', style: TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: color)),
+          Text(
+            '$count',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: color,
+            ),
+          ),
         ],
       ),
     );
@@ -299,15 +334,37 @@ class _PaymentModeChips extends StatelessWidget {
           decoration: BoxDecoration(
             color: AppColors.softGrey.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: AppColors.mutedOlive.withValues(alpha: 0.25)),
+            border: Border.all(
+              color: AppColors.mutedOlive.withValues(alpha: 0.25),
+            ),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(_modeLabel(m.mode), style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12, color: AppColors.darkOlive)),
+              Text(
+                _modeLabel(m.mode),
+                style: const TextStyle(
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                  color: AppColors.darkOlive,
+                ),
+              ),
               const SizedBox(height: 2),
-              Text('₹${_formatAmount(m.total)}', style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16, color: AppColors.darkOlive)),
-              Text('${m.count} txn${m.count == 1 ? '' : 's'}', style: const TextStyle(fontSize: 11, color: AppColors.mutedOlive)),
+              Text(
+                '₹${_formatAmount(m.total)}',
+                style: const TextStyle(
+                  fontWeight: FontWeight.w800,
+                  fontSize: 16,
+                  color: AppColors.darkOlive,
+                ),
+              ),
+              Text(
+                '${m.count} txn${m.count == 1 ? '' : 's'}',
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.mutedOlive,
+                ),
+              ),
             ],
           ),
         );
@@ -317,12 +374,18 @@ class _PaymentModeChips extends StatelessWidget {
 
   String _modeLabel(String mode) {
     switch (mode) {
-      case 'CASH': return '💵 Cash';
-      case 'ONLINE': return '💳 Online';
-      case 'UPI': return '📱 UPI';
-      case 'BANK_TRANSFER': return '🏦 Bank Transfer';
-      case 'CHEQUE': return '📝 Cheque';
-      default: return mode;
+      case 'CASH':
+        return '💵 Cash';
+      case 'ONLINE':
+        return '💳 Online';
+      case 'UPI':
+        return '📱 UPI';
+      case 'BANK_TRANSFER':
+        return '🏦 Bank Transfer';
+      case 'CHEQUE':
+        return '📝 Cheque';
+      default:
+        return mode;
     }
   }
 }
@@ -365,7 +428,13 @@ class _MonthlyChart extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 4),
-                  Text(label, style: const TextStyle(fontSize: 9, color: AppColors.mutedOlive)),
+                  Text(
+                    label,
+                    style: const TextStyle(
+                      fontSize: 9,
+                      color: AppColors.mutedOlive,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -390,27 +459,36 @@ class _QuickActions extends StatelessWidget {
           icon: Icons.receipt_long_rounded,
           label: 'All Fee Records',
           subtitle: 'View, collect & manage dues',
-          onTap: () => Navigator.push(context, MaterialPageRoute(
-            builder: (_) => FeeRecordsScreen(coachingId: coachingId),
-          )),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => FeeRecordsScreen(coachingId: coachingId),
+            ),
+          ),
         ),
         const SizedBox(height: 10),
         _ActionTile(
           icon: Icons.category_rounded,
           label: 'Fee Structures',
           subtitle: 'Create and manage templates',
-          onTap: () => Navigator.push(context, MaterialPageRoute(
-            builder: (_) => FeeStructuresScreen(coachingId: coachingId),
-          )),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => FeeStructuresScreen(coachingId: coachingId),
+            ),
+          ),
         ),
         const SizedBox(height: 10),
         _ActionTile(
           icon: Icons.person_add_rounded,
           label: 'Assign Fee to Student',
           subtitle: 'Map a fee structure to a member',
-          onTap: () => Navigator.push(context, MaterialPageRoute(
-            builder: (_) => AssignFeeScreen(coachingId: coachingId),
-          )),
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => AssignFeeScreen(coachingId: coachingId),
+            ),
+          ),
         ),
       ],
     );
@@ -454,12 +532,28 @@ class _ActionTile extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(label, style: const TextStyle(fontWeight: FontWeight.w600, color: AppColors.darkOlive, fontSize: 14)),
-                    Text(subtitle, style: const TextStyle(color: AppColors.mutedOlive, fontSize: 12)),
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.darkOlive,
+                        fontSize: 14,
+                      ),
+                    ),
+                    Text(
+                      subtitle,
+                      style: const TextStyle(
+                        color: AppColors.mutedOlive,
+                        fontSize: 12,
+                      ),
+                    ),
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_right_rounded, color: AppColors.mutedOlive),
+              const Icon(
+                Icons.chevron_right_rounded,
+                color: AppColors.mutedOlive,
+              ),
             ],
           ),
         ),
@@ -475,7 +569,14 @@ class _SectionTitle extends StatelessWidget {
   const _SectionTitle(this.title);
   @override
   Widget build(BuildContext context) {
-    return Text(title, style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 15, color: AppColors.darkOlive));
+    return Text(
+      title,
+      style: const TextStyle(
+        fontWeight: FontWeight.w700,
+        fontSize: 15,
+        color: AppColors.darkOlive,
+      ),
+    );
   }
 }
 
@@ -484,7 +585,12 @@ class _EmptyHint extends StatelessWidget {
   const _EmptyHint(this.text);
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text(text, style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13)));
+    return Center(
+      child: Text(
+        text,
+        style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
+      ),
+    );
   }
 }
 
@@ -500,9 +606,17 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 40),
+            const Icon(
+              Icons.error_outline_rounded,
+              color: Colors.redAccent,
+              size: 40,
+            ),
             const SizedBox(height: 12),
-            Text(error, textAlign: TextAlign.center, style: const TextStyle(color: AppColors.mutedOlive)),
+            Text(
+              error,
+              textAlign: TextAlign.center,
+              style: const TextStyle(color: AppColors.mutedOlive),
+            ),
             const SizedBox(height: 16),
             OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
           ],
