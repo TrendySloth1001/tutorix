@@ -7,11 +7,12 @@ class FeeStructureModel {
   final double amount;
   final String currency;
   final String
-  cycle; // ONCE | MONTHLY | QUARTERLY | HALF_YEARLY | YEARLY | CUSTOM
+  cycle; // ONCE | MONTHLY | QUARTERLY | HALF_YEARLY | YEARLY | INSTALLMENT
   final double lateFinePerDay;
   final bool isActive;
   final int assignmentCount;
   final DateTime? createdAt;
+  final List<InstallmentPlanItem> installmentPlan;
 
   const FeeStructureModel({
     required this.id,
@@ -25,10 +26,12 @@ class FeeStructureModel {
     this.isActive = true,
     this.assignmentCount = 0,
     this.createdAt,
+    this.installmentPlan = const [],
   });
 
   factory FeeStructureModel.fromJson(Map<String, dynamic> json) {
     final count = json['_count'] as Map<String, dynamic>?;
+    final planJson = json['installmentPlan'] as List<dynamic>?;
     return FeeStructureModel(
       id: json['id'] as String,
       coachingId: json['coachingId'] as String? ?? '',
@@ -43,6 +46,13 @@ class FeeStructureModel {
       createdAt: json['createdAt'] != null
           ? DateTime.tryParse(json['createdAt'] as String)
           : null,
+      installmentPlan:
+          planJson
+              ?.map(
+                (e) => InstallmentPlanItem.fromJson(e as Map<String, dynamic>),
+              )
+              .toList() ??
+          [],
     );
   }
 
@@ -58,10 +68,29 @@ class FeeStructureModel {
         return 'Half-yearly';
       case 'YEARLY':
         return 'Yearly';
+      case 'INSTALLMENT':
+        return 'Installment';
       default:
         return 'Custom';
     }
   }
+}
+
+class InstallmentPlanItem {
+  final String label;
+  final int dueDay;
+  final double amount;
+  const InstallmentPlanItem({
+    required this.label,
+    required this.dueDay,
+    required this.amount,
+  });
+  factory InstallmentPlanItem.fromJson(Map<String, dynamic> json) =>
+      InstallmentPlanItem(
+        label: json['label'] as String? ?? '',
+        dueDay: (json['dueDay'] as num?)?.toInt() ?? 1,
+        amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      );
 }
 
 /// A snapshot of a mini member for fee display.
@@ -177,11 +206,13 @@ class FeeRecordModel {
   final String? notes;
   final DateTime? reminderSentAt;
   final int reminderCount;
+  final int daysOverdue;
 
   // Embedded
   final FeeMemberInfo? member;
   final FeeStructureModel? feeStructure;
   final List<FeePaymentModel> payments;
+  final List<FeeRefundModel> refunds;
 
   const FeeRecordModel({
     required this.id,
@@ -203,9 +234,11 @@ class FeeRecordModel {
     this.notes,
     this.reminderSentAt,
     this.reminderCount = 0,
+    this.daysOverdue = 0,
     this.member,
     this.feeStructure,
     this.payments = const [],
+    this.refunds = const [],
   });
 
   factory FeeRecordModel.fromJson(Map<String, dynamic> json) {
@@ -213,6 +246,7 @@ class FeeRecordModel {
     final structure = assignment?['feeStructure'] as Map<String, dynamic>?;
     final memberJson = json['member'] as Map<String, dynamic>?;
     final paymentsList = json['payments'] as List<dynamic>?;
+    final refundsList = json['refunds'] as List<dynamic>?;
     return FeeRecordModel(
       id: json['id'] as String,
       coachingId: json['coachingId'] as String,
@@ -237,6 +271,7 @@ class FeeRecordModel {
           ? DateTime.tryParse(json['reminderSentAt'] as String)
           : null,
       reminderCount: json['reminderCount'] as int? ?? 0,
+      daysOverdue: json['daysOverdue'] as int? ?? 0,
       member: memberJson != null ? FeeMemberInfo.fromJson(memberJson) : null,
       feeStructure: structure != null
           ? FeeStructureModel.fromJson(structure)
@@ -244,6 +279,11 @@ class FeeRecordModel {
       payments:
           paymentsList
               ?.map((e) => FeePaymentModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      refunds:
+          refundsList
+              ?.map((e) => FeeRefundModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );
@@ -256,11 +296,39 @@ class FeeRecordModel {
   bool get isWaived => status == 'WAIVED';
 }
 
+/// A single refund entry.
+class FeeRefundModel {
+  final String id;
+  final double amount;
+  final String? reason;
+  final String mode;
+  final DateTime refundedAt;
+
+  const FeeRefundModel({
+    required this.id,
+    required this.amount,
+    this.reason,
+    this.mode = 'CASH',
+    required this.refundedAt,
+  });
+
+  factory FeeRefundModel.fromJson(Map<String, dynamic> json) => FeeRefundModel(
+    id: json['id'] as String,
+    amount: (json['amount'] as num).toDouble(),
+    reason: json['reason'] as String?,
+    mode: json['mode'] as String? ?? 'CASH',
+    refundedAt: DateTime.parse(json['refundedAt'] as String),
+  );
+}
+
 /// Summary / analytics response.
 class FeeSummaryModel {
   final double totalCollected;
   final double totalPending;
   final double totalOverdue;
+  final int overdueCount;
+  final double todayCollection;
+  final String? financialYear;
   final List<FeeStatusGroup> statusBreakdown;
   final List<FeePaymentModeGroup> paymentModes;
   final List<FeeMonthlyData> monthlyCollection;
@@ -269,6 +337,9 @@ class FeeSummaryModel {
     required this.totalCollected,
     required this.totalPending,
     required this.totalOverdue,
+    this.overdueCount = 0,
+    this.todayCollection = 0,
+    this.financialYear,
     required this.statusBreakdown,
     required this.paymentModes,
     required this.monthlyCollection,
@@ -279,6 +350,9 @@ class FeeSummaryModel {
       totalCollected: (json['totalCollected'] as num?)?.toDouble() ?? 0,
       totalPending: (json['totalPending'] as num?)?.toDouble() ?? 0,
       totalOverdue: (json['totalOverdue'] as num?)?.toDouble() ?? 0,
+      overdueCount: json['overdueCount'] as int? ?? 0,
+      todayCollection: (json['todayCollection'] as num?)?.toDouble() ?? 0,
+      financialYear: json['financialYear'] as String?,
       statusBreakdown:
           (json['statusBreakdown'] as List<dynamic>?)
               ?.map((e) => FeeStatusGroup.fromJson(e as Map<String, dynamic>))
@@ -341,11 +415,92 @@ class FeePaymentModeGroup {
 class FeeMonthlyData {
   final String month; // "2025-04"
   final double total;
-  const FeeMonthlyData({required this.month, required this.total});
+  final int count;
+  const FeeMonthlyData({
+    required this.month,
+    required this.total,
+    this.count = 0,
+  });
   factory FeeMonthlyData.fromJson(Map<String, dynamic> json) {
     return FeeMonthlyData(
       month: json['month'] as String,
       total: (json['total'] as num?)?.toDouble() ?? 0,
+      count: json['count'] as int? ?? 0,
     );
   }
+}
+
+/// A single entry in a student's financial ledger timeline.
+class LedgerEntryModel {
+  final DateTime date;
+  final String type; // RECORD | PAYMENT | REFUND
+  final String label;
+  final double amount;
+  final String? mode;
+  final String? ref;
+  final String? receiptNo;
+  final String? status;
+  final String recordId;
+  final double runningBalance;
+
+  const LedgerEntryModel({
+    required this.date,
+    required this.type,
+    required this.label,
+    required this.amount,
+    this.mode,
+    this.ref,
+    this.receiptNo,
+    this.status,
+    required this.recordId,
+    required this.runningBalance,
+  });
+
+  factory LedgerEntryModel.fromJson(Map<String, dynamic> json) =>
+      LedgerEntryModel(
+        date: DateTime.parse(json['date'] as String),
+        type: json['type'] as String,
+        label: json['label'] as String,
+        amount: (json['amount'] as num).toDouble(),
+        mode: json['mode'] as String?,
+        ref: json['ref'] as String?,
+        receiptNo: json['receiptNo'] as String?,
+        status: json['status'] as String?,
+        recordId: json['recordId'] as String,
+        runningBalance: (json['runningBalance'] as num).toDouble(),
+      );
+}
+
+/// Student ledger summary totals.
+class StudentLedgerSummary {
+  final double totalCharged;
+  final double totalPaid;
+  final double totalRefunded;
+  final double balance;
+  final double totalOverdue;
+  final DateTime? nextDueDate;
+  final double nextDueAmount;
+
+  const StudentLedgerSummary({
+    required this.totalCharged,
+    required this.totalPaid,
+    required this.totalRefunded,
+    required this.balance,
+    required this.totalOverdue,
+    this.nextDueDate,
+    required this.nextDueAmount,
+  });
+
+  factory StudentLedgerSummary.fromJson(Map<String, dynamic> json) =>
+      StudentLedgerSummary(
+        totalCharged: (json['totalCharged'] as num?)?.toDouble() ?? 0,
+        totalPaid: (json['totalPaid'] as num?)?.toDouble() ?? 0,
+        totalRefunded: (json['totalRefunded'] as num?)?.toDouble() ?? 0,
+        balance: (json['balance'] as num?)?.toDouble() ?? 0,
+        totalOverdue: (json['totalOverdue'] as num?)?.toDouble() ?? 0,
+        nextDueDate: json['nextDueDate'] != null
+            ? DateTime.tryParse(json['nextDueDate'] as String)
+            : null,
+        nextDueAmount: (json['nextDueAmount'] as num?)?.toDouble() ?? 0,
+      );
 }

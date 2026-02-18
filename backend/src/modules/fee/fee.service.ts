@@ -7,9 +7,10 @@ export interface CreateFeeStructureDto {
     name: string;
     description?: string;
     amount: number;
-    cycle?: string; // ONCE | MONTHLY | QUARTERLY | HALF_YEARLY | YEARLY | CUSTOM
+    cycle?: string; // ONCE | MONTHLY | QUARTERLY | HALF_YEARLY | YEARLY | INSTALLMENT
     lateFinePerDay?: number;
     discounts?: object;
+    installmentPlan?: Array<{ label: string; dueDay: number; amount: number }>;
 }
 
 export interface UpdateFeeStructureDto {
@@ -19,6 +20,7 @@ export interface UpdateFeeStructureDto {
     cycle?: string;
     lateFinePerDay?: number;
     discounts?: object;
+    installmentPlan?: object;
     isActive?: boolean;
 }
 
@@ -28,7 +30,9 @@ export interface AssignFeeDto {
     customAmount?: number;
     discountAmount?: number;
     discountReason?: string;
-    startDate?: string; // ISO string
+    scholarshipTag?: string;
+    scholarshipAmount?: number;
+    startDate?: string;
     endDate?: string;
 }
 
@@ -44,13 +48,26 @@ export interface WaiveFeeDto {
     notes?: string;
 }
 
+export interface RecordRefundDto {
+    amount: number;
+    reason?: string;
+    mode?: string;
+    refundedAt?: string;
+}
+
+export interface BulkRemindDto {
+    statusFilter?: string;
+    memberIds?: string[];
+}
+
 export interface ListFeeRecordsQuery {
     memberId?: string;
-    status?: string; // PENDING | PAID | OVERDUE | WAIVED | PARTIALLY_PAID
-    from?: string;   // ISO date
-    to?: string;     // ISO date
+    status?: string;
+    from?: string;
+    to?: string;
     page?: number;
     limit?: number;
+    search?: string;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -61,32 +78,28 @@ function generateReceiptNo(): string {
     return `RCP-${ts}-${rand}`;
 }
 
+function calcDaysOverdue(dueDate: Date): number {
+    const now = new Date();
+    if (dueDate >= now) return 0;
+    return Math.floor((now.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
+}
+
 /** Computes next due date from current date based on cycle. */
-function nextDueDate(from: Date, cycle: string): Date {
+function nextDueDateFromCycle(from: Date, cycle: string): Date {
     const d = new Date(from);
     switch (cycle) {
-        case 'MONTHLY':
-            d.setMonth(d.getMonth() + 1);
-            break;
-        case 'QUARTERLY':
-            d.setMonth(d.getMonth() + 3);
-            break;
-        case 'HALF_YEARLY':
-            d.setMonth(d.getMonth() + 6);
-            break;
-        case 'YEARLY':
-            d.setFullYear(d.getFullYear() + 1);
-            break;
-        default:
-            // ONCE or CUSTOM — no further cycles
-            break;
+        case 'MONTHLY':     d.setMonth(d.getMonth() + 1);          break;
+        case 'QUARTERLY':   d.setMonth(d.getMonth() + 3);          break;
+        case 'HALF_YEARLY': d.setMonth(d.getMonth() + 6);          break;
+        case 'YEARLY':      d.setFullYear(d.getFullYear() + 1);    break;
+        default: break;
     }
     return d;
 }
 
 function buildRecordTitle(structureName: string, dueDate: Date, cycle: string): string {
     const month = dueDate.toLocaleString('en-IN', { month: 'long', year: 'numeric' });
-    if (cycle === 'ONCE') return structureName;
+    if (cycle === 'ONCE' || cycle === 'INSTALLMENT') return structureName;
     return `${month} — ${structureName}`;
 }
 
@@ -99,6 +112,14 @@ const MEMBER_SELECT = {
     wardId: true,
     user: { select: { id: true, name: true, picture: true, email: true, phone: true } },
     ward: { select: { id: true, name: true, picture: true, parentId: true, parent: { select: { id: true, name: true, email: true, phone: true } } } },
+} as const;
+
+const RECORD_INCLUDE = {
+    member: { select: MEMBER_SELECT },
+    assignment: { include: { feeStructure: true } },
+    payments: { orderBy: { paidAt: 'desc' as const } },
+    refunds: { orderBy: { refundedAt: 'desc' as const } },
+    markedBy: { select: { id: true, name: true } },
 } as const;
 
 // ─── Service ─────────────────────────────────────────────────────────
@@ -127,18 +148,29 @@ export class FeeService {
                 cycle: dto.cycle ?? 'MONTHLY',
                 lateFinePerDay: dto.lateFinePerDay ?? 0,
                 discounts: dto.discounts != null ? dto.discounts as Prisma.InputJsonValue : Prisma.JsonNull,
+                installmentPlan: dto.installmentPlan != null ? dto.installmentPlan as Prisma.InputJsonValue : Prisma.JsonNull,
             },
         });
     }
 
     async updateStructure(coachingId: string, structureId: string, dto: UpdateFeeStructureDto) {
         await this._ensureStructureOwned(coachingId, structureId);
+        const data: Record<string, unknown> = {};
+        if (dto.name !== undefined) data.name = dto.name;
+        if (dto.description !== undefined) data.description = dto.description ?? null;
+        if (dto.amount !== undefined) data.amount = dto.amount;
+        if (dto.cycle !== undefined) data.cycle = dto.cycle;
+        if (dto.lateFinePerDay !== undefined) data.lateFinePerDay = dto.lateFinePerDay;
+        if (dto.isActive !== undefined) data.isActive = dto.isActive;
+        if (dto.discounts !== undefined) {
+            data.discounts = dto.discounts != null ? dto.discounts as Prisma.InputJsonValue : Prisma.JsonNull;
+        }
+        if (dto.installmentPlan !== undefined) {
+            data.installmentPlan = dto.installmentPlan != null ? dto.installmentPlan as Prisma.InputJsonValue : Prisma.JsonNull;
+        }
         return prisma.feeStructure.update({
             where: { id: structureId },
-            data: {
-                ...dto,
-                discounts: dto.discounts != null ? dto.discounts as Prisma.InputJsonValue : Prisma.JsonNull,
-            },
+            data,
         });
     }
 
@@ -159,7 +191,8 @@ export class FeeService {
         const structure = await this._ensureStructureOwned(coachingId, dto.feeStructureId);
 
         // Upsert assignment
-        const finalAmount = (dto.customAmount ?? structure.amount) - (dto.discountAmount ?? 0);
+        const totalDiscount = (dto.discountAmount ?? 0) + (dto.scholarshipAmount ?? 0);
+        const finalAmount = (dto.customAmount ?? structure.amount) - totalDiscount;
         const startDate = dto.startDate ? new Date(dto.startDate) : new Date();
 
         const assignment = await prisma.feeAssignment.upsert({
@@ -171,26 +204,40 @@ export class FeeService {
                 customAmount: dto.customAmount ?? null,
                 discountAmount: dto.discountAmount ?? 0,
                 discountReason: dto.discountReason ?? null,
+                scholarshipTag: dto.scholarshipTag ?? null,
+                scholarshipAmount: dto.scholarshipAmount ?? null,
                 startDate,
                 endDate: dto.endDate ? new Date(dto.endDate) : null,
                 isActive: true,
+                isPaused: false,
             },
             update: {
                 customAmount: dto.customAmount ?? null,
                 discountAmount: dto.discountAmount ?? 0,
                 discountReason: dto.discountReason ?? null,
+                scholarshipTag: dto.scholarshipTag ?? null,
+                scholarshipAmount: dto.scholarshipAmount ?? null,
                 isActive: true,
                 endDate: dto.endDate ? new Date(dto.endDate) : null,
             },
         });
 
-        // Create first record if none exists for current cycle
-        const existingRecord = await prisma.feeRecord.findFirst({
-            where: { assignmentId: assignment.id, status: { in: ['PENDING', 'PARTIALLY_PAID'] } },
-        });
-
-        if (!existingRecord) {
-            await this._createFeeRecord(coachingId, assignment.id, dto.memberId, structure, finalAmount, startDate);
+        // For INSTALLMENT cycle: create records for each installment
+        if (structure.cycle === 'INSTALLMENT' && structure.installmentPlan) {
+            const plan = structure.installmentPlan as Array<{ label: string; dueDay: number; amount: number }>;
+            for (const inst of plan) {
+                const dueDate = new Date(startDate);
+                dueDate.setDate(inst.dueDay);
+                await this._createFeeRecord(coachingId, assignment.id, dto.memberId, structure, inst.amount, dueDate, inst.label);
+            }
+        } else {
+            // Create first record if none exists for current cycle
+            const existingRecord = await prisma.feeRecord.findFirst({
+                where: { assignmentId: assignment.id, status: { in: ['PENDING', 'PARTIALLY_PAID'] } },
+            });
+            if (!existingRecord) {
+                await this._createFeeRecord(coachingId, assignment.id, dto.memberId, structure, finalAmount, startDate);
+            }
         }
 
         return assignment;
@@ -202,38 +249,90 @@ export class FeeService {
         return prisma.feeAssignment.update({ where: { id: assignmentId }, data: { isActive: false } });
     }
 
-    async getMemberFeeProfile(coachingId: string, memberId: string) {
-        const assignments = await prisma.feeAssignment.findMany({
-            where: { coachingId, memberId, isActive: true },
-            include: {
-                feeStructure: true,
-                records: {
-                    orderBy: { dueDate: 'desc' },
-                    take: 12,
-                    include: { payments: true },
-                },
+    async toggleFeePause(coachingId: string, assignmentId: string, pause: boolean, note?: string) {
+        const a = await prisma.feeAssignment.findFirst({ where: { id: assignmentId, coachingId } });
+        if (!a) throw Object.assign(new Error('Assignment not found'), { status: 404 });
+        return prisma.feeAssignment.update({
+            where: { id: assignmentId },
+            data: {
+                isPaused: pause,
+                pausedAt: pause ? new Date() : null,
+                pauseNote: pause ? (note ?? null) : null,
             },
         });
-        const member = await prisma.coachingMember.findFirst({
-            where: { id: memberId, coachingId },
-            select: MEMBER_SELECT,
-        });
+    }
+
+    async getMemberFeeProfile(coachingId: string, memberId: string) {
+        await this._markOverdueRecords(coachingId);
+        const [assignments, member] = await Promise.all([
+            prisma.feeAssignment.findMany({
+                where: { coachingId, memberId, isActive: true },
+                include: {
+                    feeStructure: true,
+                    records: {
+                        orderBy: { dueDate: 'asc' },
+                        include: { payments: true, refunds: true },
+                    },
+                },
+            }),
+            prisma.coachingMember.findFirst({ where: { id: memberId, coachingId }, select: MEMBER_SELECT }),
+        ]);
         if (!member) throw Object.assign(new Error('Member not found'), { status: 404 });
 
-        return { member, assignments };
+        const allRecords = assignments.flatMap(a => a.records);
+        const totalFee    = allRecords.reduce((s, r) => s + r.finalAmount, 0);
+        const totalPaid   = allRecords.reduce((s, r) => s + r.paidAmount, 0);
+        const totalRefund = allRecords.flatMap(r => r.refunds).reduce((s, rf) => s + rf.amount, 0);
+        const nextDueBill = allRecords
+            .filter(r => r.status === 'PENDING' || r.status === 'PARTIALLY_PAID')
+            .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())[0] ?? null;
+
+        const enriched = assignments.map(a => ({
+            ...a,
+            records: a.records.map(r => ({ ...r, daysOverdue: r.status === 'OVERDUE' ? calcDaysOverdue(r.dueDate) : 0 })),
+        }));
+
+        return {
+            member,
+            assignments: enriched,
+            ledger: {
+                totalFee,
+                totalPaid,
+                totalRefunded: totalRefund,
+                balance: totalFee - totalPaid - totalRefund,
+                totalOverdue: allRecords.filter(r => r.status === 'OVERDUE').reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0),
+                nextDue: nextDueBill,
+            },
+        };
     }
 
     // ── Fee Records ─────────────────────────────────────────────────
 
     async listRecords(coachingId: string, query: ListFeeRecordsQuery) {
-        const { memberId, status, from, to, page = 1, limit = 30 } = query;
+        const { memberId, status, from, to, page = 1, limit = 30, search } = query;
 
         // Auto-update overdue records before returning list
         await this._markOverdueRecords(coachingId);
 
-        const where: object = {
+        let memberIds: string[] | undefined;
+        if (search && !memberId) {
+            const matches = await prisma.coachingMember.findMany({
+                where: {
+                    coachingId,
+                    OR: [
+                        { user: { name: { contains: search, mode: 'insensitive' } } },
+                        { ward: { name: { contains: search, mode: 'insensitive' } } },
+                    ],
+                },
+                select: { id: true },
+            });
+            if (matches.length === 0) return { total: 0, page, limit, records: [] };
+            memberIds = matches.map(m => m.id);
+        }
+
+        const where = {
             coachingId,
-            ...(memberId && { memberId }),
+            ...(memberId ? { memberId } : memberIds ? { memberId: { in: memberIds } } : {}),
             ...(status && { status }),
             ...(from || to ? {
                 dueDate: {
@@ -250,30 +349,23 @@ export class FeeService {
                 orderBy: { dueDate: 'desc' },
                 skip: (page - 1) * limit,
                 take: limit,
-                include: {
-                    member: { select: MEMBER_SELECT },
-                    assignment: { include: { feeStructure: true } },
-                    payments: { orderBy: { paidAt: 'desc' } },
-                    markedBy: { select: { id: true, name: true } },
-                },
+                include: RECORD_INCLUDE,
             }),
         ]);
 
-        return { total, page, limit, records };
+        return {
+            total, page, limit,
+            records: records.map(r => ({ ...r, daysOverdue: r.status === 'OVERDUE' ? calcDaysOverdue(r.dueDate) : 0 })),
+        };
     }
 
     async getRecordById(coachingId: string, recordId: string) {
         const record = await prisma.feeRecord.findFirst({
             where: { id: recordId, coachingId },
-            include: {
-                member: { select: MEMBER_SELECT },
-                assignment: { include: { feeStructure: true } },
-                payments: { orderBy: { paidAt: 'desc' } },
-                markedBy: { select: { id: true, name: true } },
-            },
+            include: RECORD_INCLUDE,
         });
         if (!record) throw Object.assign(new Error('Record not found'), { status: 404 });
-        return record;
+        return { ...record, daysOverdue: record.status === 'OVERDUE' ? calcDaysOverdue(record.dueDate) : 0 };
     }
 
     /** Record a payment (full or partial) against a FeeRecord. */
@@ -283,10 +375,22 @@ export class FeeService {
         if (record.status === 'PAID' || record.status === 'WAIVED') {
             throw Object.assign(new Error('This record is already settled'), { status: 400 });
         }
+        if (dto.amount <= 0) throw Object.assign(new Error('Amount must be positive'), { status: 400 });
 
         const paidAt = dto.paidAt ? new Date(dto.paidAt) : new Date();
+
+        // Lock current fine at payment time
+        const assignment = await prisma.feeAssignment.findUnique({
+            where: { id: record.assignmentId },
+            include: { feeStructure: true },
+        });
+        const lateFine = assignment?.feeStructure?.lateFinePerDay ?? 0;
+        const days = calcDaysOverdue(record.dueDate);
+        const fineNow = lateFine > 0 && days > 0 ? lateFine * days : record.fineAmount;
+        const finalAmountLocked = record.baseAmount - record.discountAmount + fineNow;
+
         const newPaidAmount = record.paidAmount + dto.amount;
-        const isPaid = newPaidAmount >= record.finalAmount;
+        const isPaid = newPaidAmount >= finalAmountLocked - 0.01;
 
         await prisma.$transaction([
             prisma.feePayment.create({
@@ -306,6 +410,8 @@ export class FeeService {
                 where: { id: recordId },
                 data: {
                     paidAmount: newPaidAmount,
+                    fineAmount: fineNow,
+                    finalAmount: finalAmountLocked,
                     status: isPaid ? 'PAID' : 'PARTIALLY_PAID',
                     paidAt: isPaid ? paidAt : record.paidAt,
                     markedById: userId,
@@ -317,24 +423,21 @@ export class FeeService {
         ]);
 
         // If paid and cycle-based, generate next record
-        if (isPaid) {
-            const assignment = await prisma.feeAssignment.findUnique({
-                where: { id: record.assignmentId },
-                include: { feeStructure: true },
-            });
-            if (assignment && assignment.isActive && assignment.feeStructure.cycle !== 'ONCE') {
-                const dueDate = nextDueDate(record.dueDate, assignment.feeStructure.cycle);
+        if (isPaid && assignment && assignment.isActive && !assignment.isPaused) {
+            const cycle = assignment.feeStructure.cycle;
+            if (cycle !== 'ONCE' && cycle !== 'INSTALLMENT') {
+                const dueDate = nextDueDateFromCycle(record.dueDate, cycle);
                 const isBeforeEnd = !assignment.endDate || dueDate <= assignment.endDate;
                 if (isBeforeEnd) {
-                    const finalAmount = (assignment.customAmount ?? assignment.feeStructure.amount) - assignment.discountAmount;
-                    await this._createFeeRecord(coachingId, assignment.id, record.memberId, assignment.feeStructure, finalAmount, dueDate);
+                    const fa = (assignment.customAmount ?? assignment.feeStructure.amount) - assignment.discountAmount - (assignment.scholarshipAmount ?? 0);
+                    await this._createFeeRecord(coachingId, assignment.id, record.memberId, assignment.feeStructure, fa, dueDate);
                 }
             }
         }
 
-        return prisma.feeRecord.findUnique({
+        return prisma.feeRecord.findUniqueOrThrow({
             where: { id: recordId },
-            include: { payments: true },
+            include: RECORD_INCLUDE,
         });
     }
 
@@ -343,10 +446,45 @@ export class FeeService {
         if (!record) throw Object.assign(new Error('Record not found'), { status: 404 });
         if (record.status === 'PAID') throw Object.assign(new Error('Already paid'), { status: 400 });
 
-        return prisma.feeRecord.update({
+        await prisma.feeRecord.update({
             where: { id: recordId },
             data: { status: 'WAIVED', notes: dto.notes ?? null, markedById: userId },
         });
+        // Re-fetch full record to avoid fromJson parse errors on frontend
+        return this.getRecordById(coachingId, recordId);
+    }
+
+    async recordRefund(coachingId: string, recordId: string, dto: RecordRefundDto, userId: string) {
+        const record = await prisma.feeRecord.findFirst({ where: { id: recordId, coachingId } });
+        if (!record) throw Object.assign(new Error('Record not found'), { status: 404 });
+        if (dto.amount <= 0) throw Object.assign(new Error('Refund amount must be positive'), { status: 400 });
+        if (dto.amount > record.paidAmount) throw Object.assign(new Error('Cannot refund more than paid amount'), { status: 400 });
+
+        const refundedAt = dto.refundedAt ? new Date(dto.refundedAt) : new Date();
+        const newPaidAmount = record.paidAmount - dto.amount;
+
+        await prisma.$transaction([
+            prisma.feeRefund.create({
+                data: {
+                    coachingId,
+                    recordId,
+                    amount: dto.amount,
+                    reason: dto.reason ?? null,
+                    mode: dto.mode ?? 'CASH',
+                    refundedAt,
+                    processedById: userId,
+                },
+            }),
+            prisma.feeRecord.update({
+                where: { id: recordId },
+                data: {
+                    paidAmount: newPaidAmount,
+                    status: newPaidAmount <= 0 ? 'PENDING' : newPaidAmount < record.finalAmount ? 'PARTIALLY_PAID' : 'PAID',
+                },
+            }),
+        ]);
+
+        return this.getRecordById(coachingId, recordId);
     }
 
     /** Mark reminder sent + increment counter. */
@@ -359,60 +497,148 @@ export class FeeService {
         });
     }
 
+    async bulkRemind(coachingId: string, dto: BulkRemindDto) {
+        const statusFilter = dto.statusFilter ?? 'OVERDUE';
+        const where = {
+            coachingId,
+            status: statusFilter,
+            ...(dto.memberIds?.length ? { memberId: { in: dto.memberIds } } : {}),
+        };
+        const result = await prisma.feeRecord.updateMany({
+            where,
+            data: { reminderSentAt: new Date(), reminderCount: { increment: 1 } },
+        });
+        return { reminded: result.count };
+    }
+
     // ── Summary / Analytics ────────────────────────────────────────
 
-    async getSummary(coachingId: string) {
+    async getSummary(coachingId: string, financialYear?: string) {
         await this._markOverdueRecords(coachingId);
 
-        const [statusGroups, totalCollected, totalPending, totalOverdue, paymentModes, monthlyCollection] = await Promise.all([
-            // Count by status
-            prisma.feeRecord.groupBy({
-                by: ['status'],
-                where: { coachingId },
-                _count: true,
-                _sum: { finalAmount: true },
-            }),
-            // Total collected
-            prisma.feePayment.aggregate({
-                where: { coachingId },
-                _sum: { amount: true },
-            }),
-            // Total pending amount
-            prisma.feeRecord.aggregate({
-                where: { coachingId, status: { in: ['PENDING', 'PARTIALLY_PAID'] } },
-                _sum: { finalAmount: true },
-            }),
-            // Total overdue amount
-            prisma.feeRecord.aggregate({
-                where: { coachingId, status: 'OVERDUE' },
-                _sum: { finalAmount: true },
-            }),
-            // Breakdown by payment mode
-            prisma.feePayment.groupBy({
-                by: ['mode'],
-                where: { coachingId },
-                _sum: { amount: true },
-                _count: true,
-            }),
-            // Monthly collection trend (last 12 months)
-            prisma.$queryRaw<Array<{ month: string; total: number }>>`
+        // Financial year: "2025-26" → April 2025 – March 2026
+        let fyStart: Date | undefined, fyEnd: Date | undefined;
+        if (financialYear) {
+            const fy: string = financialYear;
+            const parts = fy.split('-');
+            const startYear = parseInt(parts[0] ?? '2025', 10);
+            fyStart = new Date(startYear, 3, 1);
+            fyEnd   = new Date(startYear + 1, 2, 31, 23, 59, 59);
+        }
+        const pyWhere = { coachingId, ...(fyStart && fyEnd ? { paidAt: { gte: fyStart, lte: fyEnd } } : {}) };
+        const recWhere = { coachingId, ...(fyStart && fyEnd ? { dueDate: { gte: fyStart, lte: fyEnd } } : {}) };
+
+        const [statusGroups, totalCollected, totalPendingAgg, totalOverdueAgg, paymentModes, monthlyCollection, overdueCount, todayCollection] = await Promise.all([
+            prisma.feeRecord.groupBy({ by: ['status'], where: recWhere, _count: true, _sum: { finalAmount: true } }),
+            prisma.feePayment.aggregate({ where: pyWhere, _sum: { amount: true } }),
+            prisma.feeRecord.aggregate({ where: { ...recWhere, status: { in: ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'] } }, _sum: { finalAmount: true } }),
+            prisma.feeRecord.aggregate({ where: { ...recWhere, status: 'OVERDUE' }, _sum: { finalAmount: true } }),
+            prisma.feePayment.groupBy({ by: ['mode'], where: pyWhere, _sum: { amount: true }, _count: true }),
+            prisma.$queryRaw<Array<{ month: string; total: number; count: number }>>`
                 SELECT TO_CHAR(DATE_TRUNC('month', "paidAt"), 'YYYY-MM') AS month,
-                       SUM(amount)::FLOAT AS total
+                       SUM(amount)::FLOAT AS total,
+                       COUNT(*)::INT AS count
                 FROM "FeePayment"
                 WHERE "coachingId" = ${coachingId}
-                  AND "paidAt" >= NOW() - INTERVAL '12 months'
-                GROUP BY 1
-                ORDER BY 1
+                  ${fyStart ? Prisma.sql`AND "paidAt" >= ${fyStart}` : Prisma.empty}
+                  ${fyEnd ? Prisma.sql`AND "paidAt" <= ${fyEnd}` : Prisma.sql`AND "paidAt" >= NOW() - INTERVAL '12 months'`}
+                GROUP BY 1 ORDER BY 1
             `,
+            prisma.feeRecord.count({ where: { coachingId, status: 'OVERDUE' } }),
+            prisma.feePayment.aggregate({
+                where: { coachingId, paidAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } },
+                _sum: { amount: true },
+            }),
         ]);
 
         return {
             statusBreakdown: statusGroups,
             totalCollected: totalCollected._sum.amount ?? 0,
-            totalPending: totalPending._sum.finalAmount ?? 0,
-            totalOverdue: totalOverdue._sum.finalAmount ?? 0,
+            totalPending: totalPendingAgg._sum.finalAmount ?? 0,
+            totalOverdue: totalOverdueAgg._sum.finalAmount ?? 0,
+            overdueCount,
+            todayCollection: todayCollection._sum.amount ?? 0,
             paymentModes,
             monthlyCollection,
+            financialYear: financialYear ?? null,
+        };
+    }
+
+    /** Overdue students report with days overdue per record. */
+    async getOverdueReport(coachingId: string) {
+        await this._markOverdueRecords(coachingId);
+        const records = await prisma.feeRecord.findMany({
+            where: { coachingId, status: 'OVERDUE' },
+            orderBy: { dueDate: 'asc' },
+            include: {
+                member: { select: MEMBER_SELECT },
+                assignment: { include: { feeStructure: { select: { name: true, lateFinePerDay: true } } } },
+            },
+        });
+        return records.map(r => ({
+            ...r,
+            daysOverdue: calcDaysOverdue(r.dueDate),
+            accruedFine: (r.assignment?.feeStructure?.lateFinePerDay ?? 0) * calcDaysOverdue(r.dueDate),
+        }));
+    }
+
+    /** Full student financial ledger with running balance timeline. */
+    async getStudentLedger(coachingId: string, memberId: string) {
+        await this._markOverdueRecords(coachingId);
+        const [member, records] = await Promise.all([
+            prisma.coachingMember.findFirst({ where: { id: memberId, coachingId }, select: MEMBER_SELECT }),
+            prisma.feeRecord.findMany({
+                where: { coachingId, memberId },
+                orderBy: { dueDate: 'asc' },
+                include: {
+                    payments: { orderBy: { paidAt: 'asc' } },
+                    refunds: { orderBy: { refundedAt: 'asc' } },
+                    assignment: { include: { feeStructure: { select: { name: true, cycle: true, lateFinePerDay: true } } } },
+                },
+            }),
+        ]);
+        if (!member) throw Object.assign(new Error('Member not found'), { status: 404 });
+
+        type RawEntry = { date: Date; type: 'RECORD' | 'PAYMENT' | 'REFUND'; label: string; amount: number; mode?: string; ref?: string | null; receiptNo?: string | null; status?: string; recordId: string };
+        const raw: RawEntry[] = [];
+        let totalCharged = 0, totalPaid = 0, totalRefunded = 0;
+
+        for (const r of records) {
+            totalCharged += r.finalAmount;
+            raw.push({ date: r.dueDate, type: 'RECORD', label: r.title, amount: r.finalAmount, status: r.status, recordId: r.id });
+            for (const p of r.payments) {
+                totalPaid += p.amount;
+                raw.push({ date: p.paidAt, type: 'PAYMENT', label: `Payment (${p.mode})`, amount: p.amount, mode: p.mode, ref: p.transactionRef, receiptNo: p.receiptNo, recordId: r.id });
+            }
+            for (const rf of r.refunds) {
+                totalRefunded += rf.amount;
+                raw.push({ date: rf.refundedAt, type: 'REFUND', label: 'Refund', amount: -rf.amount, mode: rf.mode, recordId: r.id });
+            }
+        }
+        raw.sort((a, b) => a.date.getTime() - b.date.getTime());
+
+        let running = 0;
+        const timeline = raw.map(e => {
+            if (e.type === 'RECORD') running += e.amount;
+            else running -= Math.abs(e.amount);
+            return { ...e, runningBalance: running };
+        });
+
+        const nextDueBill = records
+            .filter(r => r.status === 'PENDING' || r.status === 'PARTIALLY_PAID')
+            .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())[0];
+
+        return {
+            member,
+            summary: {
+                totalCharged, totalPaid, totalRefunded,
+                balance: totalCharged - totalPaid - totalRefunded,
+                totalOverdue: records.filter(r => r.status === 'OVERDUE').reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0),
+                nextDueDate: nextDueBill?.dueDate ?? null,
+                nextDueAmount: nextDueBill ? nextDueBill.finalAmount - nextDueBill.paidAmount : 0,
+            },
+            records: records.map(r => ({ ...r, daysOverdue: r.status === 'OVERDUE' ? calcDaysOverdue(r.dueDate) : 0 })),
+            timeline,
         };
     }
 
@@ -426,13 +652,8 @@ export class FeeService {
         });
         // Also check wards
         const wardMembers = await prisma.coachingMember.findMany({
-            where: {
-                coachingId,
-                ward: { parentId: userId },
-            },
-            include: {
-                ward: { select: { id: true, name: true, picture: true } },
-            },
+            where: { coachingId, ward: { parentId: userId } },
+            include: { ward: { select: { id: true, name: true, picture: true } } },
         });
 
         const memberIds = [
@@ -440,7 +661,7 @@ export class FeeService {
             ...wardMembers.map(w => w.id),
         ];
 
-        if (memberIds.length === 0) return { records: [] };
+        if (memberIds.length === 0) return { records: [], summary: { totalDue: 0, totalPaid: 0, totalOverdue: 0 } };
 
         const records = await prisma.feeRecord.findMany({
             where: { coachingId, memberId: { in: memberIds } },
@@ -448,11 +669,20 @@ export class FeeService {
             include: {
                 assignment: { include: { feeStructure: true } },
                 payments: { orderBy: { paidAt: 'desc' } },
+                refunds: { orderBy: { refundedAt: 'desc' } },
                 member: { select: MEMBER_SELECT },
             },
         });
 
-        return { records };
+        const enriched = records.map(r => ({ ...r, daysOverdue: r.status === 'OVERDUE' ? calcDaysOverdue(r.dueDate) : 0 }));
+        return {
+            records: enriched,
+            summary: {
+                totalDue:     enriched.filter(r => ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'].includes(r.status)).reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0),
+                totalPaid:    enriched.reduce((s, r) => s + r.paidAmount, 0),
+                totalOverdue: enriched.filter(r => r.status === 'OVERDUE').reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0),
+            },
+        };
     }
 
     // ── Internal helpers ────────────────────────────────────────────
@@ -470,6 +700,7 @@ export class FeeService {
         structure: { name: string; cycle: string; lateFinePerDay: number },
         finalAmount: number,
         dueDate: Date,
+        customTitle?: string,
     ) {
         // Check no duplicate for this assignment + dueDate month
         const existing = await prisma.feeRecord.findFirst({
@@ -488,7 +719,7 @@ export class FeeService {
                 coachingId,
                 assignmentId,
                 memberId,
-                title: buildRecordTitle(structure.name, dueDate, structure.cycle),
+                title: customTitle ?? buildRecordTitle(structure.name, dueDate, structure.cycle),
                 amount: finalAmount,
                 baseAmount: finalAmount,
                 discountAmount: 0,
@@ -501,13 +732,37 @@ export class FeeService {
     }
 
     private async _markOverdueRecords(coachingId: string) {
-        await prisma.feeRecord.updateMany({
-            where: {
-                coachingId,
-                status: 'PENDING',
-                dueDate: { lt: new Date() },
-            },
-            data: { status: 'OVERDUE' },
+        // 1. Mark new PENDING → OVERDUE and compute initial fine
+        const newOverdue = await prisma.feeRecord.findMany({
+            where: { coachingId, status: 'PENDING', dueDate: { lt: new Date() } },
+            include: { assignment: { include: { feeStructure: { select: { lateFinePerDay: true } } } } },
         });
+        for (const r of newOverdue) {
+            const days = calcDaysOverdue(r.dueDate);
+            const lateFine = r.assignment?.feeStructure?.lateFinePerDay ?? 0;
+            const fineAmount = lateFine > 0 ? lateFine * days : 0;
+            await prisma.feeRecord.update({
+                where: { id: r.id },
+                data: { status: 'OVERDUE', fineAmount, finalAmount: r.baseAmount - r.discountAmount + fineAmount },
+            });
+        }
+
+        // 2. Refresh accrued fine on already-OVERDUE records (daily tick)
+        const alreadyOverdue = await prisma.feeRecord.findMany({
+            where: { coachingId, status: 'OVERDUE' },
+            include: { assignment: { include: { feeStructure: { select: { lateFinePerDay: true } } } } },
+        });
+        for (const r of alreadyOverdue) {
+            const lateFine = r.assignment?.feeStructure?.lateFinePerDay ?? 0;
+            if (lateFine > 0) {
+                const fineAmount = lateFine * calcDaysOverdue(r.dueDate);
+                if (Math.abs(fineAmount - r.fineAmount) > 0.01) {
+                    await prisma.feeRecord.update({
+                        where: { id: r.id },
+                        data: { fineAmount, finalAmount: r.baseAmount - r.discountAmount + fineAmount },
+                    });
+                }
+            }
+        }
     }
 }

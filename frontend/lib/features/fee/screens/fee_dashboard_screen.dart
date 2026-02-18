@@ -5,6 +5,7 @@ import '../services/fee_service.dart';
 import 'fee_records_screen.dart';
 import 'fee_structures_screen.dart';
 import 'assign_fee_screen.dart';
+import 'fee_reports_screen.dart';
 
 /// Admin-facing fee dashboard for a coaching.
 /// Shows summary KPIs + quick-access tabs.
@@ -21,10 +22,24 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
   FeeSummaryModel? _summary;
   bool _loading = true;
   String? _error;
+  String? _selectedFY;
+  bool _sendingReminder = false;
+
+  List<String> get _fyOptions {
+    final now = DateTime.now();
+    final currentFYStart = now.month >= 4 ? now.year : now.year - 1;
+    return List.generate(3, (i) {
+      final y = currentFYStart - i;
+      return '$y-${(y + 1).toString().substring(2)}';
+    });
+  }
 
   @override
   void initState() {
     super.initState();
+    final now = DateTime.now();
+    final fyStart = now.month >= 4 ? now.year : now.year - 1;
+    _selectedFY = '$fyStart-${(fyStart + 1).toString().substring(2)}';
     _load();
   }
 
@@ -34,7 +49,10 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
       _error = null;
     });
     try {
-      final s = await _svc.getSummary(widget.coachingId);
+      final s = await _svc.getSummary(
+        widget.coachingId,
+        financialYear: _selectedFY,
+      );
       setState(() {
         _summary = s;
         _loading = false;
@@ -44,6 +62,27 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
         _error = e.toString();
         _loading = false;
       });
+    }
+  }
+
+  Future<void> _bulkRemind() async {
+    setState(() => _sendingReminder = true);
+    try {
+      final res = await _svc.bulkRemind(widget.coachingId);
+      final count = res['count'] ?? 0;
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Reminder sent to $count overdue students')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
+    } finally {
+      if (mounted) setState(() => _sendingReminder = false);
     }
   }
 
@@ -69,6 +108,14 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
           ),
         ),
         actions: [
+          _FYDropdown(
+            selected: _selectedFY!,
+            options: _fyOptions,
+            onChanged: (fy) {
+              setState(() => _selectedFY = fy);
+              _load();
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: AppColors.darkOlive),
             onPressed: _load,
@@ -82,7 +129,12 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
             ? const Center(child: CircularProgressIndicator())
             : _error != null
             ? _ErrorView(error: _error!, onRetry: _load)
-            : _Body(summary: _summary!, coachingId: widget.coachingId),
+            : _Body(
+                summary: _summary!,
+                coachingId: widget.coachingId,
+                onBulkRemind: _bulkRemind,
+                isSendingReminder: _sendingReminder,
+              ),
       ),
     );
   }
@@ -91,7 +143,14 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
 class _Body extends StatelessWidget {
   final FeeSummaryModel summary;
   final String coachingId;
-  const _Body({required this.summary, required this.coachingId});
+  final VoidCallback onBulkRemind;
+  final bool isSendingReminder;
+  const _Body({
+    required this.summary,
+    required this.coachingId,
+    required this.onBulkRemind,
+    required this.isSendingReminder,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -101,20 +160,138 @@ class _Body extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (summary.overdueCount > 0)
+            _OverdueBanner(
+              count: summary.overdueCount,
+              onRemind: onBulkRemind,
+              isLoading: isSendingReminder,
+            ),
+          if (summary.overdueCount > 0) const SizedBox(height: 12),
           _SummaryCards(summary: summary),
           const SizedBox(height: 24),
           _SectionTitle('Payment Breakdown'),
           const SizedBox(height: 12),
           _PaymentModeChips(modes: summary.paymentModes),
           const SizedBox(height: 24),
-          _SectionTitle('Monthly Collection (Last 12 months)'),
+          _SectionTitle('Monthly Collection'),
           const SizedBox(height: 12),
           _MonthlyChart(data: summary.monthlyCollection),
           const SizedBox(height: 24),
           _SectionTitle('Quick Actions'),
           const SizedBox(height: 12),
-          _QuickActions(coachingId: coachingId),
+          _QuickActions(
+            coachingId: coachingId,
+            overdueCount: summary.overdueCount,
+          ),
           const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+}
+
+// ─── FY Dropdown ──────────────────────────────────────────────────────
+
+class _FYDropdown extends StatelessWidget {
+  final String selected;
+  final List<String> options;
+  final ValueChanged<String> onChanged;
+  const _FYDropdown({
+    required this.selected,
+    required this.options,
+    required this.onChanged,
+  });
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(right: 4),
+      child: DropdownButton<String>(
+        value: selected,
+        underline: const SizedBox.shrink(),
+        icon: const Icon(
+          Icons.expand_more_rounded,
+          color: AppColors.darkOlive,
+          size: 18,
+        ),
+        style: const TextStyle(
+          color: AppColors.darkOlive,
+          fontWeight: FontWeight.w600,
+          fontSize: 13,
+        ),
+        items: options
+            .map((fy) => DropdownMenuItem(value: fy, child: Text('FY $fy')))
+            .toList(),
+        onChanged: (v) {
+          if (v != null) onChanged(v);
+        },
+      ),
+    );
+  }
+}
+
+// ─── Overdue urgency banner ───────────────────────────────────────────
+
+class _OverdueBanner extends StatelessWidget {
+  final int count;
+  final VoidCallback onRemind;
+  final bool isLoading;
+  const _OverdueBanner({
+    required this.count,
+    required this.onRemind,
+    required this.isLoading,
+  });
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFEBEE),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFC62828).withValues(alpha: 0.4),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.warning_amber_rounded,
+            color: Color(0xFFC62828),
+            size: 20,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              '$count student${count == 1 ? '' : 's'} have overdue fees',
+              style: const TextStyle(
+                color: Color(0xFFC62828),
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ),
+          if (isLoading)
+            const SizedBox(
+              width: 20,
+              height: 20,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Color(0xFFC62828),
+              ),
+            )
+          else
+            TextButton(
+              onPressed: onRemind,
+              style: TextButton.styleFrom(
+                foregroundColor: const Color(0xFFC62828),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: const Text(
+                'Remind All',
+                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+              ),
+            ),
         ],
       ),
     );
@@ -145,9 +322,9 @@ class _SummaryCards extends StatelessWidget {
             const SizedBox(width: 12),
             Expanded(
               child: _KpiCard(
-                label: 'Pending',
-                amount: summary.totalPending,
-                icon: Icons.schedule_rounded,
+                label: 'Today',
+                amount: summary.todayCollection,
+                icon: Icons.today_rounded,
                 color: const Color(0xFF1565C0),
                 bgColor: const Color(0xFFE3F2FD),
               ),
@@ -164,14 +341,25 @@ class _SummaryCards extends StatelessWidget {
                 icon: Icons.warning_amber_rounded,
                 color: const Color(0xFFC62828),
                 bgColor: const Color(0xFFFFEBEE),
+                badge: summary.overdueCount > 0
+                    ? '${summary.overdueCount} students'
+                    : null,
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
-              child: _StatusCountCard(breakdown: summary.statusBreakdown),
+              child: _KpiCard(
+                label: 'Pending',
+                amount: summary.totalPending,
+                icon: Icons.schedule_rounded,
+                color: const Color(0xFFE65100),
+                bgColor: const Color(0xFFFFF3E0),
+              ),
             ),
           ],
         ),
+        const SizedBox(height: 12),
+        _StatusCountCard(breakdown: summary.statusBreakdown),
       ],
     );
   }
@@ -183,12 +371,14 @@ class _KpiCard extends StatelessWidget {
   final IconData icon;
   final Color color;
   final Color bgColor;
+  final String? badge;
   const _KpiCard({
     required this.label,
     required this.amount,
     required this.icon,
     required this.color,
     required this.bgColor,
+    this.badge,
   });
 
   @override
@@ -234,6 +424,17 @@ class _KpiCard extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
+          if (badge != null) ...[
+            const SizedBox(height: 4),
+            Text(
+              badge!,
+              style: TextStyle(
+                color: color,
+                fontSize: 10,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -449,7 +650,8 @@ class _MonthlyChart extends StatelessWidget {
 
 class _QuickActions extends StatelessWidget {
   final String coachingId;
-  const _QuickActions({required this.coachingId});
+  final int overdueCount;
+  const _QuickActions({required this.coachingId, required this.overdueCount});
 
   @override
   Widget build(BuildContext context) {
@@ -463,6 +665,19 @@ class _QuickActions extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (_) => FeeRecordsScreen(coachingId: coachingId),
+            ),
+          ),
+        ),
+        const SizedBox(height: 10),
+        _ActionTile(
+          icon: Icons.bar_chart_rounded,
+          label: 'Reports',
+          subtitle: 'Overdue list, FY collection & analysis',
+          badge: overdueCount > 0 ? '$overdueCount' : null,
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => FeeReportsScreen(coachingId: coachingId),
             ),
           ),
         ),
@@ -500,11 +715,13 @@ class _ActionTile extends StatelessWidget {
   final String label;
   final String subtitle;
   final VoidCallback onTap;
+  final String? badge;
   const _ActionTile({
     required this.icon,
     required this.label,
     required this.subtitle,
     required this.onTap,
+    this.badge,
   });
 
   @override
@@ -550,10 +767,30 @@ class _ActionTile extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: AppColors.mutedOlive,
-              ),
+              if (badge != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFC62828),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    badge!,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                )
+              else
+                const Icon(
+                  Icons.chevron_right_rounded,
+                  color: AppColors.mutedOlive,
+                ),
             ],
           ),
         ),

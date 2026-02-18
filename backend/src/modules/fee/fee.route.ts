@@ -29,4 +29,11 @@ router.post('/records/:recordId/remind', authMiddleware, ctrl.sendReminder.bind(
 router.get('/summary', authMiddleware, ctrl.getSummary.bind(ctrl));
 router.get('/my', authMiddleware, ctrl.getMyFees.bind(ctrl));
 
+// ── New endpoints ────────────────────────────────────────────────────
+router.patch('/assignments/:assignmentId/pause', authMiddleware, ctrl.toggleFeePause.bind(ctrl));
+router.post('/records/:recordId/refund', authMiddleware, ctrl.recordRefund.bind(ctrl));
+router.post('/bulk-remind', authMiddleware, ctrl.bulkRemind.bind(ctrl));
+router.get('/overdue-report', authMiddleware, ctrl.getOverdueReport.bind(ctrl));
+router.get('/members/:memberId/ledger', authMiddleware, ctrl.getStudentLedger.bind(ctrl));
+
 export default router;

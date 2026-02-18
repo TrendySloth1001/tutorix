@@ -172,10 +172,11 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
         Navigator.pop(context);
       }
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }
@@ -254,7 +255,7 @@ class _Body extends StatelessWidget {
               Switch(
                 value: customAmountEnabled,
                 onChanged: onCustomAmountToggled,
-                activeColor: AppColors.darkOlive,
+                activeThumbColor: AppColors.darkOlive,
               ),
               const SizedBox(width: 8),
               const Text(
@@ -303,7 +304,9 @@ class _Body extends StatelessWidget {
                 firstDate: DateTime(2020),
                 lastDate: DateTime(2030),
               );
-              if (d != null) onStartDateChanged(d);
+              if (d != null) {
+                onStartDateChanged(d);
+              }
             },
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),

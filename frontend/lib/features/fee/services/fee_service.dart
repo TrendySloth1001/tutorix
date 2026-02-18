@@ -78,6 +78,8 @@ class FeeService {
     double? customAmount,
     double? discountAmount,
     String? discountReason,
+    String? scholarshipTag,
+    double? scholarshipAmount,
     DateTime? startDate,
     DateTime? endDate,
   }) async {
@@ -87,11 +89,26 @@ class FeeService {
       'customAmount': ?customAmount,
       'discountAmount': ?discountAmount,
       'discountReason': ?discountReason,
+      'scholarshipTag': ?scholarshipTag,
+      'scholarshipAmount': ?scholarshipAmount,
       if (startDate != null) 'startDate': startDate.toIso8601String(),
       if (endDate != null) 'endDate': endDate.toIso8601String(),
     };
     await _api.postAuthenticated(
       ApiConstants.assignFees(coachingId),
+      body: body,
+    );
+  }
+
+  Future<Map<String, dynamic>> toggleFeePause(
+    String coachingId,
+    String assignmentId, {
+    required bool pause,
+    String? note,
+  }) async {
+    final body = <String, dynamic>{'pause': pause, 'note': ?note};
+    return _api.patchAuthenticated(
+      ApiConstants.feeAssignmentPause(coachingId, assignmentId),
       body: body,
     );
   }
@@ -112,6 +129,7 @@ class FeeService {
     String coachingId, {
     String? memberId,
     String? status,
+    String? search,
     DateTime? from,
     DateTime? to,
     int page = 1,
@@ -122,6 +140,7 @@ class FeeService {
       'limit': '$limit',
       'memberId': ?memberId,
       'status': ?status,
+      'search': ?search,
       if (from != null) 'from': from.toIso8601String(),
       if (to != null) 'to': to.toIso8601String(),
     };
@@ -143,6 +162,25 @@ class FeeService {
   Future<FeeRecordModel> getRecord(String coachingId, String recordId) async {
     final data = await _api.getAuthenticated(
       ApiConstants.feeRecordById(coachingId, recordId),
+    );
+    return FeeRecordModel.fromJson(data);
+  }
+
+  Future<FeeRecordModel> recordRefund(
+    String coachingId,
+    String recordId, {
+    required double amount,
+    String? reason,
+    String? mode,
+  }) async {
+    final body = <String, dynamic>{
+      'amount': amount,
+      'reason': ?reason,
+      'mode': ?mode,
+    };
+    final data = await _api.postAuthenticated(
+      ApiConstants.feeRecordRefund(coachingId, recordId),
+      body: body,
     );
     return FeeRecordModel.fromJson(data);
   }
@@ -175,9 +213,13 @@ class FeeService {
     String recordId, {
     String? notes,
   }) async {
-    final data = await _api.postAuthenticated(
+    await _api.postAuthenticated(
       ApiConstants.feeRecordWaive(coachingId, recordId),
       body: {'notes': ?notes},
+    );
+    // Backend returns minimal updated record — re-fetch full record
+    final data = await _api.getAuthenticated(
+      ApiConstants.feeRecordById(coachingId, recordId),
     );
     return FeeRecordModel.fromJson(data);
   }
@@ -189,20 +231,59 @@ class FeeService {
     );
   }
 
-  // ── Summary & My Fees ────────────────────────────────────────────
+  // ── Summary, Reports & My Fees ────────────────────────────────────
 
-  Future<FeeSummaryModel> getSummary(String coachingId) async {
-    final data = await _api.getAuthenticated(
-      ApiConstants.feeSummary(coachingId),
-    );
+  Future<FeeSummaryModel> getSummary(
+    String coachingId, {
+    String? financialYear,
+  }) async {
+    final url = financialYear != null
+        ? '${ApiConstants.feeSummary(coachingId)}?fy=$financialYear'
+        : ApiConstants.feeSummary(coachingId);
+    final data = await _api.getAuthenticated(url);
     return FeeSummaryModel.fromJson(data);
   }
 
-  Future<List<FeeRecordModel>> getMyFees(String coachingId) async {
-    final data = await _api.getAuthenticated(ApiConstants.feesMy(coachingId));
-    final map = data;
-    return (map['records'] as List<dynamic>)
+  Future<List<FeeRecordModel>> getOverdueReport(String coachingId) async {
+    final data = await _api.getAuthenticatedRaw(
+      ApiConstants.feeOverdueReport(coachingId),
+    );
+    return (data as List<dynamic>)
         .map((e) => FeeRecordModel.fromJson(e as Map<String, dynamic>))
         .toList();
+  }
+
+  Future<Map<String, dynamic>> getStudentLedger(
+    String coachingId,
+    String memberId,
+  ) async {
+    return _api.getAuthenticated(
+      ApiConstants.feeMemberLedger(coachingId, memberId),
+    );
+  }
+
+  Future<Map<String, dynamic>> bulkRemind(
+    String coachingId, {
+    String statusFilter = 'OVERDUE',
+    List<String>? memberIds,
+  }) async {
+    final body = <String, dynamic>{
+      'statusFilter': statusFilter,
+      if (memberIds != null) 'memberIds': memberIds,
+    };
+    return _api.postAuthenticated(
+      ApiConstants.feeBulkRemind(coachingId),
+      body: body,
+    );
+  }
+
+  Future<Map<String, dynamic>> getMyFees(String coachingId) async {
+    final data = await _api.getAuthenticated(ApiConstants.feesMy(coachingId));
+    return {
+      'summary': data['summary'],
+      'records': (data['records'] as List<dynamic>)
+          .map((e) => FeeRecordModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    };
   }
 }

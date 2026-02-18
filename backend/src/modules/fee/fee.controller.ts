@@ -85,12 +85,13 @@ export class FeeController {
     async listRecords(req: Request, res: Response) {
         try {
             const { coachingId } = req.params as { coachingId: string };
-            const { memberId, status, from, to, page, limit } = req.query as Record<string, string | undefined>;
+            const { memberId, status, from, to, page, limit, search } = req.query as Record<string, string | undefined>;
             const query: Record<string, any> = { page: page ? parseInt(page) : undefined, limit: limit ? parseInt(limit) : undefined };
             if (memberId !== undefined) query.memberId = memberId;
             if (status !== undefined) query.status = status;
             if (from !== undefined) query.from = from;
             if (to !== undefined) query.to = to;
+            if (search !== undefined) query.search = search;
             const data = await svc.listRecords(coachingId, query);
             res.json(data);
         } catch (e: any) {
@@ -145,7 +146,8 @@ export class FeeController {
     async getSummary(req: Request, res: Response) {
         try {
             const { coachingId } = req.params as { coachingId: string };
-            const data = await svc.getSummary(coachingId);
+            const { fy } = req.query as { fy?: string };
+            const data = await svc.getSummary(coachingId, fy);
             res.json(data);
         } catch (e: any) {
             res.status(e.status ?? 500).json({ error: e.message });
@@ -157,6 +159,60 @@ export class FeeController {
             const { coachingId } = req.params as { coachingId: string };
             const userId = (req as any).user?.id;
             const data = await svc.getMyFees(coachingId, userId);
+            res.json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+
+    // ── New endpoints ─────────────────────────────────────────────
+
+    async toggleFeePause(req: Request, res: Response) {
+        try {
+            const { coachingId, assignmentId } = req.params as { coachingId: string; assignmentId: string };
+            const { pause, note } = req.body as { pause: boolean; note?: string };
+            const data = await svc.toggleFeePause(coachingId, assignmentId, pause, note);
+            res.json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+
+    async recordRefund(req: Request, res: Response) {
+        try {
+            const { coachingId, recordId } = req.params as { coachingId: string; recordId: string };
+            const userId = (req as any).user?.id;
+            const data = await svc.recordRefund(coachingId, recordId, req.body, userId);
+            res.json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+
+    async bulkRemind(req: Request, res: Response) {
+        try {
+            const { coachingId } = req.params as { coachingId: string };
+            const data = await svc.bulkRemind(coachingId, req.body ?? {});
+            res.json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+
+    async getOverdueReport(req: Request, res: Response) {
+        try {
+            const { coachingId } = req.params as { coachingId: string };
+            const data = await svc.getOverdueReport(coachingId);
+            res.json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+
+    async getStudentLedger(req: Request, res: Response) {
+        try {
+            const { coachingId, memberId } = req.params as { coachingId: string; memberId: string };
+            const data = await svc.getStudentLedger(coachingId, memberId);
             res.json(data);
         } catch (e: any) {
             res.status(e.status ?? 500).json({ error: e.message });

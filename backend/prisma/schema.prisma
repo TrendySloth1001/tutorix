@@ -55,6 +55,7 @@ model User {
   assignmentSubmissions AssignmentSubmission[] @relation("AssignmentSubmissions")
   markedFeeRecords    FeeRecord[]        @relation("FeeMarkedBy")
   recordedFeePayments FeePayment[]       @relation("FeePaymentRecorder")
+  processedFeeRefunds FeeRefund[]        @relation("FeeRefundProcessor")
 }
 
 model Ward {
@@ -142,6 +143,7 @@ model Coaching {
   feeAssignments FeeAssignment[]
   feeRecords    FeeRecord[]
   feePayments   FeePayment[]
+  feeRefunds    FeeRefund[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -722,11 +724,15 @@ model FeeStructure {
   amount      Float    // base amount in INR
   currency    String   @default("INR")
 
-  // Billing cycle: ONCE, MONTHLY, QUARTERLY, HALF_YEARLY, YEARLY, CUSTOM
+  // Billing cycle: ONCE, MONTHLY, QUARTERLY, HALF_YEARLY, YEARLY, CUSTOM, INSTALLMENT
   cycle       String   @default("MONTHLY")
 
   // fine per day after due date
   lateFinePerDay Float @default(0)
+
+  // Optional installment plan (JSON): [{label, dueDate, amount}]
+  // Used when cycle = INSTALLMENT
+  installmentPlan Json?
 
   // Optional discount config (JSON): [{ type: "SIBLING"|"EARLY_BIRD", value: float, unit: "PERCENT"|"FLAT" }]
   discounts Json?
@@ -764,6 +770,15 @@ model FeeAssignment {
   endDate   DateTime? // null = ongoing
 
   isActive Boolean @default(true)
+
+  // Pause support (fee freeze)
+  isPaused   Boolean   @default(false)
+  pausedAt   DateTime?
+  pauseNote  String?
+
+  // Scholarship tagging
+  scholarshipTag    String?  // e.g. "Merit", "Need-based"
+  scholarshipAmount Float?   // additional discount amount
 
   // Records generated for this assignment
   records FeeRecord[]
@@ -820,6 +835,7 @@ model FeeRecord {
 
   // Payments (for partial payment breakdown)
   payments FeePayment[]
+  refunds  FeeRefund[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -857,6 +873,27 @@ model FeePayment {
   @@index([recordId])
   @@index([coachingId])
   @@index([coachingId, paidAt])
+}
+
+/// Refund against a FeeRecord — creates a negative entry for clean ledger accounting.
+model FeeRefund {
+  id          String    @id @default(uuid())
+  coachingId  String
+  coaching    Coaching  @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+  recordId    String
+  record      FeeRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  amount      Float
+  reason      String?
+  mode        String    @default("CASH") // CASH, BANK_TRANSFER, ONLINE
+  refundedAt  DateTime  @default(now())
+  processedById String?
+  processedBy User?     @relation("FeeRefundProcessor", fields: [processedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([recordId])
+  @@index([coachingId])
 }
 
 // ═══════════════════════════════════════════════════════════════════════

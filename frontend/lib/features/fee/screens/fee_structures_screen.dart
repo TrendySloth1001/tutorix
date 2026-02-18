@@ -172,10 +172,11 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
         await _svc.deleteStructure(widget.coachingId, s.id);
         _load();
       } catch (e) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(e.toString())));
+        }
       }
     }
   }
@@ -460,10 +461,11 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

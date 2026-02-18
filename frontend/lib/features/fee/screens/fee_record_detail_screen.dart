@@ -94,6 +94,20 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                 const PopupMenuItem(value: 'waive', child: Text('Waive Fee')),
               ],
             ),
+          if (widget.isAdmin && _record != null && _record!.paidAmount > 0)
+            PopupMenuButton<String>(
+              icon: const Icon(
+                Icons.more_vert_rounded,
+                color: AppColors.darkOlive,
+              ),
+              onSelected: (v) => _onAction(v),
+              itemBuilder: (_) => [
+                const PopupMenuItem(
+                  value: 'refund',
+                  child: Text('Record Refund'),
+                ),
+              ],
+            ),
         ],
       ),
       body: _loading
@@ -119,13 +133,16 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
         }
         _load();
       } catch (e) {
-        if (mounted)
+        if (mounted) {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(e.toString())));
+        }
       }
     } else if (action == 'waive') {
       _showWaiveDialog();
+    } else if (action == 'refund') {
+      _showRefundSheet();
     }
   }
 
@@ -166,10 +183,11 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                 }
                 _load();
               } catch (e) {
-                if (mounted)
+                if (mounted) {
                   ScaffoldMessenger.of(
                     context,
                   ).showSnackBar(SnackBar(content: Text(e.toString())));
+                }
               }
             },
             child: const Text('Waive'),
@@ -201,6 +219,133 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
       ),
     );
   }
+
+  void _showRefundSheet() {
+    final amtCtrl = TextEditingController();
+    final reasonCtrl = TextEditingController();
+    String mode = 'CASH';
+    bool submitting = false;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSt) => Container(
+          decoration: const BoxDecoration(
+            color: AppColors.cream,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          padding: EdgeInsets.only(
+            left: 20,
+            right: 20,
+            top: 20,
+            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: AppColors.softGrey,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Record Refund',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 18,
+                  color: AppColors.darkOlive,
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: amtCtrl,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                ),
+                decoration: const InputDecoration(
+                  labelText: 'Refund Amount (₹)',
+                  prefixText: '₹ ',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: reasonCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'Reason (optional)',
+                ),
+              ),
+              const SizedBox(height: 12),
+              DropdownButtonFormField<String>(
+                value: mode,
+                decoration: const InputDecoration(labelText: 'Refund Mode'),
+                items: const [
+                  DropdownMenuItem(value: 'CASH', child: Text('Cash')),
+                  DropdownMenuItem(value: 'UPI', child: Text('UPI')),
+                  DropdownMenuItem(
+                    value: 'BANK_TRANSFER',
+                    child: Text('Bank Transfer'),
+                  ),
+                  DropdownMenuItem(value: 'CHEQUE', child: Text('Cheque')),
+                ],
+                onChanged: (v) => setSt(() => mode = v ?? 'CASH'),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: submitting
+                      ? null
+                      : () async {
+                          final amt = double.tryParse(amtCtrl.text.trim());
+                          if (amt == null || amt <= 0) return;
+                          setSt(() => submitting = true);
+                          try {
+                            await _svc.recordRefund(
+                              widget.coachingId,
+                              widget.recordId,
+                              amount: amt,
+                              reason: reasonCtrl.text.trim().isEmpty
+                                  ? null
+                                  : reasonCtrl.text.trim(),
+                              mode: mode,
+                            );
+                            if (ctx.mounted) Navigator.pop(ctx);
+                            _load();
+                          } catch (e) {
+                            setSt(() => submitting = false);
+                            if (ctx.mounted) {
+                              ScaffoldMessenger.of(ctx).showSnackBar(
+                                SnackBar(content: Text(e.toString())),
+                              );
+                            }
+                          }
+                        },
+                  child: submitting
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            color: AppColors.cream,
+                            strokeWidth: 2,
+                          ),
+                        )
+                      : const Text('Process Refund'),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _Body extends StatelessWidget {
@@ -220,12 +365,20 @@ class _Body extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          if (record.daysOverdue > 0) ...[
+            _OverdueBanner(days: record.daysOverdue),
+            const SizedBox(height: 12),
+          ],
           _HeaderCard(record: record),
           const SizedBox(height: 20),
           _BreakdownCard(record: record),
           const SizedBox(height: 20),
           if (record.payments.isNotEmpty) ...[
             _PaymentHistory(payments: record.payments),
+            const SizedBox(height: 20),
+          ],
+          if (record.refunds.isNotEmpty) ...[
+            _RefundHistory(refunds: record.refunds),
             const SizedBox(height: 20),
           ],
           if (record.member != null) ...[
@@ -246,6 +399,44 @@ class _Body extends StatelessWidget {
               ),
             ),
           const SizedBox(height: 32),
+        ],
+      ),
+    );
+  }
+}
+
+class _OverdueBanner extends StatelessWidget {
+  final int days;
+  const _OverdueBanner({required this.days});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFEBEE),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: const Color(0xFFC62828).withValues(alpha: 0.4),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.timer_off_rounded,
+            color: Color(0xFFC62828),
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              'This fee is $days day${days == 1 ? '' : 's'} overdue',
+              style: const TextStyle(
+                color: Color(0xFFC62828),
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -387,32 +578,40 @@ class _BreakdownCard extends StatelessWidget {
             ),
           if (record.receiptNo != null) ...[
             const SizedBox(height: 8),
-            GestureDetector(
-              onTap: () {
-                Clipboard.setData(ClipboardData(text: record.receiptNo!));
-              },
-              child: Row(
-                children: [
-                  const Icon(
-                    Icons.receipt_rounded,
-                    size: 14,
-                    color: AppColors.mutedOlive,
-                  ),
-                  const SizedBox(width: 6),
-                  Text(
-                    'Receipt: ${record.receiptNo}',
-                    style: const TextStyle(
-                      color: AppColors.mutedOlive,
-                      fontSize: 12,
+            Builder(
+              builder: (ctx) => GestureDetector(
+                onTap: () {
+                  Clipboard.setData(ClipboardData(text: record.receiptNo!));
+                  ScaffoldMessenger.of(ctx).showSnackBar(
+                    const SnackBar(
+                      content: Text('Receipt number copied'),
+                      duration: Duration(seconds: 2),
                     ),
-                  ),
-                  const SizedBox(width: 4),
-                  const Icon(
-                    Icons.copy_rounded,
-                    size: 12,
-                    color: AppColors.mutedOlive,
-                  ),
-                ],
+                  );
+                },
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.receipt_rounded,
+                      size: 14,
+                      color: AppColors.mutedOlive,
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      'Receipt: ${record.receiptNo}',
+                      style: const TextStyle(
+                        color: AppColors.mutedOlive,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                    const Icon(
+                      Icons.copy_rounded,
+                      size: 12,
+                      color: AppColors.mutedOlive,
+                    ),
+                  ],
+                ),
               ),
             ),
           ],
@@ -526,6 +725,84 @@ class _PaymentRow extends StatelessWidget {
             style: const TextStyle(
               fontWeight: FontWeight.w700,
               color: Color(0xFF2E7D32),
+              fontSize: 14,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RefundHistory extends StatelessWidget {
+  final List<FeeRefundModel> refunds;
+  const _RefundHistory({required this.refunds});
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Refund History',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: AppColors.darkOlive,
+          ),
+        ),
+        const SizedBox(height: 10),
+        ...refunds.map((r) => _RefundRow(refund: r)),
+      ],
+    );
+  }
+}
+
+class _RefundRow extends StatelessWidget {
+  final FeeRefundModel refund;
+  const _RefundRow({required this.refund});
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFE3F2FD),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Icons.keyboard_return_rounded,
+            color: Color(0xFF1565C0),
+            size: 18,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '${refund.mode}${refund.reason != null ? ' · ${refund.reason}' : ''}',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                    color: AppColors.darkOlive,
+                  ),
+                ),
+                Text(
+                  _fmtDateLong(refund.refundedAt),
+                  style: const TextStyle(
+                    color: AppColors.mutedOlive,
+                    fontSize: 11,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Text(
+            '- ₹${refund.amount.toStringAsFixed(0)}',
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1565C0),
               fontSize: 14,
             ),
           ),
@@ -839,6 +1116,16 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
       ).showSnackBar(const SnackBar(content: Text('Enter a valid amount')));
       return;
     }
+    if (amount > widget.record.balance + 0.01) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Amount exceeds balance of ₹${widget.record.balance.toStringAsFixed(0)}',
+          ),
+        ),
+      );
+      return;
+    }
     setState(() => _submitting = true);
     try {
       await widget.onSubmit(
@@ -850,10 +1137,11 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text(e.toString())));
+      }
     } finally {
       if (mounted) setState(() => _submitting = false);
     }

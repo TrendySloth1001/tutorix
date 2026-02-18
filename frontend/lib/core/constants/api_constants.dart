@@ -243,6 +243,16 @@ class ApiConstants {
       '$baseUrl/coaching/$coachingId/fee/members/$memberId';
   static String feesMy(String coachingId) =>
       '$baseUrl/coaching/$coachingId/fee/my';
+  static String feeMemberLedger(String coachingId, String memberId) =>
+      '$baseUrl/coaching/$coachingId/fee/members/$memberId/ledger';
+  static String feeAssignmentPause(String coachingId, String assignmentId) =>
+      '$baseUrl/coaching/$coachingId/fee/assignments/$assignmentId/pause';
+  static String feeRecordRefund(String coachingId, String recordId) =>
+      '$baseUrl/coaching/$coachingId/fee/records/$recordId/refund';
+  static String feeBulkRemind(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/fee/bulk-remind';
+  static String feeOverdueReport(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/fee/overdue-report';
 
   // Admin / Logging
   static const String logFrontendError = '$baseUrl/api/logs/frontend';

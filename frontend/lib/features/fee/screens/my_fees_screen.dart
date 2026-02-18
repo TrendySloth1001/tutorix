@@ -22,6 +22,7 @@ class MyFeesScreen extends StatefulWidget {
 class _MyFeesScreenState extends State<MyFeesScreen> {
   final _svc = FeeService();
   List<FeeRecordModel> _records = [];
+  Map<String, dynamic>? _summary;
   bool _loading = true;
   String? _error;
 
@@ -37,13 +38,15 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
       _error = null;
     });
     try {
-      final records = await _svc.getMyFees(widget.coachingId);
+      final result = await _svc.getMyFees(widget.coachingId);
+      final records = (result['records'] as List<FeeRecordModel>);
       // Sort: overdue first, then pending, then partial, then paid/waived
       records.sort(
         (a, b) => _statusOrder(a.status).compareTo(_statusOrder(b.status)),
       );
       setState(() {
         _records = records;
+        _summary = result['summary'] as Map<String, dynamic>?;
         _loading = false;
       });
     } catch (e) {
@@ -103,8 +106,15 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
               color: AppColors.darkOlive,
               onRefresh: _load,
               child: _records.isEmpty
-                  ? const _EmptyState()
-                  : _Body(records: _records, coachingId: widget.coachingId),
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: const [SizedBox(height: 200), _EmptyState()],
+                    )
+                  : _Body(
+                      records: _records,
+                      coachingId: widget.coachingId,
+                      serverSummary: _summary,
+                    ),
             ),
     );
   }
@@ -113,23 +123,34 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
 class _Body extends StatelessWidget {
   final List<FeeRecordModel> records;
   final String coachingId;
-  const _Body({required this.records, required this.coachingId});
+  final Map<String, dynamic>? serverSummary;
+  const _Body({
+    required this.records,
+    required this.coachingId,
+    this.serverSummary,
+  });
 
   @override
   Widget build(BuildContext context) {
-    // Compute totals
-    double totalDue = 0;
-    double totalPaid = 0;
-    double totalOverdue = 0;
-    for (final r in records) {
-      totalPaid += r.paidAmount;
-      if (r.status == 'PENDING' || r.status == 'PARTIALLY_PAID')
-        totalDue += r.balance;
-      if (r.status == 'OVERDUE') {
-        totalOverdue += r.balance;
-        totalDue += r.balance;
-      }
-    }
+    // Use server summary if available, otherwise compute locally
+    final totalPaid =
+        (serverSummary?['totalPaid'] as num?)?.toDouble() ??
+        records.fold<double>(0, (s, r) => s + r.paidAmount);
+    final totalDue =
+        (serverSummary?['totalDue'] as num?)?.toDouble() ??
+        records
+            .where(
+              (r) =>
+                  r.status == 'PENDING' ||
+                  r.status == 'PARTIALLY_PAID' ||
+                  r.status == 'OVERDUE',
+            )
+            .fold<double>(0, (s, r) => s + r.balance);
+    final totalOverdue =
+        (serverSummary?['totalOverdue'] as num?)?.toDouble() ??
+        records
+            .where((r) => r.status == 'OVERDUE')
+            .fold<double>(0, (s, r) => s + r.balance);
 
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
@@ -346,6 +367,27 @@ class _MyFeeCard extends StatelessWidget {
                           : FontWeight.normal,
                     ),
                   ),
+                  if (record.daysOverdue > 0) ...[
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFEBEE),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '${record.daysOverdue}d',
+                        style: const TextStyle(
+                          color: Color(0xFFC62828),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                   const Spacer(),
                   if (record.isPartial) ...[
                     Text(

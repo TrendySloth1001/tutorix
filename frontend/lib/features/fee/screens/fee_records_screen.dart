@@ -29,6 +29,8 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
   bool _hasMore = true;
 
   String _filterStatus = 'ALL';
+  String _searchQuery = '';
+  final _searchCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
 
   @override
@@ -41,6 +43,7 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
   @override
   void dispose() {
     _scrollCtrl.dispose();
+    _searchCtrl.dispose();
     super.dispose();
   }
 
@@ -73,6 +76,7 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
         widget.coachingId,
         memberId: widget.initialMemberId,
         status: _filterStatus == 'ALL' ? null : _filterStatus,
+        search: _searchQuery.isEmpty ? null : _searchQuery,
         page: page,
       );
       final newRecords = result['records'] as List<FeeRecordModel>;
@@ -119,6 +123,13 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
       ),
       body: Column(
         children: [
+          _SearchBar(
+            controller: _searchCtrl,
+            onChanged: (v) {
+              _searchQuery = v;
+              _load(reset: true);
+            },
+          ),
           _FilterBar(
             selected: _filterStatus,
             onChanged: (s) {
@@ -173,6 +184,56 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
                   ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _SearchBar extends StatelessWidget {
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  const _SearchBar({required this.controller, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      child: TextField(
+        controller: controller,
+        onChanged: onChanged,
+        style: const TextStyle(color: AppColors.darkOlive, fontSize: 14),
+        decoration: InputDecoration(
+          hintText: 'Search by student name...',
+          hintStyle: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
+          prefixIcon: const Icon(
+            Icons.search_rounded,
+            color: AppColors.mutedOlive,
+            size: 20,
+          ),
+          suffixIcon: controller.text.isNotEmpty
+              ? IconButton(
+                  icon: const Icon(
+                    Icons.clear_rounded,
+                    color: AppColors.mutedOlive,
+                    size: 18,
+                  ),
+                  onPressed: () {
+                    controller.clear();
+                    onChanged('');
+                  },
+                )
+              : null,
+          filled: true,
+          fillColor: AppColors.softGrey.withValues(alpha: 0.3),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 12,
+            vertical: 10,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
+          ),
+        ),
       ),
     );
   }
@@ -296,6 +357,13 @@ class _RecordTile extends StatelessWidget {
                                 ? const Color(0xFFC62828)
                                 : AppColors.mutedOlive,
                           ),
+                          if (record.daysOverdue > 0) ...[
+                            const SizedBox(width: 6),
+                            _Chip(
+                              label: '${record.daysOverdue}d overdue',
+                              color: const Color(0xFFC62828),
+                            ),
+                          ],
                         ],
                       ),
                     ],
