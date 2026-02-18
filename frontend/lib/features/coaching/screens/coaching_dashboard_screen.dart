@@ -88,49 +88,109 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
     }
 
     _subs.add(
-      _memberService.watchMembers(widget.coaching.id).listen((list) {
-        if (mounted) setState(() => _members = list);
-        checkDone();
-      }, onError: (e) { _logger.warn('watchMembers error', category: LogCategory.api, error: e.toString()); checkDone(); }),
+      _memberService
+          .watchMembers(widget.coaching.id)
+          .listen(
+            (list) {
+              if (mounted) setState(() => _members = list);
+              checkDone();
+            },
+            onError: (e) {
+              _logger.warn(
+                'watchMembers error',
+                category: LogCategory.api,
+                error: e.toString(),
+              );
+              checkDone();
+            },
+          ),
     );
 
     _subs.add(
-      _memberService.watchInvitations(widget.coaching.id).listen((list) {
-        if (mounted) setState(() => _invitations = list);
-        checkDone();
-      }, onError: (e) { _logger.warn('watchInvitations error', category: LogCategory.api, error: e.toString()); checkDone(); }),
+      _memberService
+          .watchInvitations(widget.coaching.id)
+          .listen(
+            (list) {
+              if (mounted) setState(() => _invitations = list);
+              checkDone();
+            },
+            onError: (e) {
+              _logger.warn(
+                'watchInvitations error',
+                category: LogCategory.api,
+                error: e.toString(),
+              );
+              checkDone();
+            },
+          ),
     );
 
     _subs.add(
       _notificationService
           .watchCoachingNotifications(widget.coaching.id, limit: 1)
-          .listen((data) {
-            if (mounted) {
-              setState(() => _unreadNotifications = data['unreadCount'] ?? 0);
-            }
-            checkDone();
-          }, onError: (e) { _logger.warn('watchNotifications error', category: LogCategory.api, error: e.toString()); checkDone(); }),
+          .listen(
+            (data) {
+              if (mounted) {
+                setState(() => _unreadNotifications = data['unreadCount'] ?? 0);
+              }
+              checkDone();
+            },
+            onError: (e) {
+              _logger.warn(
+                'watchNotifications error',
+                category: LogCategory.api,
+                error: e.toString(),
+              );
+              checkDone();
+            },
+          ),
     );
 
     _subs.add(
-      _batchService.watchRecentNotes(widget.coaching.id).listen((list) {
-        if (mounted) setState(() => _recentNotes = list);
-        checkDone();
-      }, onError: (e) { _logger.warn('watchRecentNotes error', category: LogCategory.api, error: e.toString()); checkDone(); }),
+      _batchService
+          .watchRecentNotes(widget.coaching.id)
+          .listen(
+            (list) {
+              if (mounted) setState(() => _recentNotes = list);
+              checkDone();
+            },
+            onError: (e) {
+              _logger.warn(
+                'watchRecentNotes error',
+                category: LogCategory.api,
+                error: e.toString(),
+              );
+              checkDone();
+            },
+          ),
     );
 
     // Dashboard feed (assessments, assignments, notices)
     _subs.add(
-      _batchService.watchDashboardFeed(widget.coaching.id).listen((data) {
-        if (mounted) {
-          setState(() {
-            _feedAssessments = (data['assessments'] as List<dynamic>?) ?? [];
-            _feedAssignments = (data['assignments'] as List<dynamic>?) ?? [];
-            _feedNotices = (data['notices'] as List<dynamic>?) ?? [];
-          });
-        }
-        checkDone();
-      }, onError: (e) { _logger.warn('watchDashboardFeed error', category: LogCategory.api, error: e.toString()); checkDone(); }),
+      _batchService
+          .watchDashboardFeed(widget.coaching.id)
+          .listen(
+            (data) {
+              if (mounted) {
+                setState(() {
+                  _feedAssessments =
+                      (data['assessments'] as List<dynamic>?) ?? [];
+                  _feedAssignments =
+                      (data['assignments'] as List<dynamic>?) ?? [];
+                  _feedNotices = (data['notices'] as List<dynamic>?) ?? [];
+                });
+              }
+              checkDone();
+            },
+            onError: (e) {
+              _logger.warn(
+                'watchDashboardFeed error',
+                category: LogCategory.api,
+                error: e.toString(),
+              );
+              checkDone();
+            },
+          ),
     );
   }
 
@@ -163,7 +223,10 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
         });
       }
     } catch (e) {
-      _logger.debug('Failed to load dismissed items: $e', category: LogCategory.storage);
+      _logger.debug(
+        'Failed to load dismissed items: $e',
+        category: LogCategory.storage,
+      );
     }
   }
 
@@ -175,7 +238,10 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
       await prefs.setStringList(key, _dismissedItems.toList());
       if (mounted) setState(() {});
     } catch (e) {
-      _logger.debug('Failed to dismiss item: $e', category: LogCategory.storage);
+      _logger.debug(
+        'Failed to dismiss item: $e',
+        category: LogCategory.storage,
+      );
     }
   }
 
@@ -190,7 +256,10 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
         });
       }
     } catch (e) {
-      _logger.debug('Failed to clear dismissed items: $e', category: LogCategory.storage);
+      _logger.debug(
+        'Failed to clear dismissed items: $e',
+        category: LogCategory.storage,
+      );
     }
   }
 

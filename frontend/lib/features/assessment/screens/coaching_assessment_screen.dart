@@ -48,7 +48,11 @@ class _CoachingAssessmentScreenState extends State<CoachingAssessmentScreen> {
             }
           },
           onError: (e) {
-            ErrorLoggerService.instance.warn('watchMyBatches error', category: LogCategory.api, error: e.toString());
+            ErrorLoggerService.instance.warn(
+              'watchMyBatches error',
+              category: LogCategory.api,
+              error: e.toString(),
+            );
             if (mounted) setState(() => _loading = false);
           },
         );

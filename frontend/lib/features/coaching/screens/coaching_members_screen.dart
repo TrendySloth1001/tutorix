@@ -110,10 +110,22 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
     );
 
     _subs.add(
-      _memberService.watchInvitations(widget.coaching.id).listen((list) {
-        if (mounted) setState(() => _invitations = list);
-        checkDone();
-      }, onError: (e) { ErrorLoggerService.instance.warn('watchInvitations error', category: LogCategory.api, error: e.toString()); checkDone(); }),
+      _memberService
+          .watchInvitations(widget.coaching.id)
+          .listen(
+            (list) {
+              if (mounted) setState(() => _invitations = list);
+              checkDone();
+            },
+            onError: (e) {
+              ErrorLoggerService.instance.warn(
+                'watchInvitations error',
+                category: LogCategory.api,
+                error: e.toString(),
+              );
+              checkDone();
+            },
+          ),
     );
   }
 

@@ -63,14 +63,14 @@ class LocalLogEntry {
   });
 
   Map<String, dynamic> toJson() => {
-        'timestamp': timestamp.toIso8601String(),
-        'level': level.value,
-        'category': category.value,
-        'message': message,
-        if (error != null) 'error': error,
-        if (stackTrace != null) 'stackTrace': stackTrace,
-        if (metadata != null) 'metadata': metadata,
-      };
+    'timestamp': timestamp.toIso8601String(),
+    'level': level.value,
+    'category': category.value,
+    'message': message,
+    if (error != null) 'error': error,
+    if (stackTrace != null) 'stackTrace': stackTrace,
+    if (metadata != null) 'metadata': metadata,
+  };
 }
 
 // ── Main service ────────────────────────────────────────────────────────────
@@ -223,11 +223,7 @@ class ErrorLoggerService {
   // ── Convenience: API request logging ────────────────────────────────────
 
   /// Log an outgoing API request start.
-  void apiRequest(
-    String method,
-    String url, {
-    Map<String, dynamic>? body,
-  }) {
+  void apiRequest(String method, String url, {Map<String, dynamic>? body}) {
     final path = url.replaceFirst(ApiConstants.baseUrl, '');
     _log(
       level: LogLevel.debug,
@@ -348,8 +344,7 @@ class ErrorLoggerService {
       message,
       category: LogCategory.system,
       error: error,
-      stackTrace:
-          stackTrace != null ? StackTrace.fromString(stackTrace) : null,
+      stackTrace: stackTrace != null ? StackTrace.fromString(stackTrace) : null,
       metadata: metadata,
     );
   }

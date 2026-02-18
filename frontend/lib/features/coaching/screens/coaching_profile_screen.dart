@@ -61,18 +61,23 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
 
   void _refreshCoaching() {
     _sub?.cancel();
-    _sub = _coachingService.watchCoachingById(_coaching.id).listen((updated) {
-      if (updated != null && mounted) {
-        setState(() => _coaching = updated);
-        widget.onCoachingUpdated?.call(updated);
-      }
-    }, onError: (e) {
-      ErrorLoggerService.instance.warn(
-        'watchCoachingById stream error',
-        category: LogCategory.api,
-        error: e.toString(),
-      );
-    });
+    _sub = _coachingService
+        .watchCoachingById(_coaching.id)
+        .listen(
+          (updated) {
+            if (updated != null && mounted) {
+              setState(() => _coaching = updated);
+              widget.onCoachingUpdated?.call(updated);
+            }
+          },
+          onError: (e) {
+            ErrorLoggerService.instance.warn(
+              'watchCoachingById stream error',
+              category: LogCategory.api,
+              error: e.toString(),
+            );
+          },
+        );
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -1280,11 +1285,18 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     try {
       await launchUrl(gMapsUrl, mode: LaunchMode.externalApplication);
     } catch (e) {
-      ErrorLoggerService.instance.debug('Google Maps launch failed: $e', category: LogCategory.system);
+      ErrorLoggerService.instance.debug(
+        'Google Maps launch failed: $e',
+        category: LogCategory.system,
+      );
       try {
         await launchUrl(aMapsUrl, mode: LaunchMode.externalApplication);
       } catch (e2) {
-        ErrorLoggerService.instance.warn('All map apps failed', category: LogCategory.system, error: e2.toString());
+        ErrorLoggerService.instance.warn(
+          'All map apps failed',
+          category: LogCategory.system,
+          error: e2.toString(),
+        );
         if (mounted) AppAlert.error(context, 'Could not open maps');
       }
     }

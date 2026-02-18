@@ -72,19 +72,39 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
     _subs.add(
       _service
           .watchAssessments(widget.coachingId, widget.batchId, role: _role)
-          .listen((list) {
-            if (mounted) setState(() => _assessments = list);
-            check();
-          }, onError: (e) { ErrorLoggerService.instance.warn('watchAssessments error', category: LogCategory.api, error: e.toString()); check(); }),
+          .listen(
+            (list) {
+              if (mounted) setState(() => _assessments = list);
+              check();
+            },
+            onError: (e) {
+              ErrorLoggerService.instance.warn(
+                'watchAssessments error',
+                category: LogCategory.api,
+                error: e.toString(),
+              );
+              check();
+            },
+          ),
     );
 
     _subs.add(
       _service
           .watchAssignments(widget.coachingId, widget.batchId, role: _role)
-          .listen((list) {
-            if (mounted) setState(() => _assignments = list);
-            check();
-          }, onError: (e) { ErrorLoggerService.instance.warn('watchAssignments error', category: LogCategory.api, error: e.toString()); check(); }),
+          .listen(
+            (list) {
+              if (mounted) setState(() => _assignments = list);
+              check();
+            },
+            onError: (e) {
+              ErrorLoggerService.instance.warn(
+                'watchAssignments error',
+                category: LogCategory.api,
+                error: e.toString(),
+              );
+              check();
+            },
+          ),
     );
   }
 

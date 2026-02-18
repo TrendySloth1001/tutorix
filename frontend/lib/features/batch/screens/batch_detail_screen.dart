@@ -124,33 +124,63 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
     );
 
     _subs.add(
-      _batchService.watchMembers(widget.coaching.id, widget.batchId).listen((
-        list,
-      ) {
-        if (!mounted) return;
-        setState(() => _members = list);
-        checkDone();
-      }, onError: (e) { ErrorLoggerService.instance.warn('watchMembers error', category: LogCategory.api, error: e.toString()); checkDone(); }),
+      _batchService
+          .watchMembers(widget.coaching.id, widget.batchId)
+          .listen(
+            (list) {
+              if (!mounted) return;
+              setState(() => _members = list);
+              checkDone();
+            },
+            onError: (e) {
+              ErrorLoggerService.instance.warn(
+                'watchMembers error',
+                category: LogCategory.api,
+                error: e.toString(),
+              );
+              checkDone();
+            },
+          ),
     );
 
     _subs.add(
-      _batchService.watchNotes(widget.coaching.id, widget.batchId).listen((
-        list,
-      ) {
-        if (!mounted) return;
-        setState(() => _notes = list);
-        checkDone();
-      }, onError: (e) { ErrorLoggerService.instance.warn('watchNotes error', category: LogCategory.api, error: e.toString()); checkDone(); }),
+      _batchService
+          .watchNotes(widget.coaching.id, widget.batchId)
+          .listen(
+            (list) {
+              if (!mounted) return;
+              setState(() => _notes = list);
+              checkDone();
+            },
+            onError: (e) {
+              ErrorLoggerService.instance.warn(
+                'watchNotes error',
+                category: LogCategory.api,
+                error: e.toString(),
+              );
+              checkDone();
+            },
+          ),
     );
 
     _subs.add(
-      _batchService.watchNotices(widget.coaching.id, widget.batchId).listen((
-        list,
-      ) {
-        if (!mounted) return;
-        setState(() => _notices = list);
-        checkDone();
-      }, onError: (e) { ErrorLoggerService.instance.warn('watchNotices error', category: LogCategory.api, error: e.toString()); checkDone(); }),
+      _batchService
+          .watchNotices(widget.coaching.id, widget.batchId)
+          .listen(
+            (list) {
+              if (!mounted) return;
+              setState(() => _notices = list);
+              checkDone();
+            },
+            onError: (e) {
+              ErrorLoggerService.instance.warn(
+                'watchNotices error',
+                category: LogCategory.api,
+                error: e.toString(),
+              );
+              checkDone();
+            },
+          ),
     );
   }
 

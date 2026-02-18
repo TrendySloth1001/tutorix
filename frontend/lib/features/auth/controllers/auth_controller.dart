@@ -37,10 +37,12 @@ class AuthController extends ChangeNotifier {
         final freshUser = await _userService.getMe();
         _user = freshUser ?? await _authService.getCachedUser();
       } catch (e, stack) {
-        _logger.warn('Failed to fetch fresh user, using cache',
-            category: LogCategory.auth,
-            error: e.toString(),
-            stackTrace: stack.toString());
+        _logger.warn(
+          'Failed to fetch fresh user, using cache',
+          category: LogCategory.auth,
+          error: e.toString(),
+          stackTrace: stack.toString(),
+        );
         _user = await _authService.getCachedUser();
       }
       await _checkPendingInvitations();
@@ -95,7 +97,10 @@ class AuthController extends ChangeNotifier {
       _pendingInvitations = await _invitationService.getMyInvitations();
       _invitationsChecked = true;
     } catch (e) {
-      _logger.warn('Failed to check pending invitations: $e', category: LogCategory.auth);
+      _logger.warn(
+        'Failed to check pending invitations: $e',
+        category: LogCategory.auth,
+      );
       _pendingInvitations = [];
       _invitationsChecked = true;
     }

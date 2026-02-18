@@ -53,7 +53,8 @@ class LogEntry {
       userId: json['userId'] as String?,
       userEmail: json['userEmail'] as String?,
       userName: json['userName'] as String?,
-      userRoles: (json['userRoles'] as List<dynamic>?)
+      userRoles:
+          (json['userRoles'] as List<dynamic>?)
               ?.map((e) => e.toString())
               .toList() ??
           [],
@@ -140,17 +141,11 @@ class AdminLogsService {
         .map((e) => LogEntry.fromJson(Map<String, dynamic>.from(e as Map)))
         .toList();
 
-    return {
-      'logs': logs,
-      'total': raw['total'] as int,
-    };
+    return {'logs': logs, 'total': raw['total'] as int};
   }
 
   /// Get log statistics.
-  Future<LogStats> getStats({
-    DateTime? startDate,
-    DateTime? endDate,
-  }) async {
+  Future<LogStats> getStats({DateTime? startDate, DateTime? endDate}) async {
     final params = <String, String>{
       if (startDate != null) 'startDate': startDate.toIso8601String(),
       if (endDate != null) 'endDate': endDate.toIso8601String(),

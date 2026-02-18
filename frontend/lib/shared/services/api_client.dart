@@ -41,13 +41,22 @@ class ApiClient {
     try {
       final response = await http.get(Uri.parse(url), headers: headers);
       sw.stop();
-      _logger.apiResponse('GET', url,
-          statusCode: response.statusCode, duration: sw.elapsed);
+      _logger.apiResponse(
+        'GET',
+        url,
+        statusCode: response.statusCode,
+        duration: sw.elapsed,
+      );
       return response;
     } catch (e, stack) {
       sw.stop();
-      _logger.apiError('GET', url,
-          error: e, stackTrace: stack, duration: sw.elapsed);
+      _logger.apiError(
+        'GET',
+        url,
+        error: e,
+        stackTrace: stack,
+        duration: sw.elapsed,
+      );
       rethrow;
     }
   }
@@ -60,16 +69,28 @@ class ApiClient {
     _logger.apiRequest('POST', url);
     final sw = Stopwatch()..start();
     try {
-      final response = await http.post(Uri.parse(url),
-          headers: headers, body: body);
+      final response = await http.post(
+        Uri.parse(url),
+        headers: headers,
+        body: body,
+      );
       sw.stop();
-      _logger.apiResponse('POST', url,
-          statusCode: response.statusCode, duration: sw.elapsed);
+      _logger.apiResponse(
+        'POST',
+        url,
+        statusCode: response.statusCode,
+        duration: sw.elapsed,
+      );
       return response;
     } catch (e, stack) {
       sw.stop();
-      _logger.apiError('POST', url,
-          error: e, stackTrace: stack, duration: sw.elapsed);
+      _logger.apiError(
+        'POST',
+        url,
+        error: e,
+        stackTrace: stack,
+        duration: sw.elapsed,
+      );
       rethrow;
     }
   }
@@ -82,16 +103,28 @@ class ApiClient {
     _logger.apiRequest('PATCH', url);
     final sw = Stopwatch()..start();
     try {
-      final response = await http.patch(Uri.parse(url),
-          headers: headers, body: body);
+      final response = await http.patch(
+        Uri.parse(url),
+        headers: headers,
+        body: body,
+      );
       sw.stop();
-      _logger.apiResponse('PATCH', url,
-          statusCode: response.statusCode, duration: sw.elapsed);
+      _logger.apiResponse(
+        'PATCH',
+        url,
+        statusCode: response.statusCode,
+        duration: sw.elapsed,
+      );
       return response;
     } catch (e, stack) {
       sw.stop();
-      _logger.apiError('PATCH', url,
-          error: e, stackTrace: stack, duration: sw.elapsed);
+      _logger.apiError(
+        'PATCH',
+        url,
+        error: e,
+        stackTrace: stack,
+        duration: sw.elapsed,
+      );
       rethrow;
     }
   }
@@ -105,13 +138,22 @@ class ApiClient {
     try {
       final response = await http.delete(Uri.parse(url), headers: headers);
       sw.stop();
-      _logger.apiResponse('DELETE', url,
-          statusCode: response.statusCode, duration: sw.elapsed);
+      _logger.apiResponse(
+        'DELETE',
+        url,
+        statusCode: response.statusCode,
+        duration: sw.elapsed,
+      );
       return response;
     } catch (e, stack) {
       sw.stop();
-      _logger.apiError('DELETE', url,
-          error: e, stackTrace: stack, duration: sw.elapsed);
+      _logger.apiError(
+        'DELETE',
+        url,
+        error: e,
+        stackTrace: stack,
+        duration: sw.elapsed,
+      );
       rethrow;
     }
   }
@@ -207,13 +249,22 @@ class ApiClient {
       final streamed = await request.send();
       final response = await http.Response.fromStream(streamed);
       sw.stop();
-      _logger.apiResponse('UPLOAD', url,
-          statusCode: response.statusCode, duration: sw.elapsed);
+      _logger.apiResponse(
+        'UPLOAD',
+        url,
+        statusCode: response.statusCode,
+        duration: sw.elapsed,
+      );
       return _handleResponse(response);
     } catch (e, stack) {
       sw.stop();
-      _logger.apiError('UPLOAD', url,
-          error: e, stackTrace: stack, duration: sw.elapsed);
+      _logger.apiError(
+        'UPLOAD',
+        url,
+        error: e,
+        stackTrace: stack,
+        duration: sw.elapsed,
+      );
       rethrow;
     }
   }
@@ -240,13 +291,22 @@ class ApiClient {
       final streamed = await request.send();
       final response = await http.Response.fromStream(streamed);
       sw.stop();
-      _logger.apiResponse('UPLOAD_MULTI', url,
-          statusCode: response.statusCode, duration: sw.elapsed);
+      _logger.apiResponse(
+        'UPLOAD_MULTI',
+        url,
+        statusCode: response.statusCode,
+        duration: sw.elapsed,
+      );
       return _handleResponse(response);
     } catch (e, stack) {
       sw.stop();
-      _logger.apiError('UPLOAD_MULTI', url,
-          error: e, stackTrace: stack, duration: sw.elapsed);
+      _logger.apiError(
+        'UPLOAD_MULTI',
+        url,
+        error: e,
+        stackTrace: stack,
+        duration: sw.elapsed,
+      );
       rethrow;
     }
   }

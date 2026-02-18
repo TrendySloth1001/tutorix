@@ -21,10 +21,7 @@ class LoggingNavigatorObserver extends NavigatorObserver {
 
   @override
   void didReplace({Route<dynamic>? newRoute, Route<dynamic>? oldRoute}) {
-    _logger.navigationReplace(
-      _routeName(oldRoute),
-      _routeName(newRoute),
-    );
+    _logger.navigationReplace(_routeName(oldRoute), _routeName(newRoute));
   }
 
   @override

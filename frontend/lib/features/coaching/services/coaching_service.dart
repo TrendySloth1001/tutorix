@@ -131,7 +131,10 @@ class CoachingService {
       final data = await _api.getPublic(ApiConstants.checkSlug(slug));
       return data['available'] as bool;
     } catch (e) {
-      ErrorLoggerService.instance.debug('Slug check failed for "$slug": $e', category: LogCategory.api);
+      ErrorLoggerService.instance.debug(
+        'Slug check failed for "$slug": $e',
+        category: LogCategory.api,
+      );
       return false;
     }
   }
