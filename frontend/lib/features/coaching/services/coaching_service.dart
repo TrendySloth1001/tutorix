@@ -1,5 +1,6 @@
 import '../../../core/constants/api_constants.dart';
 import '../../../core/services/cache_manager.dart';
+import '../../../core/services/error_logger_service.dart';
 import '../../../shared/services/api_client.dart';
 import '../models/coaching_model.dart';
 
@@ -129,7 +130,8 @@ class CoachingService {
     try {
       final data = await _api.getPublic(ApiConstants.checkSlug(slug));
       return data['available'] as bool;
-    } catch (_) {
+    } catch (e) {
+      ErrorLoggerService.instance.debug('Slug check failed for "$slug": $e', category: LogCategory.api);
       return false;
     }
   }

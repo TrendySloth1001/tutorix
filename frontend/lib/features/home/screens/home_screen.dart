@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/services/error_logger_service.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/services/notification_service.dart';
@@ -63,7 +64,13 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         _unreadNotifications = (result['unreadCount'] ?? 0) + pendingInvites;
       });
-    }, onError: (_) {});
+    }, onError: (e) {
+      ErrorLoggerService.instance.warn(
+        'Notification count stream error',
+        category: LogCategory.api,
+        error: e.toString(),
+      );
+    });
   }
 
   void _loadCoachings() {

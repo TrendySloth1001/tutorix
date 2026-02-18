@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/services/error_logger_service.dart';
 import '../models/assessment_model.dart';
 import '../services/assessment_service.dart';
 import 'assessment_result_screen.dart';
@@ -151,8 +152,12 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
         questionId: questionId,
         answer: value,
       );
-    } catch (_) {
-      // Silent fail — will be saved on next interaction
+    } catch (e) {
+      ErrorLoggerService.instance.debug(
+        'Auto-save answer failed for $questionId (will retry on next interaction)',
+        category: LogCategory.api,
+        metadata: {'questionId': questionId},
+      );
     }
   }
 

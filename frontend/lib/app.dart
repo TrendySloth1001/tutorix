@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'core/observers/app_lifecycle_observer.dart';
+import 'core/observers/logging_navigator_observer.dart';
+import 'core/services/error_logger_service.dart';
 import 'core/theme/app_theme.dart';
 import 'features/academic/screens/academic_onboarding_screen.dart';
 import 'features/academic/services/academic_service.dart';
@@ -9,8 +12,27 @@ import 'features/profile/screens/pending_invitations_screen.dart';
 import 'shared/widgets/main_wrapper.dart';
 
 /// Top-level material app — theme, auth guard, and root navigation.
-class TutorixApp extends StatelessWidget {
+class TutorixApp extends StatefulWidget {
   const TutorixApp({super.key});
+
+  @override
+  State<TutorixApp> createState() => _TutorixAppState();
+}
+
+class _TutorixAppState extends State<TutorixApp> {
+  final _lifecycleObserver = AppLifecycleObserver();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(_lifecycleObserver);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(_lifecycleObserver);
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,6 +40,7 @@ class TutorixApp extends StatelessWidget {
       title: 'Tutorix',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      navigatorObservers: [LoggingNavigatorObserver()],
       home: const AuthWrapper(),
     );
   }
@@ -72,7 +95,13 @@ class _AuthWrapperState extends State<AuthWrapper> {
           _needsAcademicOnboarding = status.needsOnboarding;
         });
       }
-    } catch (e) {
+    } catch (e, stack) {
+      ErrorLoggerService.instance.warn(
+        'Academic onboarding check failed — skipping',
+        category: LogCategory.auth,
+        error: e.toString(),
+        stackTrace: stack.toString(),
+      );
       if (mounted) {
         setState(() {
           _checkingOnboarding = false;

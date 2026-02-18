@@ -17,6 +17,10 @@ import coachingRoutes from './modules/coaching/coaching.route.js';
 import uploadRoutes from './modules/upload/upload.route.js';
 import notificationRoutes from './modules/notification/notification.route.js';
 import academicRoutes from './modules/academic/academic.route.js';
+import adminRoutes from './modules/admin/admin.route.js';
+import { requestLoggerMiddleware } from './shared/middleware/request-logger.middleware.js';
+import { authMiddleware } from './shared/middleware/auth.middleware.js';
+import { AdminLogsController } from './modules/admin/logs.controller.js';
 
 
 const app = express();
@@ -33,11 +37,12 @@ app.use(cors(allowedOrigins.length > 0 ? {
 } : undefined));
 app.use(express.json({ limit: '100kb' }));
 
-// Lightweight request logger — never log sensitive body fields
-app.use((req, res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
-  next();
-});
+// Request logging middleware
+app.use(requestLoggerMiddleware);
+
+// Frontend error logging endpoint (accessible to all authenticated users)
+const logsController = new AdminLogsController();
+app.post('/api/logs/frontend', authMiddleware, logsController.logFrontendError.bind(logsController));
 
 app.use('/auth', authRoutes);
 app.use('/user', userRoutes);
@@ -45,6 +50,7 @@ app.use('/coaching', coachingRoutes);
 app.use('/upload', uploadRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/academic', academicRoutes);
+app.use('/admin', adminRoutes);
 
 app.get('/hello', (req, res) => {
   res.json({ message: 'Hello from Express TypeScript!' });

@@ -244,6 +244,12 @@ class ApiConstants {
   static String feesMy(String coachingId) =>
       '$baseUrl/coaching/$coachingId/fee/my';
 
+  // Admin / Logging
+  static const String logFrontendError = '$baseUrl/api/logs/frontend';
+  static const String adminLogs = '$baseUrl/admin/logs';
+  static const String adminLogsStats = '$baseUrl/admin/logs/stats';
+  static const String adminLogsCleanup = '$baseUrl/admin/logs/cleanup';
+
   // Google
   static const String googleClientId =
       '299795936862-s70dge4e1k99b3db0faqss8qrcrjj12b.apps.googleusercontent.com';

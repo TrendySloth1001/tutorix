@@ -1,17 +1,20 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import '../../core/services/error_logger_service.dart';
 import 'secure_storage_service.dart';
 
-/// Lightweight HTTP wrapper that automatically attaches Bearer tokens
-/// and parses JSON responses.
+/// Lightweight HTTP wrapper that automatically attaches Bearer tokens,
+/// parses JSON responses, and logs every request/response.
 ///
 /// Every feature-service delegates its HTTP calls here so that
-/// auth-header logic and error handling live in one place.
+/// auth-header logic, error handling, and observability live in one place.
 class ApiClient {
   ApiClient._();
   static final ApiClient instance = ApiClient._();
 
   final SecureStorageService _storage = SecureStorageService.instance;
+  // Lazy access to break circular dependency with ErrorLoggerService
+  ErrorLoggerService get _logger => ErrorLoggerService.instance;
 
   // ── Headers ────────────────────────────────────────────────────────────
 
@@ -27,25 +30,111 @@ class ApiClient {
     };
   }
 
+  // ── Instrumented HTTP helpers ──────────────────────────────────────────
+
+  Future<http.Response> _trackedGet(
+    String url, {
+    required Map<String, String> headers,
+  }) async {
+    _logger.apiRequest('GET', url);
+    final sw = Stopwatch()..start();
+    try {
+      final response = await http.get(Uri.parse(url), headers: headers);
+      sw.stop();
+      _logger.apiResponse('GET', url,
+          statusCode: response.statusCode, duration: sw.elapsed);
+      return response;
+    } catch (e, stack) {
+      sw.stop();
+      _logger.apiError('GET', url,
+          error: e, stackTrace: stack, duration: sw.elapsed);
+      rethrow;
+    }
+  }
+
+  Future<http.Response> _trackedPost(
+    String url, {
+    required Map<String, String> headers,
+    String? body,
+  }) async {
+    _logger.apiRequest('POST', url);
+    final sw = Stopwatch()..start();
+    try {
+      final response = await http.post(Uri.parse(url),
+          headers: headers, body: body);
+      sw.stop();
+      _logger.apiResponse('POST', url,
+          statusCode: response.statusCode, duration: sw.elapsed);
+      return response;
+    } catch (e, stack) {
+      sw.stop();
+      _logger.apiError('POST', url,
+          error: e, stackTrace: stack, duration: sw.elapsed);
+      rethrow;
+    }
+  }
+
+  Future<http.Response> _trackedPatch(
+    String url, {
+    required Map<String, String> headers,
+    String? body,
+  }) async {
+    _logger.apiRequest('PATCH', url);
+    final sw = Stopwatch()..start();
+    try {
+      final response = await http.patch(Uri.parse(url),
+          headers: headers, body: body);
+      sw.stop();
+      _logger.apiResponse('PATCH', url,
+          statusCode: response.statusCode, duration: sw.elapsed);
+      return response;
+    } catch (e, stack) {
+      sw.stop();
+      _logger.apiError('PATCH', url,
+          error: e, stackTrace: stack, duration: sw.elapsed);
+      rethrow;
+    }
+  }
+
+  Future<http.Response> _trackedDelete(
+    String url, {
+    required Map<String, String> headers,
+  }) async {
+    _logger.apiRequest('DELETE', url);
+    final sw = Stopwatch()..start();
+    try {
+      final response = await http.delete(Uri.parse(url), headers: headers);
+      sw.stop();
+      _logger.apiResponse('DELETE', url,
+          statusCode: response.statusCode, duration: sw.elapsed);
+      return response;
+    } catch (e, stack) {
+      sw.stop();
+      _logger.apiError('DELETE', url,
+          error: e, stackTrace: stack, duration: sw.elapsed);
+      rethrow;
+    }
+  }
+
   // ── Convenience verbs ──────────────────────────────────────────────────
 
   /// Authenticated GET → decoded JSON map.
   Future<Map<String, dynamic>> getAuthenticated(String url) async {
     final headers = await _authHeaders();
-    final response = await http.get(Uri.parse(url), headers: headers);
+    final response = await _trackedGet(url, headers: headers);
     return _handleResponse(response);
   }
 
   /// Authenticated GET → decoded JSON (could be list or map).
   Future<dynamic> getAuthenticatedRaw(String url) async {
     final headers = await _authHeaders();
-    final response = await http.get(Uri.parse(url), headers: headers);
+    final response = await _trackedGet(url, headers: headers);
     return _handleResponseRaw(response);
   }
 
   /// Public GET (no token) → decoded JSON map.
   Future<Map<String, dynamic>> getPublic(String url) async {
-    final response = await http.get(Uri.parse(url), headers: _jsonHeaders);
+    final response = await _trackedGet(url, headers: _jsonHeaders);
     return _handleResponse(response);
   }
 
@@ -55,8 +144,8 @@ class ApiClient {
     Map<String, dynamic>? body,
   }) async {
     final headers = await _authHeaders();
-    final response = await http.post(
-      Uri.parse(url),
+    final response = await _trackedPost(
+      url,
       headers: headers,
       body: body != null ? jsonEncode(body) : null,
     );
@@ -70,8 +159,8 @@ class ApiClient {
     Map<String, String>? extraHeaders,
   }) async {
     final headers = {..._jsonHeaders, ...?extraHeaders};
-    final response = await http.post(
-      Uri.parse(url),
+    final response = await _trackedPost(
+      url,
       headers: headers,
       body: body != null ? jsonEncode(body) : null,
     );
@@ -84,8 +173,8 @@ class ApiClient {
     Map<String, dynamic>? body,
   }) async {
     final headers = await _authHeaders();
-    final response = await http.patch(
-      Uri.parse(url),
+    final response = await _trackedPatch(
+      url,
       headers: headers,
       body: body != null ? jsonEncode(body) : null,
     );
@@ -95,7 +184,7 @@ class ApiClient {
   /// Authenticated DELETE → success boolean.
   Future<bool> deleteAuthenticated(String url) async {
     final headers = await _authHeaders();
-    final response = await http.delete(Uri.parse(url), headers: headers);
+    final response = await _trackedDelete(url, headers: headers);
     return response.statusCode == 200;
   }
 
@@ -105,16 +194,28 @@ class ApiClient {
     required String fieldName,
     required String filePath,
   }) async {
-    final token = await _storage.getToken();
-    if (token == null) throw Exception('Not authenticated');
+    _logger.apiRequest('UPLOAD', url);
+    final sw = Stopwatch()..start();
+    try {
+      final token = await _storage.getToken();
+      if (token == null) throw Exception('Not authenticated');
 
-    final request = http.MultipartRequest('POST', Uri.parse(url))
-      ..headers['Authorization'] = 'Bearer $token'
-      ..files.add(await http.MultipartFile.fromPath(fieldName, filePath));
+      final request = http.MultipartRequest('POST', Uri.parse(url))
+        ..headers['Authorization'] = 'Bearer $token'
+        ..files.add(await http.MultipartFile.fromPath(fieldName, filePath));
 
-    final streamed = await request.send();
-    final response = await http.Response.fromStream(streamed);
-    return _handleResponse(response);
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
+      sw.stop();
+      _logger.apiResponse('UPLOAD', url,
+          statusCode: response.statusCode, duration: sw.elapsed);
+      return _handleResponse(response);
+    } catch (e, stack) {
+      sw.stop();
+      _logger.apiError('UPLOAD', url,
+          error: e, stackTrace: stack, duration: sw.elapsed);
+      rethrow;
+    }
   }
 
   /// Authenticated multipart POST (multiple files upload).
@@ -123,19 +224,31 @@ class ApiClient {
     required String fieldName,
     required List<String> filePaths,
   }) async {
-    final token = await _storage.getToken();
-    if (token == null) throw Exception('Not authenticated');
+    _logger.apiRequest('UPLOAD_MULTI', url);
+    final sw = Stopwatch()..start();
+    try {
+      final token = await _storage.getToken();
+      if (token == null) throw Exception('Not authenticated');
 
-    final request = http.MultipartRequest('POST', Uri.parse(url))
-      ..headers['Authorization'] = 'Bearer $token';
+      final request = http.MultipartRequest('POST', Uri.parse(url))
+        ..headers['Authorization'] = 'Bearer $token';
 
-    for (final path in filePaths) {
-      request.files.add(await http.MultipartFile.fromPath(fieldName, path));
+      for (final path in filePaths) {
+        request.files.add(await http.MultipartFile.fromPath(fieldName, path));
+      }
+
+      final streamed = await request.send();
+      final response = await http.Response.fromStream(streamed);
+      sw.stop();
+      _logger.apiResponse('UPLOAD_MULTI', url,
+          statusCode: response.statusCode, duration: sw.elapsed);
+      return _handleResponse(response);
+    } catch (e, stack) {
+      sw.stop();
+      _logger.apiError('UPLOAD_MULTI', url,
+          error: e, stackTrace: stack, duration: sw.elapsed);
+      rethrow;
     }
-
-    final streamed = await request.send();
-    final response = await http.Response.fromStream(streamed);
-    return _handleResponse(response);
   }
 
   // ── Response handling ──────────────────────────────────────────────────

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/services/error_logger_service.dart';
 import '../models/coaching_model.dart';
 import '../models/member_model.dart';
 import '../models/invitation_model.dart';
@@ -42,6 +43,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
   final MemberService _memberService = MemberService();
   final NotificationService _notificationService = NotificationService();
   final BatchService _batchService = BatchService();
+  final ErrorLoggerService _logger = ErrorLoggerService.instance;
 
   List<MemberModel> _members = [];
   List<InvitationModel> _invitations = [];
@@ -89,14 +91,14 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
       _memberService.watchMembers(widget.coaching.id).listen((list) {
         if (mounted) setState(() => _members = list);
         checkDone();
-      }, onError: (_) => checkDone()),
+      }, onError: (e) { _logger.warn('watchMembers error', category: LogCategory.api, error: e.toString()); checkDone(); }),
     );
 
     _subs.add(
       _memberService.watchInvitations(widget.coaching.id).listen((list) {
         if (mounted) setState(() => _invitations = list);
         checkDone();
-      }, onError: (_) => checkDone()),
+      }, onError: (e) { _logger.warn('watchInvitations error', category: LogCategory.api, error: e.toString()); checkDone(); }),
     );
 
     _subs.add(
@@ -107,14 +109,14 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
               setState(() => _unreadNotifications = data['unreadCount'] ?? 0);
             }
             checkDone();
-          }, onError: (_) => checkDone()),
+          }, onError: (e) { _logger.warn('watchNotifications error', category: LogCategory.api, error: e.toString()); checkDone(); }),
     );
 
     _subs.add(
       _batchService.watchRecentNotes(widget.coaching.id).listen((list) {
         if (mounted) setState(() => _recentNotes = list);
         checkDone();
-      }, onError: (_) => checkDone()),
+      }, onError: (e) { _logger.warn('watchRecentNotes error', category: LogCategory.api, error: e.toString()); checkDone(); }),
     );
 
     // Dashboard feed (assessments, assignments, notices)
@@ -128,7 +130,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
           });
         }
         checkDone();
-      }, onError: (_) => checkDone()),
+      }, onError: (e) { _logger.warn('watchDashboardFeed error', category: LogCategory.api, error: e.toString()); checkDone(); }),
     );
   }
 
@@ -160,7 +162,9 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
           _dismissedItems = dismissed.toSet();
         });
       }
-    } catch (_) {}
+    } catch (e) {
+      _logger.debug('Failed to load dismissed items: $e', category: LogCategory.storage);
+    }
   }
 
   Future<void> _dismissItem(String itemId, String type) async {
@@ -170,7 +174,9 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
       _dismissedItems.add('${type}_$itemId');
       await prefs.setStringList(key, _dismissedItems.toList());
       if (mounted) setState(() {});
-    } catch (_) {}
+    } catch (e) {
+      _logger.debug('Failed to dismiss item: $e', category: LogCategory.storage);
+    }
   }
 
   Future<void> _clearDismissed() async {
@@ -183,7 +189,9 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
           _dismissedItems.clear();
         });
       }
-    } catch (_) {}
+    } catch (e) {
+      _logger.debug('Failed to clear dismissed items: $e', category: LogCategory.storage);
+    }
   }
 
   List<dynamic> _filterDismissed(List<dynamic> items, String type) {

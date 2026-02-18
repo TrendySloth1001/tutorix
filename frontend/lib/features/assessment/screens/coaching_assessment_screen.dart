@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/services/error_logger_service.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_shimmer.dart';
 import '../../batch/models/batch_model.dart';
@@ -46,7 +47,8 @@ class _CoachingAssessmentScreenState extends State<CoachingAssessmentScreen> {
               });
             }
           },
-          onError: (_) {
+          onError: (e) {
+            ErrorLoggerService.instance.warn('watchMyBatches error', category: LogCategory.api, error: e.toString());
             if (mounted) setState(() => _loading = false);
           },
         );

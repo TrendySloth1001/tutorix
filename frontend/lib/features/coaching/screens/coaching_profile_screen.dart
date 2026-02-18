@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/services/error_logger_service.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
@@ -65,7 +66,13 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
         setState(() => _coaching = updated);
         widget.onCoachingUpdated?.call(updated);
       }
-    }, onError: (_) {});
+    }, onError: (e) {
+      ErrorLoggerService.instance.warn(
+        'watchCoachingById stream error',
+        category: LogCategory.api,
+        error: e.toString(),
+      );
+    });
   }
 
   // ═══════════════════════════════════════════════════════════════════════
@@ -1272,10 +1279,12 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     );
     try {
       await launchUrl(gMapsUrl, mode: LaunchMode.externalApplication);
-    } catch (_) {
+    } catch (e) {
+      ErrorLoggerService.instance.debug('Google Maps launch failed: $e', category: LogCategory.system);
       try {
         await launchUrl(aMapsUrl, mode: LaunchMode.externalApplication);
-      } catch (_) {
+      } catch (e2) {
+        ErrorLoggerService.instance.warn('All map apps failed', category: LogCategory.system, error: e2.toString());
         if (mounted) AppAlert.error(context, 'Could not open maps');
       }
     }

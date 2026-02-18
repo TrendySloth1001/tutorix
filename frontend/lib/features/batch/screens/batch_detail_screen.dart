@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/services/error_logger_service.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
@@ -129,7 +130,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
         if (!mounted) return;
         setState(() => _members = list);
         checkDone();
-      }, onError: (_) => checkDone()),
+      }, onError: (e) { ErrorLoggerService.instance.warn('watchMembers error', category: LogCategory.api, error: e.toString()); checkDone(); }),
     );
 
     _subs.add(
@@ -139,7 +140,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
         if (!mounted) return;
         setState(() => _notes = list);
         checkDone();
-      }, onError: (_) => checkDone()),
+      }, onError: (e) { ErrorLoggerService.instance.warn('watchNotes error', category: LogCategory.api, error: e.toString()); checkDone(); }),
     );
 
     _subs.add(
@@ -149,7 +150,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
         if (!mounted) return;
         setState(() => _notices = list);
         checkDone();
-      }, onError: (_) => checkDone()),
+      }, onError: (e) { ErrorLoggerService.instance.warn('watchNotices error', category: LogCategory.api, error: e.toString()); checkDone(); }),
     );
   }
 

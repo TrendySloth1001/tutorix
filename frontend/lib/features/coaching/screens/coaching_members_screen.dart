@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/services/error_logger_service.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
@@ -112,7 +113,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
       _memberService.watchInvitations(widget.coaching.id).listen((list) {
         if (mounted) setState(() => _invitations = list);
         checkDone();
-      }, onError: (_) => checkDone()),
+      }, onError: (e) { ErrorLoggerService.instance.warn('watchInvitations error', category: LogCategory.api, error: e.toString()); checkDone(); }),
     );
   }
 

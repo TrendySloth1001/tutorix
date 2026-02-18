@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../../core/services/error_logger_service.dart';
 import '../models/assignment_model.dart';
 import '../services/assessment_service.dart';
 import 'file_viewer_screen.dart';
@@ -42,7 +43,14 @@ class _SubmitAssignmentScreenState extends State<SubmitAssignmentScreen> {
         widget.batchId,
         widget.assignment.id,
       );
-    } catch (_) {}
+    } catch (e, stack) {
+      ErrorLoggerService.instance.warn(
+        'Failed to load my submission for assignment ${widget.assignment.id}',
+        category: LogCategory.api,
+        error: e.toString(),
+        stackTrace: stack.toString(),
+      );
+    }
     if (mounted) setState(() => _loadingSubmission = false);
   }
 

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/services/error_logger_service.dart';
 import '../../../shared/widgets/app_shimmer.dart';
 import '../models/assessment_model.dart';
 import '../models/assignment_model.dart';
@@ -74,7 +75,7 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
           .listen((list) {
             if (mounted) setState(() => _assessments = list);
             check();
-          }, onError: (_) => check()),
+          }, onError: (e) { ErrorLoggerService.instance.warn('watchAssessments error', category: LogCategory.api, error: e.toString()); check(); }),
     );
 
     _subs.add(
@@ -83,7 +84,7 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
           .listen((list) {
             if (mounted) setState(() => _assignments = list);
             check();
-          }, onError: (_) => check()),
+          }, onError: (e) { ErrorLoggerService.instance.warn('watchAssignments error', category: LogCategory.api, error: e.toString()); check(); }),
     );
   }
 

@@ -1,4 +1,5 @@
 import '../../../core/constants/api_constants.dart';
+import '../../../core/services/error_logger_service.dart';
 import '../../../shared/services/api_client.dart';
 import '../models/academic_masters.dart';
 import '../models/academic_profile.dart';
@@ -28,6 +29,11 @@ class AcademicService {
       final data = await _api.getAuthenticated(ApiConstants.academicProfile);
       return AcademicProfile.fromJson(data);
     } catch (e) {
+      ErrorLoggerService.instance.warn(
+        'Failed to get academic profile',
+        category: LogCategory.api,
+        error: e.toString(),
+      );
       return null;
     }
   }

@@ -323,11 +323,16 @@ export class CoachingService {
         // Filter with exact Haversine + compute distance
         const withDistance = coachings
             .map((c) => {
-                const addr = c.address!;
-                const dist = haversine(lat, lng, addr.latitude!, addr.longitude!);
+                const addr = c.address;
+                // Skip coachings with null/invalid addresses
+                if (!addr || addr.latitude == null || addr.longitude == null) {
+                    console.warn(`⚠️ Coaching ${c.id} has invalid address, skipping`);
+                    return null;
+                }
+                const dist = haversine(lat, lng, addr.latitude, addr.longitude);
                 return { coaching: c, distance: Math.round(dist * 10) / 10 };
             })
-            .filter((c) => c.distance <= safeRadius)
+            .filter((c): c is { coaching: any; distance: number } => c !== null && c.distance <= safeRadius)
             .sort((a, b) => a.distance - b.distance);
 
         const total = withDistance.length;

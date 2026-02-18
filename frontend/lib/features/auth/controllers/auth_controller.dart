@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/services/error_logger_service.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/services/invitation_service.dart';
 import '../services/auth_service.dart';
@@ -12,6 +13,7 @@ class AuthController extends ChangeNotifier {
   final AuthService _authService = AuthService();
   final UserService _userService = UserService();
   final InvitationService _invitationService = InvitationService();
+  final ErrorLoggerService _logger = ErrorLoggerService.instance;
 
   UserModel? _user;
   bool _isLoading = false;
@@ -34,7 +36,11 @@ class AuthController extends ChangeNotifier {
       try {
         final freshUser = await _userService.getMe();
         _user = freshUser ?? await _authService.getCachedUser();
-      } catch (_) {
+      } catch (e, stack) {
+        _logger.warn('Failed to fetch fresh user, using cache',
+            category: LogCategory.auth,
+            error: e.toString(),
+            stackTrace: stack.toString());
         _user = await _authService.getCachedUser();
       }
       await _checkPendingInvitations();
@@ -80,7 +86,7 @@ class AuthController extends ChangeNotifier {
         notifyListeners();
       }
     } catch (e) {
-      // ignore
+      _logger.debug('refreshUser failed: $e', category: LogCategory.auth);
     }
   }
 
@@ -89,6 +95,7 @@ class AuthController extends ChangeNotifier {
       _pendingInvitations = await _invitationService.getMyInvitations();
       _invitationsChecked = true;
     } catch (e) {
+      _logger.warn('Failed to check pending invitations: $e', category: LogCategory.auth);
       _pendingInvitations = [];
       _invitationsChecked = true;
     }

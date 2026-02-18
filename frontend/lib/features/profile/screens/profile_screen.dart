@@ -9,6 +9,7 @@ import '../../academic/models/academic_masters.dart';
 import '../../academic/models/academic_profile.dart';
 import '../../academic/screens/academic_onboarding_screen.dart';
 import '../../academic/services/academic_service.dart';
+import '../../admin/screens/admin_debug_screen.dart';
 import '../../settings/screens/settings_screen.dart';
 import '../services/upload_service.dart';
 import '../services/user_service.dart';
@@ -240,6 +241,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
+
+              // ── Admin Debug (only for admins) ─────────────────────────
+              if (user.isAdmin) ...[
+                SettingTile(
+                  icon: Icons.bug_report_outlined,
+                  title: 'Admin Debug Console',
+                  subtitle: 'System logs and diagnostics',
+                  onTap: () => _navigateTo(const AdminDebugScreen()),
+                ),
+              ],
 
               // ── Academic Information (only for students) ───────────────
               if (_isStudentSomewhere) ...[

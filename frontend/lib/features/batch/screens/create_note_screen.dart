@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../../../core/services/error_logger_service.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../services/batch_service.dart';
@@ -71,7 +72,12 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
         _storageLimit = (data['limit'] as num?)?.toInt() ?? 524288000;
         _storageLoaded = true;
       });
-    } catch (_) {
+    } catch (e) {
+      ErrorLoggerService.instance.warn(
+        'Failed to load storage usage',
+        category: LogCategory.api,
+        error: e.toString(),
+      );
       if (mounted) setState(() => _storageLoaded = true);
     }
   }

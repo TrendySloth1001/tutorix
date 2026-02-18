@@ -1,10 +1,12 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/services/error_logger_service.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/screens/coaching_profile_screen.dart';
@@ -123,7 +125,12 @@ class _ExploreScreenState extends State<ExploreScreen>
         ),
       );
       _setLocation(LatLng(pos.latitude, pos.longitude));
-    } catch (_) {
+    } catch (e) {
+      ErrorLoggerService.instance.warn(
+        'Location fetch failed, using fallback Delhi coordinates',
+        category: LogCategory.system,
+        error: e.toString(),
+      );
       _setLocation(const LatLng(28.6139, 77.2090), fallback: true);
     }
   }
@@ -198,9 +205,30 @@ class _ExploreScreenState extends State<ExploreScreen>
               _nearbyLoading = false;
             });
           },
-          onError: (_) {
+          onError: (error, stackTrace) {
             if (!mounted) return;
+            // Log error to backend for admin debugging
+            ErrorLoggerService.instance.logError(
+              message: 'Explore nearby coachings failed',
+              error: error.toString(),
+              stackTrace: stackTrace.toString(),
+              metadata: {
+                'lat': loc.latitude,
+                'lng': loc.longitude,
+                'radius': _radiusKm,
+              },
+            );
+            // Also log to console for local debugging
+            if (kDebugMode) {
+              print(' Explore nearby error: $error');
+            }
+            print('Stack trace: $stackTrace');
             setState(() => _nearbyLoading = false);
+            // Show error to user
+            AppAlert.error(
+              context,
+              'Failed to load nearby coachings. Please try again.',
+            );
           },
         );
   }
@@ -226,9 +254,18 @@ class _ExploreScreenState extends State<ExploreScreen>
           _searchResults = results;
           _isSearching = false;
         });
-      } catch (_) {
+      } catch (error, stackTrace) {
+        ErrorLoggerService.instance.logError(
+          message: 'Search coachings failed',
+          error: error.toString(),
+          stackTrace: stackTrace.toString(),
+          metadata: {'query': query},
+        );
+        print('❌ Search error: $error');
+        print('Stack trace: $stackTrace');
         if (!mounted) return;
         setState(() => _isSearching = false);
+        AppAlert.error(context, 'Search failed. Please try again.');
       }
     });
   }

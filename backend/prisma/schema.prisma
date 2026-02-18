@@ -687,3 +687,46 @@ model AssignmentSubmissionFile {
 
   @@index([submissionId])
 }
+
+// ═══════════════════════════════════════════════════════════════════════
+// Admin Logging System
+// ═══════════════════════════════════════════════════════════════════════
+
+model Log {
+  id        String   @id @default(uuid())
+  createdAt DateTime @default(now())
+
+  // Log type: API_REQUEST, API_ERROR, FRONTEND_ERROR, SYSTEM
+  type String
+
+  // Log level: INFO, WARN, ERROR, FATAL
+  level String @default("INFO")
+
+  // User context (optional)
+  userId     String?
+  userEmail  String?
+  userName   String?
+  userRoles  String[] // ["isAdmin", "isTeacher"] etc
+
+  // Request context (for API logs)
+  method      String?
+  path        String?
+  statusCode  Int?
+  duration    Float? // milliseconds
+  ip          String?
+  userAgent   String?
+
+  // Error details
+  message    String?
+  error      String? // error message
+  stackTrace String? // full stack trace
+
+  // Additional metadata (JSON)
+  metadata Json?
+
+  @@index([type])
+  @@index([level])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([type, createdAt])
+}

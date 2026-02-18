@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/services/error_logger_service.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../shared/services/invitation_service.dart';
 import '../../../shared/widgets/accept_invite_sheet.dart';
@@ -29,7 +30,14 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     setState(() => _loading = true);
     try {
       _invitations = await _invitationService.getMyInvitations();
-    } catch (_) {}
+    } catch (e, stack) {
+      ErrorLoggerService.instance.error(
+        'Failed to load invitations',
+        category: LogCategory.api,
+        error: e,
+        stackTrace: stack,
+      );
+    }
     if (mounted) setState(() => _loading = false);
   }
 
