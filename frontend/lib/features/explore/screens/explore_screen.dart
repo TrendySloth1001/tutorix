@@ -577,7 +577,13 @@ class _ExploreScreenState extends State<ExploreScreen>
       child: Material(
         elevation: 4,
         shadowColor: Colors.black.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(20),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+          side: BorderSide(
+            color: theme.colorScheme.outline.withValues(alpha: 0.2),
+            width: 1.5,
+          ),
+        ),
         color: theme.colorScheme.surface,
         child: Column(
           children: [
@@ -867,12 +873,20 @@ class _ExploreScreenState extends State<ExploreScreen>
                   ),
                 ),
               ),
-            // Coaching markers
-            ..._nearby.map((nc) => _buildCoachingMarker(nc, theme)),
+            // Coaching markers (sort so selected renders on top)
+            ..._getSortedMarkers().map((nc) => _buildCoachingMarker(nc, theme)),
           ],
         ),
       ],
     );
+  }
+
+  List<NearbyCoaching> _getSortedMarkers() {
+    if (_selectedCoaching == null) return _nearby;
+    final list = List<NearbyCoaching>.from(_nearby);
+    list.removeWhere((nc) => nc.coaching.id == _selectedCoaching!.coaching.id);
+    list.add(_selectedCoaching!);
+    return list;
   }
 
   Marker _buildCoachingMarker(NearbyCoaching nc, ThemeData theme) {
