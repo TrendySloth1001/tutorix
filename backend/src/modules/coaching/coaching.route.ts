@@ -3,6 +3,7 @@ import { CoachingController } from './coaching.controller.js';
 import { InvitationController } from './invitation.controller.js';
 import { authMiddleware } from '../../shared/middleware/auth.middleware.js';
 import batchRoutes from '../batch/batch.route.js';
+import feeRoutes from '../fee/fee.route.js';
 
 const router = Router();
 const coachingController = new CoachingController();
@@ -54,6 +55,9 @@ router.get('/:id/notifications', authMiddleware, notificationController.getCoach
 
 // Batch management routes (nested)
 router.use('/:coachingId/batches', batchRoutes);
+
+// Fee management routes (nested)
+router.use('/:coachingId/fee', feeRoutes);
 
 // Dynamic route last
 router.get('/:id', coachingController.getById.bind(coachingController));

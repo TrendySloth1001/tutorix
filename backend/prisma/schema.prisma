@@ -53,6 +53,8 @@ model User {
   assessmentAttempts  AssessmentAttempt[] @relation("AssessmentAttempts")
   createdAssignments  Assignment[]      @relation("AssignmentCreator")
   assignmentSubmissions AssignmentSubmission[] @relation("AssignmentSubmissions")
+  markedFeeRecords    FeeRecord[]        @relation("FeeMarkedBy")
+  recordedFeePayments FeePayment[]       @relation("FeePaymentRecorder")
 }
 
 model Ward {
@@ -136,6 +138,10 @@ model Coaching {
   savedByUsers  SavedCoaching[]   @relation("SavedByUsers")
   assessments   Assessment[]
   assignments   Assignment[]
+  feeStructures FeeStructure[]
+  feeAssignments FeeAssignment[]
+  feeRecords    FeeRecord[]
+  feePayments   FeePayment[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -222,6 +228,10 @@ model CoachingMember {
 
   // Batch memberships
   batchMembers BatchMember[]
+
+  // Fee assignments & records
+  feeAssignments FeeAssignment[]
+  feeRecords     FeeRecord[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -694,6 +704,159 @@ model AssignmentSubmissionFile {
   createdAt DateTime @default(now())
 
   @@index([submissionId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Fee Management System
+// ═══════════════════════════════════════════════════════════════════════
+
+/// A reusable fee template defined at coaching level.
+/// e.g. "Monthly Tuition", "Annual Registration", "Exam Fee"
+model FeeStructure {
+  id         String   @id @default(uuid())
+  coachingId String
+  coaching   Coaching @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+
+  name        String   // "Monthly Tuition", "Registration Fee"
+  description String?
+  amount      Float    // base amount in INR
+  currency    String   @default("INR")
+
+  // Billing cycle: ONCE, MONTHLY, QUARTERLY, HALF_YEARLY, YEARLY, CUSTOM
+  cycle       String   @default("MONTHLY")
+
+  // fine per day after due date
+  lateFinePerDay Float @default(0)
+
+  // Optional discount config (JSON): [{ type: "SIBLING"|"EARLY_BIRD", value: float, unit: "PERCENT"|"FLAT" }]
+  discounts Json?
+
+  isActive Boolean @default(true)
+
+  // Relations
+  assignments FeeAssignment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([coachingId])
+  @@index([coachingId, isActive])
+}
+
+/// Maps a FeeStructure to a specific member (student). Carries the
+/// negotiated amount (may differ from structure base), the start date,
+/// and generates FeeRecord rows automatically each cycle.
+model FeeAssignment {
+  id              String       @id @default(uuid())
+  coachingId      String
+  coaching        Coaching     @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+  feeStructureId  String
+  feeStructure    FeeStructure @relation(fields: [feeStructureId], references: [id], onDelete: Cascade)
+  memberId        String
+  member          CoachingMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  /// Overrides structure base amount (e.g. after discount negotiation)
+  customAmount    Float?
+  discountAmount  Float  @default(0)
+  discountReason  String?
+
+  startDate DateTime @default(now())
+  endDate   DateTime? // null = ongoing
+
+  isActive Boolean @default(true)
+
+  // Records generated for this assignment
+  records FeeRecord[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([feeStructureId, memberId]) // one assignment per structure per member
+  @@index([coachingId])
+  @@index([memberId])
+  @@index([feeStructureId])
+}
+
+/// A single payable instance (e.g. "April 2025 Tuition" for a student).
+/// One record per cycle per assignment.
+model FeeRecord {
+  id             String        @id @default(uuid())
+  coachingId     String
+  coaching       Coaching      @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+  assignmentId   String
+  assignment     FeeAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  memberId       String
+  member         CoachingMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  title       String           // e.g. "April 2025 - Monthly Tuition"
+  amount      Float            // final payable = base - discount + fine
+  baseAmount  Float            // snapshot of amount at time of creation
+  discountAmount Float         @default(0)
+  fineAmount  Float            @default(0)
+  finalAmount Float            // computed: baseAmount - discountAmount + fineAmount
+
+  dueDate  DateTime
+  paidAt   DateTime?
+
+  /// PENDING, PAID, PARTIALLY_PAID, WAIVED, OVERDUE
+  status String @default("PENDING")
+
+  // Payment mode: CASH, ONLINE, UPI, BANK_TRANSFER, CHEQUE, OTHER
+  paymentMode String?
+  transactionRef String? // UPI ref, cheque no., etc.
+  receiptNo String?    // human-readable receipt
+
+  paidAmount Float @default(0) // for partial payments
+
+  notes String? // admin notes / remarks
+
+  // Reminder tracking
+  reminderSentAt DateTime?
+  reminderCount  Int       @default(0)
+
+  // Who marked it paid
+  markedById String?
+  markedBy   User?   @relation("FeeMarkedBy", fields: [markedById], references: [id])
+
+  // Payments (for partial payment breakdown)
+  payments FeePayment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([coachingId])
+  @@index([memberId])
+  @@index([assignmentId])
+  @@index([coachingId, status])
+  @@index([coachingId, dueDate])
+  @@index([memberId, status])
+  @@index([memberId, dueDate])
+}
+
+/// Each actual payment transaction against a FeeRecord.
+/// Enables partial / split payments and full audit trail.
+model FeePayment {
+  id          String    @id @default(uuid())
+  coachingId  String
+  coaching    Coaching  @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+  recordId    String
+  record      FeeRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  amount      Float
+  mode        String   // CASH, ONLINE, UPI, BANK_TRANSFER, CHEQUE, OTHER
+  transactionRef String?
+  receiptNo   String?
+  notes       String?
+
+  paidAt     DateTime @default(now())
+  recordedById String?
+  recordedBy  User?    @relation("FeePaymentRecorder", fields: [recordedById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([recordId])
+  @@index([coachingId])
+  @@index([coachingId, paidAt])
 }
 
 // ═══════════════════════════════════════════════════════════════════════

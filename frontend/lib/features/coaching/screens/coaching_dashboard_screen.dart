@@ -18,6 +18,8 @@ import '../../assessment/models/assessment_model.dart';
 import '../../assessment/models/assignment_model.dart';
 import '../../assessment/screens/take_assessment_screen.dart';
 import '../../assessment/screens/submit_assignment_screen.dart';
+import '../../fee/screens/fee_dashboard_screen.dart';
+import '../../fee/screens/my_fees_screen.dart';
 
 /// Coaching dashboard — compact, data-driven overview.
 class CoachingDashboardScreen extends StatefulWidget {
@@ -422,6 +424,26 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                       icon: Icons.person_add_alt_1_rounded,
                       label: 'Invite Members',
                       onTap: widget.onMembersTap,
+                    ),
+                    const SizedBox(height: 10),
+                    _QuickAction(
+                      icon: Icons.account_balance_wallet_rounded,
+                      label: 'Fee Management',
+                      onTap: () => Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => FeeDashboardScreen(coachingId: widget.coaching.id),
+                      )),
+                    ),
+                  ],
+
+                  // ── My Fees shortcut (for students/parents) ──
+                  if (!_canManageMembers) ...[
+                    const SizedBox(height: 16),
+                    _QuickAction(
+                      icon: Icons.receipt_rounded,
+                      label: 'My Fees',
+                      onTap: () => Navigator.push(context, MaterialPageRoute(
+                        builder: (_) => MyFeesScreen(coachingId: widget.coaching.id, coachingName: widget.coaching.name),
+                      )),
                     ),
                   ],
 
