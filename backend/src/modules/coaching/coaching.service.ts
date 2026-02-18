@@ -1,5 +1,6 @@
 import prisma from '../../infra/prisma.js';
 import redis from '../../infra/redis.js';
+import { assessmentService } from '../assessment/assessment.service.js';
 
 export interface CreateCoachingDto {
     name: string;
@@ -862,5 +863,17 @@ export class CoachingService {
             where: { userId_coachingId: { userId, coachingId } },
         });
         return !!saved;
+    }
+
+    async getMemberAcademicHistory(coachingId: string, memberId: string) {
+        const member = await prisma.coachingMember.findFirst({
+            where: { id: memberId, coachingId },
+            select: { userId: true },
+        });
+
+        if (!member) throw new Error('Member not found');
+        if (!member.userId) return []; // Member has no associated user account to take tests
+
+        return assessmentService.getStudentResults(member.userId);
     }
 }

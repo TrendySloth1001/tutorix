@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../coaching/services/member_service.dart';
 import '../services/fee_service.dart';
 import 'fee_record_detail_screen.dart';
 
-/// Per-student fee breakdown — shows all assignments/records, ledger totals,
-/// and quick actions (collect, remind) for an admin view.
+/// Unified Student Profile — Fees, Academic, and Personal details.
 class FeeMemberProfileScreen extends StatefulWidget {
   final String coachingId;
   final String memberId;
@@ -22,10 +23,10 @@ class FeeMemberProfileScreen extends StatefulWidget {
 }
 
 class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
-  final _svc = FeeService();
+  final _feeSvc = FeeService();
   bool _loading = true;
   String? _error;
-  Map<String, dynamic>? _profile;
+  Map<String, dynamic>? _feeProfile;
 
   @override
   void initState() {
@@ -39,12 +40,12 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
       _error = null;
     });
     try {
-      final data = await _svc.getMemberFeeProfile(
+      final data = await _feeSvc.getMemberFeeProfile(
         widget.coachingId,
         widget.memberId,
       );
       setState(() {
-        _profile = data;
+        _feeProfile = data;
         _loading = false;
       });
     } catch (e) {
@@ -55,111 +56,144 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
     }
   }
 
-  Future<void> _sendReminder(String recordId) async {
-    try {
-      await _svc.sendReminder(widget.coachingId, recordId);
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Reminder sent')),
-        );
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed: ${e.toString()}')),
-        );
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
-    final memberData = _profile?['member'] as Map<String, dynamic>?;
-    final displayName = widget.memberName ??
+    final memberData = _feeProfile?['member'] as Map<String, dynamic>?;
+    final displayName =
+        widget.memberName ??
         (memberData?['name'] as String?) ??
         (memberData?['ward']?['name'] as String?) ??
         'Student';
+    final picture =
+        (memberData?['user']?['picture'] as String?) ??
+        (memberData?['ward']?['picture'] as String?);
 
     return Scaffold(
       backgroundColor: cs.surface,
       appBar: AppBar(
-        backgroundColor: cs.surface,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: AppColors.darkOlive,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+        title: Row(
           children: [
-            const Text(
-              'Fee Profile',
-              style: TextStyle(
-                color: AppColors.darkOlive,
-                fontWeight: FontWeight.w700,
-                fontSize: 17,
-              ),
+            CircleAvatar(
+              radius: 16,
+              backgroundImage: picture != null ? NetworkImage(picture) : null,
+              backgroundColor: AppColors.mutedOlive.withOpacity(0.2),
+              child: picture == null
+                  ? Text(
+                      displayName[0].toUpperCase(),
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.darkOlive,
+                      ),
+                    )
+                  : null,
             ),
-            Text(
-              displayName,
-              style: const TextStyle(
-                color: AppColors.mutedOlive,
-                fontSize: 12,
-              ),
+            const SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  displayName,
+                  style: const TextStyle(
+                    color: AppColors.darkOlive,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+                const Text(
+                  'Student Profile',
+                  style: TextStyle(color: AppColors.mutedOlive, fontSize: 12),
+                ),
+              ],
             ),
           ],
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.refresh_rounded, color: AppColors.darkOlive),
-            onPressed: _load,
+            onPressed: () {
+              _load();
+              setState(() {});
+            },
           ),
         ],
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(1),
+          child: Container(color: Colors.grey.withOpacity(0.2), height: 1),
+        ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? _ErrorRetry(error: _error!, onRetry: _load)
-          : _ProfileBody(
-              profile: _profile!,
-              coachingId: widget.coachingId,
-              onRemind: _sendReminder,
-              onRecordTap: (recordId) async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => FeeRecordDetailScreen(
-                      coachingId: widget.coachingId,
-                      recordId: recordId,
-                      isAdmin: true,
-                    ),
-                  ),
-                );
-                _load();
-              },
+      body: DefaultTabController(
+        length: 3,
+        child: Column(
+          children: [
+            TabBar(
+              labelColor: AppColors.darkOlive,
+              unselectedLabelColor: AppColors.mutedOlive,
+              indicatorColor: AppColors.darkOlive,
+              indicatorSize: TabBarIndicatorSize.label,
+              labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+              tabs: const [
+                Tab(text: 'Fees'),
+                Tab(text: 'Academic'),
+                Tab(text: 'Profile'),
+              ],
             ),
+            Expanded(
+              child: _loading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _error != null
+                  ? _ErrorRetry(error: _error!, onRetry: _load)
+                  : TabBarView(
+                      children: [
+                        _FeeTab(
+                          profile: _feeProfile!,
+                          coachingId: widget.coachingId,
+                          onRefresh: _load,
+                        ),
+                        _AcademicTab(
+                          coachingId: widget.coachingId,
+                          memberId: widget.memberId,
+                        ),
+                        _ProfileDetailsTab(member: memberData ?? {}),
+                      ],
+                    ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
 
-// ── Body ──────────────────────────────────────────────────────────
+// ── Fee Tab ──────────────────────────────────────────────────────────
 
-class _ProfileBody extends StatelessWidget {
+class _FeeTab extends StatelessWidget {
   final Map<String, dynamic> profile;
   final String coachingId;
-  final Future<void> Function(String recordId) onRemind;
-  final Future<void> Function(String recordId) onRecordTap;
+  final VoidCallback onRefresh;
 
-  const _ProfileBody({
+  const _FeeTab({
     required this.profile,
     required this.coachingId,
-    required this.onRemind,
-    required this.onRecordTap,
+    required this.onRefresh,
   });
+
+  Future<void> _sendReminder(BuildContext context, String recordId) async {
+    try {
+      await FeeService().sendReminder(coachingId, recordId);
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Reminder sent')));
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed: ${e.toString()}')));
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -167,7 +201,7 @@ class _ProfileBody extends StatelessWidget {
     final assignments = (profile['assignments'] as List<dynamic>?) ?? [];
 
     return ListView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(16),
       children: [
         _LedgerBanner(ledger: ledger),
         const SizedBox(height: 20),
@@ -186,8 +220,20 @@ class _ProfileBody extends StatelessWidget {
             final assignment = a as Map<String, dynamic>;
             return _AssignmentSection(
               assignment: assignment,
-              onRemind: onRemind,
-              onRecordTap: onRecordTap,
+              onRemind: (id) => _sendReminder(context, id),
+              onRecordTap: (recordId) async {
+                await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (_) => FeeRecordDetailScreen(
+                      coachingId: coachingId,
+                      recordId: recordId,
+                      isAdmin: true,
+                    ),
+                  ),
+                );
+                onRefresh();
+              },
             );
           }),
       ],
@@ -195,7 +241,333 @@ class _ProfileBody extends StatelessWidget {
   }
 }
 
-// ── Ledger Banner ─────────────────────────────────────────────────
+// ── Academic Tab ─────────────────────────────────────────────────────
+
+class _AcademicTab extends StatefulWidget {
+  final String coachingId;
+  final String memberId;
+
+  const _AcademicTab({required this.coachingId, required this.memberId});
+
+  @override
+  State<_AcademicTab> createState() => _AcademicTabState();
+}
+
+class _AcademicTabState extends State<_AcademicTab>
+    with AutomaticKeepAliveClientMixin {
+  final _memberSvc = MemberService();
+  bool _loading = true;
+  String? _error;
+  List<Map<String, dynamic>> _results = [];
+
+  @override
+  bool get wantKeepAlive => true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadResults();
+  }
+
+  Future<void> _loadResults() async {
+    try {
+      setState(() {
+        _loading = true;
+        _error = null;
+      });
+      final data = await _memberSvc.getMemberAcademicHistory(
+        widget.coachingId,
+        widget.memberId,
+      );
+      if (mounted) {
+        setState(() {
+          _results = data;
+          _loading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = e.toString();
+          _loading = false;
+        });
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    super.build(context);
+    if (_loading) return const Center(child: CircularProgressIndicator());
+    if (_error != null)
+      return _ErrorRetry(error: _error!, onRetry: _loadResults);
+    if (_results.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.school_outlined, size: 48, color: AppColors.mutedOlive),
+            SizedBox(height: 16),
+            Text(
+              'No academic records found',
+              style: TextStyle(color: AppColors.mutedOlive),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: _results.length,
+      itemBuilder: (context, index) {
+        final attempt = _results[index];
+        final assessment = attempt['assessment'] as Map<String, dynamic>? ?? {};
+        final title = assessment['title'] as String? ?? 'Assessment';
+        final type = assessment['type'] as String? ?? '';
+        final totalMarks = (assessment['totalMarks'] as num?)?.toDouble() ?? 0;
+        final score = (attempt['totalScore'] as num?)?.toDouble() ?? 0;
+        final percent = (attempt['percentage'] as num?)?.toDouble() ?? 0;
+        final dateStr = attempt['submittedAt'] as String?;
+        final date = dateStr != null ? DateTime.tryParse(dateStr) : null;
+
+        return Card(
+          elevation: 0,
+          margin: const EdgeInsets.only(bottom: 12),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+            side: BorderSide(color: AppColors.softGrey.withOpacity(0.5)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              children: [
+                Container(
+                  width: 50,
+                  height: 50,
+                  decoration: BoxDecoration(
+                    color: _gradeColor(percent).withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: Text(
+                    '${percent.round()}%',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: _gradeColor(percent),
+                      fontSize: 14,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 15,
+                          color: AppColors.darkOlive,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${type.toUpperCase()} • ${date != null ? DateFormat('MMM d, y').format(date) : ''}',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: AppColors.mutedOlive,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      '${_fmt(score)}/${_fmt(totalMarks)}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: AppColors.darkOlive,
+                      ),
+                    ),
+                    const Text(
+                      'Score',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: AppColors.mutedOlive,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Color _gradeColor(double percent) {
+    if (percent >= 80) return const Color(0xFF2E7D32);
+    if (percent >= 60) return const Color(0xFF1565C0);
+    if (percent >= 40) return const Color(0xFFE65100);
+    return const Color(0xFFC62828);
+  }
+}
+
+// ── Profile Tab ──────────────────────────────────────────────────────
+
+class _ProfileDetailsTab extends StatelessWidget {
+  final Map<String, dynamic> member;
+
+  const _ProfileDetailsTab({required this.member});
+
+  @override
+  Widget build(BuildContext context) {
+    final user = member['user'] as Map<String, dynamic>?;
+    final ward = member['ward'] as Map<String, dynamic>?;
+    final email = (user?['email'] as String?);
+    final phone = (user?['phone'] as String?);
+    final role = member['role'] as String? ?? 'STUDENT';
+    final parent = ward?['parent'] as Map<String, dynamic>?;
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        _InfoCard(
+          title: 'Contact Info',
+          children: [
+            if (email != null)
+              _InfoRow(
+                icon: Icons.email_outlined,
+                label: 'Email',
+                value: email,
+              ),
+            if (phone != null)
+              _InfoRow(
+                icon: Icons.phone_outlined,
+                label: 'Phone',
+                value: phone,
+              ),
+            _InfoRow(icon: Icons.badge_outlined, label: 'Role', value: role),
+          ],
+        ),
+        if (ward != null && parent != null) ...[
+          const SizedBox(height: 16),
+          _InfoCard(
+            title: 'Parent/Guardian',
+            children: [
+              _InfoRow(
+                icon: Icons.person_outline,
+                label: 'Name',
+                value: parent['name'] ?? 'N/A',
+              ),
+              if (parent['email'] != null)
+                _InfoRow(
+                  icon: Icons.email_outlined,
+                  label: 'Email',
+                  value: parent['email'],
+                ),
+              if (parent['phone'] != null)
+                _InfoRow(
+                  icon: Icons.phone_outlined,
+                  label: 'Phone',
+                  value: parent['phone'],
+                ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+}
+
+class _InfoCard extends StatelessWidget {
+  final String title;
+  final List<Widget> children;
+
+  const _InfoCard({required this.title, required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: BorderSide(color: AppColors.softGrey.withOpacity(0.5)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: const TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: AppColors.mutedOlive,
+              ),
+            ),
+            const Divider(height: 24),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _InfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _InfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Row(
+        children: [
+          Icon(icon, size: 18, color: AppColors.mutedOlive),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: AppColors.mutedOlive,
+                ),
+              ),
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.darkOlive,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Shared Widgets ────────────────────────────────────────────────────
 
 class _LedgerBanner extends StatelessWidget {
   final Map<String, dynamic> ledger;
@@ -209,9 +581,9 @@ class _LedgerBanner extends StatelessWidget {
     final totalRefunded = (ledger['totalRefunded'] as num?)?.toDouble() ?? 0;
     final balance = (ledger['balance'] as num?)?.toDouble() ?? 0;
     final totalOverdue = (ledger['totalOverdue'] as num?)?.toDouble() ?? 0;
-
-    // Progress bar: paid fraction of totalFee
-    final paidFraction = totalFee > 0 ? (totalPaid / totalFee).clamp(0.0, 1.0) : 0.0;
+    final paidFraction = totalFee > 0
+        ? (totalPaid / totalFee).clamp(0.0, 1.0)
+        : 0.0;
 
     return Container(
       decoration: BoxDecoration(
@@ -241,14 +613,15 @@ class _LedgerBanner extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-          // Progress bar
           ClipRRect(
             borderRadius: BorderRadius.circular(6),
             child: LinearProgressIndicator(
               value: paidFraction,
               minHeight: 8,
               backgroundColor: Colors.white24,
-              valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF81C784)),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Color(0xFF81C784),
+              ),
             ),
           ),
           const SizedBox(height: 16),
@@ -265,14 +638,18 @@ class _LedgerBanner extends StatelessWidget {
                 child: _BannerStat(
                   label: 'Balance',
                   value: '₹${_fmt(balance)}',
-                  color: balance > 0 ? const Color(0xFFFFB74D) : const Color(0xFF81C784),
+                  color: balance > 0
+                      ? const Color(0xFFFFB74D)
+                      : const Color(0xFF81C784),
                 ),
               ),
               Expanded(
                 child: _BannerStat(
                   label: 'Overdue',
                   value: '₹${_fmt(totalOverdue)}',
-                  color: totalOverdue > 0 ? const Color(0xFFEF9A9A) : Colors.white54,
+                  color: totalOverdue > 0
+                      ? const Color(0xFFEF9A9A)
+                      : Colors.white54,
                 ),
               ),
             ],
@@ -333,12 +710,10 @@ class _BannerStat extends StatelessWidget {
   }
 }
 
-// ── Assignment Section ────────────────────────────────────────────
-
 class _AssignmentSection extends StatelessWidget {
   final Map<String, dynamic> assignment;
-  final Future<void> Function(String recordId) onRemind;
-  final Future<void> Function(String recordId) onRecordTap;
+  final Function(String) onRemind;
+  final Function(String) onRecordTap;
 
   const _AssignmentSection({
     required this.assignment,
@@ -348,16 +723,12 @@ class _AssignmentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final feeStructure = assignment['feeStructure'] as Map<String, dynamic>? ?? {};
+    final feeStructure =
+        assignment['feeStructure'] as Map<String, dynamic>? ?? {};
     final structureName = feeStructure['name'] as String? ?? 'Fee Plan';
     final cycle = feeStructure['cycle'] as String? ?? '';
-    final customAmount = (assignment['customAmount'] as num?)?.toDouble();
-    final discountAmount = (assignment['discountAmount'] as num?)?.toDouble() ?? 0;
-    final scholarshipTag = assignment['scholarshipTag'] as String?;
-
     final records = (assignment['records'] as List<dynamic>?) ?? [];
 
-    // Status summary counts
     var paidCount = 0;
     var partialCount = 0;
     var overdueCount = 0;
@@ -377,7 +748,6 @@ class _AssignmentSection extends StatelessWidget {
           pendingCount++;
       }
     }
-
     final total = records.length;
 
     return Padding(
@@ -385,7 +755,6 @@ class _AssignmentSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Assignment header
           Row(
             children: [
               Expanded(
@@ -401,34 +770,9 @@ class _AssignmentSection extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 2),
-                    Row(
-                      children: [
-                        _SmallChip(
-                          label: _cycleName(cycle),
-                          color: AppColors.mutedOlive,
-                        ),
-                        if (customAmount != null) ...[
-                          const SizedBox(width: 4),
-                          _SmallChip(
-                            label: 'Custom ₹${_fmt(customAmount)}',
-                            color: const Color(0xFF1565C0),
-                          ),
-                        ],
-                        if (discountAmount > 0) ...[
-                          const SizedBox(width: 4),
-                          _SmallChip(
-                            label: '-₹${_fmt(discountAmount)}',
-                            color: const Color(0xFF2E7D32),
-                          ),
-                        ],
-                        if (scholarshipTag != null) ...[
-                          const SizedBox(width: 4),
-                          _SmallChip(
-                            label: scholarshipTag,
-                            color: const Color(0xFFE65100),
-                          ),
-                        ],
-                      ],
+                    _SmallChip(
+                      label: _cycleName(cycle),
+                      color: AppColors.mutedOlive,
                     ),
                   ],
                 ),
@@ -443,18 +787,15 @@ class _AssignmentSection extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 8),
-
-          // Status bar
-          if (total > 0) _StatusBar(
-            paid: paidCount,
-            partial: partialCount,
-            overdue: overdueCount,
-            pending: pendingCount,
-            total: total,
-          ),
+          if (total > 0)
+            _StatusBar(
+              paid: paidCount,
+              partial: partialCount,
+              overdue: overdueCount,
+              pending: pendingCount,
+              total: total,
+            ),
           const SizedBox(height: 10),
-
-          // Record tiles
           ...records.map((r) {
             final rec = r as Map<String, dynamic>;
             final recordId = rec['id'] as String? ?? '';
@@ -470,15 +811,8 @@ class _AssignmentSection extends StatelessWidget {
   }
 }
 
-// ── Status Bar ────────────────────────────────────────────────────
-
 class _StatusBar extends StatelessWidget {
-  final int paid;
-  final int partial;
-  final int overdue;
-  final int pending;
-  final int total;
-
+  final int paid, partial, overdue, pending, total;
   const _StatusBar({
     required this.paid,
     required this.partial,
@@ -489,90 +823,35 @@ class _StatusBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      children: [
-        ClipRRect(
-          borderRadius: BorderRadius.circular(6),
-          child: Row(
-            children: [
-              if (paid > 0)
-                Expanded(
-                  flex: paid,
-                  child: Container(
-                    height: 8,
-                    color: const Color(0xFF2E7D32),
-                  ),
-                ),
-              if (partial > 0)
-                Expanded(
-                  flex: partial,
-                  child: Container(
-                    height: 8,
-                    color: const Color(0xFFE65100),
-                  ),
-                ),
-              if (overdue > 0)
-                Expanded(
-                  flex: overdue,
-                  child: Container(
-                    height: 8,
-                    color: const Color(0xFFC62828),
-                  ),
-                ),
-              if (pending > 0)
-                Expanded(
-                  flex: pending,
-                  child: Container(
-                    height: 8,
-                    color: AppColors.softGrey,
-                  ),
-                ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 6),
-        Row(
-          children: [
-            if (paid > 0) _BarLegend(label: 'Paid $paid', color: const Color(0xFF2E7D32)),
-            if (partial > 0) _BarLegend(label: 'Partial $partial', color: const Color(0xFFE65100)),
-            if (overdue > 0) _BarLegend(label: 'Overdue $overdue', color: const Color(0xFFC62828)),
-            if (pending > 0) _BarLegend(label: 'Pending $pending', color: AppColors.mutedOlive),
-          ],
-        ),
-      ],
-    );
-  }
-}
-
-class _BarLegend extends StatelessWidget {
-  final String label;
-  final Color color;
-
-  const _BarLegend({required this.label, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(right: 10),
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(6),
       child: Row(
         children: [
-          Container(
-            width: 8,
-            height: 8,
-            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-          ),
-          const SizedBox(width: 4),
-          Text(
-            label,
-            style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.w600),
-          ),
+          if (paid > 0)
+            Expanded(
+              flex: paid,
+              child: Container(height: 8, color: const Color(0xFF2E7D32)),
+            ),
+          if (partial > 0)
+            Expanded(
+              flex: partial,
+              child: Container(height: 8, color: const Color(0xFFE65100)),
+            ),
+          if (overdue > 0)
+            Expanded(
+              flex: overdue,
+              child: Container(height: 8, color: const Color(0xFFC62828)),
+            ),
+          if (pending > 0)
+            Expanded(
+              flex: pending,
+              child: Container(height: 8, color: AppColors.softGrey),
+            ),
         ],
       ),
     );
   }
 }
-
-// ── Record Row ────────────────────────────────────────────────────
 
 class _RecordRow extends StatelessWidget {
   final Map<String, dynamic> record;
@@ -591,18 +870,16 @@ class _RecordRow extends StatelessWidget {
     final status = record['status'] as String? ?? 'PENDING';
     final finalAmount = (record['finalAmount'] as num?)?.toDouble() ?? 0;
     final paidAmount = (record['paidAmount'] as num?)?.toDouble() ?? 0;
-    final daysOverdue = record['daysOverdue'] as int? ?? 0;
     final dueDateRaw = record['dueDate'];
     DateTime? dueDate;
     if (dueDateRaw is String) dueDate = DateTime.tryParse(dueDateRaw);
-    final statusColor = _statusColor(status);
     final isPaid = status == 'PAID' || status == 'WAIVED';
-    final isOverdue = status == 'OVERDUE';
+    final statusColor = _statusColor(status);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: AppColors.softGrey.withValues(alpha: 0.2),
+        color: AppColors.softGrey.withOpacity(0.2),
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
@@ -632,24 +909,17 @@ class _RecordRow extends StatelessWidget {
                           color: AppColors.darkOlive,
                         ),
                       ),
-                      const SizedBox(height: 2),
                       Row(
                         children: [
-                          _SmallChip(label: _statusLabel(status), color: statusColor),
+                          _SmallChip(
+                            label: _statusLabel(status),
+                            color: statusColor,
+                          ),
                           if (dueDate != null) ...[
                             const SizedBox(width: 4),
                             _SmallChip(
-                              label: 'Due ${_fmtDate(dueDate)}',
-                              color: isOverdue
-                                  ? const Color(0xFFC62828)
-                                  : AppColors.mutedOlive,
-                            ),
-                          ],
-                          if (daysOverdue > 0) ...[
-                            const SizedBox(width: 4),
-                            _SmallChip(
-                              label: '${daysOverdue}d overdue',
-                              color: const Color(0xFFC62828),
+                              label: _fmtDate(dueDate),
+                              color: AppColors.mutedOlive,
                             ),
                           ],
                         ],
@@ -657,7 +927,6 @@ class _RecordRow extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   children: [
@@ -686,7 +955,7 @@ class _RecordRow extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: AppColors.mutedOlive.withValues(alpha: 0.1),
+                        color: AppColors.mutedOlive.withOpacity(0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -706,20 +975,16 @@ class _RecordRow extends StatelessWidget {
   }
 }
 
-// ── Helpers ───────────────────────────────────────────────────────
-
 class _SmallChip extends StatelessWidget {
   final String label;
   final Color color;
-
   const _SmallChip({required this.label, required this.color});
-
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(5),
       ),
       child: Text(
@@ -737,16 +1002,18 @@ class _SmallChip extends StatelessWidget {
 class _ErrorRetry extends StatelessWidget {
   final String error;
   final VoidCallback onRetry;
-
   const _ErrorRetry({required this.error, required this.onRetry});
-
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.error_outline_rounded, color: Colors.redAccent, size: 40),
+          const Icon(
+            Icons.error_outline_rounded,
+            color: Colors.redAccent,
+            size: 40,
+          ),
           const SizedBox(height: 10),
           Text(
             error,
@@ -761,12 +1028,10 @@ class _ErrorRetry extends StatelessWidget {
   }
 }
 
-String _fmt(double v) {
-  if (v >= 1000) {
-    return v.toStringAsFixed(0);
-  }
-  return v.toStringAsFixed(0);
-}
+String _fmt(double v) => v.toStringAsFixed(0);
+String _fmtDate(DateTime d) => DateFormat('MMM d').format(d);
+String _cycleName(String c) =>
+    c.substring(0, 1) + c.substring(1).toLowerCase().replaceAll('_', ' ');
 
 Color _statusColor(String s) {
   switch (s) {
@@ -778,8 +1043,6 @@ Color _statusColor(String s) {
       return const Color(0xFFC62828);
     case 'PARTIALLY_PAID':
       return const Color(0xFFE65100);
-    case 'WAIVED':
-      return AppColors.mutedOlive;
     default:
       return AppColors.mutedOlive;
   }
@@ -800,29 +1063,4 @@ String _statusLabel(String s) {
     default:
       return s;
   }
-}
-
-String _cycleName(String c) {
-  switch (c) {
-    case 'MONTHLY':
-      return 'Monthly';
-    case 'QUARTERLY':
-      return 'Quarterly';
-    case 'HALF_YEARLY':
-      return 'Half-Yearly';
-    case 'YEARLY':
-      return 'Yearly';
-    case 'ONE_TIME':
-      return 'One-Time';
-    default:
-      return c;
-  }
-}
-
-String _fmtDate(DateTime d) {
-  const months = [
-    'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-  ];
-  return '${d.day} ${months[d.month - 1]}';
 }

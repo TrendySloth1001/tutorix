@@ -66,6 +66,8 @@ class ApiConstants {
       '$baseUrl/coaching/$coachingId/members/$memberId';
   static String updateMemberRole(String coachingId, String memberId) =>
       '$baseUrl/coaching/$coachingId/members/$memberId';
+  static String memberAcademicHistory(String coachingId, String memberId) =>
+      '$baseUrl/coaching/$coachingId/members/$memberId/academic-history';
 
   // User Invitations
   static const String userInvitations = '$baseUrl/user/invitations';

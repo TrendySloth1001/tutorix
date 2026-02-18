@@ -520,4 +520,19 @@ export class CoachingController {
             res.status(500).json({ message: error.message });
         }
     }
+
+    // GET /coaching/:id/members/:memberId/academic-history
+    async getMemberAcademicHistory(req: Request, res: Response) {
+        try {
+            const coachingId = req.params.id as string;
+            const memberId = req.params.memberId as string;
+            const results = await coachingService.getMemberAcademicHistory(coachingId, memberId);
+            res.json({ results });
+        } catch (error: any) {
+            if (error.message.includes('not found')) {
+                return res.status(404).json({ message: error.message });
+            }
+            res.status(500).json({ message: error.message });
+        }
+    }
 }

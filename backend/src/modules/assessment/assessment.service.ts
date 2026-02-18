@@ -510,6 +510,19 @@ class AssessmentService {
         });
     }
 
+    // ── Get all attempts for a student ──
+    async getStudentResults(userId: string) {
+        return prisma.assessmentAttempt.findMany({
+            where: { userId, status: 'SUBMITTED' },
+            select: {
+                ...ATTEMPT_SELECT,
+                assessment: { select: { title: true, type: true, totalMarks: true } },
+            },
+            orderBy: { submittedAt: 'desc' },
+            take: 10,
+        });
+    }
+
     // ── Answer checking logic ──
     private _checkAnswer(type: string, correct: any, student: any): boolean {
         switch (type) {

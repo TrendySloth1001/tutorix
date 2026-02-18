@@ -47,6 +47,7 @@ router.get('/:id/members', authMiddleware, coachingController.getMembers.bind(co
 router.post('/:id/members/ward', authMiddleware, coachingController.addWard.bind(coachingController));
 router.delete('/:id/members/:memberId', authMiddleware, coachingController.removeMember.bind(coachingController));
 router.patch('/:id/members/:memberId', authMiddleware, coachingController.updateMemberRole.bind(coachingController));
+router.get('/:id/members/:memberId/academic-history', authMiddleware, coachingController.getMemberAcademicHistory.bind(coachingController));
 
 // Notifications routes (protected)
 import { NotificationController } from '../notification/notification.controller.js';

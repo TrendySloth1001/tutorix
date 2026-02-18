@@ -53,6 +53,21 @@ class MemberService {
     return MemberModel.fromJson(data['member'] as Map<String, dynamic>);
   }
 
+  /// GET /coaching/:id/members/:memberId/academic-history
+  Future<List<Map<String, dynamic>>> getMemberAcademicHistory(
+    String coachingId,
+    String memberId,
+  ) async {
+    final data = await _api.getAuthenticatedRaw(
+      ApiConstants.memberAcademicHistory(coachingId, memberId),
+    );
+    // The backend returns { results: [...] }
+    if (data is Map && data.containsKey('results')) {
+      return (data['results'] as List).cast<Map<String, dynamic>>();
+    }
+    return [];
+  }
+
   /// GET /coaching/:id/invitations — all invitations for the coaching.
   /// Stream: emits cached list first, then fresh from network.
   Stream<List<InvitationModel>> watchInvitations(String coachingId) {

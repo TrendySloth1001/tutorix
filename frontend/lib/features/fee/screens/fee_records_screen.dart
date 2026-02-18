@@ -316,66 +316,157 @@ class _RecordTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final statusColor = _statusColor(record.status);
     final memberName = record.member?.name ?? 'Unknown Student';
+    final memberPic = record.member?.picture;
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: AppColors.softGrey.withValues(alpha: 0.22),
-        borderRadius: BorderRadius.circular(14),
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Card(
+        elevation: 0,
+        color: AppColors.softGrey.withValues(alpha: 0.1),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: AppColors.mutedOlive.withValues(alpha: 0.2)),
+        ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(16),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _StatusDot(color: statusColor),
+                // Avatar + Navigation to Profile
+                GestureDetector(
+                  onTap: record.memberId.isNotEmpty
+                      ? () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => FeeMemberProfileScreen(
+                              coachingId: coachingId,
+                              memberId: record.memberId,
+                              memberName: memberName,
+                            ),
+                          ),
+                        )
+                      : null,
+                  child: Container(
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.mutedOlive.withValues(alpha: 0.2),
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 22,
+                      backgroundColor: AppColors.softGrey.withValues(
+                        alpha: 0.5,
+                      ),
+                      backgroundImage: memberPic != null && memberPic.isNotEmpty
+                          ? NetworkImage(memberPic)
+                          : null,
+                      child: memberPic == null || memberPic.isEmpty
+                          ? Text(
+                              memberName.isNotEmpty
+                                  ? memberName[0].toUpperCase()
+                                  : '?',
+                              style: const TextStyle(
+                                color: AppColors.darkOlive,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            )
+                          : null,
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 12),
+
+                // Details
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      GestureDetector(
-                        onTap: record.memberId.isNotEmpty
-                            ? () => Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (_) => FeeMemberProfileScreen(
-                                    coachingId: coachingId,
-                                    memberId: record.memberId,
-                                    memberName: memberName,
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                GestureDetector(
+                                  onTap: record.memberId.isNotEmpty
+                                      ? () => Navigator.push(
+                                          context,
+                                          MaterialPageRoute(
+                                            builder: (_) =>
+                                                FeeMemberProfileScreen(
+                                                  coachingId: coachingId,
+                                                  memberId: record.memberId,
+                                                  memberName: memberName,
+                                                ),
+                                          ),
+                                        )
+                                      : null,
+                                  child: Text(
+                                    memberName,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w700,
+                                      color: AppColors.darkOlive,
+                                      fontSize: 15,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
                                   ),
                                 ),
-                              )
-                            : null,
-                        child: Text(
-                          memberName,
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.darkOlive,
-                            fontSize: 14,
-                            decoration: record.memberId.isNotEmpty
-                                ? TextDecoration.underline
-                                : null,
-                            decorationColor: AppColors.mutedOlive,
+                                const SizedBox(height: 2),
+                                Text(
+                                  record.title,
+                                  style: const TextStyle(
+                                    color: AppColors.mutedOlive,
+                                    fontSize: 12,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                          const SizedBox(width: 8),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '₹${record.finalAmount.toStringAsFixed(0)}',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  color: AppColors.darkOlive,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              if (record.isPartial || record.isPaid)
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 2),
+                                  child: Text(
+                                    'Paid ₹${record.paidAmount.toStringAsFixed(0)}',
+                                    style: const TextStyle(
+                                      color: Color(0xFF2E7D32),
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        record.title,
-                        style: const TextStyle(
-                          color: AppColors.mutedOlive,
-                          fontSize: 12,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 10),
                       Row(
                         children: [
                           _Chip(
                             label: _statusLabel(record.status),
                             color: statusColor,
+                            isFilled: true,
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: 8),
                           _Chip(
                             label: 'Due ${_fmtDate(record.dueDate)}',
                             color: record.isOverdue
@@ -384,37 +475,19 @@ class _RecordTile extends StatelessWidget {
                           ),
                           if (record.daysOverdue > 0) ...[
                             const SizedBox(width: 6),
-                            _Chip(
-                              label: '${record.daysOverdue}d overdue',
-                              color: const Color(0xFFC62828),
+                            Text(
+                              '${record.daysOverdue}d late',
+                              style: const TextStyle(
+                                color: Color(0xFFC62828),
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
                           ],
                         ],
                       ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 8),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.end,
-                  children: [
-                    Text(
-                      '₹${record.finalAmount.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.darkOlive,
-                        fontSize: 15,
-                      ),
-                    ),
-                    if (record.isPartial || record.isPaid)
-                      Text(
-                        'Paid ₹${record.paidAmount.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          color: Color(0xFF2E7D32),
-                          fontSize: 11,
-                        ),
-                      ),
-                  ],
                 ),
               ],
             ),
@@ -425,30 +498,27 @@ class _RecordTile extends StatelessWidget {
   }
 }
 
-class _StatusDot extends StatelessWidget {
-  final Color color;
-  const _StatusDot({required this.color});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 10,
-      height: 10,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-  }
-}
-
 class _Chip extends StatelessWidget {
   final String label;
   final Color color;
-  const _Chip({required this.label, required this.color});
+  final bool isFilled;
+  const _Chip({
+    required this.label,
+    required this.color,
+    this.isFilled = false,
+  });
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
+        color: isFilled
+            ? color.withValues(alpha: 0.1)
+            : AppColors.softGrey.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(6),
+        border: Border.all(
+          color: isFilled ? Colors.transparent : color.withValues(alpha: 0.3),
+        ),
       ),
       child: Text(
         label,

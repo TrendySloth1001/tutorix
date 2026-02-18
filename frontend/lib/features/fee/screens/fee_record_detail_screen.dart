@@ -76,10 +76,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
           ),
         ),
         actions: [
-          if (widget.isAdmin &&
-              _record != null &&
-              !_record!.isPaid &&
-              !_record!.isWaived)
+          if (widget.isAdmin && _record != null)
             PopupMenuButton<String>(
               icon: const Icon(
                 Icons.more_vert_rounded,
@@ -87,25 +84,51 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
               ),
               onSelected: (v) => _onAction(v),
               itemBuilder: (_) => [
-                const PopupMenuItem(
-                  value: 'remind',
-                  child: Text('Send Reminder'),
-                ),
-                const PopupMenuItem(value: 'waive', child: Text('Waive Fee')),
-              ],
-            ),
-          if (widget.isAdmin && _record != null && _record!.paidAmount > 0)
-            PopupMenuButton<String>(
-              icon: const Icon(
-                Icons.more_vert_rounded,
-                color: AppColors.darkOlive,
-              ),
-              onSelected: (v) => _onAction(v),
-              itemBuilder: (_) => [
-                const PopupMenuItem(
-                  value: 'refund',
-                  child: Text('Record Refund'),
-                ),
+                if (!_record!.isPaid && !_record!.isWaived) ...[
+                  const PopupMenuItem(
+                    value: 'remind',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.notifications_outlined,
+                          size: 20,
+                          color: AppColors.darkOlive,
+                        ),
+                        SizedBox(width: 12),
+                        Text('Send Reminder'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'waive',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.remove_circle_outline,
+                          size: 20,
+                          color: AppColors.darkOlive,
+                        ),
+                        SizedBox(width: 12),
+                        Text('Waive Fee'),
+                      ],
+                    ),
+                  ),
+                ],
+                if (_record!.paidAmount > 0)
+                  const PopupMenuItem(
+                    value: 'refund',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.keyboard_return,
+                          size: 20,
+                          color: AppColors.darkOlive,
+                        ),
+                        SizedBox(width: 12),
+                        Text('Record Refund'),
+                      ],
+                    ),
+                  ),
               ],
             ),
         ],
@@ -118,6 +141,9 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
               record: _record!,
               isAdmin: widget.isAdmin,
               onCollect: _showCollectSheet,
+              onRemind: () => _onAction('remind'),
+              onWaive: () => _onAction('waive'),
+              onRefund: () => _onAction('refund'),
             ),
     );
   }
@@ -284,7 +310,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                value: mode,
+                initialValue: mode,
                 decoration: const InputDecoration(labelText: 'Refund Mode'),
                 items: const [
                   DropdownMenuItem(value: 'CASH', child: Text('Cash')),
@@ -352,10 +378,17 @@ class _Body extends StatelessWidget {
   final FeeRecordModel record;
   final bool isAdmin;
   final VoidCallback onCollect;
+  final VoidCallback onRemind;
+  final VoidCallback onWaive;
+  final VoidCallback onRefund;
+
   const _Body({
     required this.record,
     required this.isAdmin,
     required this.onCollect,
+    required this.onRemind,
+    required this.onWaive,
+    required this.onRefund,
   });
 
   @override
@@ -370,6 +403,15 @@ class _Body extends StatelessWidget {
             const SizedBox(height: 12),
           ],
           _HeaderCard(record: record),
+          if (isAdmin) ...[
+            const SizedBox(height: 16),
+            _QuickActions(
+              record: record,
+              onRemind: onRemind,
+              onWaive: onWaive,
+              onRefund: onRefund,
+            ),
+          ],
           const SizedBox(height: 20),
           _BreakdownCard(record: record),
           const SizedBox(height: 20),
@@ -388,18 +430,126 @@ class _Body extends StatelessWidget {
           if (isAdmin && !record.isPaid && !record.isWaived)
             SizedBox(
               width: double.infinity,
+              height: 50,
               child: FilledButton.icon(
                 onPressed: onCollect,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.darkOlive,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
                 icon: const Icon(Icons.payments_rounded),
                 label: Text(
                   record.isPartial
                       ? 'Collect Remaining ₹${record.balance.toStringAsFixed(0)}'
                       : 'Collect Payment',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ),
           const SizedBox(height: 32),
         ],
+      ),
+    );
+  }
+}
+
+class _QuickActions extends StatelessWidget {
+  final FeeRecordModel record;
+  final VoidCallback onRemind;
+  final VoidCallback onWaive;
+  final VoidCallback onRefund;
+
+  const _QuickActions({
+    required this.record,
+    required this.onRemind,
+    required this.onWaive,
+    required this.onRefund,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final actions = <Widget>[];
+
+    if (!record.isPaid && !record.isWaived) {
+      actions.add(
+        _ActionButton(
+          icon: Icons.notifications_outlined,
+          label: 'Remind',
+          onTap: onRemind,
+        ),
+      );
+      actions.add(const SizedBox(width: 12));
+      actions.add(
+        _ActionButton(
+          icon: Icons.remove_circle_outline,
+          label: 'Waive',
+          onTap: onWaive,
+        ),
+      );
+    }
+
+    if (record.paidAmount > 0) {
+      if (actions.isNotEmpty) actions.add(const SizedBox(width: 12));
+      actions.add(
+        _ActionButton(
+          icon: Icons.keyboard_return_rounded,
+          label: 'Refund',
+          onTap: onRefund,
+        ),
+      );
+    }
+
+    if (actions.isEmpty) return const SizedBox.shrink();
+
+    return Row(children: actions);
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ActionButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.softGrey.withValues(alpha: 0.3),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.mutedOlive.withValues(alpha: 0.2),
+            ),
+          ),
+          child: Column(
+            children: [
+              Icon(icon, color: AppColors.darkOlive, size: 22),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.darkOlive,
+                  fontWeight: FontWeight.w600,
+                  fontSize: 12,
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
