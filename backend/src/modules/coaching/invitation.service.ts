@@ -47,24 +47,24 @@ export class InvitationService {
 
         if (!user) return null;
 
-        // Check memberships in THIS coaching
-        const memberships = await prisma.coachingMember.findMany({
-            where: { coachingId, userId: user.id },
-            select: { role: true, status: true },
-        });
+        // Parallelize: membership check + ward enrollment check
+        const wardIds = user.wards.map(w => w.id);
+        const [memberships, wardMemberships] = await Promise.all([
+            prisma.coachingMember.findMany({
+                where: { coachingId, userId: user.id },
+                select: { role: true, status: true },
+            }),
+            wardIds.length > 0
+                ? prisma.coachingMember.findMany({
+                    where: { coachingId, wardId: { in: wardIds } },
+                    select: { wardId: true, role: true, status: true },
+                })
+                : Promise.resolve([]),
+        ]);
         const isMember = memberships.length > 0;
 
         // If already a member of this coaching → full access, bypass privacy
         const bypassPrivacy = isMember;
-
-        // Ward enrollment in THIS coaching
-        const wardIds = user.wards.map(w => w.id);
-        const wardMemberships = wardIds.length > 0
-            ? await prisma.coachingMember.findMany({
-                where: { coachingId, wardId: { in: wardIds } },
-                select: { wardId: true, role: true, status: true },
-            })
-            : [];
         const wardMap = new Map(
             wardMemberships.map(wm => [wm.wardId, { role: wm.role, status: wm.status }])
         );
@@ -186,41 +186,28 @@ export class InvitationService {
             }
         }
 
-        // Check if currently a member (block if they're already in the coaching)
-        if (data.userId) {
-            const existingMember = await prisma.coachingMember.findFirst({
-                where: {
-                    coachingId: data.coachingId,
-                    userId: data.userId,
-                },
-                select: { id: true, role: true, status: true },
-            });
-            if (existingMember) {
-                console.error('Invitation blocked: User is already a member', {
-                    coachingId: data.coachingId,
-                    userId: data.userId,
-                    memberData: existingMember,
-                });
-                throw new Error(`This user is already a member of this coaching (role: ${existingMember.role}, status: ${existingMember.status})`);
-            }
-        }
+        // Parallelize member existence checks (both user and ward at once)
+        const memberChecks = await Promise.all([
+            data.userId
+                ? prisma.coachingMember.findFirst({
+                    where: { coachingId: data.coachingId, userId: data.userId },
+                    select: { id: true, role: true, status: true },
+                })
+                : null,
+            data.wardId
+                ? prisma.coachingMember.findFirst({
+                    where: { coachingId: data.coachingId, wardId: data.wardId },
+                    select: { id: true, role: true, status: true },
+                })
+                : null,
+        ]);
 
-        if (data.wardId) {
-            const existingMember = await prisma.coachingMember.findFirst({
-                where: {
-                    coachingId: data.coachingId,
-                    wardId: data.wardId,
-                },
-                select: { id: true, role: true, status: true },
-            });
-            if (existingMember) {
-                console.error('Invitation blocked: Ward is already enrolled', {
-                    coachingId: data.coachingId,
-                    wardId: data.wardId,
-                    memberData: existingMember,
-                });
-                throw new Error(`This ward is already enrolled in this coaching (role: ${existingMember.role}, status: ${existingMember.status})`);
-            }
+        const [userMember, wardMember] = memberChecks;
+        if (userMember) {
+            throw new Error(`This user is already a member of this coaching (role: ${userMember.role}, status: ${userMember.status})`);
+        }
+        if (wardMember) {
+            throw new Error(`This ward is already enrolled in this coaching (role: ${wardMember.role}, status: ${wardMember.status})`);
         }
 
         return prisma.invitation.create({
@@ -460,17 +447,16 @@ export class InvitationService {
      * Cancel/revoke an invitation (admin action).
      */
     async cancelInvitation(invitationId: string, coachingId: string) {
-        const invitation = await prisma.invitation.findFirst({
+        // Single query: updateMany with compound WHERE replaces findFirst + update
+        const result = await prisma.invitation.updateMany({
             where: { id: invitationId, coachingId, status: 'PENDING' },
+            data: { status: 'EXPIRED' },
         });
 
-        if (!invitation) {
+        if (result.count === 0) {
             throw new Error('Invitation not found or already processed');
         }
 
-        return prisma.invitation.update({
-            where: { id: invitationId },
-            data: { status: 'EXPIRED' },
-        });
+        return { id: invitationId, status: 'EXPIRED' };
     }
 }

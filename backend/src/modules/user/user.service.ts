@@ -16,8 +16,12 @@ export class UserService {
         return prisma.user.findUnique({
             where: { id },
             include: {
-                ownedCoachings: true,
-                wards: true,
+                ownedCoachings: {
+                    select: { id: true, name: true, slug: true, logo: true, status: true },
+                },
+                wards: {
+                    select: { id: true, name: true, picture: true },
+                },
             },
         });
     }
@@ -26,8 +30,12 @@ export class UserService {
         return prisma.user.findUnique({
             where: { email },
             include: {
-                ownedCoachings: true,
-                wards: true,
+                ownedCoachings: {
+                    select: { id: true, name: true, slug: true, logo: true, status: true },
+                },
+                wards: {
+                    select: { id: true, name: true, picture: true },
+                },
             },
         });
     }
@@ -37,8 +45,12 @@ export class UserService {
             where: { id },
             data,
             include: {
-                ownedCoachings: true,
-                wards: true,
+                ownedCoachings: {
+                    select: { id: true, name: true, slug: true, logo: true, status: true },
+                },
+                wards: {
+                    select: { id: true, name: true, picture: true },
+                },
             },
         });
     }
@@ -53,7 +65,9 @@ export class UserService {
             where: { id },
             data: roles,
             include: {
-                ownedCoachings: true,
+                ownedCoachings: {
+                    select: { id: true, name: true, slug: true, logo: true, status: true },
+                },
             },
         });
     }
@@ -63,7 +77,9 @@ export class UserService {
             where: { id },
             data: { onboardingComplete: true },
             include: {
-                ownedCoachings: true,
+                ownedCoachings: {
+                    select: { id: true, name: true, slug: true, logo: true, status: true },
+                },
             },
         });
     }
@@ -84,7 +100,9 @@ export class UserService {
                 take: limit,
                 orderBy: { createdAt: 'desc' },
                 include: {
-                    ownedCoachings: true,
+                    ownedCoachings: {
+                        select: { id: true, name: true, slug: true, logo: true, status: true },
+                    },
                 },
             }),
             prisma.user.count(),

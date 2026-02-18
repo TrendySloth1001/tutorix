@@ -168,6 +168,9 @@ model CoachingAddress {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  // Geo index for findNearby bounding-box queries
+  @@index([latitude, longitude])
 }
 
 model CoachingBranch {
@@ -267,6 +270,9 @@ model Invitation {
   @@index([userId])
   @@index([invitePhone])
   @@index([inviteEmail])
+  @@index([status])
+  @@index([status, inviteEmail])
+  @@index([status, invitePhone])
 }
 
 model Notification {
@@ -499,6 +505,7 @@ model Assessment {
   @@index([batchId])
   @@index([coachingId])
   @@index([batchId, status])
+  @@index([batchId, status, createdAt])
   @@index([createdById])
 }
 
@@ -625,6 +632,7 @@ model Assignment {
   @@index([batchId])
   @@index([coachingId])
   @@index([batchId, status])
+  @@index([batchId, status, createdAt])
   @@index([createdById])
 }
 
@@ -729,4 +737,5 @@ model Log {
   @@index([userId])
   @@index([createdAt])
   @@index([type, createdAt])
+  @@index([level, createdAt])
 }

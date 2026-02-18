@@ -99,24 +99,31 @@ export class CoachingService {
             },
         });
 
-        // Use parallel DB-level counting per coaching instead of loading all members
-        const stats = await Promise.all(
-            coachings.map(async (c) => {
-                const [teacherCount, studentCount] = await Promise.all([
-                    prisma.coachingMember.count({ where: { coachingId: c.id, role: 'TEACHER' } }),
-                    prisma.coachingMember.count({ where: { coachingId: c.id, role: 'STUDENT' } }),
-                ]);
-                return { teacherCount, studentCount };
-            })
-        );
+        if (coachings.length === 0) return [];
 
-        return coachings.map((coaching, i) => ({
+        // Single groupBy query replaces N+1 count queries
+        const roleCounts = await prisma.coachingMember.groupBy({
+            by: ['coachingId', 'role'],
+            where: { coachingId: { in: coachings.map(c => c.id) } },
+            _count: true,
+        });
+
+        // Build lookup map: coachingId → { TEACHER: n, STUDENT: n }
+        const statsMap = new Map<string, { teacherCount: number; studentCount: number }>();
+        for (const row of roleCounts) {
+            const entry = statsMap.get(row.coachingId) ?? { teacherCount: 0, studentCount: 0 };
+            if (row.role === 'TEACHER') entry.teacherCount = row._count;
+            else if (row.role === 'STUDENT') entry.studentCount = row._count;
+            statsMap.set(row.coachingId, entry);
+        }
+
+        return coachings.map((coaching) => ({
             ...coaching,
             storageUsed: Number(coaching.storageUsed),
             storageLimit: Number(coaching.storageLimit),
             memberCount: coaching._count.members,
-            teacherCount: stats[i]!.teacherCount,
-            studentCount: stats[i]!.studentCount,
+            teacherCount: statsMap.get(coaching.id)?.teacherCount ?? 0,
+            studentCount: statsMap.get(coaching.id)?.studentCount ?? 0,
             _count: undefined,
         }));
     }
@@ -150,19 +157,27 @@ export class CoachingService {
         // Filter out coachings where user is owner
         const filtered = memberships.filter((m) => m.coaching.ownerId !== userId);
 
-        // DB-level role counting instead of loading all members
-        const stats = await Promise.all(
-            filtered.map(async (m) => {
-                const [teacherCount, studentCount] = await Promise.all([
-                    prisma.coachingMember.count({ where: { coachingId: m.coaching.id, role: 'TEACHER' } }),
-                    prisma.coachingMember.count({ where: { coachingId: m.coaching.id, role: 'STUDENT' } }),
-                ]);
-                return { teacherCount, studentCount };
-            })
-        );
+        if (filtered.length === 0) return [];
 
-        return filtered.map((m, i) => {
+        // Single groupBy query replaces N+1 count queries
+        const coachingIds = filtered.map(m => m.coaching.id);
+        const roleCounts = await prisma.coachingMember.groupBy({
+            by: ['coachingId', 'role'],
+            where: { coachingId: { in: coachingIds } },
+            _count: true,
+        });
+
+        const statsMap = new Map<string, { teacherCount: number; studentCount: number }>();
+        for (const row of roleCounts) {
+            const entry = statsMap.get(row.coachingId) ?? { teacherCount: 0, studentCount: 0 };
+            if (row.role === 'TEACHER') entry.teacherCount = row._count;
+            else if (row.role === 'STUDENT') entry.studentCount = row._count;
+            statsMap.set(row.coachingId, entry);
+        }
+
+        return filtered.map((m) => {
             const coaching = m.coaching;
+            const stats = statsMap.get(coaching.id) ?? { teacherCount: 0, studentCount: 0 };
             return {
                 id: coaching.id,
                 name: coaching.name,
@@ -176,8 +191,8 @@ export class CoachingService {
                 createdAt: coaching.createdAt,
                 updatedAt: coaching.updatedAt,
                 memberCount: coaching._count.members,
-                teacherCount: stats[i]!.teacherCount,
-                studentCount: stats[i]!.studentCount,
+                teacherCount: stats.teacherCount,
+                studentCount: stats.studentCount,
                 myRole: m.role,
                 address: coaching.address,
                 branches: coaching.branches,
@@ -186,18 +201,19 @@ export class CoachingService {
     }
 
     async update(id: string, ownerId: string, data: UpdateCoachingDto) {
-        // First verify ownership
-        const coaching = await prisma.coaching.findFirst({
+        // Single query: update only if owner matches (returns count=0 if not found/unauthorized)
+        const result = await prisma.coaching.updateMany({
             where: { id, ownerId },
+            data,
         });
 
-        if (!coaching) {
+        if (result.count === 0) {
             throw new Error('Coaching not found or you do not have permission');
         }
 
-        return prisma.coaching.update({
+        // Return the updated coaching
+        return prisma.coaching.findUnique({
             where: { id },
-            data,
             include: {
                 owner: {
                     select: {
@@ -212,18 +228,16 @@ export class CoachingService {
     }
 
     async delete(id: string, ownerId: string) {
-        // First verify ownership
-        const coaching = await prisma.coaching.findFirst({
+        // Single deleteMany with ownership check — avoids extra findFirst query
+        const result = await prisma.coaching.deleteMany({
             where: { id, ownerId },
         });
 
-        if (!coaching) {
+        if (result.count === 0) {
             throw new Error('Coaching not found or you do not have permission');
         }
 
-        return prisma.coaching.delete({
-            where: { id },
-        });
+        return { deleted: true };
     }
 
     async findAll(page: number = 1, limit: number = 10) {
@@ -285,6 +299,8 @@ export class CoachingService {
                     longitude: { gte: minLng, lte: maxLng },
                 },
             },
+            // Cap DB results to prevent unbounded memory for huge bounding boxes
+            take: 500,
             select: {
                 id: true,
                 name: true,
@@ -662,10 +678,8 @@ export class CoachingService {
     }
 
     async isSlugAvailable(slug: string): Promise<boolean> {
-        const existing = await prisma.coaching.findUnique({
-            where: { slug },
-        });
-        return !existing;
+        const count = await prisma.coaching.count({ where: { slug } });
+        return count === 0;
     }
 
     generateSlug(name: string): string {

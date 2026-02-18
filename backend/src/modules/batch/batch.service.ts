@@ -170,17 +170,12 @@ export class BatchService {
 
     /** Get coaching members NOT already in this batch — for the "Add Members" picker */
     async getAvailableMembers(coachingId: string, batchId: string, role?: string) {
-        const existingMemberIds = await prisma.batchMember.findMany({
-            where: { batchId },
-            select: { memberId: true },
-        });
-        const ids = existingMemberIds.map(m => m.memberId);
-
+        // Single query with NOT EXISTS subquery via Prisma relation filter
         return prisma.coachingMember.findMany({
             where: {
                 coachingId,
                 status: 'active',
-                id: { notIn: ids },
+                batchMembers: { none: { batchId } },
                 ...(role ? { role } : {}),
             },
             select: {
@@ -238,32 +233,8 @@ export class BatchService {
     }
 
     async getRecentNotes(userId: string, coachingId: string) {
-        // Get user's wards in parallel with nothing (prep step)
-        const userWards = await prisma.ward.findMany({
-            where: { parentId: userId },
-            select: { id: true },
-        });
-        const wardIds = userWards.map((w) => w.id);
-
-        // Get coaching members for both user + wards
-        const whereConditions: any[] = [{ userId }];
-        if (wardIds.length > 0) {
-            whereConditions.push({ wardId: { in: wardIds } });
-        }
-
-        // Single query: get batch IDs through coaching members → batch members
-        const memberIds = (await prisma.coachingMember.findMany({
-            where: { coachingId, OR: whereConditions },
-            select: { id: true },
-        })).map((m) => m.id);
-
-        if (memberIds.length === 0) return [];
-
-        const batchIds = (await prisma.batchMember.findMany({
-            where: { memberId: { in: memberIds } },
-            select: { batchId: true },
-        })).map((b) => b.batchId);
-
+        // Single query: get batch IDs by joining through coaching members + batch members
+        const batchIds = await this._getUserBatchIds(userId, coachingId);
         if (batchIds.length === 0) return [];
 
         // Get notes from last 7 days
@@ -324,11 +295,11 @@ export class BatchService {
 
     /** Get total bytes of attachments for a note (for deletion) */
     async getNoteAttachmentsSize(noteId: string): Promise<number> {
-        const attachments = await prisma.noteAttachment.findMany({
+        const agg = await prisma.noteAttachment.aggregate({
             where: { noteId },
-            select: { fileSize: true },
+            _sum: { fileSize: true },
         });
-        return attachments.reduce((sum, a) => sum + a.fileSize, 0);
+        return agg._sum.fileSize ?? 0;
     }
 
     // ── Notices (Announcements) ───────────────────────────────────────
@@ -478,34 +449,52 @@ export class BatchService {
     }
 
     /**
+     * Shared helper: get batch IDs a user belongs to in a coaching.
+     * Handles both direct user memberships and ward memberships (parent account).
+     * Reduces 3 sequential queries to 2 with parallel fetch.
+     */
+    private async _getUserBatchIds(userId: string, coachingId: string): Promise<string[]> {
+        // Parallel: get wards + direct coaching members at the same time
+        const [userWards, directMembers] = await Promise.all([
+            prisma.ward.findMany({
+                where: { parentId: userId },
+                select: { id: true },
+            }),
+            prisma.coachingMember.findMany({
+                where: { coachingId, userId },
+                select: { id: true },
+            }),
+        ]);
+
+        const wardIds = userWards.map(w => w.id);
+
+        // If user has wards, also fetch ward memberships
+        let wardMembers: { id: string }[] = [];
+        if (wardIds.length > 0) {
+            wardMembers = await prisma.coachingMember.findMany({
+                where: { coachingId, wardId: { in: wardIds } },
+                select: { id: true },
+            });
+        }
+
+        const allMemberIds = [...directMembers.map(m => m.id), ...wardMembers.map(m => m.id)];
+        if (allMemberIds.length === 0) return [];
+
+        const batchMembers = await prisma.batchMember.findMany({
+            where: { memberId: { in: allMemberIds } },
+            select: { batchId: true },
+        });
+
+        // Deduplicate batch IDs
+        return Array.from(new Set(batchMembers.map(b => b.batchId)));
+    }
+
+    /**
      * Dashboard feed — recent assessments, assignments, and notices
      * across all batches the user belongs to in a coaching.
      */
     async getDashboardFeed(userId: string, coachingId: string) {
-        // Get user's wards
-        const userWards = await prisma.ward.findMany({
-            where: { parentId: userId },
-            select: { id: true },
-        });
-        const wardIds = userWards.map((w) => w.id);
-
-        const whereConditions: any[] = [{ userId }];
-        if (wardIds.length > 0) {
-            whereConditions.push({ wardId: { in: wardIds } });
-        }
-
-        const memberIds = (await prisma.coachingMember.findMany({
-            where: { coachingId, OR: whereConditions },
-            select: { id: true },
-        })).map((m) => m.id);
-
-        if (memberIds.length === 0) return { assessments: [], assignments: [], notices: [] };
-
-        const batchIds = (await prisma.batchMember.findMany({
-            where: { memberId: { in: memberIds } },
-            select: { batchId: true },
-        })).map((b) => b.batchId);
-
+        const batchIds = await this._getUserBatchIds(userId, coachingId);
         if (batchIds.length === 0) return { assessments: [], assignments: [], notices: [] };
 
         const sevenDaysAgo = new Date();

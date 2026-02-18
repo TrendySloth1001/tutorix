@@ -140,8 +140,9 @@ export class AcademicService {
     }
 
     /**
-     * Send reminder notification to users with expired remindAt
-     * Called by a scheduled job
+     * Send reminder notification to users with expired remindAt.
+     * Batched: createMany + updateMany instead of N+1 loop.
+     * Called by a scheduled job.
      */
     async sendReminderNotifications() {
         const now = new Date();
@@ -152,31 +153,30 @@ export class AcademicService {
                 status: 'REMIND_LATER',
                 remindAt: { lte: now },
             },
-            include: {
-                user: true,
-            },
+            select: { id: true, userId: true },
         });
 
-        for (const profile of expiredProfiles) {
-            // Create a personal notification
-            await prisma.notification.create({
-                data: {
-                    userId: profile.userId,
+        if (expiredProfiles.length === 0) return { processed: 0 };
+
+        const profileIds = expiredProfiles.map(p => p.id);
+        const userIds = expiredProfiles.map(p => p.userId);
+
+        // Batch: create all notifications + update all profiles in a single transaction
+        await prisma.$transaction([
+            prisma.notification.createMany({
+                data: userIds.map(userId => ({
+                    userId,
                     type: 'ACADEMIC_ONBOARDING_REMINDER',
                     title: 'Complete your profile',
                     message: 'Help your teachers know you better! Complete your academic profile to get personalized learning experience.',
-                    data: {
-                        action: 'open_academic_onboarding',
-                    },
-                },
-            });
-
-            // Update status to PENDING so it shows up in onboarding check
-            await prisma.academicProfile.update({
-                where: { id: profile.id },
+                    data: { action: 'open_academic_onboarding' },
+                })),
+            }),
+            prisma.academicProfile.updateMany({
+                where: { id: { in: profileIds } },
                 data: { status: 'PENDING' },
-            });
-        }
+            }),
+        ]);
 
         return { processed: expiredProfiles.length };
     }

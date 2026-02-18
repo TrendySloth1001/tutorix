@@ -394,13 +394,55 @@ class AssessmentService {
         totalScore = Math.max(0, totalScore); // floor at 0
         const percentage = maxScore > 0 ? Math.round((totalScore / maxScore) * 10000) / 100 : 0;
 
-        // Update all in a transaction
+        // Update all in a transaction — batch answer updates to avoid N+1
         return prisma.$transaction(async (tx) => {
-            // Update each answer's correctness
-            for (const upd of answerUpdates) {
+            // Batch: group answers by result to reduce to max 3 queries instead of N
+            const correctQIds = answerUpdates.filter(u => u.isCorrect).map(u => u.questionId);
+            const wrongUpdates = answerUpdates.filter(u => !u.isCorrect && u.marksAwarded !== 0);
+            const skippedQIds = answerUpdates.filter(u => !u.isCorrect && u.marksAwarded === 0).map(u => u.questionId);
+
+            // Batch 1: Mark all correct answers
+            if (correctQIds.length > 0) {
                 await tx.assessmentAnswer.updateMany({
-                    where: { attemptId, questionId: upd.questionId },
-                    data: { isCorrect: upd.isCorrect, marksAwarded: upd.marksAwarded },
+                    where: { attemptId, questionId: { in: correctQIds } },
+                    data: { isCorrect: true },
+                });
+                // Set marks per question (group by marks value to minimize queries)
+                const markGroups = new Map<number, string[]>();
+                for (const u of answerUpdates.filter(u => u.isCorrect)) {
+                    const list = markGroups.get(u.marksAwarded) ?? [];
+                    list.push(u.questionId);
+                    markGroups.set(u.marksAwarded, list);
+                }
+                for (const [marks, qIds] of Array.from(markGroups.entries())) {
+                    await tx.assessmentAnswer.updateMany({
+                        where: { attemptId, questionId: { in: qIds } },
+                        data: { marksAwarded: marks },
+                    });
+                }
+            }
+
+            // Batch 2: Mark all wrong answers (group by penalty value)
+            if (wrongUpdates.length > 0) {
+                const penaltyGroups = new Map<number, string[]>();
+                for (const u of wrongUpdates) {
+                    const list = penaltyGroups.get(u.marksAwarded) ?? [];
+                    list.push(u.questionId);
+                    penaltyGroups.set(u.marksAwarded, list);
+                }
+                for (const [penalty, qIds] of Array.from(penaltyGroups.entries())) {
+                    await tx.assessmentAnswer.updateMany({
+                        where: { attemptId, questionId: { in: qIds } },
+                        data: { isCorrect: false, marksAwarded: penalty },
+                    });
+                }
+            }
+
+            // Batch 3: Mark all skipped
+            if (skippedQIds.length > 0) {
+                await tx.assessmentAnswer.updateMany({
+                    where: { attemptId, questionId: { in: skippedQIds } },
+                    data: { isCorrect: false, marksAwarded: 0 },
                 });
             }
 
