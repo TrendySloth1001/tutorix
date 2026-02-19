@@ -1,9 +1,11 @@
 import { Router } from 'express';
 import { FeeController } from './fee.controller.js';
+import { PaymentController } from '../payment/payment.controller.js';
 import { authMiddleware } from '../../shared/middleware/auth.middleware.js';
 
 const router = Router({ mergeParams: true }); // access :coachingId from parent
 const ctrl = new FeeController();
+const payCtrl = new PaymentController();
 
 // All routes under /coaching/:coachingId/fee
 
@@ -36,5 +38,11 @@ router.post('/records/:recordId/refund', authMiddleware, ctrl.recordRefund.bind(
 router.post('/bulk-remind', authMiddleware, ctrl.bulkRemind.bind(ctrl));
 router.get('/overdue-report', authMiddleware, ctrl.getOverdueReport.bind(ctrl));
 router.get('/members/:memberId/ledger', authMiddleware, ctrl.getStudentLedger.bind(ctrl));
+
+// ── Online Payment (Razorpay) ─────────────────────────────────────────
+router.post('/records/:recordId/create-order', authMiddleware, payCtrl.createOrder.bind(payCtrl));
+router.post('/records/:recordId/verify-payment', authMiddleware, payCtrl.verifyPayment.bind(payCtrl));
+router.get('/records/:recordId/online-payments', authMiddleware, payCtrl.getOnlinePayments.bind(payCtrl));
+router.post('/records/:recordId/online-refund', authMiddleware, payCtrl.initiateOnlineRefund.bind(payCtrl));
 
 export default router;

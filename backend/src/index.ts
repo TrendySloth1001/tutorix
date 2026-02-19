@@ -18,6 +18,8 @@ import uploadRoutes from './modules/upload/upload.route.js';
 import notificationRoutes from './modules/notification/notification.route.js';
 import academicRoutes from './modules/academic/academic.route.js';
 import adminRoutes from './modules/admin/admin.route.js';
+// import { webhookRouter } from './modules/payment/payment.webhook.js'; // Uncomment for production
+import { PaymentController } from './modules/payment/payment.controller.js';
 import { requestLoggerMiddleware } from './shared/middleware/request-logger.middleware.js';
 import { authMiddleware } from './shared/middleware/auth.middleware.js';
 import { AdminLogsController } from './modules/admin/logs.controller.js';
@@ -35,6 +37,10 @@ app.use(cors(allowedOrigins.length > 0 ? {
   origin: allowedOrigins,
   credentials: true,
 } : undefined));
+
+// Webhook route — commented out during test mode (no webhook secret configured)
+// app.use('/webhooks', express.json(), webhookRouter);
+
 app.use(express.json({ limit: '100kb' }));
 
 // Request logging middleware
@@ -51,6 +57,14 @@ app.use('/upload', uploadRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/academic', academicRoutes);
 app.use('/admin', adminRoutes);
+
+// Payment config (Razorpay key for frontend)
+const paymentCtrl = new PaymentController();
+app.get('/payment/config', authMiddleware, paymentCtrl.getConfig.bind(paymentCtrl));
+
+// Coaching payment settings (bank account, GST, etc.)
+app.get('/coaching/:coachingId/payment-settings', authMiddleware, paymentCtrl.getPaymentSettings.bind(paymentCtrl));
+app.patch('/coaching/:coachingId/payment-settings', authMiddleware, paymentCtrl.updatePaymentSettings.bind(paymentCtrl));
 
 app.get('/hello', (req, res) => {
   res.json({ message: 'Hello from Express TypeScript!' });

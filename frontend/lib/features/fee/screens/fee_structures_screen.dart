@@ -106,7 +106,9 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _StructureFormSheet(
-        onSubmit: (name, desc, amount, cycle, fine) async {
+        onSubmit: (name, desc, amount, cycle, fine,
+            {taxType, gstRate, sacCode, hsnCode, gstSupplyType, cessRate,
+            lineItems}) async {
           await _svc.createStructure(
             widget.coachingId,
             name: name,
@@ -114,6 +116,13 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
             amount: amount,
             cycle: cycle,
             lateFinePerDay: fine,
+            taxType: taxType,
+            gstRate: gstRate,
+            sacCode: sacCode,
+            hsnCode: hsnCode,
+            gstSupplyType: gstSupplyType,
+            cessRate: cessRate,
+            lineItems: lineItems,
           );
           _load();
         },
@@ -128,7 +137,9 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => _StructureFormSheet(
         existing: s,
-        onSubmit: (name, desc, amount, cycle, fine) async {
+        onSubmit: (name, desc, amount, cycle, fine,
+            {taxType, gstRate, sacCode, hsnCode, gstSupplyType, cessRate,
+            lineItems}) async {
           await _svc.updateStructure(
             widget.coachingId,
             s.id,
@@ -137,6 +148,13 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
             amount: amount,
             cycle: cycle,
             lateFinePerDay: fine,
+            taxType: taxType,
+            gstRate: gstRate,
+            sacCode: sacCode,
+            hsnCode: hsnCode,
+            gstSupplyType: gstSupplyType,
+            cessRate: cessRate,
+            lineItems: lineItems,
           );
           _load();
         },
@@ -234,6 +252,16 @@ class _StructureTile extends StatelessWidget {
                 'Late fine: ₹${structure.lateFinePerDay}/day',
                 style: const TextStyle(color: Color(0xFFC62828), fontSize: 11),
               ),
+            if (structure.hasTax)
+              Text(
+                'GST ${structure.gstRate.toStringAsFixed(0)}% (${structure.taxType == 'GST_INCLUSIVE' ? 'Incl.' : 'Excl.'})',
+                style: const TextStyle(color: Color(0xFF1565C0), fontSize: 11),
+              ),
+            if (structure.lineItems.isNotEmpty)
+              Text(
+                '${structure.lineItems.length} line item${structure.lineItems.length == 1 ? '' : 's'}',
+                style: const TextStyle(color: AppColors.mutedOlive, fontSize: 11),
+              ),
             Text(
               '${structure.assignmentCount} student${structure.assignmentCount == 1 ? '' : 's'}',
               style: const TextStyle(color: AppColors.mutedOlive, fontSize: 11),
@@ -263,9 +291,15 @@ class _StructureFormSheet extends StatefulWidget {
     String? desc,
     double amount,
     String cycle,
-    double fine,
-  )
-  onSubmit;
+    double fine, {
+    String? taxType,
+    double? gstRate,
+    String? sacCode,
+    String? hsnCode,
+    String? gstSupplyType,
+    double? cessRate,
+    List<Map<String, dynamic>>? lineItems,
+  }) onSubmit;
   const _StructureFormSheet({this.existing, required this.onSubmit});
 
   @override
@@ -277,8 +311,14 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
   final _descCtrl = TextEditingController();
   final _amountCtrl = TextEditingController();
   final _fineCtrl = TextEditingController();
+  final _sacCtrl = TextEditingController();
+  final _hsnCtrl = TextEditingController();
   String _cycle = 'MONTHLY';
+  String _taxType = 'NONE';
+  double _gstRate = 18;
+  String _supplyType = 'INTRA_STATE';
   bool _submitting = false;
+  final List<_LineItem> _lineItems = [];
 
   static const _cycles = [
     'ONCE',
@@ -294,22 +334,59 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
     'HALF_YEARLY': 'Half-yearly',
     'YEARLY': 'Yearly',
   };
+  static const _taxTypes = ['NONE', 'GST_INCLUSIVE', 'GST_EXCLUSIVE'];
+  static const _taxLabels = {
+    'NONE': 'No Tax',
+    'GST_INCLUSIVE': 'GST Inclusive',
+    'GST_EXCLUSIVE': 'GST Exclusive',
+  };
+  static const _gstRates = [0.0, 5.0, 12.0, 18.0, 28.0];
 
   @override
   void initState() {
     super.initState();
     if (widget.existing != null) {
-      _nameCtrl.text = widget.existing!.name;
-      _descCtrl.text = widget.existing!.description ?? '';
-      _amountCtrl.text = widget.existing!.amount.toStringAsFixed(0);
-      _fineCtrl.text = widget.existing!.lateFinePerDay.toStringAsFixed(0);
-      _cycle = widget.existing!.cycle;
+      final e = widget.existing!;
+      _nameCtrl.text = e.name;
+      _descCtrl.text = e.description ?? '';
+      _amountCtrl.text = e.amount.toStringAsFixed(0);
+      _fineCtrl.text = e.lateFinePerDay.toStringAsFixed(0);
+      _cycle = e.cycle;
+      _taxType = e.taxType;
+      _gstRate = e.gstRate > 0 ? e.gstRate : 18;
+      _supplyType = e.gstSupplyType;
+      _sacCtrl.text = e.sacCode ?? '';
+      _hsnCtrl.text = e.hsnCode ?? '';
+      for (final item in e.lineItems) {
+        _lineItems.add(_LineItem(
+          labelCtrl: TextEditingController(text: item.label),
+          amountCtrl: TextEditingController(text: item.amount.toStringAsFixed(0)),
+        ));
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _nameCtrl.dispose();
+    _descCtrl.dispose();
+    _amountCtrl.dispose();
+    _fineCtrl.dispose();
+    _sacCtrl.dispose();
+    _hsnCtrl.dispose();
+    for (final item in _lineItems) {
+      item.labelCtrl.dispose();
+      item.amountCtrl.dispose();
+    }
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.9,
+      ),
       decoration: const BoxDecoration(
         color: AppColors.cream,
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
@@ -418,6 +495,245 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                 hintText: '0',
               ),
             ),
+
+            // ── Tax Configuration ──
+            const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 12),
+            const Text(
+              'Tax Configuration',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: AppColors.darkOlive,
+                fontSize: 14,
+              ),
+            ),
+            const SizedBox(height: 10),
+            const Text(
+              'Tax Type',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.darkOlive,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: _taxTypes.map((t) {
+                final sel = t == _taxType;
+                return GestureDetector(
+                  onTap: () => setState(() => _taxType = t),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: sel
+                          ? AppColors.darkOlive
+                          : AppColors.softGrey.withValues(alpha: 0.3),
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _taxLabels[t] ?? t,
+                      style: TextStyle(
+                        color: sel ? AppColors.cream : AppColors.darkOlive,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
+            if (_taxType != 'NONE') ...[
+              const SizedBox(height: 14),
+              const Text(
+                'GST Rate',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.darkOlive,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: _gstRates.map((r) {
+                  final sel = r == _gstRate;
+                  return GestureDetector(
+                    onTap: () => setState(() => _gstRate = r),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: sel
+                            ? AppColors.darkOlive
+                            : AppColors.softGrey.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${r.toStringAsFixed(0)}%',
+                        style: TextStyle(
+                          color: sel ? AppColors.cream : AppColors.darkOlive,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 14),
+              const Text(
+                'Supply Type',
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.darkOlive,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ('INTRA_STATE', 'Intra-State (CGST+SGST)'),
+                  ('INTER_STATE', 'Inter-State (IGST)'),
+                ].map((e) {
+                  final sel = e.$1 == _supplyType;
+                  return GestureDetector(
+                    onTap: () => setState(() => _supplyType = e.$1),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: sel
+                            ? AppColors.darkOlive
+                            : AppColors.softGrey.withValues(alpha: 0.3),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        e.$2,
+                        style: TextStyle(
+                          color: sel ? AppColors.cream : AppColors.darkOlive,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  );
+                }).toList(),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _sacCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'SAC Code (optional)',
+                  hintText: 'e.g. 999293',
+                ),
+              ),
+              const SizedBox(height: 12),
+              TextField(
+                controller: _hsnCtrl,
+                decoration: const InputDecoration(
+                  labelText: 'HSN Code (optional)',
+                  hintText: 'For goods only',
+                ),
+              ),
+            ],
+
+            // ── Line Items ──
+            const SizedBox(height: 20),
+            const Divider(),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Line Items (optional)',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.darkOlive,
+                    fontSize: 14,
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.add_circle_rounded,
+                      color: AppColors.darkOlive),
+                  onPressed: () {
+                    setState(() {
+                      _lineItems.add(_LineItem(
+                        labelCtrl: TextEditingController(),
+                        amountCtrl: TextEditingController(),
+                      ));
+                    });
+                  },
+                ),
+              ],
+            ),
+            if (_lineItems.isEmpty)
+              const Padding(
+                padding: EdgeInsets.only(bottom: 8),
+                child: Text(
+                  'Add breakdowns like "Books", "Lab Fee"',
+                  style: TextStyle(color: AppColors.mutedOlive, fontSize: 12),
+                ),
+              ),
+            ..._lineItems.asMap().entries.map((entry) {
+              final i = entry.key;
+              final item = entry.value;
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: Row(
+                  children: [
+                    Expanded(
+                      flex: 3,
+                      child: TextField(
+                        controller: item.labelCtrl,
+                        decoration: InputDecoration(
+                          labelText: 'Item ${i + 1}',
+                          isDense: true,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      flex: 2,
+                      child: TextField(
+                        controller: item.amountCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true),
+                        decoration: const InputDecoration(
+                          labelText: '₹',
+                          prefixText: '₹ ',
+                          isDense: true,
+                        ),
+                      ),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle_outline,
+                          color: Color(0xFFC62828), size: 20),
+                      onPressed: () {
+                        setState(() {
+                          _lineItems[i].labelCtrl.dispose();
+                          _lineItems[i].amountCtrl.dispose();
+                          _lineItems.removeAt(i);
+                        });
+                      },
+                    ),
+                  ],
+                ),
+              );
+            }),
+
             const SizedBox(height: 20),
             SizedBox(
               width: double.infinity,
@@ -450,6 +766,18 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
       );
       return;
     }
+
+    List<Map<String, dynamic>>? items;
+    if (_lineItems.isNotEmpty) {
+      items = _lineItems
+          .where((li) => li.labelCtrl.text.trim().isNotEmpty)
+          .map((li) => {
+                'label': li.labelCtrl.text.trim(),
+                'amount': double.tryParse(li.amountCtrl.text.trim()) ?? 0,
+              })
+          .toList();
+    }
+
     setState(() => _submitting = true);
     try {
       await widget.onSubmit(
@@ -458,6 +786,12 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
         amount,
         _cycle,
         double.tryParse(_fineCtrl.text) ?? 0,
+        taxType: _taxType != 'NONE' ? _taxType : null,
+        gstRate: _taxType != 'NONE' ? _gstRate : null,
+        sacCode: _sacCtrl.text.trim().isNotEmpty ? _sacCtrl.text.trim() : null,
+        hsnCode: _hsnCtrl.text.trim().isNotEmpty ? _hsnCtrl.text.trim() : null,
+        gstSupplyType: _taxType != 'NONE' ? _supplyType : null,
+        lineItems: items,
       );
       if (mounted) Navigator.pop(context);
     } catch (e) {
@@ -470,6 +804,12 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
       if (mounted) setState(() => _submitting = false);
     }
   }
+}
+
+class _LineItem {
+  final TextEditingController labelCtrl;
+  final TextEditingController amountCtrl;
+  _LineItem({required this.labelCtrl, required this.amountCtrl});
 }
 
 class _EmptyState extends StatelessWidget {

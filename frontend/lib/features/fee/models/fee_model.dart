@@ -7,12 +7,21 @@ class FeeStructureModel {
   final double amount;
   final String currency;
   final String
-  cycle; // ONCE | MONTHLY | QUARTERLY | HALF_YEARLY | YEARLY | INSTALLMENT
+      cycle; // ONCE | MONTHLY | QUARTERLY | HALF_YEARLY | YEARLY | INSTALLMENT
   final double lateFinePerDay;
   final bool isActive;
   final int assignmentCount;
   final DateTime? createdAt;
   final List<InstallmentPlanItem> installmentPlan;
+
+  // Tax configuration
+  final String taxType; // NONE | GST_INCLUSIVE | GST_EXCLUSIVE
+  final double gstRate; // 0 | 5 | 12 | 18 | 28
+  final String? sacCode;
+  final String? hsnCode;
+  final String gstSupplyType; // INTRA_STATE | INTER_STATE
+  final double cessRate;
+  final List<LineItemModel> lineItems;
 
   const FeeStructureModel({
     required this.id,
@@ -27,11 +36,19 @@ class FeeStructureModel {
     this.assignmentCount = 0,
     this.createdAt,
     this.installmentPlan = const [],
+    this.taxType = 'NONE',
+    this.gstRate = 0,
+    this.sacCode,
+    this.hsnCode,
+    this.gstSupplyType = 'INTRA_STATE',
+    this.cessRate = 0,
+    this.lineItems = const [],
   });
 
   factory FeeStructureModel.fromJson(Map<String, dynamic> json) {
     final count = json['_count'] as Map<String, dynamic>?;
     final planJson = json['installmentPlan'] as List<dynamic>?;
+    final itemsJson = json['lineItems'] as List<dynamic>?;
     return FeeStructureModel(
       id: json['id'] as String? ?? '',
       coachingId: json['coachingId'] as String? ?? '',
@@ -53,8 +70,23 @@ class FeeStructureModel {
               )
               .toList() ??
           [],
+      taxType: json['taxType'] as String? ?? 'NONE',
+      gstRate: (json['gstRate'] as num?)?.toDouble() ?? 0,
+      sacCode: json['sacCode'] as String?,
+      hsnCode: json['hsnCode'] as String?,
+      gstSupplyType: json['gstSupplyType'] as String? ?? 'INTRA_STATE',
+      cessRate: (json['cessRate'] as num?)?.toDouble() ?? 0,
+      lineItems:
+          itemsJson
+              ?.map(
+                (e) => LineItemModel.fromJson(e as Map<String, dynamic>),
+              )
+              .toList() ??
+          [],
     );
   }
+
+  bool get hasTax => taxType != 'NONE' && gstRate > 0;
 
   String get cycleLabel {
     switch (cycle) {
@@ -91,6 +123,18 @@ class InstallmentPlanItem {
         dueDay: (json['dueDay'] as num?)?.toInt() ?? 1,
         amount: (json['amount'] as num?)?.toDouble() ?? 0,
       );
+}
+
+/// A single line item within a fee structure (e.g. "Books", "Lab Fee").
+class LineItemModel {
+  final String label;
+  final double amount;
+  const LineItemModel({required this.label, required this.amount});
+  factory LineItemModel.fromJson(Map<String, dynamic> json) => LineItemModel(
+    label: json['label'] as String? ?? '',
+    amount: (json['amount'] as num?)?.toDouble() ?? 0,
+  );
+  Map<String, dynamic> toJson() => {'label': label, 'amount': amount};
 }
 
 /// A snapshot of a mini member for fee display.
@@ -144,6 +188,8 @@ class FeePaymentModel {
   final String? receiptNo;
   final String? notes;
   final DateTime paidAt;
+  final String? razorpayPaymentId;
+  final String? razorpayOrderId;
 
   const FeePaymentModel({
     required this.id,
@@ -153,6 +199,8 @@ class FeePaymentModel {
     this.receiptNo,
     this.notes,
     required this.paidAt,
+    this.razorpayPaymentId,
+    this.razorpayOrderId,
   });
 
   factory FeePaymentModel.fromJson(Map<String, dynamic> json) {
@@ -164,8 +212,12 @@ class FeePaymentModel {
       receiptNo: json['receiptNo'] as String?,
       notes: json['notes'] as String?,
       paidAt: DateTime.parse(json['paidAt'] as String),
+      razorpayPaymentId: json['razorpayPaymentId'] as String?,
+      razorpayOrderId: json['razorpayOrderId'] as String?,
     );
   }
+
+  bool get isOnline => razorpayPaymentId != null;
 
   String get modeLabel {
     switch (mode) {
@@ -179,6 +231,8 @@ class FeePaymentModel {
         return 'Bank Transfer';
       case 'CHEQUE':
         return 'Cheque';
+      case 'RAZORPAY':
+        return 'Razorpay';
       default:
         return mode;
     }
@@ -208,6 +262,18 @@ class FeeRecordModel {
   final int reminderCount;
   final int daysOverdue;
 
+  // Tax snapshot
+  final String taxType; // NONE | GST_INCLUSIVE | GST_EXCLUSIVE
+  final double taxAmount;
+  final double cgstAmount;
+  final double sgstAmount;
+  final double igstAmount;
+  final double cessAmount;
+  final double gstRate;
+  final String? sacCode;
+  final String? hsnCode;
+  final List<LineItemModel> lineItems;
+
   // Embedded
   final FeeMemberInfo? member;
   final FeeStructureModel? feeStructure;
@@ -235,6 +301,16 @@ class FeeRecordModel {
     this.reminderSentAt,
     this.reminderCount = 0,
     this.daysOverdue = 0,
+    this.taxType = 'NONE',
+    this.taxAmount = 0,
+    this.cgstAmount = 0,
+    this.sgstAmount = 0,
+    this.igstAmount = 0,
+    this.cessAmount = 0,
+    this.gstRate = 0,
+    this.sacCode,
+    this.hsnCode,
+    this.lineItems = const [],
     this.member,
     this.feeStructure,
     this.payments = const [],
@@ -247,6 +323,7 @@ class FeeRecordModel {
     final memberJson = json['member'] as Map<String, dynamic>?;
     final paymentsList = json['payments'] as List<dynamic>?;
     final refundsList = json['refunds'] as List<dynamic>?;
+    final itemsJson = json['lineItems'] as List<dynamic>?;
     return FeeRecordModel(
       id: json['id'] as String? ?? '',
       coachingId: json['coachingId'] as String? ?? '',
@@ -274,6 +351,22 @@ class FeeRecordModel {
           : null,
       reminderCount: json['reminderCount'] as int? ?? 0,
       daysOverdue: json['daysOverdue'] as int? ?? 0,
+      taxType: json['taxType'] as String? ?? 'NONE',
+      taxAmount: (json['taxAmount'] as num?)?.toDouble() ?? 0,
+      cgstAmount: (json['cgstAmount'] as num?)?.toDouble() ?? 0,
+      sgstAmount: (json['sgstAmount'] as num?)?.toDouble() ?? 0,
+      igstAmount: (json['igstAmount'] as num?)?.toDouble() ?? 0,
+      cessAmount: (json['cessAmount'] as num?)?.toDouble() ?? 0,
+      gstRate: (json['gstRate'] as num?)?.toDouble() ?? 0,
+      sacCode: json['sacCode'] as String?,
+      hsnCode: json['hsnCode'] as String?,
+      lineItems:
+          itemsJson
+              ?.map(
+                (e) => LineItemModel.fromJson(e as Map<String, dynamic>),
+              )
+              .toList() ??
+          [],
       member: memberJson != null ? FeeMemberInfo.fromJson(memberJson) : null,
       feeStructure: structure != null
           ? FeeStructureModel.fromJson(structure)
@@ -296,6 +389,7 @@ class FeeRecordModel {
   bool get isPaid => status == 'PAID';
   bool get isPartial => status == 'PARTIALLY_PAID';
   bool get isWaived => status == 'WAIVED';
+  bool get hasTax => taxType != 'NONE' && taxAmount > 0;
 }
 
 /// A single refund entry.

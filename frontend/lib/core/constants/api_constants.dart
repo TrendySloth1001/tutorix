@@ -258,6 +258,21 @@ class ApiConstants {
   static String feeCalendar(String coachingId) =>
       '$baseUrl/coaching/$coachingId/fee/calendar';
 
+  // Online Payment (Razorpay)
+  static String feeCreateOrder(String coachingId, String recordId) =>
+      '$baseUrl/coaching/$coachingId/fee/records/$recordId/create-order';
+  static String feeVerifyPayment(String coachingId, String recordId) =>
+      '$baseUrl/coaching/$coachingId/fee/records/$recordId/verify-payment';
+  static String feeOnlinePayments(String coachingId, String recordId) =>
+      '$baseUrl/coaching/$coachingId/fee/records/$recordId/online-payments';
+  static String feeOnlineRefund(String coachingId, String recordId) =>
+      '$baseUrl/coaching/$coachingId/fee/records/$recordId/online-refund';
+  static const String paymentConfig = '$baseUrl/payment/config';
+
+  // Payment Settings (Coaching-level bank/GST config)
+  static String paymentSettings(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/payment-settings';
+
   // Admin / Logging
   static const String logFrontendError = '$baseUrl/api/logs/frontend';
   static const String adminLogs = '$baseUrl/admin/logs';

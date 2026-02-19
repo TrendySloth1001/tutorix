@@ -14,6 +14,15 @@ export interface CreateFeeStructureDto {
     lateFinePerDay?: number;
     discounts?: object;
     installmentPlan?: Array<{ label: string; dueDay: number; amount: number }>;
+    // Tax fields
+    taxType?: string;        // NONE | GST_INCLUSIVE | GST_EXCLUSIVE
+    gstRate?: number;        // 0, 5, 12, 18, 28
+    sacCode?: string;
+    hsnCode?: string;
+    gstSupplyType?: string;  // INTRA_STATE | INTER_STATE
+    cessRate?: number;
+    // Line item breakdowns
+    lineItems?: Array<{ label: string; amount: number }>;
 }
 
 export interface UpdateFeeStructureDto {
@@ -25,6 +34,13 @@ export interface UpdateFeeStructureDto {
     discounts?: object;
     installmentPlan?: object;
     isActive?: boolean;
+    taxType?: string;
+    gstRate?: number;
+    sacCode?: string;
+    hsnCode?: string;
+    gstSupplyType?: string;
+    cessRate?: number;
+    lineItems?: Array<{ label: string; amount: number }> | null;
 }
 
 export interface AssignFeeDto {
@@ -75,10 +91,98 @@ export interface ListFeeRecordsQuery {
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
+/** Returns Indian financial year string: "2025-26" for dates between Apr 2025 – Mar 2026 */
+function getFinancialYear(date: Date = new Date()): string {
+    const y = date.getFullYear();
+    const m = date.getMonth(); // 0-indexed
+    const startYear = m >= 3 ? y : y - 1; // Apr onwards = current FY
+    const endYear = (startYear + 1) % 100;
+    return `${startYear}-${endYear.toString().padStart(2, '0')}`;
+}
+
+/** Generate sequential receipt number: TXR/2025-26/0042 */
+async function generateSequentialReceiptNo(coachingId: string): Promise<string> {
+    const fy = getFinancialYear();
+    const seq = await prisma.receiptSequence.upsert({
+        where: { coachingId_financialYear: { coachingId, financialYear: fy } },
+        create: { coachingId, financialYear: fy, lastNumber: 1 },
+        update: { lastNumber: { increment: 1 } },
+    });
+    return `TXR/${fy}/${seq.lastNumber.toString().padStart(4, '0')}`;
+}
+
+/** Legacy random receipt (fallback, kept for compatibility) */
 function generateReceiptNo(): string {
     const ts = Date.now().toString(36).toUpperCase();
     const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
     return `RCP-${ts}-${rand}`;
+}
+
+// ── Tax Computation ─────────────────────────────────────────────────
+
+interface TaxBreakdown {
+    taxAmount: number;
+    cgstAmount: number;
+    sgstAmount: number;
+    igstAmount: number;
+    cessAmount: number;
+    taxableAmount: number; // base amount before tax
+    totalWithTax: number;  // inclusive of tax
+}
+
+/**
+ * Compute GST breakdown for a given base amount.
+ * @param baseAmount  The pre-tax amount
+ * @param taxType     NONE | GST_INCLUSIVE | GST_EXCLUSIVE
+ * @param gstRate     GST rate in percentage (0, 5, 12, 18, 28)
+ * @param supplyType  INTRA_STATE → CGST+SGST | INTER_STATE → IGST
+ * @param cessRate    Additional cess percentage
+ */
+function computeTax(
+    baseAmount: number,
+    taxType: string,
+    gstRate: number,
+    supplyType: string = 'INTRA_STATE',
+    cessRate: number = 0,
+): TaxBreakdown {
+    if (taxType === 'NONE' || gstRate === 0) {
+        return { taxAmount: 0, cgstAmount: 0, sgstAmount: 0, igstAmount: 0, cessAmount: 0, taxableAmount: baseAmount, totalWithTax: baseAmount };
+    }
+
+    let taxableAmount: number;
+    let gstAmount: number;
+    let cess: number;
+
+    if (taxType === 'GST_INCLUSIVE') {
+        // Reverse-calculate: base includes tax
+        const effectiveRate = gstRate + cessRate;
+        taxableAmount = baseAmount / (1 + effectiveRate / 100);
+        gstAmount = taxableAmount * (gstRate / 100);
+        cess = taxableAmount * (cessRate / 100);
+    } else {
+        // GST_EXCLUSIVE: tax is on top
+        taxableAmount = baseAmount;
+        gstAmount = baseAmount * (gstRate / 100);
+        cess = baseAmount * (cessRate / 100);
+    }
+
+    // Round to 2 decimals
+    gstAmount = Math.round(gstAmount * 100) / 100;
+    cess = Math.round(cess * 100) / 100;
+    taxableAmount = Math.round(taxableAmount * 100) / 100;
+
+    let cgst = 0, sgst = 0, igst = 0;
+    if (supplyType === 'INTER_STATE') {
+        igst = gstAmount;
+    } else {
+        cgst = Math.round((gstAmount / 2) * 100) / 100;
+        sgst = Math.round((gstAmount / 2) * 100) / 100;
+    }
+
+    const totalTax = gstAmount + cess;
+    const totalWithTax = taxType === 'GST_INCLUSIVE' ? baseAmount : baseAmount + totalTax;
+
+    return { taxAmount: totalTax, cgstAmount: cgst, sgstAmount: sgst, igstAmount: igst, cessAmount: cess, taxableAmount, totalWithTax: Math.round(totalWithTax * 100) / 100 };
 }
 
 function calcDaysOverdue(dueDate: Date): number {
@@ -152,6 +256,15 @@ export class FeeService {
                 lateFinePerDay: dto.lateFinePerDay ?? 0,
                 discounts: dto.discounts != null ? dto.discounts as Prisma.InputJsonValue : Prisma.JsonNull,
                 installmentPlan: dto.installmentPlan != null ? dto.installmentPlan as Prisma.InputJsonValue : Prisma.JsonNull,
+                // Tax
+                taxType: dto.taxType ?? 'NONE',
+                gstRate: dto.gstRate ?? 0,
+                sacCode: dto.sacCode ?? null,
+                hsnCode: dto.hsnCode ?? null,
+                gstSupplyType: dto.gstSupplyType ?? 'INTRA_STATE',
+                cessRate: dto.cessRate ?? 0,
+                // Line items
+                lineItems: dto.lineItems != null ? dto.lineItems as Prisma.InputJsonValue : Prisma.JsonNull,
             },
         });
     }
@@ -170,6 +283,16 @@ export class FeeService {
         }
         if (dto.installmentPlan !== undefined) {
             data.installmentPlan = dto.installmentPlan != null ? dto.installmentPlan as Prisma.InputJsonValue : Prisma.JsonNull;
+        }
+        // Tax fields
+        if (dto.taxType !== undefined) data.taxType = dto.taxType;
+        if (dto.gstRate !== undefined) data.gstRate = dto.gstRate;
+        if (dto.sacCode !== undefined) data.sacCode = dto.sacCode ?? null;
+        if (dto.hsnCode !== undefined) data.hsnCode = dto.hsnCode ?? null;
+        if (dto.gstSupplyType !== undefined) data.gstSupplyType = dto.gstSupplyType;
+        if (dto.cessRate !== undefined) data.cessRate = dto.cessRate;
+        if (dto.lineItems !== undefined) {
+            data.lineItems = dto.lineItems != null ? dto.lineItems as Prisma.InputJsonValue : Prisma.JsonNull;
         }
         return prisma.feeStructure.update({
             where: { id: structureId },
@@ -390,10 +513,13 @@ export class FeeService {
         const lateFine = assignment?.feeStructure?.lateFinePerDay ?? 0;
         const days = calcDaysOverdue(record.dueDate);
         const fineNow = lateFine > 0 && days > 0 ? lateFine * days : record.fineAmount;
-        const finalAmountLocked = record.baseAmount - record.discountAmount + fineNow;
+        const finalAmountLocked = record.baseAmount - record.discountAmount + fineNow + record.taxAmount;
 
         const newPaidAmount = record.paidAmount + dto.amount;
         const isPaid = newPaidAmount >= finalAmountLocked - 0.01;
+
+        // Generate sequential receipt number for each payment
+        const paymentReceiptNo = await generateSequentialReceiptNo(coachingId);
 
         await prisma.$transaction([
             prisma.feePayment.create({
@@ -403,7 +529,7 @@ export class FeeService {
                     amount: dto.amount,
                     mode: dto.mode,
                     transactionRef: dto.transactionRef ?? null,
-                    receiptNo: generateReceiptNo(),
+                    receiptNo: paymentReceiptNo,
                     notes: dto.notes ?? null,
                     paidAt,
                     recordedById: userId,
@@ -420,7 +546,7 @@ export class FeeService {
                     markedById: userId,
                     paymentMode: dto.mode,
                     transactionRef: dto.transactionRef ?? null,
-                    receiptNo: isPaid ? generateReceiptNo() : record.receiptNo,
+                    receiptNo: isPaid ? paymentReceiptNo : record.receiptNo,
                 },
             }),
         ]);
@@ -769,7 +895,11 @@ export class FeeService {
         coachingId: string,
         assignmentId: string,
         memberId: string,
-        structure: { name: string; cycle: string; lateFinePerDay: number },
+        structure: {
+            name: string; cycle: string; lateFinePerDay: number;
+            taxType?: string; gstRate?: number; sacCode?: string | null; hsnCode?: string | null;
+            gstSupplyType?: string; cessRate?: number; lineItems?: unknown;
+        },
         finalAmount: number,
         dueDate: Date,
         customTitle?: string,
@@ -786,19 +916,42 @@ export class FeeService {
         });
         if (existing) return existing;
 
+        // Compute tax breakdown
+        const taxType = structure.taxType ?? 'NONE';
+        const gstRate = structure.gstRate ?? 0;
+        const supplyType = structure.gstSupplyType ?? 'INTRA_STATE';
+        const cessRate = structure.cessRate ?? 0;
+        const tax = computeTax(finalAmount, taxType, gstRate, supplyType, cessRate);
+
+        // For GST_EXCLUSIVE, the finalAmount is base + tax.
+        // For GST_INCLUSIVE, finalAmount already includes tax.
+        const recordFinalAmount = tax.totalWithTax;
+
         return prisma.feeRecord.create({
             data: {
                 coachingId,
                 assignmentId,
                 memberId,
                 title: customTitle ?? buildRecordTitle(structure.name, dueDate, structure.cycle),
-                amount: finalAmount,
+                amount: recordFinalAmount,
                 baseAmount: finalAmount,
                 discountAmount: 0,
                 fineAmount: 0,
-                finalAmount,
+                finalAmount: recordFinalAmount,
                 dueDate,
                 status: 'PENDING',
+                // Tax snapshot
+                taxType,
+                taxAmount: tax.taxAmount,
+                cgstAmount: tax.cgstAmount,
+                sgstAmount: tax.sgstAmount,
+                igstAmount: tax.igstAmount,
+                cessAmount: tax.cessAmount,
+                gstRate,
+                sacCode: structure.sacCode ?? null,
+                hsnCode: structure.hsnCode ?? null,
+                // Line items snapshot
+                lineItems: structure.lineItems != null ? structure.lineItems as Prisma.InputJsonValue : Prisma.JsonNull,
             },
         });
     }
@@ -815,7 +968,7 @@ export class FeeService {
             const fineAmount = lateFine > 0 ? lateFine * days : 0;
             await prisma.feeRecord.update({
                 where: { id: r.id },
-                data: { status: 'OVERDUE', fineAmount, finalAmount: r.baseAmount - r.discountAmount + fineAmount },
+                data: { status: 'OVERDUE', fineAmount, finalAmount: r.baseAmount - r.discountAmount + fineAmount + r.taxAmount },
             });
         }
 

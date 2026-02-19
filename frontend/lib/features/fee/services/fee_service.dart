@@ -23,6 +23,13 @@ class FeeService {
     required double amount,
     String cycle = 'MONTHLY',
     double lateFinePerDay = 0,
+    String? taxType,
+    double? gstRate,
+    String? sacCode,
+    String? hsnCode,
+    String? gstSupplyType,
+    double? cessRate,
+    List<Map<String, dynamic>>? lineItems,
   }) async {
     final body = <String, dynamic>{
       'name': name,
@@ -30,6 +37,13 @@ class FeeService {
       'cycle': cycle,
       'lateFinePerDay': lateFinePerDay,
       'description': ?description,
+      'taxType': ?taxType,
+      'gstRate': ?gstRate,
+      'sacCode': ?sacCode,
+      'hsnCode': ?hsnCode,
+      'gstSupplyType': ?gstSupplyType,
+      'cessRate': ?cessRate,
+      'lineItems': ?lineItems,
     };
     final data = await _api.postAuthenticated(
       ApiConstants.feeStructures(coachingId),
@@ -47,6 +61,13 @@ class FeeService {
     String? cycle,
     double? lateFinePerDay,
     bool? isActive,
+    String? taxType,
+    double? gstRate,
+    String? sacCode,
+    String? hsnCode,
+    String? gstSupplyType,
+    double? cessRate,
+    List<Map<String, dynamic>>? lineItems,
   }) async {
     final body = <String, dynamic>{
       'name': ?name,
@@ -55,6 +76,13 @@ class FeeService {
       'cycle': ?cycle,
       'lateFinePerDay': ?lateFinePerDay,
       'isActive': ?isActive,
+      'taxType': ?taxType,
+      'gstRate': ?gstRate,
+      'sacCode': ?sacCode,
+      'hsnCode': ?hsnCode,
+      'gstSupplyType': ?gstSupplyType,
+      'cessRate': ?cessRate,
+      'lineItems': ?lineItems,
     };
     final data = await _api.patchAuthenticated(
       ApiConstants.feeStructureById(coachingId, structureId),

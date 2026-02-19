@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/controllers/auth_controller.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
+import '../services/payment_service.dart';
 import 'fee_record_detail_screen.dart';
+import 'payment_receipt_screen.dart';
 
 /// Student / Parent fee view for a specific coaching.
 /// Groups records by status with a clean summary header.
@@ -21,6 +25,7 @@ class MyFeesScreen extends StatefulWidget {
 
 class _MyFeesScreenState extends State<MyFeesScreen> {
   final _svc = FeeService();
+  final _paySvc = PaymentService();
   List<FeeRecordModel> _records = [];
   Map<String, dynamic>? _summary;
   bool _loading = true;
@@ -30,6 +35,12 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _paySvc.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -113,21 +124,119 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
                   : _Body(
                       records: _records,
                       coachingId: widget.coachingId,
+                      coachingName: widget.coachingName,
                       serverSummary: _summary,
+                      onPayOnline: _payOnline,
                     ),
             ),
     );
+  }
+
+  Future<void> _payOnline(FeeRecordModel record) async {
+    final auth = Provider.of<AuthController>(context, listen: false);
+    final user = auth.user;
+
+    debugPrint('[PayOnline] Starting payment for record: ${record.id}');
+
+    try {
+      // 1. Create order
+      debugPrint('[PayOnline] Creating order...');
+      final orderData = await _paySvc.createOrder(
+        widget.coachingId,
+        record.id,
+      );
+
+      debugPrint('[PayOnline] Order created: $orderData');
+
+      if (!mounted) return;
+
+      // 2. Open Razorpay checkout
+      debugPrint('[PayOnline] Opening Razorpay checkout...');
+      final response = await _paySvc.openCheckout(
+        orderId: orderData['orderId'] as String,
+        amountPaise: (orderData['amount'] as num).toInt(),
+        key: orderData['key'] as String,
+        feeTitle: record.title,
+        userEmail: user?.email,
+        userPhone: user?.phone,
+        userName: user?.name,
+      );
+
+      if (!mounted) return;
+
+      // 3. Verify payment
+      final verified = await _paySvc.verifyPayment(
+        widget.coachingId,
+        record.id,
+        razorpayOrderId: response.orderId!,
+        razorpayPaymentId: response.paymentId!,
+        razorpaySignature: response.signature!,
+      );
+
+      if (!mounted) return;
+
+      // 4. Extract enriched payment data
+      final vp = verified['verifiedPayment'] as Map<String, dynamic>?;
+      final receiptNo = vp?['receiptNo'] as String? ??
+          verified['receiptNo'] as String? ??
+          '';
+      final paidAmount = (vp?['amount'] as num?)?.toDouble() ?? record.balance;
+
+      // 5. Show receipt with tax breakdown
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PaymentReceiptScreen(
+            coachingName: widget.coachingName,
+            feeTitle: record.title,
+            amount: paidAmount,
+            paymentId: response.paymentId!,
+            orderId: response.orderId!,
+            paidAt: vp?['paidAt'] != null
+                ? DateTime.tryParse(vp!['paidAt'] as String) ?? DateTime.now()
+                : DateTime.now(),
+            studentName: record.member?.name,
+            receiptNo: receiptNo,
+            taxType: record.taxType,
+            taxAmount: record.taxAmount,
+            cgstAmount: record.cgstAmount,
+            sgstAmount: record.sgstAmount,
+            igstAmount: record.igstAmount,
+            cessAmount: record.cessAmount,
+            gstRate: record.gstRate,
+            sacCode: record.sacCode,
+            baseAmount: record.baseAmount,
+            discountAmount: record.discountAmount,
+            fineAmount: record.fineAmount,
+          ),
+        ),
+      );
+
+      _load(); // refresh
+    } catch (e, st) {
+      debugPrint('[PayOnline] ERROR: $e');
+      debugPrint('[PayOnline] Stack: $st');
+      if (!mounted) return;
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: const Color(0xFFC62828)),
+      );
+    }
   }
 }
 
 class _Body extends StatelessWidget {
   final List<FeeRecordModel> records;
   final String coachingId;
+  final String coachingName;
   final Map<String, dynamic>? serverSummary;
+  final void Function(FeeRecordModel) onPayOnline;
   const _Body({
     required this.records,
     required this.coachingId,
+    required this.coachingName,
     this.serverSummary,
+    required this.onPayOnline,
   });
 
   @override
@@ -177,9 +286,11 @@ class _Body extends StatelessWidget {
                       builder: (_) => FeeRecordDetailScreen(
                         coachingId: coachingId,
                         recordId: r.id,
+                        coachingName: coachingName,
                       ),
                     ),
                   ),
+                  onPayOnline: () => onPayOnline(r),
                 ),
               );
             }, childCount: records.length),
@@ -288,11 +399,19 @@ class _SummaryItem extends StatelessWidget {
 class _MyFeeCard extends StatelessWidget {
   final FeeRecordModel record;
   final VoidCallback onTap;
-  const _MyFeeCard({required this.record, required this.onTap});
+  final VoidCallback onPayOnline;
+  const _MyFeeCard({
+    required this.record,
+    required this.onTap,
+    required this.onPayOnline,
+  });
 
   @override
   Widget build(BuildContext context) {
     final statusColor = _statusColor(record.status);
+    final canPay = record.status == 'PENDING' ||
+        record.status == 'OVERDUE' ||
+        record.status == 'PARTIALLY_PAID';
     return Material(
       color: Colors.white.withValues(alpha: 0.6),
       borderRadius: BorderRadius.circular(16),
@@ -415,6 +534,34 @@ class _MyFeeCard extends StatelessWidget {
                   paid: record.paidAmount,
                   total: record.finalAmount,
                   statusColor: statusColor,
+                ),
+              ],
+              // ─── Pay Online Button ───
+              if (canPay) ...[
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 38,
+                  child: FilledButton.icon(
+                    onPressed: onPayOnline,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: AppColors.darkOlive,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      padding: EdgeInsets.zero,
+                    ),
+                    icon: const Icon(Icons.bolt_rounded, size: 18),
+                    label: Text(
+                      record.isPartial
+                          ? 'Pay ₹${record.balance.toStringAsFixed(0)} Online'
+                          : 'Pay ₹${record.finalAmount.toStringAsFixed(0)} Online',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
                 ),
               ],
             ],

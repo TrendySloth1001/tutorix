@@ -54,8 +54,7 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error loading calendar: $e')));
-    } finally {
-    }
+    } finally {}
   }
 
   @override

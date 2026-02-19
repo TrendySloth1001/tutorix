@@ -56,6 +56,7 @@ model User {
   markedFeeRecords    FeeRecord[]        @relation("FeeMarkedBy")
   recordedFeePayments FeePayment[]       @relation("FeePaymentRecorder")
   processedFeeRefunds FeeRefund[]        @relation("FeeRefundProcessor")
+  razorpayOrders      RazorpayOrder[]    @relation("RazorpayOrderUser")
 }
 
 model Ward {
@@ -144,6 +145,25 @@ model Coaching {
   feeRecords    FeeRecord[]
   feePayments   FeePayment[]
   feeRefunds    FeeRefund[]
+  razorpayOrders RazorpayOrder[]
+  razorpayWebhookLogs RazorpayWebhookLog[]
+  razorpayRefunds RazorpayRefund[]
+  receiptSequences ReceiptSequence[]
+
+  // Tax & Financial
+  gstNumber     String?   // GSTIN (15-char) for tax invoices
+  panNumber     String?   // PAN for TDS/compliance
+
+  // Razorpay Route — linked account for direct settlement
+  razorpayAccountId String?  // Razorpay linked account id (acc_xxxxx)
+  razorpayActivated Boolean @default(false)  // Whether Razorpay Route is active
+  platformFeePercent Float  @default(1.0)    // Tutorix commission (default 1%)
+
+  // Bank details (for Razorpay linked account creation)
+  bankAccountName   String?
+  bankAccountNumber String?
+  bankIfscCode      String?
+  bankName          String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -730,6 +750,26 @@ model FeeStructure {
   // fine per day after due date
   lateFinePerDay Float @default(0)
 
+  // ── Tax Configuration ───────────────────────────────────────────
+  // GST applicability: NONE, GST_INCLUSIVE, GST_EXCLUSIVE
+  taxType      String  @default("NONE")
+  // GST rate %: 0, 5, 12, 18, 28 (standard Indian rates)
+  gstRate      Float   @default(0)
+  // SAC code (Service Accounting Code) for education services
+  sacCode      String?  // e.g. "999293" for coaching/tuition
+  // HSN code (if selling materials/goods)
+  hsnCode      String?
+  // Whether IGST (inter-state) or CGST+SGST (intra-state) — auto-derived from coaching state vs student state
+  // INTRA_STATE → CGST + SGST (50-50 split), INTER_STATE → IGST
+  gstSupplyType String @default("INTRA_STATE")
+  // Additional cess % (education cess, etc.)
+  cessRate     Float   @default(0)
+
+  // ── Fee Breakdown / Line Items (admin-defined) ──────────────────
+  // JSON array: [{ label: "Tuition Fee", amount: 400 }, { label: "Lab Fee", amount: 80 }]
+  // If provided, these line items sum to `amount`. Empty = single base amount.
+  lineItems    Json?
+
   // Optional installment plan (JSON): [{label, dueDate, amount}]
   // Used when cycle = INSTALLMENT
   installmentPlan Json?
@@ -808,7 +848,22 @@ model FeeRecord {
   baseAmount  Float            // snapshot of amount at time of creation
   discountAmount Float         @default(0)
   fineAmount  Float            @default(0)
-  finalAmount Float            // computed: baseAmount - discountAmount + fineAmount
+  finalAmount Float            // computed: baseAmount - discountAmount + fineAmount + taxAmount
+
+  // ── Tax Breakdown (snapshot from FeeStructure at creation) ──────
+  taxType     String  @default("NONE")     // NONE, GST_INCLUSIVE, GST_EXCLUSIVE
+  taxAmount   Float   @default(0)          // total tax
+  cgstAmount  Float   @default(0)          // Central GST
+  sgstAmount  Float   @default(0)          // State GST
+  igstAmount  Float   @default(0)          // Integrated GST (inter-state)
+  cessAmount  Float   @default(0)          // Education cess
+  gstRate     Float   @default(0)          // snapshot of rate used
+  sacCode     String?                      // snapshot
+  hsnCode     String?                      // snapshot
+
+  // ── Line Items Breakdown (snapshot) ─────────────────────────────
+  // JSON: [{ label, amount }] — frozen at record creation time
+  lineItems   Json?
 
   dueDate  DateTime
   paidAt   DateTime?
@@ -836,6 +891,7 @@ model FeeRecord {
   // Payments (for partial payment breakdown)
   payments FeePayment[]
   refunds  FeeRefund[]
+  razorpayOrders RazorpayOrder[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -859,10 +915,17 @@ model FeePayment {
   record      FeeRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
 
   amount      Float
-  mode        String   // CASH, ONLINE, UPI, BANK_TRANSFER, CHEQUE, OTHER
+  mode        String   // CASH, ONLINE, UPI, BANK_TRANSFER, CHEQUE, OTHER, RAZORPAY
   transactionRef String?
   receiptNo   String?
   notes       String?
+
+  // Razorpay linkage (populated for online payments)
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+
+  // Razorpay Route transfer tracking
+  razorpayTransferId String?  // transfer_xxxxx — funds moved to coaching's linked account
 
   paidAt     DateTime @default(now())
   recordedById String?
@@ -885,15 +948,142 @@ model FeeRefund {
 
   amount      Float
   reason      String?
-  mode        String    @default("CASH") // CASH, BANK_TRANSFER, ONLINE
+  mode        String    @default("CASH") // CASH, BANK_TRANSFER, ONLINE, RAZORPAY
   refundedAt  DateTime  @default(now())
   processedById String?
   processedBy User?     @relation("FeeRefundProcessor", fields: [processedById], references: [id])
+
+  // Razorpay refund linkage
+  razorpayRefund RazorpayRefund?
 
   createdAt DateTime @default(now())
 
   @@index([recordId])
   @@index([coachingId])
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Razorpay Payment Gateway
+// ═══════════════════════════════════════════════════════════════════════
+
+/// Tracks Razorpay orders initiated by students/parents for fee payment.
+model RazorpayOrder {
+  id            String   @id @default(uuid())
+  coachingId    String
+  coaching      Coaching @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+  recordId      String
+  record        FeeRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  userId        String
+  user          User     @relation("RazorpayOrderUser", fields: [userId], references: [id])
+
+  /// Razorpay order_id (e.g. "order_xxxxxxxxxxxxxx")
+  razorpayOrderId String @unique
+
+  /// Amount in paise (₹100 → 10000)
+  amountPaise   Int
+  currency      String  @default("INR")
+
+  /// CREATED | PAID | FAILED | EXPIRED
+  status        String  @default("CREATED")
+
+  /// Populated after successful payment
+  razorpayPaymentId  String?
+  razorpaySignature  String?
+
+  /// Webhook tracking
+  webhookReceived    Boolean @default(false)
+  webhookReceivedAt  DateTime?
+
+  /// Metadata
+  receipt       String?  // e.g. "rcpt_<recordId>_<timestamp>"
+  notes         Json?    // Razorpay notes dict
+
+  /// Whether this order was used to record a FeePayment
+  paymentRecorded Boolean @default(false)
+
+  /// Razorpay Route transfer — funds to coaching's linked account
+  transferId        String?  // Razorpay transfer_id
+  transferStatus    String?  // created, processed, settled, failed
+  platformFeePaise  Int?     // Tutorix commission in paise
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([coachingId])
+  @@index([recordId])
+  @@index([userId])
+  @@index([status])
+  @@index([razorpayOrderId])
+}
+
+/// Logs every Razorpay webhook event for audit + replay.
+model RazorpayWebhookLog {
+  id          String   @id @default(uuid())
+  coachingId  String?
+  coaching    Coaching? @relation(fields: [coachingId], references: [id])
+
+  event       String   // payment.captured, payment.failed, refund.created, etc.
+  orderId     String?  // Razorpay order_id
+  paymentId   String?  // Razorpay payment_id
+  refundId    String?  // Razorpay refund_id
+
+  payload     Json     // Full webhook payload
+  signature   String   // X-Razorpay-Signature header
+
+  verified    Boolean  @default(false)
+  processed   Boolean  @default(false)
+  error       String?  // Error message if processing failed
+
+  createdAt   DateTime @default(now())
+
+  @@index([event])
+  @@index([orderId])
+  @@index([paymentId])
+  @@index([createdAt])
+}
+
+/// Tracks Razorpay refunds initiated by admin.
+model RazorpayRefund {
+  id              String    @id @default(uuid())
+  coachingId      String
+  coaching        Coaching  @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+
+  /// Link to our FeeRefund
+  feeRefundId     String    @unique
+  feeRefund       FeeRefund @relation(fields: [feeRefundId], references: [id], onDelete: Cascade)
+
+  /// Razorpay IDs
+  razorpayRefundId  String?  // populated after Razorpay confirms
+  razorpayPaymentId String   // the original payment to refund
+
+  amountPaise     Int
+  /// INITIATED | PROCESSED | FAILED
+  status          String  @default("INITIATED")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([coachingId])
+  @@index([razorpayPaymentId])
+  @@index([status])
+}
+
+/// Sequential receipt counter per coaching for generating
+/// professional receipt numbers like "TXR/2025-26/0001"
+model ReceiptSequence {
+  id          String   @id @default(uuid())
+  coachingId  String
+  coaching    Coaching @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+
+  /// Financial year prefix: "2025-26"
+  financialYear String
+
+  /// Last used number in this FY (auto-incremented)
+  lastNumber    Int    @default(0)
+
+  updatedAt DateTime @updatedAt
+
+  @@unique([coachingId, financialYear])
 }
 
 // ═══════════════════════════════════════════════════════════════════════

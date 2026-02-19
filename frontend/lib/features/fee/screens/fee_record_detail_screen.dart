@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../auth/controllers/auth_controller.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
+import '../services/payment_service.dart';
+import 'payment_receipt_screen.dart';
 
 /// Detailed view of a single fee record.
 /// Admin can collect payment, waive fee, send reminder.
@@ -11,11 +15,13 @@ class FeeRecordDetailScreen extends StatefulWidget {
   final String coachingId;
   final String recordId;
   final bool isAdmin;
+  final String? coachingName;
   const FeeRecordDetailScreen({
     super.key,
     required this.coachingId,
     required this.recordId,
     this.isAdmin = false,
+    this.coachingName,
   });
 
   @override
@@ -24,6 +30,7 @@ class FeeRecordDetailScreen extends StatefulWidget {
 
 class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
   final _svc = FeeService();
+  final _paySvc = PaymentService();
   FeeRecordModel? _record;
   bool _loading = true;
   String? _error;
@@ -32,6 +39,12 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
   void initState() {
     super.initState();
     _load();
+  }
+
+  @override
+  void dispose() {
+    _paySvc.dispose();
+    super.dispose();
   }
 
   Future<void> _load() async {
@@ -129,6 +142,21 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                       ],
                     ),
                   ),
+                if (_record!.paidAmount > 0)
+                  const PopupMenuItem(
+                    value: 'online_refund',
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.currency_rupee_rounded,
+                          size: 20,
+                          color: AppColors.darkOlive,
+                        ),
+                        SizedBox(width: 12),
+                        Text('Online Refund'),
+                      ],
+                    ),
+                  ),
               ],
             ),
         ],
@@ -144,6 +172,8 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
               onRemind: () => _onAction('remind'),
               onWaive: () => _onAction('waive'),
               onRefund: () => _onAction('refund'),
+              onPayOnline: _payOnline,
+              coachingName: widget.coachingName ?? 'Institute',
             ),
     );
   }
@@ -169,6 +199,8 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
       _showWaiveDialog();
     } else if (action == 'refund') {
       _showRefundSheet();
+    } else if (action == 'online_refund') {
+      _showOnlineRefundSheet();
     }
   }
 
@@ -244,6 +276,86 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
         },
       ),
     );
+  }
+
+  Future<void> _payOnline() async {
+    if (_record == null) return;
+    final auth = Provider.of<AuthController>(context, listen: false);
+    final user = auth.user;
+
+    try {
+      final orderData = await _paySvc.createOrder(
+        widget.coachingId,
+        widget.recordId,
+      );
+
+      if (!mounted) return;
+
+      final response = await _paySvc.openCheckout(
+        orderId: orderData['orderId'] as String,
+        amountPaise: (orderData['amount'] as num).toInt(),
+        key: orderData['key'] as String,
+        feeTitle: _record!.title,
+        userEmail: user?.email,
+        userPhone: user?.phone,
+        userName: user?.name,
+      );
+
+      if (!mounted) return;
+
+      final verified = await _paySvc.verifyPayment(
+        widget.coachingId,
+        widget.recordId,
+        razorpayOrderId: response.orderId!,
+        razorpayPaymentId: response.paymentId!,
+        razorpaySignature: response.signature!,
+      );
+
+      if (!mounted) return;
+
+      final vp = verified['verifiedPayment'] as Map<String, dynamic>?;
+      final receiptNo = vp?['receiptNo'] as String? ??
+          verified['receiptNo'] as String? ??
+          '';
+      final paidAmount = (vp?['amount'] as num?)?.toDouble() ?? _record!.balance;
+
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PaymentReceiptScreen(
+            coachingName: widget.coachingName ?? 'Institute',
+            feeTitle: _record!.title,
+            amount: paidAmount,
+            paymentId: response.paymentId!,
+            orderId: response.orderId!,
+            paidAt: vp?['paidAt'] != null
+                ? DateTime.tryParse(vp!['paidAt'] as String) ?? DateTime.now()
+                : DateTime.now(),
+            studentName: _record!.member?.name,
+            receiptNo: receiptNo,
+            taxType: _record!.taxType,
+            taxAmount: _record!.taxAmount,
+            cgstAmount: _record!.cgstAmount,
+            sgstAmount: _record!.sgstAmount,
+            igstAmount: _record!.igstAmount,
+            cessAmount: _record!.cessAmount,
+            gstRate: _record!.gstRate,
+            sacCode: _record!.sacCode,
+            baseAmount: _record!.baseAmount,
+            discountAmount: _record!.discountAmount,
+            fineAmount: _record!.fineAmount,
+          ),
+        ),
+      );
+
+      _load();
+    } catch (e) {
+      if (!mounted) return;
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg), backgroundColor: const Color(0xFFC62828)),
+      );
+    }
   }
 
   void _showRefundSheet() {
@@ -372,6 +484,246 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
       ),
     );
   }
+
+  void _showOnlineRefundSheet() {
+    bool loading = true;
+    List<Map<String, dynamic>> payments = [];
+    String? selectedPaymentId;
+    double? selectedAmount;
+    final amtCtrl = TextEditingController();
+    final reasonCtrl = TextEditingController();
+    bool submitting = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setSt) {
+          if (loading) {
+            _paySvc
+                .getOnlinePayments(widget.coachingId, widget.recordId)
+                .then((data) {
+              setSt(() {
+                payments = data;
+                loading = false;
+              });
+            }).catchError((e) {
+              setSt(() => loading = false);
+              if (ctx.mounted) {
+                ScaffoldMessenger.of(ctx).showSnackBar(
+                  SnackBar(content: Text(e.toString())),
+                );
+              }
+            });
+          }
+
+          return Container(
+            decoration: const BoxDecoration(
+              color: AppColors.cream,
+              borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            ),
+            padding: EdgeInsets.only(
+              left: 20,
+              right: 20,
+              top: 20,
+              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Center(
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: AppColors.softGrey,
+                      borderRadius: BorderRadius.circular(2),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'Online Refund',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    color: AppColors.darkOlive,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Select an online payment to refund via Razorpay',
+                  style: TextStyle(
+                    color: AppColors.mutedOlive,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                if (loading)
+                  const Center(
+                    child: Padding(
+                      padding: EdgeInsets.all(20),
+                      child: CircularProgressIndicator(),
+                    ),
+                  )
+                else if (payments.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.all(20),
+                    child: Center(
+                      child: Text(
+                        'No online payments found for this record',
+                        style: TextStyle(color: AppColors.mutedOlive),
+                      ),
+                    ),
+                  )
+                else ...[
+                  ...payments.map((p) {
+                    final id = p['id'] as String;
+                    final amt = (p['amount'] as num).toDouble();
+                    final date = DateTime.tryParse(p['paidAt'] as String? ?? '');
+                    final selected = selectedPaymentId == id;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: Material(
+                        color: selected
+                            ? AppColors.darkOlive.withValues(alpha: 0.08)
+                            : AppColors.softGrey.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(12),
+                        child: InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () => setSt(() {
+                            selectedPaymentId = id;
+                            selectedAmount = amt;
+                            amtCtrl.text = amt.toStringAsFixed(0);
+                          }),
+                          child: Padding(
+                            padding: const EdgeInsets.all(14),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  selected
+                                      ? Icons.radio_button_checked
+                                      : Icons.radio_button_off,
+                                  color: AppColors.darkOlive,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        '₹${amt.toStringAsFixed(0)}',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          color: AppColors.darkOlive,
+                                        ),
+                                      ),
+                                      if (date != null)
+                                        Text(
+                                          '${date.day}/${date.month}/${date.year}',
+                                          style: const TextStyle(
+                                            color: AppColors.mutedOlive,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                Text(
+                                  p['receiptNo'] as String? ?? '',
+                                  style: const TextStyle(
+                                    color: AppColors.mutedOlive,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: amtCtrl,
+                    keyboardType:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    decoration: const InputDecoration(
+                      labelText: 'Refund Amount (₹)',
+                      prefixText: '₹ ',
+                      helperText: 'Leave as-is for full refund',
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: reasonCtrl,
+                    decoration: const InputDecoration(
+                      labelText: 'Reason (optional)',
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  SizedBox(
+                    width: double.infinity,
+                    child: FilledButton(
+                      onPressed: submitting || selectedPaymentId == null
+                          ? null
+                          : () async {
+                              final amt =
+                                  double.tryParse(amtCtrl.text.trim());
+                              if (amt == null || amt <= 0) return;
+                              setSt(() => submitting = true);
+                              try {
+                                await _paySvc.initiateOnlineRefund(
+                                  widget.coachingId,
+                                  widget.recordId,
+                                  paymentId: selectedPaymentId!,
+                                  amount: amt,
+                                  reason: reasonCtrl.text.trim().isEmpty
+                                      ? null
+                                      : reasonCtrl.text.trim(),
+                                );
+                                if (ctx.mounted) Navigator.pop(ctx);
+                                if (mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Refund initiated'),
+                                    ),
+                                  );
+                                }
+                                _load();
+                              } catch (e) {
+                                setSt(() => submitting = false);
+                                if (ctx.mounted) {
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                    SnackBar(content: Text(e.toString())),
+                                  );
+                                }
+                              }
+                            },
+                      child: submitting
+                          ? const SizedBox(
+                              height: 20,
+                              width: 20,
+                              child: CircularProgressIndicator(
+                                color: AppColors.cream,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : const Text('Initiate Refund via Razorpay'),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          );
+        },
+      ),
+    );
+  }
 }
 
 class _Body extends StatelessWidget {
@@ -381,6 +733,8 @@ class _Body extends StatelessWidget {
   final VoidCallback onRemind;
   final VoidCallback onWaive;
   final VoidCallback onRefund;
+  final VoidCallback onPayOnline;
+  final String coachingName;
 
   const _Body({
     required this.record,
@@ -389,6 +743,8 @@ class _Body extends StatelessWidget {
     required this.onRemind,
     required this.onWaive,
     required this.onRefund,
+    required this.onPayOnline,
+    required this.coachingName,
   });
 
   @override
@@ -416,7 +772,11 @@ class _Body extends StatelessWidget {
           _BreakdownCard(record: record),
           const SizedBox(height: 20),
           if (record.payments.isNotEmpty) ...[
-            _PaymentHistory(payments: record.payments),
+            _PaymentHistory(
+              payments: record.payments,
+              coachingName: coachingName,
+              record: record,
+            ),
             const SizedBox(height: 20),
           ],
           if (record.refunds.isNotEmpty) ...[
@@ -444,6 +804,31 @@ class _Body extends StatelessWidget {
                   record.isPartial
                       ? 'Collect Remaining ₹${record.balance.toStringAsFixed(0)}'
                       : 'Collect Payment',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ),
+          // ─── Pay Online (Student / Parent) ───
+          if (!isAdmin && !record.isPaid && !record.isWaived)
+            SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: FilledButton.icon(
+                onPressed: onPayOnline,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.darkOlive,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                icon: const Icon(Icons.bolt_rounded),
+                label: Text(
+                  record.isPartial
+                      ? 'Pay ₹${record.balance.toStringAsFixed(0)} Online'
+                      : 'Pay ₹${record.finalAmount.toStringAsFixed(0)} Online',
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
@@ -693,6 +1078,16 @@ class _BreakdownCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
+          // ── Line Items (if present) ──
+          if (record.lineItems.isNotEmpty) ...[
+            ...record.lineItems.map(
+              (item) => _Row(
+                item.label,
+                '₹${item.amount.toStringAsFixed(0)}',
+              ),
+            ),
+            const Divider(height: 16),
+          ],
           _Row('Base Amount', '₹${record.baseAmount.toStringAsFixed(0)}'),
           if (record.discountAmount > 0)
             _Row(
@@ -706,6 +1101,42 @@ class _BreakdownCard extends StatelessWidget {
               '+ ₹${record.fineAmount.toStringAsFixed(0)}',
               color: const Color(0xFFC62828),
             ),
+          // ── Tax Breakdown ──
+          if (record.hasTax) ...[
+            const Divider(height: 16),
+            _Row(
+              record.taxType == 'GST_INCLUSIVE'
+                  ? 'GST (Incl. ${record.gstRate.toStringAsFixed(0)}%)'
+                  : 'GST @ ${record.gstRate.toStringAsFixed(0)}%',
+              '₹${record.taxAmount.toStringAsFixed(0)}',
+            ),
+            if (record.cgstAmount > 0)
+              _Row(
+                '  CGST @ ${(record.gstRate / 2).toStringAsFixed(1)}%',
+                '₹${record.cgstAmount.toStringAsFixed(0)}',
+                color: AppColors.mutedOlive,
+              ),
+            if (record.sgstAmount > 0)
+              _Row(
+                '  SGST @ ${(record.gstRate / 2).toStringAsFixed(1)}%',
+                '₹${record.sgstAmount.toStringAsFixed(0)}',
+                color: AppColors.mutedOlive,
+              ),
+            if (record.igstAmount > 0)
+              _Row(
+                '  IGST @ ${record.gstRate.toStringAsFixed(1)}%',
+                '₹${record.igstAmount.toStringAsFixed(0)}',
+                color: AppColors.mutedOlive,
+              ),
+            if (record.cessAmount > 0)
+              _Row(
+                '  Cess',
+                '₹${record.cessAmount.toStringAsFixed(0)}',
+                color: AppColors.mutedOlive,
+              ),
+            if (record.sacCode != null)
+              _Row('SAC Code', record.sacCode!),
+          ],
           const Divider(height: 20),
           _Row(
             'Total',
@@ -808,7 +1239,13 @@ class _Row extends StatelessWidget {
 
 class _PaymentHistory extends StatelessWidget {
   final List<FeePaymentModel> payments;
-  const _PaymentHistory({required this.payments});
+  final String coachingName;
+  final FeeRecordModel record;
+  const _PaymentHistory({
+    required this.payments,
+    required this.coachingName,
+    required this.record,
+  });
   @override
   Widget build(BuildContext context) {
     return Column(
@@ -822,7 +1259,11 @@ class _PaymentHistory extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        ...payments.map((p) => _PaymentRow(payment: p)),
+        ...payments.map((p) => _PaymentRow(
+              payment: p,
+              coachingName: coachingName,
+              record: record,
+            )),
       ],
     );
   }
@@ -830,55 +1271,98 @@ class _PaymentHistory extends StatelessWidget {
 
 class _PaymentRow extends StatelessWidget {
   final FeePaymentModel payment;
-  const _PaymentRow({required this.payment});
+  final String coachingName;
+  final FeeRecordModel record;
+  const _PaymentRow({
+    required this.payment,
+    required this.coachingName,
+    required this.record,
+  });
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-      decoration: BoxDecoration(
-        color: const Color(0xFFE8F5E9),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: Row(
-        children: [
-          const Icon(
-            Icons.check_circle_rounded,
-            color: Color(0xFF2E7D32),
-            size: 18,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${payment.modeLabel}${payment.transactionRef != null ? ' · ${payment.transactionRef}' : ''}',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 13,
-                    color: AppColors.darkOlive,
+    return GestureDetector(
+      onTap: payment.isOnline
+          ? () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => PaymentReceiptScreen(
+                    coachingName: coachingName,
+                    feeTitle: record.title,
+                    amount: payment.amount,
+                    paymentId: payment.razorpayPaymentId ?? '',
+                    orderId: payment.razorpayOrderId ?? '',
+                    paidAt: payment.paidAt,
+                    receiptNo: payment.receiptNo ?? '',
+                    taxType: record.taxType,
+                    taxAmount: record.taxAmount,
+                    cgstAmount: record.cgstAmount,
+                    sgstAmount: record.sgstAmount,
+                    igstAmount: record.igstAmount,
+                    cessAmount: record.cessAmount,
+                    gstRate: record.gstRate,
+                    sacCode: record.sacCode,
+                    baseAmount: record.baseAmount,
+                    discountAmount: record.discountAmount,
+                    fineAmount: record.fineAmount,
                   ),
                 ),
-                Text(
-                  _fmtDateLong(payment.paidAt),
-                  style: const TextStyle(
-                    color: AppColors.mutedOlive,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            '₹${payment.amount.toStringAsFixed(0)}',
-            style: const TextStyle(
-              fontWeight: FontWeight.w700,
+              )
+          : null,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: const Color(0xFFE8F5E9),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Row(
+          children: [
+            const Icon(
+              Icons.check_circle_rounded,
               color: Color(0xFF2E7D32),
-              fontSize: 14,
+              size: 18,
             ),
-          ),
-        ],
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${payment.modeLabel}${payment.transactionRef != null ? ' · ${payment.transactionRef}' : ''}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                      color: AppColors.darkOlive,
+                    ),
+                  ),
+                  Text(
+                    _fmtDateLong(payment.paidAt),
+                    style: const TextStyle(
+                      color: AppColors.mutedOlive,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '₹${payment.amount.toStringAsFixed(0)}',
+              style: const TextStyle(
+                fontWeight: FontWeight.w700,
+                color: Color(0xFF2E7D32),
+                fontSize: 14,
+              ),
+            ),
+            if (payment.isOnline) ...[
+              const SizedBox(width: 6),
+              const Icon(
+                Icons.receipt_long_rounded,
+                color: AppColors.mutedOlive,
+                size: 16,
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }
