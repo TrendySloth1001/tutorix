@@ -30,7 +30,6 @@ class _MyFeesScreenState extends State<MyFeesScreen>
   final _paySvc = PaymentService();
   late final TabController _tab;
   List<FeeRecordModel> _records = [];
-  Map<String, dynamic>? _summary;
   bool _loading = true;
   String? _error;
 
@@ -101,7 +100,6 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       );
       setState(() {
         _records = records;
-        _summary = result['summary'] as Map<String, dynamic>?;
         _loading = false;
         _selected.removeWhere((id) => !records.any((r) => r.id == id));
       });
@@ -306,18 +304,6 @@ class _MyFeesScreenState extends State<MyFeesScreen>
 
   // ─── Build the fee list body ───
   Widget _buildBody() {
-    final totalPaid =
-        ((_summary?['totalPaid'] as num?)?.toDouble()) ??
-        _records.fold<double>(0, (s, r) => s + r.paidAmount);
-    final totalDue =
-        ((_summary?['totalDue'] as num?)?.toDouble()) ??
-        _payableRecords.fold<double>(0, (s, r) => s + r.balance);
-    final totalOverdue =
-        ((_summary?['totalOverdue'] as num?)?.toDouble()) ??
-        _records
-            .where((r) => r.status == 'OVERDUE')
-            .fold<double>(0, (s, r) => s + r.balance);
-
     final payable = _payableRecords;
     final settled = _records
         .where((r) => r.status == 'PAID' || r.status == 'WAIVED')
@@ -326,18 +312,11 @@ class _MyFeesScreenState extends State<MyFeesScreen>
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
-        SliverToBoxAdapter(
-          child: _SummaryHeader(
-            totalDue: totalDue,
-            totalPaid: totalPaid,
-            totalOverdue: totalOverdue,
-          ),
-        ),
         // ─── Payable Section ───
         if (payable.isNotEmpty) ...[
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
               child: Row(
                 children: [
                   const Text(
@@ -355,7 +334,9 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -442,7 +423,9 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
@@ -834,124 +817,6 @@ class _PayBar extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _SummaryHeader extends StatelessWidget {
-  final double totalDue;
-  final double totalPaid;
-  final double totalOverdue;
-  const _SummaryHeader({
-    required this.totalDue,
-    required this.totalPaid,
-    required this.totalOverdue,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.darkOlive,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text(
-                'Fee Summary',
-                style: TextStyle(
-                  color: AppColors.cream,
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                ),
-              ),
-              const Spacer(),
-              if (totalDue > 0)
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
-                  ),
-                  decoration: BoxDecoration(
-                    color: Colors.white.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    'Due ₹${_formatAmount(totalDue)}',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Expanded(
-                child: _SummaryItem(
-                  label: 'Paid',
-                  amount: totalPaid,
-                  color: const Color(0xFF81C784),
-                ),
-              ),
-              Expanded(
-                child: _SummaryItem(
-                  label: 'Outstanding',
-                  amount: totalDue,
-                  color: AppColors.cream,
-                ),
-              ),
-              if (totalOverdue > 0)
-                Expanded(
-                  child: _SummaryItem(
-                    label: 'Overdue',
-                    amount: totalOverdue,
-                    color: const Color(0xFFEF9A9A),
-                  ),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _SummaryItem extends StatelessWidget {
-  final String label;
-  final double amount;
-  final Color color;
-  const _SummaryItem({
-    required this.label,
-    required this.amount,
-    required this.color,
-  });
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '₹${_formatAmount(amount)}',
-          style: TextStyle(
-            color: color,
-            fontWeight: FontWeight.w800,
-            fontSize: 20,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 12),
-        ),
-      ],
     );
   }
 }
@@ -1385,12 +1250,6 @@ String _fmtDate(DateTime d) {
     'Dec',
   ];
   return '${d.day} ${months[d.month - 1]} ${d.year}';
-}
-
-String _formatAmount(double v) {
-  if (v >= 100000) return '${(v / 100000).toStringAsFixed(1)}L';
-  if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
-  return v.toStringAsFixed(0);
 }
 
 // ─── Transaction History Tab ────────────────────────────────────────────

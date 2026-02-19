@@ -235,7 +235,8 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                       ? null
                       : notesCtrl.text.trim(),
                 );
-                if (mounted) AppAlert.success(context, 'Fee waived successfully');
+                if (mounted)
+                  AppAlert.success(context, 'Fee waived successfully');
                 _load();
               } catch (e) {
                 if (mounted) AppAlert.error(context, e);
