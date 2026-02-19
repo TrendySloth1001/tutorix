@@ -200,12 +200,53 @@ class _FeeTab extends StatelessWidget {
     final ledger = profile['ledger'] as Map<String, dynamic>? ?? {};
     final assignments = (profile['assignments'] as List<dynamic>?) ?? [];
 
+    // Filter assignments:
+    // Show if status is NOT 'PENDING' (i.e. PAID, PARTIALLY_PAID, WAIVED, OVERDUE)
+    // OR if dueDate is within the current or next month.
+    final now = DateTime.now();
+    final endOfNextMonth = DateTime(now.year, now.month + 2, 0);
+
+    final filteredAssignments = assignments.where((a) {
+      final assignment = a as Map<String, dynamic>;
+      final records = (assignment['records'] as List<dynamic>?) ?? [];
+
+      // We are displaying sections based on assignment, but the UI iterates over assignments?
+      // Wait, _AssignmentSection iterates over records?
+      // Let's check _AssignmentSection.
+      // It seems _AssignmentSection might display multiple records.
+      // If the assignment has ANY visible record, we show it?
+      // Or does _AssignmentSection show all records?
+      // Looking at the code for _AssignmentSection (not fully visible but inferred), it likely lists records.
+      // I should probably pass the filter strictness down or filter the records within the assignment data structure before passing it.
+
+      // Let's filter the records inside each assignment.
+      final visibleRecords = records.where((r) {
+        final record = r as Map<String, dynamic>;
+        final status = record['status'] as String? ?? 'PENDING';
+        final dateStr = record['dueDate'] as String?;
+        DateTime? dueDate;
+        if (dateStr != null) dueDate = DateTime.tryParse(dateStr);
+
+        if (status != 'PENDING')
+          return true; // Always show history/paid/overdue
+        if (dueDate == null) return true; // Show if no date
+
+        // Check if due date is before or on endOfNextMonth
+        return dueDate.isBefore(endOfNextMonth) ||
+            dueDate.isAtSameMomentAs(endOfNextMonth);
+      }).toList();
+
+      // Update the assignment's records with filtered list (creating a copy to avoid mutating original if needed, though here it's fine)
+      assignment['records'] = visibleRecords;
+      return visibleRecords.isNotEmpty;
+    }).toList();
+
     return ListView(
       padding: const EdgeInsets.all(16),
       children: [
         _LedgerBanner(ledger: ledger),
         const SizedBox(height: 20),
-        if (assignments.isEmpty)
+        if (filteredAssignments.isEmpty)
           const Padding(
             padding: EdgeInsets.symmetric(vertical: 40),
             child: Center(
@@ -216,7 +257,7 @@ class _FeeTab extends StatelessWidget {
             ),
           )
         else
-          ...assignments.map((a) {
+          ...filteredAssignments.map((a) {
             final assignment = a as Map<String, dynamic>;
             return _AssignmentSection(
               assignment: assignment,

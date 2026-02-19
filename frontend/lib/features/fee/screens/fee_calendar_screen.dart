@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../../../core/theme/app_colors.dart';
-import '../models/fee_model.dart';
 import '../services/fee_service.dart';
 
 class FeeCalendarScreen extends StatefulWidget {
@@ -16,7 +15,6 @@ class FeeCalendarScreen extends StatefulWidget {
 
 class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
   final _feeService = FeeService();
-  bool _isLoading = false;
 
   // Map date string (YYYY-MM-DD) to stats
   Map<String, Map<String, dynamic>> _calendarData = {};
@@ -32,7 +30,6 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
   }
 
   Future<void> _fetchMonthData(DateTime date) async {
-    setState(() => _isLoading = true);
     try {
       // Fetch for the whole month (with some buffer if needed, but service takes exact dates)
       final start = DateTime(date.year, date.month, 1);
@@ -58,7 +55,6 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
         context,
       ).showSnackBar(SnackBar(content: Text('Error loading calendar: $e')));
     } finally {
-      setState(() => _isLoading = false);
     }
   }
 
