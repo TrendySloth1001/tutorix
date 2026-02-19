@@ -61,8 +61,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
       if (!mounted) return;
       setState(() {
         _record = results[0] as FeeRecordModel;
-        _failedOrders =
-            (results[1] as List).cast<Map<String, dynamic>>();
+        _failedOrders = (results[1] as List).cast<Map<String, dynamic>>();
         _loading = false;
       });
     } catch (e) {
@@ -294,10 +293,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
 
     Map<String, dynamic>? orderData;
     try {
-      orderData = await _paySvc.createOrder(
-        widget.coachingId,
-        widget.recordId,
-      );
+      orderData = await _paySvc.createOrder(widget.coachingId, widget.recordId);
 
       if (!mounted) return;
 
@@ -364,11 +360,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
         final internalId = orderData['internalOrderId'] as String?;
         if (internalId != null) {
           final reason = e.toString().replaceFirst('Exception: ', '');
-          await _paySvc.markOrderFailed(
-            widget.coachingId,
-            internalId,
-            reason,
-          );
+          await _paySvc.markOrderFailed(widget.coachingId, internalId, reason);
         }
       }
       await _load();
@@ -1494,15 +1486,18 @@ class _FailedAttempts extends StatelessWidget {
           final paise = (o['amountPaise'] as num?)?.toInt() ?? 0;
           final amtStr = '₹${(paise / 100).toStringAsFixed(0)}';
           final reason =
-              (o['failureReason'] as String?)?.replaceFirst('Exception: ', '') ??
+              (o['failureReason'] as String?)?.replaceFirst(
+                'Exception: ',
+                '',
+              ) ??
               'Unknown reason';
           final failedAt = o['failedAt'] != null
               ? DateTime.tryParse(o['failedAt'] as String)
               : null;
           final dateStr = failedAt != null
               ? '${failedAt.day} ${_monthName(failedAt.month)} '
-                  '${failedAt.hour.toString().padLeft(2, '0')}:'
-                  '${failedAt.minute.toString().padLeft(2, '0')}'
+                    '${failedAt.hour.toString().padLeft(2, '0')}:'
+                    '${failedAt.minute.toString().padLeft(2, '0')}'
               : '';
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
@@ -1562,8 +1557,19 @@ class _FailedAttempts extends StatelessWidget {
 
   static String _monthName(int m) {
     const months = [
-      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      '',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return months[m];
   }

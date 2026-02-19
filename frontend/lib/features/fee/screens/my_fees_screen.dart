@@ -48,8 +48,10 @@ class _MyFeesScreenState extends State<MyFeesScreen>
     _tab = TabController(length: 2, vsync: this);
     _tab.addListener(() {
       // Lazy-load transactions on first visit to History tab
-      if (_tab.index == 1 && !_tab.indexIsChanging &&
-          _transactions.isEmpty && !_txLoading) {
+      if (_tab.index == 1 &&
+          !_tab.indexIsChanging &&
+          _transactions.isEmpty &&
+          !_txLoading) {
         _loadTransactions();
       }
     });
@@ -64,14 +66,23 @@ class _MyFeesScreenState extends State<MyFeesScreen>
   }
 
   Future<void> _loadTransactions() async {
-    setState(() { _txLoading = true; _txError = null; });
+    setState(() {
+      _txLoading = true;
+      _txError = null;
+    });
     try {
       final txns = await _paySvc.getMyTransactions(widget.coachingId);
       if (!mounted) return;
-      setState(() { _transactions = txns; _txLoading = false; });
+      setState(() {
+        _transactions = txns;
+        _txLoading = false;
+      });
     } catch (e) {
       if (!mounted) return;
-      setState(() { _txError = e.toString(); _txLoading = false; });
+      setState(() {
+        _txError = e.toString();
+        _txLoading = false;
+      });
     }
   }
 
@@ -226,19 +237,22 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       body: _selectMode
           // In select mode show only the fees list (no TabBarView)
           ? (_loading
-              ? const Center(child: CircularProgressIndicator())
-              : _error != null
-              ? _ErrorRetry(error: _error!, onRetry: _load)
-              : RefreshIndicator(
-                  color: AppColors.darkOlive,
-                  onRefresh: _load,
-                  child: _records.isEmpty
-                      ? ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          children: const [SizedBox(height: 200), _EmptyState()],
-                        )
-                      : _buildBody(),
-                ))
+                ? const Center(child: CircularProgressIndicator())
+                : _error != null
+                ? _ErrorRetry(error: _error!, onRetry: _load)
+                : RefreshIndicator(
+                    color: AppColors.darkOlive,
+                    onRefresh: _load,
+                    child: _records.isEmpty
+                        ? ListView(
+                            physics: const AlwaysScrollableScrollPhysics(),
+                            children: const [
+                              SizedBox(height: 200),
+                              _EmptyState(),
+                            ],
+                          )
+                        : _buildBody(),
+                  ))
           : TabBarView(
               controller: _tab,
               children: [
@@ -253,7 +267,10 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                         child: _records.isEmpty
                             ? ListView(
                                 physics: const AlwaysScrollableScrollPhysics(),
-                                children: const [SizedBox(height: 200), _EmptyState()],
+                                children: const [
+                                  SizedBox(height: 200),
+                                  _EmptyState(),
+                                ],
                               )
                             : _buildBody(),
                       ),
@@ -264,7 +281,10 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                   child: _txLoading
                       ? const Center(child: CircularProgressIndicator())
                       : _txError != null
-                      ? _ErrorRetry(error: _txError!, onRetry: _loadTransactions)
+                      ? _ErrorRetry(
+                          error: _txError!,
+                          onRetry: _loadTransactions,
+                        )
                       : _TransactionHistory(
                           transactions: _transactions,
                           coachingId: widget.coachingId,
@@ -1399,15 +1419,19 @@ class _TransactionHistory extends StatelessWidget {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.receipt_long_rounded,
-                    size: 52, color: AppColors.mutedOlive),
+                Icon(
+                  Icons.receipt_long_rounded,
+                  size: 52,
+                  color: AppColors.mutedOlive,
+                ),
                 SizedBox(height: 12),
                 Text(
                   'No transactions yet',
                   style: TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.darkOlive,
-                      fontSize: 16),
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.darkOlive,
+                    fontSize: 16,
+                  ),
                 ),
                 SizedBox(height: 4),
                 Text(
@@ -1445,71 +1469,69 @@ class _TxnCard extends StatelessWidget {
     late String statusLabel;
 
     if (isPayment) {
-      bgColor      = const Color(0xFFEBF5EB);
-      accentColor  = const Color(0xFF2E7D32);
-      labelBg      = const Color(0xFFD0EDD0);
-      icon         = Icons.check_circle_rounded;
-      statusLabel  = 'Paid';
+      bgColor = const Color(0xFFEBF5EB);
+      accentColor = const Color(0xFF2E7D32);
+      labelBg = const Color(0xFFD0EDD0);
+      icon = Icons.check_circle_rounded;
+      statusLabel = 'Paid';
     } else if (orderStatus == 'FAILED') {
-      bgColor      = const Color(0xFFFFEBEE);
-      accentColor  = const Color(0xFFC62828);
-      labelBg      = const Color(0xFFFFCDD2);
-      icon         = Icons.cancel_rounded;
-      statusLabel  = 'Failed';
+      bgColor = const Color(0xFFFFEBEE);
+      accentColor = const Color(0xFFC62828);
+      labelBg = const Color(0xFFFFCDD2);
+      icon = Icons.cancel_rounded;
+      statusLabel = 'Failed';
     } else if (orderStatus == 'EXPIRED') {
-      bgColor      = const Color(0xFFFFF8E1);
-      accentColor  = const Color(0xFFF57F17);
-      labelBg      = const Color(0xFFFFECB3);
-      icon         = Icons.access_time_rounded;
-      statusLabel  = 'Expired';
+      bgColor = const Color(0xFFFFF8E1);
+      accentColor = const Color(0xFFF57F17);
+      labelBg = const Color(0xFFFFECB3);
+      icon = Icons.access_time_rounded;
+      statusLabel = 'Expired';
     } else {
       // CREATED — initiated but not completed
-      bgColor      = const Color(0xFFF3F4F6);
-      accentColor  = const Color(0xFF5E6A82);
-      labelBg      = const Color(0xFFE3E6EC);
-      icon         = Icons.pending_rounded;
-      statusLabel  = 'Initiated';
+      bgColor = const Color(0xFFF3F4F6);
+      accentColor = const Color(0xFF5E6A82);
+      labelBg = const Color(0xFFE3E6EC);
+      icon = Icons.pending_rounded;
+      statusLabel = 'Initiated';
     }
 
     final amount =
         ((txn['totalAmount'] ?? txn['amount']) as num?)?.toDouble() ?? 0;
-    final title   = txn['recordTitle'] as String? ?? '';
+    final title = txn['recordTitle'] as String? ?? '';
     final dateRaw = txn['date'] as String?;
-    final date    = dateRaw != null ? DateTime.tryParse(dateRaw) : null;
+    final date = dateRaw != null ? DateTime.tryParse(dateRaw) : null;
     final dateStr = date != null
         ? '${date.day} ${_monthName(date.month)} ${date.year}  '
-            '${date.hour.toString().padLeft(2, '0')}:'
-            '${date.minute.toString().padLeft(2, '0')}'
+              '${date.hour.toString().padLeft(2, '0')}:'
+              '${date.minute.toString().padLeft(2, '0')}'
         : '';
 
     // Build detail lines
     final lines = <String>[];
     if (isPayment) {
-      final mode      = txn['mode']               as String? ?? '';
-      final receiptNo = txn['receiptNo']           as String? ?? '';
-      final payId     = txn['razorpayPaymentId']   as String? ?? '';
-      final orderId   = txn['razorpayOrderId']     as String? ?? '';
-      final parts     = <String>[];
-      if (mode.isNotEmpty)      parts.add(mode.toUpperCase());
+      final mode = txn['mode'] as String? ?? '';
+      final receiptNo = txn['receiptNo'] as String? ?? '';
+      final payId = txn['razorpayPaymentId'] as String? ?? '';
+      final orderId = txn['razorpayOrderId'] as String? ?? '';
+      final parts = <String>[];
+      if (mode.isNotEmpty) parts.add(mode.toUpperCase());
       if (receiptNo.isNotEmpty) parts.add('Receipt #$receiptNo');
-      if (payId.isNotEmpty)     parts.add(_truncateId(payId));
-      if (parts.isNotEmpty)     lines.add(parts.join(' · '));
-      if (orderId.isNotEmpty)   lines.add(_truncateId(orderId));
+      if (payId.isNotEmpty) parts.add(_truncateId(payId));
+      if (parts.isNotEmpty) lines.add(parts.join(' · '));
+      if (orderId.isNotEmpty) lines.add(_truncateId(orderId));
     } else {
-      final rzpOrderId    = txn['razorpayOrderId']   as String? ?? '';
-      final rzpPayId      = txn['razorpayPaymentId'] as String? ?? '';
-      final receipt       = txn['receipt']           as String? ?? '';
-      final failureReason = txn['failureReason']     as String? ?? '';
-      final transferStatus = txn['transferStatus']   as String? ?? '';
+      final rzpOrderId = txn['razorpayOrderId'] as String? ?? '';
+      final rzpPayId = txn['razorpayPaymentId'] as String? ?? '';
+      final receipt = txn['receipt'] as String? ?? '';
+      final failureReason = txn['failureReason'] as String? ?? '';
+      final transferStatus = txn['transferStatus'] as String? ?? '';
 
       if (rzpOrderId.isNotEmpty) lines.add(_truncateId(rzpOrderId));
-      if (rzpPayId.isNotEmpty)   lines.add(_truncateId(rzpPayId));
-      if (receipt.isNotEmpty)    lines.add('Receipt: $receipt');
+      if (rzpPayId.isNotEmpty) lines.add(_truncateId(rzpPayId));
+      if (receipt.isNotEmpty) lines.add('Receipt: $receipt');
 
       if (orderStatus == 'FAILED') {
-        final reason = failureReason
-            .replaceFirst('Exception: ', '')
-            .trim();
+        final reason = failureReason.replaceFirst('Exception: ', '').trim();
         if (reason.isNotEmpty) lines.add(reason);
       } else if (orderStatus == 'EXPIRED') {
         lines.add('Order expired — not completed');
@@ -1557,7 +1579,9 @@ class _TxnCard extends StatelessWidget {
                     const SizedBox(width: 6),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 7, vertical: 2),
+                        horizontal: 7,
+                        vertical: 2,
+                      ),
                       decoration: BoxDecoration(
                         color: labelBg,
                         borderRadius: BorderRadius.circular(6),
@@ -1589,7 +1613,9 @@ class _TxnCard extends StatelessWidget {
                     child: Text(
                       dateStr,
                       style: const TextStyle(
-                          fontSize: 11, color: AppColors.mutedOlive),
+                        fontSize: 11,
+                        color: AppColors.mutedOlive,
+                      ),
                     ),
                   ),
               ],
@@ -1617,8 +1643,18 @@ class _TxnCard extends StatelessWidget {
 
   String _monthName(int m) {
     const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
     return months[m - 1];
   }

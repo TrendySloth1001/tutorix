@@ -189,7 +189,9 @@ class PaymentService {
   }
 
   /// Get all transactions (successful + failed) for the current user in a coaching.
-  Future<List<Map<String, dynamic>>> getMyTransactions(String coachingId) async {
+  Future<List<Map<String, dynamic>>> getMyTransactions(
+    String coachingId,
+  ) async {
     final data = await _api.getAuthenticatedRaw(
       ApiConstants.feeMyTransactions(coachingId),
     );
@@ -225,7 +227,8 @@ class PaymentService {
     ) {
       if (!completer.isCompleted) {
         final raw = response.message;
-        final isBlank = raw == null || raw.isEmpty || raw == 'null' || raw == 'undefined';
+        final isBlank =
+            raw == null || raw.isEmpty || raw == 'null' || raw == 'undefined';
         final msg = isBlank
             ? (response.code == 0 ? 'Payment cancelled' : 'Payment failed')
             : raw;
