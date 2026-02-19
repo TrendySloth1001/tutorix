@@ -108,4 +108,27 @@ export class PaymentController {
             res.status(e.status ?? 500).json({ error: e.message });
         }
     }
+
+    /** POST /coaching/:coachingId/fee/orders/:internalOrderId/fail */
+    async failOrder(req: Request, res: Response) {
+        try {
+            const { coachingId, internalOrderId } = req.params as { coachingId: string; internalOrderId: string };
+            const reason: string = req.body?.reason ?? 'User cancelled';
+            await svc.markOrderFailed(coachingId, internalOrderId, reason);
+            res.json({ ok: true });
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+
+    /** GET /coaching/:coachingId/fee/records/:recordId/failed-orders */
+    async getFailedOrders(req: Request, res: Response) {
+        try {
+            const { coachingId, recordId } = req.params as { coachingId: string; recordId: string };
+            const data = await svc.getFailedOrders(coachingId, recordId);
+            res.json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
 }

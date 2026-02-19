@@ -179,6 +179,17 @@ export class FeeController {
         }
     }
 
+    async getMyTransactions(req: Request, res: Response) {
+        try {
+            const { coachingId } = req.params as { coachingId: string };
+            const userId = (req as any).user?.id;
+            const data = await svc.getMyTransactions(coachingId, userId);
+            res.json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+
     // ── New endpoints ─────────────────────────────────────────────
 
     async toggleFeePause(req: Request, res: Response) {

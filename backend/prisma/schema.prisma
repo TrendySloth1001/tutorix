@@ -977,7 +977,8 @@ model RazorpayOrder {
   user          User     @relation("RazorpayOrderUser", fields: [userId], references: [id])
 
   /// Razorpay order_id (e.g. "order_xxxxxxxxxxxxxx")
-  razorpayOrderId String @unique
+  /// Not unique — multi-pay creates one row per FeeRecord all sharing the same razorpayOrderId
+  razorpayOrderId String
 
   /// Amount in paise (₹100 → 10000)
   amountPaise   Int
@@ -1000,6 +1001,10 @@ model RazorpayOrder {
 
   /// Whether this order was used to record a FeePayment
   paymentRecorded Boolean @default(false)
+
+  /// Failure tracking (user cancellation, SDK errors, etc.)
+  failureReason     String?
+  failedAt          DateTime?
 
   /// Razorpay Route transfer — funds to coaching's linked account
   transferId        String?  // Razorpay transfer_id

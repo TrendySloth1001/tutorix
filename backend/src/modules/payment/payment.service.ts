@@ -388,6 +388,39 @@ export class PaymentService {
         });
     }
 
+    /** Mark a CREATED order as FAILED (user cancelled or SDK error).
+     * Accepts either an internal UUID (single-pay) or a razorpayOrderId "order_xxx" (multi-pay).
+     * For multi-pay all rows sharing the razorpayOrderId are marked failed together.
+     */
+    async markOrderFailed(coachingId: string, internalOrderId: string, reason: string) {
+        await prisma.razorpayOrder.updateMany({
+            where: {
+                coachingId,
+                status: 'CREATED',
+                OR: [
+                    { id: internalOrderId },
+                    { razorpayOrderId: internalOrderId },
+                ],
+            },
+            data: { status: 'FAILED', failureReason: reason, failedAt: new Date() },
+        });
+    }
+
+    /** Get all FAILED orders for a specific fee record (for display in history). */
+    async getFailedOrders(coachingId: string, recordId: string) {
+        return prisma.razorpayOrder.findMany({
+            where: { coachingId, recordId, status: 'FAILED' },
+            orderBy: { createdAt: 'desc' },
+            select: {
+                id: true,
+                amountPaise: true,
+                failureReason: true,
+                failedAt: true,
+                createdAt: true,
+            },
+        });
+    }
+
     /**
      * Get Razorpay configuration (key + enabled status) for frontends.
      */
@@ -433,8 +466,43 @@ export class PaymentService {
 
         const amountPaise = toPaise(payAmount);
 
-        // 3. Create Razorpay order — use first record as anchor for tracking
-        // Store all record IDs in notes for verification
+        // 3. Idempotency — reuse an existing CREATED order set if < 30 min old and same amount
+        const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
+        const existingRows = await prisma.razorpayOrder.findMany({
+            where: {
+                coachingId,
+                userId,
+                status: 'CREATED',
+                amountPaise: { gt: 0 },
+                createdAt: { gte: thirtyMinAgo },
+                recordId: { in: dto.recordIds },
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+        // Group by razorpayOrderId — find one that covers ALL the requested records
+        const byRzpId = new Map<string, typeof existingRows>();
+        for (const row of existingRows) {
+            if (!byRzpId.has(row.razorpayOrderId)) byRzpId.set(row.razorpayOrderId, []);
+            byRzpId.get(row.razorpayOrderId)!.push(row);
+        }
+        for (const [rzpId, rows] of Array.from(byRzpId.entries())) {
+            const coveredIds = new Set(rows.map((r: { recordId: string }) => r.recordId));
+            const totalAllocated = rows.reduce((s: number, r: { amountPaise: number }) => s + r.amountPaise, 0);
+            if (dto.recordIds.every(id => coveredIds.has(id)) && totalAllocated === amountPaise) {
+                return {
+                    orderId: rzpId,
+                    amount: amountPaise,
+                    currency: 'INR',
+                    key: process.env.RAZORPAY_KEY_ID,
+                    records: records.map(r => ({ id: r.id, title: r.title, balance: r.finalAmount - r.paidAmount })),
+                    totalBalance,
+                    payAmount,
+                    internalOrderId: rzpId,
+                };
+            }
+        }
+
+        // 4. Create Razorpay order
         const receipt = `multi_${Date.now()}`;
         const rzpOrder = await razorpay.orders.create({
             amount: amountPaise,
@@ -449,7 +517,7 @@ export class PaymentService {
             },
         });
 
-        // 4. Create RazorpayOrder rows for each record (proportional split)
+        // 5. Create RazorpayOrder rows for each record (proportional split)
         const orderRows = [];
         let remainingPaise = amountPaise;
         for (let i = 0; i < records.length; i++) {
@@ -489,6 +557,7 @@ export class PaymentService {
             })),
             totalBalance,
             payAmount,
+            internalOrderId: rzpOrder.id, // Razorpay order_id shared across all rows
         };
     }
 
@@ -607,9 +676,12 @@ export class PaymentService {
                     const nextDue = nextDueDateFromCycle(record.dueDate, cycle);
                     const endDate = record.assignment.endDate;
                     if (!endDate || nextDue <= endDate) {
-                        const baseAmt = (record.assignment.customAmount ?? fs.amount)
-                            - record.assignment.discountAmount - (record.assignment.scholarshipAmount ?? 0);
+                        const totalDiscount = record.assignment.discountAmount + (record.assignment.scholarshipAmount ?? 0);
+                        const baseAmt = (record.assignment.customAmount ?? fs.amount) - totalDiscount;
                         const tax = computeTax(baseAmt, fs.taxType, fs.gstRate, fs.gstSupplyType, fs.cessRate);
+                        // finalAmount = net (post-discount) + taxAmount — consistent with _createFeeRecord
+                        const finalAmt = baseAmt + tax.taxAmount;
+                        const grossBaseAmt = baseAmt + totalDiscount; // pre-discount amount for reference
 
                         // Check no duplicate
                         const dup = await tx.feeRecord.findFirst({
@@ -628,9 +700,10 @@ export class PaymentService {
                                     assignmentId: record.assignmentId,
                                     memberId: record.memberId,
                                     title: `${nextDue.toLocaleString('en-IN', { month: 'long', year: 'numeric' })} — ${fs.name}`,
-                                    amount: tax.totalWithTax,
-                                    baseAmount: baseAmt,
-                                    finalAmount: tax.totalWithTax,
+                                    amount: finalAmt,
+                                    baseAmount: grossBaseAmt,
+                                    discountAmount: totalDiscount,
+                                    finalAmount: finalAmt,
                                     dueDate: nextDue,
                                     taxType: fs.taxType,
                                     taxAmount: tax.taxAmount,

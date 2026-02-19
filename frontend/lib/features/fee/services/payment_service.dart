@@ -155,6 +155,47 @@ class PaymentService {
     );
   }
 
+  // ── Failed Order Tracking ────────────────────────────────────
+
+  /// Mark a CREATED order as FAILED (user cancelled or SDK error).
+  Future<void> markOrderFailed(
+    String coachingId,
+    String internalOrderId,
+    String reason,
+  ) async {
+    try {
+      await _api.postAuthenticated(
+        ApiConstants.feeOrderFail(coachingId, internalOrderId),
+        body: {'reason': reason},
+      );
+    } catch (_) {
+      // Best-effort — don't let fail-tracking crash the UI
+    }
+  }
+
+  /// Get all FAILED orders for a specific fee record.
+  Future<List<Map<String, dynamic>>> getFailedOrders(
+    String coachingId,
+    String recordId,
+  ) async {
+    try {
+      final res = await _api.getAuthenticated(
+        ApiConstants.feeFailedOrders(coachingId, recordId),
+      );
+      return (res as List).cast<Map<String, dynamic>>();
+    } catch (_) {
+      return [];
+    }
+  }
+
+  /// Get all transactions (successful + failed) for the current user in a coaching.
+  Future<List<Map<String, dynamic>>> getMyTransactions(String coachingId) async {
+    final data = await _api.getAuthenticatedRaw(
+      ApiConstants.feeMyTransactions(coachingId),
+    );
+    return (data as List).cast<Map<String, dynamic>>();
+  }
+
   // ── Razorpay Checkout Flow ──────────────────────────────────────
 
   /// Opens Razorpay checkout. Returns the payment response on success.
@@ -183,9 +224,12 @@ class PaymentService {
       PaymentFailureResponse response,
     ) {
       if (!completer.isCompleted) {
-        completer.completeError(
-          Exception(response.message ?? 'Payment failed'),
-        );
+        final raw = response.message;
+        final isBlank = raw == null || raw.isEmpty || raw == 'null' || raw == 'undefined';
+        final msg = isBlank
+            ? (response.code == 0 ? 'Payment cancelled' : 'Payment failed')
+            : raw;
+        completer.completeError(Exception(msg));
       }
     });
 

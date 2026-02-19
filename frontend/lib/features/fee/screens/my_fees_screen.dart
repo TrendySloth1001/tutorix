@@ -23,13 +23,20 @@ class MyFeesScreen extends StatefulWidget {
   State<MyFeesScreen> createState() => _MyFeesScreenState();
 }
 
-class _MyFeesScreenState extends State<MyFeesScreen> {
+class _MyFeesScreenState extends State<MyFeesScreen>
+    with SingleTickerProviderStateMixin {
   final _svc = FeeService();
   final _paySvc = PaymentService();
+  late final TabController _tab;
   List<FeeRecordModel> _records = [];
   Map<String, dynamic>? _summary;
   bool _loading = true;
   String? _error;
+
+  // Transaction history tab
+  List<Map<String, dynamic>> _transactions = [];
+  bool _txLoading = false;
+  String? _txError;
 
   // Multi-select state
   final Set<String> _selected = {};
@@ -38,13 +45,34 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
   @override
   void initState() {
     super.initState();
+    _tab = TabController(length: 2, vsync: this);
+    _tab.addListener(() {
+      // Lazy-load transactions on first visit to History tab
+      if (_tab.index == 1 && !_tab.indexIsChanging &&
+          _transactions.isEmpty && !_txLoading) {
+        _loadTransactions();
+      }
+    });
     _load();
   }
 
   @override
   void dispose() {
+    _tab.dispose();
     _paySvc.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadTransactions() async {
+    setState(() { _txLoading = true; _txError = null; });
+    try {
+      final txns = await _paySvc.getMyTransactions(widget.coachingId);
+      if (!mounted) return;
+      setState(() { _transactions = txns; _txLoading = false; });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() { _txError = e.toString(); _txLoading = false; });
+    }
   }
 
   Future<void> _load() async {
@@ -177,20 +205,72 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
               onPressed: _selectAllPayable,
             ),
         ],
+        bottom: _selectMode
+            ? null
+            : TabBar(
+                controller: _tab,
+                labelColor: AppColors.darkOlive,
+                unselectedLabelColor: AppColors.mutedOlive,
+                indicatorColor: AppColors.darkOlive,
+                indicatorWeight: 2.5,
+                labelStyle: const TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 13,
+                ),
+                tabs: const [
+                  Tab(text: 'Fees'),
+                  Tab(text: 'History'),
+                ],
+              ),
       ),
-      body: _loading
-          ? const Center(child: CircularProgressIndicator())
-          : _error != null
-          ? _ErrorRetry(error: _error!, onRetry: _load)
-          : RefreshIndicator(
-              color: AppColors.darkOlive,
-              onRefresh: _load,
-              child: _records.isEmpty
-                  ? ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: const [SizedBox(height: 200), _EmptyState()],
-                    )
-                  : _buildBody(),
+      body: _selectMode
+          // In select mode show only the fees list (no TabBarView)
+          ? (_loading
+              ? const Center(child: CircularProgressIndicator())
+              : _error != null
+              ? _ErrorRetry(error: _error!, onRetry: _load)
+              : RefreshIndicator(
+                  color: AppColors.darkOlive,
+                  onRefresh: _load,
+                  child: _records.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: const [SizedBox(height: 200), _EmptyState()],
+                        )
+                      : _buildBody(),
+                ))
+          : TabBarView(
+              controller: _tab,
+              children: [
+                // ─── Tab 0: Fees ───
+                _loading
+                    ? const Center(child: CircularProgressIndicator())
+                    : _error != null
+                    ? _ErrorRetry(error: _error!, onRetry: _load)
+                    : RefreshIndicator(
+                        color: AppColors.darkOlive,
+                        onRefresh: _load,
+                        child: _records.isEmpty
+                            ? ListView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                children: const [SizedBox(height: 200), _EmptyState()],
+                              )
+                            : _buildBody(),
+                      ),
+                // ─── Tab 1: History ───
+                RefreshIndicator(
+                  color: AppColors.darkOlive,
+                  onRefresh: _loadTransactions,
+                  child: _txLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : _txError != null
+                      ? _ErrorRetry(error: _txError!, onRetry: _loadTransactions)
+                      : _TransactionHistory(
+                          transactions: _transactions,
+                          coachingId: widget.coachingId,
+                        ),
+                ),
+              ],
             ),
       bottomNavigationBar: _selectMode && _selected.isNotEmpty
           ? _PayBar(
@@ -396,8 +476,9 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
     final auth = Provider.of<AuthController>(context, listen: false);
     final user = auth.user;
 
+    Map<String, dynamic>? orderData;
     try {
-      final orderData = await _paySvc.createOrder(widget.coachingId, record.id);
+      orderData = await _paySvc.createOrder(widget.coachingId, record.id);
       if (!mounted) return;
 
       final response = await _paySvc.openCheckout(
@@ -454,11 +535,39 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
         ),
       );
       _load();
+      _loadTransactions();
     } catch (e) {
+      if (orderData != null) {
+        final internalId = orderData['internalOrderId'] as String?;
+        if (internalId != null) {
+          final reason = e.toString().replaceFirst('Exception: ', '');
+          await _paySvc.markOrderFailed(widget.coachingId, internalId, reason);
+        }
+      }
       if (!mounted) return;
       final msg = e.toString().replaceFirst('Exception: ', '');
+      if (msg == 'Payment cancelled') return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg), backgroundColor: const Color(0xFFC62828)),
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: const Color(0xFFC62828),
+          action: SnackBarAction(
+            label: 'View Details',
+            textColor: Colors.white,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => FeeRecordDetailScreen(
+                    coachingId: widget.coachingId,
+                    recordId: record.id,
+                    coachingName: widget.coachingName,
+                  ),
+                ),
+              ).then((_) => _load());
+            },
+          ),
+        ),
       );
     }
   }
@@ -469,8 +578,9 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
     final auth = Provider.of<AuthController>(context, listen: false);
     final user = auth.user;
 
+    Map<String, dynamic>? orderData;
     try {
-      final orderData = await _paySvc.createMultiOrder(
+      orderData = await _paySvc.createMultiOrder(
         widget.coachingId,
         recordIds: _selected.toList(),
         amount: customAmount,
@@ -507,9 +617,18 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
         _selectMode = false;
       });
       _load();
+      _loadTransactions();
     } catch (e) {
+      if (orderData != null) {
+        final internalId = orderData['internalOrderId'] as String?;
+        if (internalId != null) {
+          final reason = e.toString().replaceFirst('Exception: ', '');
+          await _paySvc.markOrderFailed(widget.coachingId, internalId, reason);
+        }
+      }
       if (!mounted) return;
       final msg = e.toString().replaceFirst('Exception: ', '');
+      if (msg == 'Payment cancelled') return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(msg), backgroundColor: const Color(0xFFC62828)),
       );
@@ -1257,4 +1376,250 @@ String _formatAmount(double v) {
   if (v >= 100000) return '${(v / 100000).toStringAsFixed(1)}L';
   if (v >= 1000) return '${(v / 1000).toStringAsFixed(1)}K';
   return v.toStringAsFixed(0);
+}
+
+// ─── Transaction History Tab ────────────────────────────────────────────
+
+class _TransactionHistory extends StatelessWidget {
+  final List<Map<String, dynamic>> transactions;
+  final String coachingId;
+  const _TransactionHistory({
+    required this.transactions,
+    required this.coachingId,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    if (transactions.isEmpty) {
+      return ListView(
+        physics: const AlwaysScrollableScrollPhysics(),
+        children: const [
+          SizedBox(height: 120),
+          Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.receipt_long_rounded,
+                    size: 52, color: AppColors.mutedOlive),
+                SizedBox(height: 12),
+                Text(
+                  'No transactions yet',
+                  style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.darkOlive,
+                      fontSize: 16),
+                ),
+                SizedBox(height: 4),
+                Text(
+                  'Your payment history will appear here.',
+                  style: TextStyle(color: AppColors.mutedOlive, fontSize: 13),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 32),
+      itemCount: transactions.length,
+      itemBuilder: (ctx, i) => _TxnCard(txn: transactions[i]),
+    );
+  }
+}
+
+class _TxnCard extends StatelessWidget {
+  final Map<String, dynamic> txn;
+  const _TxnCard({required this.txn});
+
+  @override
+  Widget build(BuildContext context) {
+    final type = txn['type'] as String? ?? '';
+    final isPayment = type == 'PAYMENT';
+    final orderStatus = txn['status'] as String? ?? '';
+
+    // Visual theme by status
+    late Color bgColor, accentColor, labelBg;
+    late IconData icon;
+    late String statusLabel;
+
+    if (isPayment) {
+      bgColor      = const Color(0xFFEBF5EB);
+      accentColor  = const Color(0xFF2E7D32);
+      labelBg      = const Color(0xFFD0EDD0);
+      icon         = Icons.check_circle_rounded;
+      statusLabel  = 'Paid';
+    } else if (orderStatus == 'FAILED') {
+      bgColor      = const Color(0xFFFFEBEE);
+      accentColor  = const Color(0xFFC62828);
+      labelBg      = const Color(0xFFFFCDD2);
+      icon         = Icons.cancel_rounded;
+      statusLabel  = 'Failed';
+    } else if (orderStatus == 'EXPIRED') {
+      bgColor      = const Color(0xFFFFF8E1);
+      accentColor  = const Color(0xFFF57F17);
+      labelBg      = const Color(0xFFFFECB3);
+      icon         = Icons.access_time_rounded;
+      statusLabel  = 'Expired';
+    } else {
+      // CREATED — initiated but not completed
+      bgColor      = const Color(0xFFF3F4F6);
+      accentColor  = const Color(0xFF5E6A82);
+      labelBg      = const Color(0xFFE3E6EC);
+      icon         = Icons.pending_rounded;
+      statusLabel  = 'Initiated';
+    }
+
+    final amount =
+        ((txn['totalAmount'] ?? txn['amount']) as num?)?.toDouble() ?? 0;
+    final title   = txn['recordTitle'] as String? ?? '';
+    final dateRaw = txn['date'] as String?;
+    final date    = dateRaw != null ? DateTime.tryParse(dateRaw) : null;
+    final dateStr = date != null
+        ? '${date.day} ${_monthName(date.month)} ${date.year}  '
+            '${date.hour.toString().padLeft(2, '0')}:'
+            '${date.minute.toString().padLeft(2, '0')}'
+        : '';
+
+    // Build detail lines
+    final lines = <String>[];
+    if (isPayment) {
+      final mode      = txn['mode']               as String? ?? '';
+      final receiptNo = txn['receiptNo']           as String? ?? '';
+      final payId     = txn['razorpayPaymentId']   as String? ?? '';
+      final orderId   = txn['razorpayOrderId']     as String? ?? '';
+      final parts     = <String>[];
+      if (mode.isNotEmpty)      parts.add(mode.toUpperCase());
+      if (receiptNo.isNotEmpty) parts.add('Receipt #$receiptNo');
+      if (payId.isNotEmpty)     parts.add(_truncateId(payId));
+      if (parts.isNotEmpty)     lines.add(parts.join(' · '));
+      if (orderId.isNotEmpty)   lines.add(_truncateId(orderId));
+    } else {
+      final rzpOrderId    = txn['razorpayOrderId']   as String? ?? '';
+      final rzpPayId      = txn['razorpayPaymentId'] as String? ?? '';
+      final receipt       = txn['receipt']           as String? ?? '';
+      final failureReason = txn['failureReason']     as String? ?? '';
+      final transferStatus = txn['transferStatus']   as String? ?? '';
+
+      if (rzpOrderId.isNotEmpty) lines.add(_truncateId(rzpOrderId));
+      if (rzpPayId.isNotEmpty)   lines.add(_truncateId(rzpPayId));
+      if (receipt.isNotEmpty)    lines.add('Receipt: $receipt');
+
+      if (orderStatus == 'FAILED') {
+        final reason = failureReason
+            .replaceFirst('Exception: ', '')
+            .trim();
+        if (reason.isNotEmpty) lines.add(reason);
+      } else if (orderStatus == 'EXPIRED') {
+        lines.add('Order expired — not completed');
+      } else if (orderStatus == 'CREATED') {
+        lines.add('Payment initiated — awaiting completion');
+      }
+
+      if (transferStatus.isNotEmpty && transferStatus != 'PENDING') {
+        lines.add('Transfer: $transferStatus');
+      }
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.fromLTRB(14, 12, 14, 12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, color: accentColor, size: 22),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Title + status badge
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        title,
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: AppColors.darkOlive,
+                          fontSize: 13,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 7, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: labelBg,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        statusLabel,
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: accentColor,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                for (final line in lines)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      line,
+                      style: TextStyle(fontSize: 11, color: accentColor),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                if (dateStr.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      dateStr,
+                      style: const TextStyle(
+                          fontSize: 11, color: AppColors.mutedOlive),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '₹${amount.toStringAsFixed(0)}',
+            style: TextStyle(
+              fontWeight: FontWeight.w800,
+              fontSize: 15,
+              color: accentColor,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// Truncate long Razorpay IDs like `order_Abc123...` to a readable length.
+  String _truncateId(String id) {
+    if (id.length <= 22) return id;
+    return '${id.substring(0, 18)}…';
+  }
+
+  String _monthName(int m) {
+    const months = [
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return months[m - 1];
+  }
 }

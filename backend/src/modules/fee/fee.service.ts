@@ -854,6 +854,132 @@ export class FeeService {
     }
 
     /** Fees for the logged-in student/parent. */
+    async getMyTransactions(coachingId: string, userId: string) {
+        // Resolve memberIds for this user (direct + wards)
+        const member = await prisma.coachingMember.findFirst({ where: { coachingId, userId } });
+        const wardMembers = await prisma.coachingMember.findMany({ where: { coachingId, ward: { parentId: userId } } });
+        const memberIds = [...(member ? [member.id] : []), ...wardMembers.map(w => w.id)];
+        if (memberIds.length === 0) return [];
+
+        const records = await prisma.feeRecord.findMany({
+            where: { coachingId, memberId: { in: memberIds } },
+            select: { id: true, title: true, finalAmount: true },
+        });
+        const recordIds = records.map(r => r.id);
+        const recordMap = Object.fromEntries(records.map(r => [r.id, r]));
+
+        // Fetch FeePayments + ALL RazorpayOrders in parallel
+        const [payments, allOrders] = await Promise.all([
+            prisma.feePayment.findMany({
+                where: { coachingId, recordId: { in: recordIds } },
+                orderBy: { paidAt: 'desc' },
+                select: {
+                    id: true, recordId: true, amount: true, paidAt: true,
+                    mode: true, receiptNo: true, razorpayPaymentId: true,
+                    razorpayOrderId: true, notes: true,
+                },
+            }),
+            prisma.razorpayOrder.findMany({
+                where: { coachingId, userId, recordId: { in: recordIds } },
+                orderBy: { createdAt: 'desc' },
+                select: {
+                    id: true, recordId: true, razorpayOrderId: true,
+                    razorpayPaymentId: true, status: true, amountPaise: true,
+                    receipt: true, notes: true, paymentRecorded: true,
+                    failureReason: true, failedAt: true,
+                    transferId: true, transferStatus: true, platformFeePaise: true,
+                    createdAt: true, updatedAt: true,
+                },
+            }),
+        ]);
+
+        // Group RazorpayOrders by razorpayOrderId (multi-pay uses same Razorpay orderId)
+        const orderGroups = new Map<string, typeof allOrders>();
+        for (const o of allOrders) {
+            if (!orderGroups.has(o.razorpayOrderId)) orderGroups.set(o.razorpayOrderId, []);
+            orderGroups.get(o.razorpayOrderId)!.push(o);
+        }
+
+        // Helper: produce human-readable reason from raw failureReason
+        function humanReason(raw: string | null, isMulti: boolean): string {
+            const r = (raw ?? '').trim();
+            if (!r || r === 'undefined' || r === 'null') {
+                return isMulti ? 'Multi-fee payment not completed' : 'Payment not completed';
+            }
+            // Known Razorpay codes
+            if (r.includes('BAD_REQUEST_ERROR')) return 'Request error — payment could not be initiated';
+            if (r.includes('GATEWAY_ERROR'))     return 'Payment gateway error — please retry';
+            if (r.includes('NETWORK_ERROR'))     return 'Network error — check your connection';
+            if (r.includes('Payment cancelled') || r === 'Payment cancelled') return 'Payment cancelled by user';
+            if (r.includes('Payment failed'))    return 'Payment declined by bank or gateway';
+            return r;
+        }
+
+        const txns: object[] = [];
+
+        // 1. Confirmed FeePayments
+        for (const p of payments) {
+            txns.push({
+                type: 'PAYMENT',
+                id: p.id,
+                recordId: p.recordId,
+                recordTitle: recordMap[p.recordId]?.title ?? '',
+                amount: p.amount,
+                date: p.paidAt,
+                mode: p.mode,
+                receiptNo: p.receiptNo,
+                razorpayPaymentId: p.razorpayPaymentId,
+                razorpayOrderId: p.razorpayOrderId,
+                notes: p.notes,
+            });
+        }
+
+        // 2. All RazorpayOrder groups — skip PAID (already in FeePayments) to avoid duplicates
+        for (const [rzpId, rows] of Array.from(orderGroups.entries())) {
+            const first = rows[0]!;
+            const status = first.status; // all rows in group share same razorpayOrderId, status changes together
+            if (status === 'PAID') continue; // covered by FeePayment rows above
+
+            const isMulti = rows.length > 1 || (first.notes as any)?.multiPay === true;
+            const totalPaise = rows.reduce((s: number, r: { amountPaise: number }) => s + r.amountPaise, 0);
+            const recordEntries = rows.map((r: { recordId: string; amountPaise: number }) => ({
+                id: r.recordId,
+                title: recordMap[r.recordId]?.title ?? '',
+                amount: r.amountPaise / 100,
+            }));
+            const combinedTitle = isMulti
+                ? recordEntries.map((r: { title: string }) => r.title).filter(Boolean).join(', ')
+                : (recordMap[first.recordId]?.title ?? '');
+
+            const rawReason = rows.find((r: { failureReason: string | null }) => r.failureReason)?.failureReason ?? null;
+
+            txns.push({
+                type: 'ORDER',
+                id: first.id,
+                razorpayOrderId: rzpId,
+                razorpayPaymentId: first.razorpayPaymentId,
+                status,                                    // CREATED | FAILED | EXPIRED
+                totalAmount: totalPaise / 100,
+                date: first.failedAt ?? first.createdAt,
+                failureReason: status === 'FAILED' ? humanReason(rawReason, isMulti) : null,
+                failedAt: first.failedAt,
+                receipt: first.receipt,
+                paymentRecorded: first.paymentRecorded,
+                transferId: first.transferId,
+                transferStatus: first.transferStatus,
+                platformFeePaise: first.platformFeePaise,
+                isMultiPay: isMulti,
+                records: recordEntries,
+                recordTitle: combinedTitle,
+                createdAt: first.createdAt,
+            });
+        }
+
+        // Sort newest first
+        txns.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+        return txns;
+    }
+
     async getMyFees(coachingId: string, userId: string) {
         await this._markOverdueRecords(coachingId);
 
@@ -937,9 +1063,12 @@ export class FeeService {
         const cessRate = structure.cessRate ?? 0;
         const tax = computeTax(netAmount, taxType, gstRate, supplyType, cessRate);
 
-        // For GST_EXCLUSIVE, the finalAmount is net + tax.
-        // For GST_INCLUSIVE, finalAmount already includes tax.
-        const recordFinalAmount = tax.totalWithTax;
+        // finalAmount = net (post-discount) + tax portion.
+        // For GST_EXCLUSIVE: tax.taxAmount is on top → correct.
+        // For GST_INCLUSIVE: tax.taxAmount is extracted from the inclusive price and we
+        // still add it back so finalAmount = taxableAmount + taxAmount = invoiced total.
+        // This matches the formula: baseAmount − discountAmount + taxAmount used everywhere else.
+        const recordFinalAmount = netAmount + tax.taxAmount;
         // baseAmount = structure amount (pre-discount), discountAmount = total discount
         const baseAmount = netAmount + discountAmount;
 

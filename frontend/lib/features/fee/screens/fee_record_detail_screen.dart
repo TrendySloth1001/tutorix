@@ -32,6 +32,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
   final _svc = FeeService();
   final _paySvc = PaymentService();
   FeeRecordModel? _record;
+  List<Map<String, dynamic>> _failedOrders = [];
   bool _loading = true;
   String? _error;
 
@@ -53,12 +54,19 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
       _error = null;
     });
     try {
-      final r = await _svc.getRecord(widget.coachingId, widget.recordId);
+      final results = await Future.wait([
+        _svc.getRecord(widget.coachingId, widget.recordId),
+        _paySvc.getFailedOrders(widget.coachingId, widget.recordId),
+      ]);
+      if (!mounted) return;
       setState(() {
-        _record = r;
+        _record = results[0] as FeeRecordModel;
+        _failedOrders =
+            (results[1] as List).cast<Map<String, dynamic>>();
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;
@@ -174,6 +182,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
               onRefund: () => _onAction('refund'),
               onPayOnline: _payOnline,
               coachingName: widget.coachingName ?? 'Institute',
+              failedOrders: _failedOrders,
             ),
     );
   }
@@ -283,8 +292,9 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
     final auth = Provider.of<AuthController>(context, listen: false);
     final user = auth.user;
 
+    Map<String, dynamic>? orderData;
     try {
-      final orderData = await _paySvc.createOrder(
+      orderData = await _paySvc.createOrder(
         widget.coachingId,
         widget.recordId,
       );
@@ -350,8 +360,21 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
 
       _load();
     } catch (e) {
+      if (orderData != null) {
+        final internalId = orderData['internalOrderId'] as String?;
+        if (internalId != null) {
+          final reason = e.toString().replaceFirst('Exception: ', '');
+          await _paySvc.markOrderFailed(
+            widget.coachingId,
+            internalId,
+            reason,
+          );
+        }
+      }
+      await _load();
       if (!mounted) return;
       final msg = e.toString().replaceFirst('Exception: ', '');
+      if (msg == 'Payment cancelled') return; // user dismissed — no snackbar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(msg), backgroundColor: const Color(0xFFC62828)),
       );
@@ -735,6 +758,7 @@ class _Body extends StatelessWidget {
   final VoidCallback onRefund;
   final VoidCallback onPayOnline;
   final String coachingName;
+  final List<Map<String, dynamic>> failedOrders;
 
   const _Body({
     required this.record,
@@ -745,6 +769,7 @@ class _Body extends StatelessWidget {
     required this.onRefund,
     required this.onPayOnline,
     required this.coachingName,
+    this.failedOrders = const [],
   });
 
   @override
@@ -781,6 +806,10 @@ class _Body extends StatelessWidget {
           ],
           if (record.refunds.isNotEmpty) ...[
             _RefundHistory(refunds: record.refunds),
+            const SizedBox(height: 20),
+          ],
+          if (failedOrders.isNotEmpty) ...[
+            _FailedAttempts(orders: failedOrders),
             const SizedBox(height: 20),
           ],
           if (record.member != null) ...[
@@ -1441,6 +1470,102 @@ class _RefundRow extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _FailedAttempts extends StatelessWidget {
+  final List<Map<String, dynamic>> orders;
+  const _FailedAttempts({required this.orders});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Failed Attempts',
+          style: TextStyle(
+            fontWeight: FontWeight.w700,
+            color: AppColors.darkOlive,
+          ),
+        ),
+        const SizedBox(height: 10),
+        ...orders.map((o) {
+          final paise = (o['amountPaise'] as num?)?.toInt() ?? 0;
+          final amtStr = '₹${(paise / 100).toStringAsFixed(0)}';
+          final reason =
+              (o['failureReason'] as String?)?.replaceFirst('Exception: ', '') ??
+              'Unknown reason';
+          final failedAt = o['failedAt'] != null
+              ? DateTime.tryParse(o['failedAt'] as String)
+              : null;
+          final dateStr = failedAt != null
+              ? '${failedAt.day} ${_monthName(failedAt.month)} '
+                  '${failedAt.hour.toString().padLeft(2, '0')}:'
+                  '${failedAt.minute.toString().padLeft(2, '0')}'
+              : '';
+          return Container(
+            margin: const EdgeInsets.only(bottom: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+            decoration: BoxDecoration(
+              color: const Color(0xFFFFEBEE),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.cancel_rounded,
+                  color: Color(0xFFC62828),
+                  size: 18,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        reason,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFFC62828),
+                          fontWeight: FontWeight.w600,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (dateStr.isNotEmpty)
+                        Text(
+                          dateStr,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.mutedOlive,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                Text(
+                  amtStr,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFFC62828),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }),
+      ],
+    );
+  }
+
+  static String _monthName(int m) {
+    const months = [
+      '', 'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+    ];
+    return months[m];
   }
 }
 

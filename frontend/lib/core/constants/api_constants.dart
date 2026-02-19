@@ -275,6 +275,14 @@ class ApiConstants {
   static String feeMultiPayVerify(String coachingId) =>
       '$baseUrl/coaching/$coachingId/fee/multi-pay/verify';
 
+  // Failed order tracking
+  static String feeOrderFail(String coachingId, String internalOrderId) =>
+      '$baseUrl/coaching/$coachingId/fee/orders/$internalOrderId/fail';
+  static String feeFailedOrders(String coachingId, String recordId) =>
+      '$baseUrl/coaching/$coachingId/fee/records/$recordId/failed-orders';
+  static String feeMyTransactions(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/fee/my-transactions';
+
   // Payment Settings (Coaching-level bank/GST config)
   static String paymentSettings(String coachingId) =>
       '$baseUrl/coaching/$coachingId/payment-settings';

@@ -30,6 +30,7 @@ router.post('/records/:recordId/remind', authMiddleware, ctrl.sendReminder.bind(
 // ── Summary & My Fees ────────────────────────────────────────────────
 router.get('/summary', authMiddleware, ctrl.getSummary.bind(ctrl));
 router.get('/my', authMiddleware, ctrl.getMyFees.bind(ctrl));
+router.get('/my-transactions', authMiddleware, ctrl.getMyTransactions.bind(ctrl));
 router.get('/calendar', authMiddleware, ctrl.getFeeCalendar.bind(ctrl));
 
 // ── New endpoints ────────────────────────────────────────────────────
@@ -48,5 +49,9 @@ router.post('/records/:recordId/online-refund', authMiddleware, payCtrl.initiate
 // ── Multi-record payment (select & pay multiple fees) ─────────────────
 router.post('/multi-pay/create-order', authMiddleware, payCtrl.createMultiOrder.bind(payCtrl));
 router.post('/multi-pay/verify', authMiddleware, payCtrl.verifyMultiPayment.bind(payCtrl));
+
+// ── Failed order tracking ──────────────────────────────────────────────
+router.post('/orders/:internalOrderId/fail', authMiddleware, payCtrl.failOrder.bind(payCtrl));
+router.get('/records/:recordId/failed-orders', authMiddleware, payCtrl.getFailedOrders.bind(payCtrl));
 
 export default router;
