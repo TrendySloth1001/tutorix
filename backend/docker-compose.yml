@@ -35,6 +35,31 @@ services:
     volumes:
       - minio_data:/data
 
+  backend:
+    image: nick8956/tutorix-backend:latest
+    container_name: tutorix-backend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      # Connect to services defined in this compose file
+      DATABASE_URL: postgresql://tutorix_user:tutorix_password@postgres:5432/tutorix_db
+      REDIS_URL: redis://
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      # Minio config
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: tutorix-bucket
+      # App secrets (You should override these in production)
+      JWT_SECRET: dev_secret_key_change_me
+    depends_on:
+      - postgres
+      - redis
+      - minio
+
 volumes:
   postgres_data:
   minio_data:

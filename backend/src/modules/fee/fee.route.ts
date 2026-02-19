@@ -45,4 +45,8 @@ router.post('/records/:recordId/verify-payment', authMiddleware, payCtrl.verifyP
 router.get('/records/:recordId/online-payments', authMiddleware, payCtrl.getOnlinePayments.bind(payCtrl));
 router.post('/records/:recordId/online-refund', authMiddleware, payCtrl.initiateOnlineRefund.bind(payCtrl));
 
+// ── Multi-record payment (select & pay multiple fees) ─────────────────
+router.post('/multi-pay/create-order', authMiddleware, payCtrl.createMultiOrder.bind(payCtrl));
+router.post('/multi-pay/verify', authMiddleware, payCtrl.verifyMultiPayment.bind(payCtrl));
+
 export default router;

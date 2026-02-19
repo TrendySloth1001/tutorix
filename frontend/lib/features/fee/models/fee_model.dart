@@ -278,6 +278,11 @@ class FeeRecordModel {
   final List<FeePaymentModel> payments;
   final List<FeeRefundModel> refunds;
 
+  // Assignment info (validity period)
+  final DateTime? assignedAt;
+  final DateTime? validFrom;
+  final DateTime? validUntil;
+
   const FeeRecordModel({
     required this.id,
     required this.coachingId,
@@ -313,6 +318,9 @@ class FeeRecordModel {
     this.feeStructure,
     this.payments = const [],
     this.refunds = const [],
+    this.assignedAt,
+    this.validFrom,
+    this.validUntil,
   });
 
   factory FeeRecordModel.fromJson(Map<String, dynamic> json) {
@@ -377,6 +385,16 @@ class FeeRecordModel {
               ?.map((e) => FeeRefundModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      // Assignment dates
+      assignedAt: assignment?['createdAt'] != null
+          ? DateTime.tryParse(assignment!['createdAt'] as String)
+          : null,
+      validFrom: assignment?['startDate'] != null
+          ? DateTime.tryParse(assignment!['startDate'] as String)
+          : null,
+      validUntil: assignment?['endDate'] != null
+          ? DateTime.tryParse(assignment!['endDate'] as String)
+          : null,
     );
   }
 

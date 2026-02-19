@@ -74,6 +74,30 @@ export class PaymentController {
         }
     }
 
+    /** POST /coaching/:coachingId/fee/multi-pay/create-order */
+    async createMultiOrder(req: Request, res: Response) {
+        try {
+            const { coachingId } = req.params as { coachingId: string };
+            const userId = (req as any).user?.id;
+            const data = await svc.createMultiOrder(coachingId, userId, req.body);
+            res.status(201).json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+
+    /** POST /coaching/:coachingId/fee/multi-pay/verify */
+    async verifyMultiPayment(req: Request, res: Response) {
+        try {
+            const { coachingId } = req.params as { coachingId: string };
+            const userId = (req as any).user?.id;
+            const data = await svc.verifyMultiPayment(coachingId, req.body, userId);
+            res.json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+
     /** GET /coaching/:coachingId/payment-settings */
     async getPaymentSettings(req: Request, res: Response) {
         try {

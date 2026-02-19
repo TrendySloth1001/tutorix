@@ -31,6 +31,10 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
   bool _loading = true;
   String? _error;
 
+  // Multi-select state
+  final Set<String> _selected = {};
+  bool _selectMode = false;
+
   @override
   void initState() {
     super.initState();
@@ -59,6 +63,7 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
         _records = records;
         _summary = result['summary'] as Map<String, dynamic>?;
         _loading = false;
+        _selected.removeWhere((id) => !records.any((r) => r.id == id));
       });
     } catch (e) {
       setState(() {
@@ -85,6 +90,46 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
     }
   }
 
+  List<FeeRecordModel> get _payableRecords => _records
+      .where(
+        (r) =>
+            r.status == 'PENDING' ||
+            r.status == 'OVERDUE' ||
+            r.status == 'PARTIALLY_PAID',
+      )
+      .toList();
+
+  double get _selectedTotal {
+    return _records
+        .where((r) => _selected.contains(r.id))
+        .fold<double>(0, (s, r) => s + r.balance);
+  }
+
+  void _toggleSelect(String id) {
+    setState(() {
+      if (_selected.contains(id)) {
+        _selected.remove(id);
+        if (_selected.isEmpty) _selectMode = false;
+      } else {
+        _selected.add(id);
+        _selectMode = true;
+      }
+    });
+  }
+
+  void _selectAllPayable() {
+    setState(() {
+      final ids = _payableRecords.map((r) => r.id).toSet();
+      if (_selected.containsAll(ids)) {
+        _selected.clear();
+        _selectMode = false;
+      } else {
+        _selected.addAll(ids);
+        _selectMode = true;
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -101,54 +146,266 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Fees · ${widget.coachingName}',
+          _selectMode
+              ? '${_selected.length} selected'
+              : 'Fees · ${widget.coachingName}',
           style: const TextStyle(
             color: AppColors.darkOlive,
             fontWeight: FontWeight.w700,
             fontSize: 17,
           ),
         ),
+        actions: [
+          if (_selectMode)
+            TextButton(
+              onPressed: () => setState(() {
+                _selected.clear();
+                _selectMode = false;
+              }),
+              child: const Text(
+                'Cancel',
+                style: TextStyle(color: AppColors.darkOlive),
+              ),
+            ),
+          if (!_selectMode && _payableRecords.isNotEmpty)
+            IconButton(
+              icon: const Icon(
+                Icons.checklist_rounded,
+                color: AppColors.darkOlive,
+              ),
+              tooltip: 'Select fees to pay',
+              onPressed: _selectAllPayable,
+            ),
+        ],
       ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-          ? _ErrorRetry(error: _error!, onRetry: _load)
-          : RefreshIndicator(
-              color: AppColors.darkOlive,
-              onRefresh: _load,
-              child: _records.isEmpty
-                  ? ListView(
-                      physics: const AlwaysScrollableScrollPhysics(),
-                      children: const [SizedBox(height: 200), _EmptyState()],
-                    )
-                  : _Body(
-                      records: _records,
-                      coachingId: widget.coachingId,
-                      coachingName: widget.coachingName,
-                      serverSummary: _summary,
-                      onPayOnline: _payOnline,
-                    ),
-            ),
+              ? _ErrorRetry(error: _error!, onRetry: _load)
+              : RefreshIndicator(
+                  color: AppColors.darkOlive,
+                  onRefresh: _load,
+                  child: _records.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          children: const [
+                            SizedBox(height: 200),
+                            _EmptyState(),
+                          ],
+                        )
+                      : _buildBody(),
+                ),
+      bottomNavigationBar: _selectMode && _selected.isNotEmpty
+          ? _PayBar(
+              selectedCount: _selected.length,
+              totalAmount: _selectedTotal,
+              onPayFull: () => _payMulti(null),
+              onPayCustom: _showCustomAmountSheet,
+            )
+          : null,
     );
   }
 
-  Future<void> _payOnline(FeeRecordModel record) async {
+  // ─── Build the fee list body ───
+  Widget _buildBody() {
+    final totalPaid =
+        ((_summary?['totalPaid'] as num?)?.toDouble()) ??
+        _records.fold<double>(0, (s, r) => s + r.paidAmount);
+    final totalDue =
+        ((_summary?['totalDue'] as num?)?.toDouble()) ??
+        _payableRecords.fold<double>(0, (s, r) => s + r.balance);
+    final totalOverdue =
+        ((_summary?['totalOverdue'] as num?)?.toDouble()) ??
+        _records
+            .where((r) => r.status == 'OVERDUE')
+            .fold<double>(0, (s, r) => s + r.balance);
+
+    final payable = _payableRecords;
+    final settled = _records
+        .where((r) => r.status == 'PAID' || r.status == 'WAIVED')
+        .toList();
+
+    return CustomScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
+      slivers: [
+        SliverToBoxAdapter(
+          child: _SummaryHeader(
+            totalDue: totalDue,
+            totalPaid: totalPaid,
+            totalOverdue: totalOverdue,
+          ),
+        ),
+        // ─── Payable Section ───
+        if (payable.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+              child: Row(
+                children: [
+                  const Text(
+                    'Payable',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.darkOlive,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFC62828).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${payable.length}',
+                      style: const TextStyle(
+                        color: Color(0xFFC62828),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                  const Spacer(),
+                  if (!_selectMode)
+                    TextButton.icon(
+                      style: TextButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                        visualDensity: VisualDensity.compact,
+                      ),
+                      icon: const Icon(Icons.select_all_rounded, size: 16),
+                      label: const Text(
+                        'Select All',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      onPressed: _selectAllPayable,
+                    ),
+                ],
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate((ctx, i) {
+                final r = payable[i];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _FeeCard(
+                    record: r,
+                    isSelected: _selected.contains(r.id),
+                    selectMode: _selectMode,
+                    onTap: () {
+                      if (_selectMode) {
+                        _toggleSelect(r.id);
+                      } else {
+                        Navigator.push(
+                          ctx,
+                          MaterialPageRoute(
+                            builder: (_) => FeeRecordDetailScreen(
+                              coachingId: widget.coachingId,
+                              recordId: r.id,
+                              coachingName: widget.coachingName,
+                            ),
+                          ),
+                        ).then((_) => _load());
+                      }
+                    },
+                    onLongPress: () => _toggleSelect(r.id),
+                    onPayOnline: () => _paySingle(r),
+                  ),
+                );
+              }, childCount: payable.length),
+            ),
+          ),
+        ],
+        // ─── Settled Section ───
+        if (settled.isNotEmpty) ...[
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
+              child: Row(
+                children: [
+                  const Text(
+                    'Settled',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w800,
+                      color: AppColors.mutedOlive,
+                      fontSize: 15,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 7,
+                      vertical: 2,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      '${settled.length}',
+                      style: const TextStyle(
+                        color: Color(0xFF2E7D32),
+                        fontWeight: FontWeight.w700,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            sliver: SliverList(
+              delegate: SliverChildBuilderDelegate((ctx, i) {
+                final r = settled[i];
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: _FeeCard(
+                    record: r,
+                    isSelected: false,
+                    selectMode: false,
+                    onTap: () => Navigator.push(
+                      ctx,
+                      MaterialPageRoute(
+                        builder: (_) => FeeRecordDetailScreen(
+                          coachingId: widget.coachingId,
+                          recordId: r.id,
+                          coachingName: widget.coachingName,
+                        ),
+                      ),
+                    ).then((_) => _load()),
+                    onLongPress: null,
+                    onPayOnline: null,
+                  ),
+                );
+              }, childCount: settled.length),
+            ),
+          ),
+        ],
+        const SliverToBoxAdapter(child: SizedBox(height: 100)),
+      ],
+    );
+  }
+
+  // ─── Single-record online pay ───
+  Future<void> _paySingle(FeeRecordModel record) async {
     final auth = Provider.of<AuthController>(context, listen: false);
     final user = auth.user;
 
-    debugPrint('[PayOnline] Starting payment for record: ${record.id}');
-
     try {
-      // 1. Create order
-      debugPrint('[PayOnline] Creating order...');
-      final orderData = await _paySvc.createOrder(widget.coachingId, record.id);
-
-      debugPrint('[PayOnline] Order created: $orderData');
-
+      final orderData = await _paySvc.createOrder(
+        widget.coachingId,
+        record.id,
+      );
       if (!mounted) return;
 
-      // 2. Open Razorpay checkout
-      debugPrint('[PayOnline] Opening Razorpay checkout...');
       final response = await _paySvc.openCheckout(
         orderId: orderData['orderId'] as String,
         amountPaise: (orderData['amount'] as num).toInt(),
@@ -158,10 +415,8 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
         userPhone: user?.phone,
         userName: user?.name,
       );
-
       if (!mounted) return;
 
-      // 3. Verify payment
       final verified = await _paySvc.verifyPayment(
         widget.coachingId,
         record.id,
@@ -169,16 +424,16 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
         razorpayPaymentId: response.paymentId!,
         razorpaySignature: response.signature!,
       );
-
       if (!mounted) return;
 
-      // 4. Extract enriched payment data
       final vp = verified['verifiedPayment'] as Map<String, dynamic>?;
       final receiptNo =
-          vp?['receiptNo'] as String? ?? verified['receiptNo'] as String? ?? '';
-      final paidAmount = (vp?['amount'] as num?)?.toDouble() ?? record.balance;
+          vp?['receiptNo'] as String? ??
+          verified['receiptNo'] as String? ??
+          '';
+      final paidAmount =
+          (vp?['amount'] as num?)?.toDouble() ?? record.balance;
 
-      // 5. Show receipt with tax breakdown
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -207,93 +462,269 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
           ),
         ),
       );
-
-      _load(); // refresh
-    } catch (e, st) {
-      debugPrint('[PayOnline] ERROR: $e');
-      debugPrint('[PayOnline] Stack: $st');
+      _load();
+    } catch (e) {
       if (!mounted) return;
       final msg = e.toString().replaceFirst('Exception: ', '');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg), backgroundColor: const Color(0xFFC62828)),
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: const Color(0xFFC62828),
+        ),
       );
     }
   }
+
+  // ─── Multi-record online pay ───
+  Future<void> _payMulti(double? customAmount) async {
+    if (_selected.isEmpty) return;
+    final auth = Provider.of<AuthController>(context, listen: false);
+    final user = auth.user;
+
+    try {
+      final orderData = await _paySvc.createMultiOrder(
+        widget.coachingId,
+        recordIds: _selected.toList(),
+        amount: customAmount,
+      );
+      if (!mounted) return;
+
+      final response = await _paySvc.openCheckout(
+        orderId: orderData['orderId'] as String,
+        amountPaise: (orderData['amount'] as num).toInt(),
+        key: orderData['key'] as String,
+        feeTitle:
+            '${_selected.length} fee${_selected.length > 1 ? 's' : ''}',
+        userEmail: user?.email,
+        userPhone: user?.phone,
+        userName: user?.name,
+      );
+      if (!mounted) return;
+
+      await _paySvc.verifyMultiPayment(
+        widget.coachingId,
+        razorpayOrderId: response.orderId!,
+        razorpayPaymentId: response.paymentId!,
+        razorpaySignature: response.signature!,
+      );
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Payment successful!'),
+          backgroundColor: Color(0xFF2E7D32),
+        ),
+      );
+      setState(() {
+        _selected.clear();
+        _selectMode = false;
+      });
+      _load();
+    } catch (e) {
+      if (!mounted) return;
+      final msg = e.toString().replaceFirst('Exception: ', '');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(msg),
+          backgroundColor: const Color(0xFFC62828),
+        ),
+      );
+    }
+  }
+
+  void _showCustomAmountSheet() {
+    final ctrl = TextEditingController(
+      text: _selectedTotal.toStringAsFixed(0),
+    );
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) => Container(
+        padding: EdgeInsets.fromLTRB(
+          24,
+          24,
+          24,
+          MediaQuery.of(ctx).viewInsets.bottom + 24,
+        ),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Pay Custom Amount',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 18,
+                color: AppColors.darkOlive,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Total due: ₹${_selectedTotal.toStringAsFixed(0)} '
+              'for ${_selected.length} fee${_selected.length > 1 ? 's' : ''}',
+              style: const TextStyle(
+                color: AppColors.mutedOlive,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 16),
+            TextField(
+              controller: ctrl,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              autofocus: true,
+              decoration: const InputDecoration(
+                labelText: 'Amount (₹)',
+                prefixText: '₹ ',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              spacing: 8,
+              children: [25, 50, 75, 100].map((pct) {
+                final amt = (_selectedTotal * pct / 100).round();
+                return ActionChip(
+                  label: Text('$pct% · ₹$amt'),
+                  onPressed: () => ctrl.text = amt.toString(),
+                  backgroundColor:
+                      AppColors.softGrey.withValues(alpha: 0.3),
+                );
+              }).toList(),
+            ),
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton(
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.darkOlive,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                ),
+                onPressed: () {
+                  final amt = double.tryParse(ctrl.text.trim());
+                  if (amt == null || amt <= 0) return;
+                  Navigator.pop(ctx);
+                  _payMulti(amt);
+                },
+                child: const Text(
+                  'Pay Now',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _Body extends StatelessWidget {
-  final List<FeeRecordModel> records;
-  final String coachingId;
-  final String coachingName;
-  final Map<String, dynamic>? serverSummary;
-  final void Function(FeeRecordModel) onPayOnline;
-  const _Body({
-    required this.records,
-    required this.coachingId,
-    required this.coachingName,
-    this.serverSummary,
-    required this.onPayOnline,
+// ═══════════════════════════════════════════════════════════════════════
+// ─── WIDGETS ──────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════
+
+/// Bottom payment bar when records are selected.
+class _PayBar extends StatelessWidget {
+  final int selectedCount;
+  final double totalAmount;
+  final VoidCallback onPayFull;
+  final VoidCallback onPayCustom;
+  const _PayBar({
+    required this.selectedCount,
+    required this.totalAmount,
+    required this.onPayFull,
+    required this.onPayCustom,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Use server summary if available, otherwise compute locally
-    final totalPaid =
-        (serverSummary?['totalPaid'] as num?)?.toDouble() ??
-        records.fold<double>(0, (s, r) => s + r.paidAmount);
-    final totalDue =
-        (serverSummary?['totalDue'] as num?)?.toDouble() ??
-        records
-            .where(
-              (r) =>
-                  r.status == 'PENDING' ||
-                  r.status == 'PARTIALLY_PAID' ||
-                  r.status == 'OVERDUE',
-            )
-            .fold<double>(0, (s, r) => s + r.balance);
-    final totalOverdue =
-        (serverSummary?['totalOverdue'] as num?)?.toDouble() ??
-        records
-            .where((r) => r.status == 'OVERDUE')
-            .fold<double>(0, (s, r) => s + r.balance);
-
-    return CustomScrollView(
-      physics: const AlwaysScrollableScrollPhysics(),
-      slivers: [
-        SliverToBoxAdapter(
-          child: _SummaryHeader(
-            totalDue: totalDue,
-            totalPaid: totalPaid,
-            totalOverdue: totalOverdue,
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.08),
+            blurRadius: 12,
+            offset: const Offset(0, -2),
           ),
-        ),
-        SliverPadding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-          sliver: SliverList(
-            delegate: SliverChildBuilderDelegate((ctx, i) {
-              final r = records[i];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: 10),
-                child: _MyFeeCard(
-                  record: r,
-                  onTap: () => Navigator.push(
-                    ctx,
-                    MaterialPageRoute(
-                      builder: (_) => FeeRecordDetailScreen(
-                        coachingId: coachingId,
-                        recordId: r.id,
-                        coachingName: coachingName,
-                      ),
+        ],
+      ),
+      child: SafeArea(
+        child: Row(
+          children: [
+            Expanded(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '$selectedCount fee${selectedCount > 1 ? 's' : ''} selected',
+                    style: const TextStyle(
+                      color: AppColors.mutedOlive,
+                      fontSize: 12,
                     ),
                   ),
-                  onPayOnline: () => onPayOnline(r),
+                  Text(
+                    '₹${totalAmount.toStringAsFixed(0)}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w800,
+                      fontSize: 22,
+                      color: AppColors.darkOlive,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 12),
+            OutlinedButton(
+              onPressed: onPayCustom,
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.darkOlive,
+                side: const BorderSide(color: AppColors.darkOlive),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 10,
                 ),
-              );
-            }, childCount: records.length),
-          ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              child: const Text(
+                'Custom',
+                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+              ),
+            ),
+            const SizedBox(width: 8),
+            FilledButton.icon(
+              onPressed: onPayFull,
+              style: FilledButton.styleFrom(
+                backgroundColor: AppColors.darkOlive,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 10,
+                ),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              icon: const Icon(Icons.bolt_rounded, size: 18),
+              label: const Text(
+                'Pay Now',
+                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+              ),
+            ),
+          ],
         ),
-        const SliverToBoxAdapter(child: SizedBox(height: 32)),
-      ],
+      ),
     );
   }
 }
@@ -320,13 +751,37 @@ class _SummaryHeader extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Fee Summary',
-            style: TextStyle(
-              color: AppColors.cream,
-              fontWeight: FontWeight.w700,
-              fontSize: 16,
-            ),
+          Row(
+            children: [
+              const Text(
+                'Fee Summary',
+                style: TextStyle(
+                  color: AppColors.cream,
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                ),
+              ),
+              const Spacer(),
+              if (totalDue > 0)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 3,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    'Due ₹${_formatAmount(totalDue)}',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+            ],
           ),
           const SizedBox(height: 16),
           Row(
@@ -340,7 +795,7 @@ class _SummaryHeader extends StatelessWidget {
               ),
               Expanded(
                 child: _SummaryItem(
-                  label: 'Due',
+                  label: 'Outstanding',
                   amount: totalDue,
                   color: AppColors.cream,
                 ),
@@ -392,36 +847,68 @@ class _SummaryItem extends StatelessWidget {
   }
 }
 
-class _MyFeeCard extends StatelessWidget {
+/// A single fee record card with selection support.
+class _FeeCard extends StatelessWidget {
   final FeeRecordModel record;
+  final bool isSelected;
+  final bool selectMode;
   final VoidCallback onTap;
-  final VoidCallback onPayOnline;
-  const _MyFeeCard({
+  final VoidCallback? onLongPress;
+  final VoidCallback? onPayOnline;
+  const _FeeCard({
     required this.record,
+    required this.isSelected,
+    required this.selectMode,
     required this.onTap,
-    required this.onPayOnline,
+    this.onLongPress,
+    this.onPayOnline,
   });
 
   @override
   Widget build(BuildContext context) {
     final statusColor = _statusColor(record.status);
-    final canPay =
-        record.status == 'PENDING' ||
+    final canPay = record.status == 'PENDING' ||
         record.status == 'OVERDUE' ||
         record.status == 'PARTIALLY_PAID';
+
     return Material(
-      color: Colors.white.withValues(alpha: 0.6),
+      color: isSelected
+          ? AppColors.darkOlive.withValues(alpha: 0.08)
+          : Colors.white.withValues(alpha: 0.6),
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
         onTap: onTap,
-        child: Padding(
+        onLongPress: onLongPress,
+        child: Container(
           padding: const EdgeInsets.all(16),
+          decoration: isSelected
+              ? BoxDecoration(
+                  border: Border.all(
+                    color: AppColors.darkOlive,
+                    width: 1.5,
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                )
+              : null,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
+                  if (selectMode && canPay)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 10),
+                      child: Icon(
+                        isSelected
+                            ? Icons.check_circle_rounded
+                            : Icons.radio_button_unchecked_rounded,
+                        color: isSelected
+                            ? AppColors.darkOlive
+                            : AppColors.mutedOlive,
+                        size: 22,
+                      ),
+                    ),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -450,7 +937,9 @@ class _MyFeeCard extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        '₹${record.finalAmount.toStringAsFixed(0)}',
+                        canPay
+                            ? '₹${record.balance.toStringAsFixed(0)}'
+                            : '₹${record.finalAmount.toStringAsFixed(0)}',
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           color: AppColors.darkOlive,
@@ -462,7 +951,7 @@ class _MyFeeCard extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 10),
               Row(
                 children: [
                   const Icon(
@@ -495,7 +984,7 @@ class _MyFeeCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
-                        '${record.daysOverdue}d',
+                        '${record.daysOverdue}d overdue',
                         style: const TextStyle(
                           color: Color(0xFFC62828),
                           fontSize: 10,
@@ -505,6 +994,27 @@ class _MyFeeCard extends StatelessWidget {
                     ),
                   ],
                   const Spacer(),
+                  if (record.discountAmount > 0) ...[
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 5,
+                        vertical: 2,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: Text(
+                        '-₹${record.discountAmount.toStringAsFixed(0)}',
+                        style: const TextStyle(
+                          color: Color(0xFF2E7D32),
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 4),
+                  ],
                   if (record.isPartial) ...[
                     Text(
                       '₹${record.paidAmount.toStringAsFixed(0)} paid',
@@ -513,19 +1023,54 @@ class _MyFeeCard extends StatelessWidget {
                         fontSize: 12,
                       ),
                     ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '· ₹${record.balance.toStringAsFixed(0)} left',
-                      style: const TextStyle(
-                        color: Color(0xFFE65100),
-                        fontSize: 12,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
                   ],
                 ],
               ),
-              if (record.status != 'PAID' && record.status != 'WAIVED') ...[
+              // Validity period
+              if (record.validFrom != null || record.validUntil != null) ...[
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.date_range_rounded,
+                      size: 12,
+                      color: AppColors.mutedOlive,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      _validityLabel(record.validFrom, record.validUntil),
+                      style: const TextStyle(
+                        color: AppColors.mutedOlive,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              // Tax info
+              if (record.hasTax) ...[
+                const SizedBox(height: 4),
+                Row(
+                  children: [
+                    const Icon(
+                      Icons.receipt_long_rounded,
+                      size: 12,
+                      color: AppColors.mutedOlive,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      'GST ${record.gstRate.toStringAsFixed(0)}%'
+                      ' · Tax ₹${record.taxAmount.toStringAsFixed(0)}',
+                      style: const TextStyle(
+                        color: AppColors.mutedOlive,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+              // Progress bar
+              if (canPay) ...[
                 const SizedBox(height: 10),
                 _ProgressBar(
                   paid: record.paidAmount,
@@ -533,12 +1078,12 @@ class _MyFeeCard extends StatelessWidget {
                   statusColor: statusColor,
                 ),
               ],
-              // ─── Pay Online Button ───
-              if (canPay) ...[
-                const SizedBox(height: 12),
+              // Pay Online (only in non-select mode)
+              if (canPay && !selectMode) ...[
+                const SizedBox(height: 10),
                 SizedBox(
                   width: double.infinity,
-                  height: 38,
+                  height: 36,
                   child: FilledButton.icon(
                     onPressed: onPayOnline,
                     style: FilledButton.styleFrom(
@@ -550,9 +1095,7 @@ class _MyFeeCard extends StatelessWidget {
                     ),
                     icon: const Icon(Icons.bolt_rounded, size: 18),
                     label: Text(
-                      record.isPartial
-                          ? 'Pay ₹${record.balance.toStringAsFixed(0)} Online'
-                          : 'Pay ₹${record.finalAmount.toStringAsFixed(0)} Online',
+                      'Pay ₹${record.balance.toStringAsFixed(0)} Online',
                       style: const TextStyle(
                         fontWeight: FontWeight.w600,
                         fontSize: 13,
@@ -566,6 +1109,15 @@ class _MyFeeCard extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  static String _validityLabel(DateTime? from, DateTime? until) {
+    if (from != null && until != null) {
+      return '${_fmtDate(from)} — ${_fmtDate(until)}';
+    }
+    if (from != null) return 'From ${_fmtDate(from)}';
+    if (until != null) return 'Until ${_fmtDate(until)}';
+    return '';
   }
 }
 
@@ -724,7 +1276,7 @@ String _fmtDate(DateTime d) {
     'Nov',
     'Dec',
   ];
-  return '${d.day} ${months[d.month - 1]}';
+  return '${d.day} ${months[d.month - 1]} ${d.year}';
 }
 
 String _formatAmount(double v) {

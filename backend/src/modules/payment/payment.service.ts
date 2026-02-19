@@ -401,6 +401,138 @@ export class PaymentService {
     // ─── Internal Helpers ───────────────────────────────────────────
 
     /**
+     * Create a combined Razorpay order for multiple fee records.
+     * Allows partial payment (pay any amount towards selected records).
+     */
+    async createMultiOrder(coachingId: string, userId: string, dto: { recordIds: string[]; amount?: number }) {
+        if (!dto.recordIds || dto.recordIds.length === 0) {
+            throw Object.assign(new Error('At least one record required'), { status: 400 });
+        }
+
+        // 1. Fetch all records and validate
+        const records = await prisma.feeRecord.findMany({
+            where: { id: { in: dto.recordIds }, coachingId, status: { in: ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'] } },
+            include: { member: { select: { userId: true, wardId: true, ward: { select: { parentId: true } } } } },
+        });
+
+        if (records.length === 0) throw Object.assign(new Error('No payable records found'), { status: 400 });
+
+        // Verify user owns all records
+        for (const r of records) {
+            const memberUserId = r.member?.userId;
+            const parentUserId = r.member?.ward?.parentId;
+            if (userId !== memberUserId && userId !== parentUserId) {
+                throw Object.assign(new Error('You cannot pay for one or more of these fee records'), { status: 403 });
+            }
+        }
+
+        // 2. Calculate total balance
+        const totalBalance = records.reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0);
+        const payAmount = dto.amount ? Math.min(dto.amount, totalBalance) : totalBalance;
+        if (payAmount <= 0) throw Object.assign(new Error('Nothing to pay'), { status: 400 });
+
+        const amountPaise = toPaise(payAmount);
+
+        // 3. Create Razorpay order — use first record as anchor for tracking
+        // Store all record IDs in notes for verification
+        const receipt = `multi_${Date.now()}`;
+        const rzpOrder = await razorpay.orders.create({
+            amount: amountPaise,
+            currency: 'INR',
+            receipt,
+            notes: {
+                coachingId,
+                userId,
+                multiPay: 'true',
+                recordIds: dto.recordIds.join(','),
+                recordCount: String(dto.recordIds.length),
+            },
+        });
+
+        // 4. Create RazorpayOrder rows for each record (proportional split)
+        const orderRows = [];
+        let remainingPaise = amountPaise;
+        for (let i = 0; i < records.length; i++) {
+            const r = records[i]!;
+            const rBalance = r.finalAmount - r.paidAmount;
+            // Proportional allocation: pay towards each record in order of due date
+            const allocPaise = i === records.length - 1
+                ? remainingPaise
+                : Math.min(toPaise(rBalance), remainingPaise);
+            if (allocPaise <= 0) continue;
+            remainingPaise -= allocPaise;
+
+            const row = await prisma.razorpayOrder.create({
+                data: {
+                    coachingId,
+                    recordId: r.id,
+                    userId,
+                    razorpayOrderId: rzpOrder.id,
+                    amountPaise: allocPaise,
+                    currency: 'INR',
+                    receipt: `${receipt}_${i}`,
+                    notes: { multiPay: true, index: i, totalRecords: records.length } as any,
+                },
+            });
+            orderRows.push(row);
+        }
+
+        return {
+            orderId: rzpOrder.id,
+            amount: amountPaise,
+            currency: 'INR',
+            key: process.env.RAZORPAY_KEY_ID,
+            records: records.map(r => ({
+                id: r.id,
+                title: r.title,
+                balance: r.finalAmount - r.paidAmount,
+            })),
+            totalBalance,
+            payAmount,
+        };
+    }
+
+    /**
+     * Verify a multi-record payment.
+     * Distributes the paid amount across records (oldest first).
+     */
+    async verifyMultiPayment(coachingId: string, dto: VerifyPaymentDto, userId: string) {
+        // 1. Verify signature
+        const secret = process.env.RAZORPAY_KEY_SECRET;
+        if (!secret) throw Object.assign(new Error('Payment configuration error'), { status: 500 });
+
+        const body = dto.razorpay_order_id + '|' + dto.razorpay_payment_id;
+        const expectedSignature = crypto.createHmac('sha256', secret).update(body).digest('hex');
+        if (expectedSignature !== dto.razorpay_signature) {
+            throw Object.assign(new Error('Payment verification failed'), { status: 400 });
+        }
+
+        // 2. Find all order rows for this Razorpay order
+        const orders = await prisma.razorpayOrder.findMany({
+            where: { razorpayOrderId: dto.razorpay_order_id, coachingId },
+            orderBy: { createdAt: 'asc' },
+        });
+        if (orders.length === 0) throw Object.assign(new Error('Orders not found'), { status: 404 });
+
+        // Check if already processed
+        if (orders.every(o => o.paymentRecorded)) {
+            return { success: true, message: 'Already processed', recordIds: orders.map(o => o.recordId) };
+        }
+
+        // 3. Process each sub-order
+        for (const order of orders) {
+            if (order.paymentRecorded) continue;
+            await this._processPayment(order.id, dto.razorpay_payment_id, dto.razorpay_signature, userId);
+        }
+
+        return {
+            success: true,
+            recordIds: orders.map(o => o.recordId),
+            totalPaise: orders.reduce((s, o) => s + o.amountPaise, 0),
+        };
+    }
+
+    /**
      * Core payment processing — used by both verify-payment and webhook.
      * Idempotent: checks `paymentRecorded` flag.
      */

@@ -236,34 +236,55 @@ class _StructureTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      decoration: BoxDecoration(
-        color: AppColors.softGrey.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.mutedOlive.withValues(alpha: 0.2)),
-      ),
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        leading: Container(
-          padding: const EdgeInsets.all(10),
-          decoration: BoxDecoration(
-            color: AppColors.darkOlive.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(10),
-          ),
-          child: const Icon(
-            Icons.receipt_rounded,
-            color: AppColors.darkOlive,
-            size: 20,
-          ),
+    final isInactive = !structure.isActive;
+    return Opacity(
+      opacity: isInactive ? 0.55 : 1.0,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        decoration: BoxDecoration(
+          color: AppColors.softGrey.withValues(alpha: 0.25),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: isInactive ? Colors.grey.withValues(alpha: 0.3) : AppColors.mutedOlive.withValues(alpha: 0.2)),
         ),
-        title: Text(
-          structure.name,
-          style: const TextStyle(
-            fontWeight: FontWeight.w700,
-            color: AppColors.darkOlive,
+        child: ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          leading: Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: (isInactive ? Colors.grey : AppColors.darkOlive).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              isInactive ? Icons.archive_rounded : Icons.receipt_rounded,
+              color: isInactive ? Colors.grey : AppColors.darkOlive,
+              size: 20,
+            ),
           ),
-        ),
+          title: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  structure.name,
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    color: isInactive ? Colors.grey : AppColors.darkOlive,
+                  ),
+                ),
+              ),
+              if (isInactive)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Text(
+                    'Archived',
+                    style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.w600),
+                  ),
+                ),
+            ],
+          ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -301,11 +322,12 @@ class _StructureTile extends StatelessWidget {
             color: AppColors.mutedOlive,
           ),
           onSelected: (v) => v == 'edit' ? onEdit() : onDelete(),
-          itemBuilder: (_) => const [
-            PopupMenuItem(value: 'edit', child: Text('Edit')),
-            PopupMenuItem(value: 'delete', child: Text('Delete')),
+          itemBuilder: (_) => [
+            if (!isInactive) const PopupMenuItem(value: 'edit', child: Text('Edit')),
+            PopupMenuItem(value: 'delete', child: Text(isInactive ? 'Remove' : 'Delete')),
           ],
         ),
+      ),
       ),
     );
   }

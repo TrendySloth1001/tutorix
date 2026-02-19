@@ -422,7 +422,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<String>(
-                initialValue: mode,
+                value: mode,
                 decoration: const InputDecoration(labelText: 'Refund Mode'),
                 items: const [
                   DropdownMenuItem(value: 'CASH', child: Text('Cash')),

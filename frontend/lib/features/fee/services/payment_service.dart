@@ -119,6 +119,42 @@ class PaymentService {
     return data as Map<String, dynamic>;
   }
 
+  // ── Multi-Pay (select & pay multiple records) ────────────────────
+
+  /// Create a combined Razorpay order for multiple fee records.
+  Future<Map<String, dynamic>> createMultiOrder(
+    String coachingId, {
+    required List<String> recordIds,
+    double? amount,
+  }) async {
+    final body = <String, dynamic>{
+      'recordIds': recordIds,
+      if (amount != null) 'amount': amount,
+    };
+    return _api.postAuthenticated(
+      ApiConstants.feeMultiPayCreateOrder(coachingId),
+      body: body,
+    );
+  }
+
+  /// Verify multi-pay after Razorpay checkout.
+  Future<Map<String, dynamic>> verifyMultiPayment(
+    String coachingId, {
+    required String razorpayOrderId,
+    required String razorpayPaymentId,
+    required String razorpaySignature,
+  }) async {
+    final body = {
+      'razorpay_order_id': razorpayOrderId,
+      'razorpay_payment_id': razorpayPaymentId,
+      'razorpay_signature': razorpaySignature,
+    };
+    return _api.postAuthenticated(
+      ApiConstants.feeMultiPayVerify(coachingId),
+      body: body,
+    );
+  }
+
   // ── Razorpay Checkout Flow ──────────────────────────────────────
 
   /// Opens Razorpay checkout. Returns the payment response on success.

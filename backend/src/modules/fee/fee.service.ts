@@ -302,11 +302,14 @@ export class FeeService {
 
     async deleteStructure(coachingId: string, structureId: string) {
         await this._ensureStructureOwned(coachingId, structureId);
-        // Soft-delete (deactivate) if records exist, hard-delete otherwise
-        const count = await prisma.feeRecord.count({ where: { assignment: { feeStructureId: structureId } } });
-        if (count > 0) {
+        // Check if any fee records exist under this structure
+        const recordCount = await prisma.feeRecord.count({ where: { assignment: { feeStructureId: structureId } } });
+        if (recordCount > 0) {
+            // Soft-delete: deactivate structure + all its assignments
+            await prisma.feeAssignment.updateMany({ where: { feeStructureId: structureId }, data: { isActive: false } });
             return prisma.feeStructure.update({ where: { id: structureId }, data: { isActive: false } });
         }
+        // No records: safe to hard-delete (cascades to assignments)
         return prisma.feeStructure.delete({ where: { id: structureId } });
     }
 
@@ -351,8 +354,10 @@ export class FeeService {
         // For INSTALLMENT cycle: create records for each installment
         if (structure.cycle === 'INSTALLMENT' && structure.installmentPlan) {
             const plan = structure.installmentPlan as Array<{ label: string; dueDay: number; amount: number }>;
-            for (const inst of plan) {
+            for (let idx = 0; idx < plan.length; idx++) {
+                const inst = plan[idx]!;
                 const dueDate = new Date(startDate);
+                dueDate.setMonth(dueDate.getMonth() + idx);
                 dueDate.setDate(inst.dueDay);
                 await this._createFeeRecord(coachingId, assignment.id, dto.memberId, structure, inst.amount, dueDate, inst.label);
             }
@@ -362,7 +367,7 @@ export class FeeService {
                 where: { assignmentId: assignment.id, status: { in: ['PENDING', 'PARTIALLY_PAID'] } },
             });
             if (!existingRecord) {
-                await this._createFeeRecord(coachingId, assignment.id, dto.memberId, structure, finalAmount, startDate);
+                await this._createFeeRecord(coachingId, assignment.id, dto.memberId, structure, finalAmount, startDate, undefined, totalDiscount);
             }
         }
 
@@ -558,8 +563,9 @@ export class FeeService {
                 const dueDate = nextDueDateFromCycle(record.dueDate, cycle);
                 const isBeforeEnd = !assignment.endDate || dueDate <= assignment.endDate;
                 if (isBeforeEnd) {
-                    const fa = (assignment.customAmount ?? assignment.feeStructure.amount) - assignment.discountAmount - (assignment.scholarshipAmount ?? 0);
-                    await this._createFeeRecord(coachingId, assignment.id, record.memberId, assignment.feeStructure, fa, dueDate);
+                    const totalDiscount = assignment.discountAmount + (assignment.scholarshipAmount ?? 0);
+                    const fa = (assignment.customAmount ?? assignment.feeStructure.amount) - totalDiscount;
+                    await this._createFeeRecord(coachingId, assignment.id, record.memberId, assignment.feeStructure, fa, dueDate, undefined, totalDiscount);
                 }
             }
         }
@@ -724,12 +730,15 @@ export class FeeService {
 
         const refundWhere = { coachingId, ...(fyStart && fyEnd ? { refundedAt: { gte: fyStart, lte: fyEnd } } : {}) };
 
-        const [statusGroups, totalCollected, totalRefunded, totalPendingAgg, totalOverdueAgg, paymentModes, monthlyCollection, overdueCount, todayCollection] = await Promise.all([
+        const [statusGroups, totalCollected, totalRefunded, outstandingRecords, paymentModes, monthlyCollection, overdueCount, todayCollection] = await Promise.all([
             prisma.feeRecord.groupBy({ by: ['status'], where: recWhere, _count: true, _sum: { finalAmount: true } }),
             prisma.feePayment.aggregate({ where: pyWhere, _sum: { amount: true } }),
             prisma.feeRefund.aggregate({ where: refundWhere, _sum: { amount: true } }),
-            prisma.feeRecord.aggregate({ where: { ...recWhere, status: { in: ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'] } }, _sum: { finalAmount: true } }),
-            prisma.feeRecord.aggregate({ where: { ...recWhere, status: 'OVERDUE' }, _sum: { finalAmount: true } }),
+            // Fetch outstanding records to compute actual balance (finalAmount - paidAmount)
+            prisma.feeRecord.findMany({
+                where: { ...recWhere, status: { in: ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'] } },
+                select: { finalAmount: true, paidAmount: true, status: true },
+            }),
             prisma.feePayment.groupBy({ by: ['mode'], where: pyWhere, _sum: { amount: true }, _count: true }),
             prisma.$queryRaw<Array<{ month: string; total: number; count: number }>>`
                 SELECT TO_CHAR(DATE_TRUNC('month', "paidAt"), 'YYYY-MM') AS month,
@@ -748,12 +757,16 @@ export class FeeService {
             }),
         ]);
 
+        // Calculate actual outstanding balance (not inflated finalAmount)
+        const totalPending = outstandingRecords.reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0);
+        const totalOverdue = outstandingRecords.filter(r => r.status === 'OVERDUE').reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0);
+
         return {
             statusBreakdown: statusGroups,
             totalCollected: (totalCollected._sum.amount ?? 0) - (totalRefunded._sum.amount ?? 0),
             totalRefunded: totalRefunded._sum.amount ?? 0,
-            totalPending: totalPendingAgg._sum.finalAmount ?? 0,
-            totalOverdue: totalOverdueAgg._sum.finalAmount ?? 0,
+            totalPending,
+            totalOverdue,
             overdueCount,
             todayCollection: todayCollection._sum.amount ?? 0,
             paymentModes,
@@ -896,13 +909,14 @@ export class FeeService {
         assignmentId: string,
         memberId: string,
         structure: {
-            name: string; cycle: string; lateFinePerDay: number;
+            name: string; cycle: string; lateFinePerDay: number; amount: number;
             taxType?: string; gstRate?: number; sacCode?: string | null; hsnCode?: string | null;
             gstSupplyType?: string; cessRate?: number; lineItems?: unknown;
         },
-        finalAmount: number,
+        netAmount: number,
         dueDate: Date,
         customTitle?: string,
+        discountAmount: number = 0,
     ) {
         // Check no duplicate for this assignment + dueDate month
         const existing = await prisma.feeRecord.findFirst({
@@ -916,16 +930,18 @@ export class FeeService {
         });
         if (existing) return existing;
 
-        // Compute tax breakdown
+        // Compute tax on the net (post-discount) amount
         const taxType = structure.taxType ?? 'NONE';
         const gstRate = structure.gstRate ?? 0;
         const supplyType = structure.gstSupplyType ?? 'INTRA_STATE';
         const cessRate = structure.cessRate ?? 0;
-        const tax = computeTax(finalAmount, taxType, gstRate, supplyType, cessRate);
+        const tax = computeTax(netAmount, taxType, gstRate, supplyType, cessRate);
 
-        // For GST_EXCLUSIVE, the finalAmount is base + tax.
+        // For GST_EXCLUSIVE, the finalAmount is net + tax.
         // For GST_INCLUSIVE, finalAmount already includes tax.
         const recordFinalAmount = tax.totalWithTax;
+        // baseAmount = structure amount (pre-discount), discountAmount = total discount
+        const baseAmount = netAmount + discountAmount;
 
         return prisma.feeRecord.create({
             data: {
@@ -934,8 +950,8 @@ export class FeeService {
                 memberId,
                 title: customTitle ?? buildRecordTitle(structure.name, dueDate, structure.cycle),
                 amount: recordFinalAmount,
-                baseAmount: finalAmount,
-                discountAmount: 0,
+                baseAmount,
+                discountAmount,
                 fineAmount: 0,
                 finalAmount: recordFinalAmount,
                 dueDate,
@@ -962,14 +978,16 @@ export class FeeService {
             where: { coachingId, status: 'PENDING', dueDate: { lt: new Date() } },
             include: { assignment: { include: { feeStructure: { select: { lateFinePerDay: true } } } } },
         });
-        for (const r of newOverdue) {
-            const days = calcDaysOverdue(r.dueDate);
-            const lateFine = r.assignment?.feeStructure?.lateFinePerDay ?? 0;
-            const fineAmount = lateFine > 0 ? lateFine * days : 0;
-            await prisma.feeRecord.update({
-                where: { id: r.id },
-                data: { status: 'OVERDUE', fineAmount, finalAmount: r.baseAmount - r.discountAmount + fineAmount + r.taxAmount },
-            });
+        if (newOverdue.length > 0) {
+            await Promise.all(newOverdue.map(r => {
+                const days = calcDaysOverdue(r.dueDate);
+                const lateFine = r.assignment?.feeStructure?.lateFinePerDay ?? 0;
+                const fineAmount = lateFine > 0 ? lateFine * days : 0;
+                return prisma.feeRecord.update({
+                    where: { id: r.id },
+                    data: { status: 'OVERDUE', fineAmount, finalAmount: r.baseAmount - r.discountAmount + fineAmount + r.taxAmount },
+                });
+            }));
         }
 
         // 2. Refresh accrued fine on already-OVERDUE records (daily tick)
@@ -977,17 +995,21 @@ export class FeeService {
             where: { coachingId, status: 'OVERDUE' },
             include: { assignment: { include: { feeStructure: { select: { lateFinePerDay: true } } } } },
         });
+        const overdueUpdates: { id: string; fineAmount: number; finalAmount: number }[] = [];
         for (const r of alreadyOverdue) {
             const lateFine = r.assignment?.feeStructure?.lateFinePerDay ?? 0;
             if (lateFine > 0) {
                 const fineAmount = lateFine * calcDaysOverdue(r.dueDate);
                 if (Math.abs(fineAmount - r.fineAmount) > 0.01) {
-                    await prisma.feeRecord.update({
-                        where: { id: r.id },
-                        data: { fineAmount, finalAmount: r.baseAmount - r.discountAmount + fineAmount },
-                    });
+                    overdueUpdates.push({ id: r.id, fineAmount, finalAmount: r.baseAmount - r.discountAmount + fineAmount + r.taxAmount });
                 }
             }
+        }
+        // Batch update overdue records to avoid N+1 queries
+        if (overdueUpdates.length > 0) {
+            await Promise.all(overdueUpdates.map(u =>
+                prisma.feeRecord.update({ where: { id: u.id }, data: { fineAmount: u.fineAmount, finalAmount: u.finalAmount } })
+            ));
         }
     }
 

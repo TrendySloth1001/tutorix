@@ -70,7 +70,7 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
     setState(() => _sendingReminder = true);
     try {
       final res = await _svc.bulkRemind(widget.coachingId);
-      final count = res['count'] ?? 0;
+      final count = res['reminded'] ?? res['count'] ?? 0;
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Reminder sent to $count overdue students')),

@@ -269,6 +269,12 @@ class ApiConstants {
       '$baseUrl/coaching/$coachingId/fee/records/$recordId/online-refund';
   static const String paymentConfig = '$baseUrl/payment/config';
 
+  // Multi-pay (select & pay multiple fees at once)
+  static String feeMultiPayCreateOrder(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/fee/multi-pay/create-order';
+  static String feeMultiPayVerify(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/fee/multi-pay/verify';
+
   // Payment Settings (Coaching-level bank/GST config)
   static String paymentSettings(String coachingId) =>
       '$baseUrl/coaching/$coachingId/payment-settings';
