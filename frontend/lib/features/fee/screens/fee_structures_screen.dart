@@ -106,26 +106,38 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _StructureFormSheet(
-        onSubmit: (name, desc, amount, cycle, fine,
-            {taxType, gstRate, sacCode, hsnCode, gstSupplyType, cessRate,
-            lineItems}) async {
-          await _svc.createStructure(
-            widget.coachingId,
-            name: name,
-            description: desc,
-            amount: amount,
-            cycle: cycle,
-            lateFinePerDay: fine,
-            taxType: taxType,
-            gstRate: gstRate,
-            sacCode: sacCode,
-            hsnCode: hsnCode,
-            gstSupplyType: gstSupplyType,
-            cessRate: cessRate,
-            lineItems: lineItems,
-          );
-          _load();
-        },
+        onSubmit:
+            (
+              name,
+              desc,
+              amount,
+              cycle,
+              fine, {
+              taxType,
+              gstRate,
+              sacCode,
+              hsnCode,
+              gstSupplyType,
+              cessRate,
+              lineItems,
+            }) async {
+              await _svc.createStructure(
+                widget.coachingId,
+                name: name,
+                description: desc,
+                amount: amount,
+                cycle: cycle,
+                lateFinePerDay: fine,
+                taxType: taxType,
+                gstRate: gstRate,
+                sacCode: sacCode,
+                hsnCode: hsnCode,
+                gstSupplyType: gstSupplyType,
+                cessRate: cessRate,
+                lineItems: lineItems,
+              );
+              _load();
+            },
       ),
     );
   }
@@ -137,27 +149,39 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
       backgroundColor: Colors.transparent,
       builder: (_) => _StructureFormSheet(
         existing: s,
-        onSubmit: (name, desc, amount, cycle, fine,
-            {taxType, gstRate, sacCode, hsnCode, gstSupplyType, cessRate,
-            lineItems}) async {
-          await _svc.updateStructure(
-            widget.coachingId,
-            s.id,
-            name: name,
-            description: desc,
-            amount: amount,
-            cycle: cycle,
-            lateFinePerDay: fine,
-            taxType: taxType,
-            gstRate: gstRate,
-            sacCode: sacCode,
-            hsnCode: hsnCode,
-            gstSupplyType: gstSupplyType,
-            cessRate: cessRate,
-            lineItems: lineItems,
-          );
-          _load();
-        },
+        onSubmit:
+            (
+              name,
+              desc,
+              amount,
+              cycle,
+              fine, {
+              taxType,
+              gstRate,
+              sacCode,
+              hsnCode,
+              gstSupplyType,
+              cessRate,
+              lineItems,
+            }) async {
+              await _svc.updateStructure(
+                widget.coachingId,
+                s.id,
+                name: name,
+                description: desc,
+                amount: amount,
+                cycle: cycle,
+                lateFinePerDay: fine,
+                taxType: taxType,
+                gstRate: gstRate,
+                sacCode: sacCode,
+                hsnCode: hsnCode,
+                gstSupplyType: gstSupplyType,
+                cessRate: cessRate,
+                lineItems: lineItems,
+              );
+              _load();
+            },
       ),
     );
   }
@@ -260,7 +284,10 @@ class _StructureTile extends StatelessWidget {
             if (structure.lineItems.isNotEmpty)
               Text(
                 '${structure.lineItems.length} line item${structure.lineItems.length == 1 ? '' : 's'}',
-                style: const TextStyle(color: AppColors.mutedOlive, fontSize: 11),
+                style: const TextStyle(
+                  color: AppColors.mutedOlive,
+                  fontSize: 11,
+                ),
               ),
             Text(
               '${structure.assignmentCount} student${structure.assignmentCount == 1 ? '' : 's'}',
@@ -299,7 +326,8 @@ class _StructureFormSheet extends StatefulWidget {
     String? gstSupplyType,
     double? cessRate,
     List<Map<String, dynamic>>? lineItems,
-  }) onSubmit;
+  })
+  onSubmit;
   const _StructureFormSheet({this.existing, required this.onSubmit});
 
   @override
@@ -358,10 +386,14 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
       _sacCtrl.text = e.sacCode ?? '';
       _hsnCtrl.text = e.hsnCode ?? '';
       for (final item in e.lineItems) {
-        _lineItems.add(_LineItem(
-          labelCtrl: TextEditingController(text: item.label),
-          amountCtrl: TextEditingController(text: item.amount.toStringAsFixed(0)),
-        ));
+        _lineItems.add(
+          _LineItem(
+            labelCtrl: TextEditingController(text: item.label),
+            amountCtrl: TextEditingController(
+              text: item.amount.toStringAsFixed(0),
+            ),
+          ),
+        );
       }
     }
   }
@@ -602,35 +634,38 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
-                children: [
-                  ('INTRA_STATE', 'Intra-State (CGST+SGST)'),
-                  ('INTER_STATE', 'Inter-State (IGST)'),
-                ].map((e) {
-                  final sel = e.$1 == _supplyType;
-                  return GestureDetector(
-                    onTap: () => setState(() => _supplyType = e.$1),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
-                      decoration: BoxDecoration(
-                        color: sel
-                            ? AppColors.darkOlive
-                            : AppColors.softGrey.withValues(alpha: 0.3),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        e.$2,
-                        style: TextStyle(
-                          color: sel ? AppColors.cream : AppColors.darkOlive,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                children:
+                    [
+                      ('INTRA_STATE', 'Intra-State (CGST+SGST)'),
+                      ('INTER_STATE', 'Inter-State (IGST)'),
+                    ].map((e) {
+                      final sel = e.$1 == _supplyType;
+                      return GestureDetector(
+                        onTap: () => setState(() => _supplyType = e.$1),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: sel
+                                ? AppColors.darkOlive
+                                : AppColors.softGrey.withValues(alpha: 0.3),
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
+                            e.$2,
+                            style: TextStyle(
+                              color: sel
+                                  ? AppColors.cream
+                                  : AppColors.darkOlive,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                  );
-                }).toList(),
+                      );
+                    }).toList(),
               ),
               const SizedBox(height: 12),
               TextField(
@@ -666,14 +701,18 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.add_circle_rounded,
-                      color: AppColors.darkOlive),
+                  icon: const Icon(
+                    Icons.add_circle_rounded,
+                    color: AppColors.darkOlive,
+                  ),
                   onPressed: () {
                     setState(() {
-                      _lineItems.add(_LineItem(
-                        labelCtrl: TextEditingController(),
-                        amountCtrl: TextEditingController(),
-                      ));
+                      _lineItems.add(
+                        _LineItem(
+                          labelCtrl: TextEditingController(),
+                          amountCtrl: TextEditingController(),
+                        ),
+                      );
                     });
                   },
                 ),
@@ -710,7 +749,8 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                       child: TextField(
                         controller: item.amountCtrl,
                         keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true),
+                          decimal: true,
+                        ),
                         decoration: const InputDecoration(
                           labelText: '₹',
                           prefixText: '₹ ',
@@ -719,8 +759,11 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(Icons.remove_circle_outline,
-                          color: Color(0xFFC62828), size: 20),
+                      icon: const Icon(
+                        Icons.remove_circle_outline,
+                        color: Color(0xFFC62828),
+                        size: 20,
+                      ),
                       onPressed: () {
                         setState(() {
                           _lineItems[i].labelCtrl.dispose();
@@ -771,10 +814,12 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
     if (_lineItems.isNotEmpty) {
       items = _lineItems
           .where((li) => li.labelCtrl.text.trim().isNotEmpty)
-          .map((li) => {
-                'label': li.labelCtrl.text.trim(),
-                'amount': double.tryParse(li.amountCtrl.text.trim()) ?? 0,
-              })
+          .map(
+            (li) => {
+              'label': li.labelCtrl.text.trim(),
+              'amount': double.tryParse(li.amountCtrl.text.trim()) ?? 0,
+            },
+          )
           .toList();
     }
 

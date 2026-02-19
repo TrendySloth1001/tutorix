@@ -62,10 +62,7 @@ class PaymentReceiptScreen extends StatelessWidget {
         backgroundColor: const Color(0xFFF7F6F2),
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
-            Icons.close_rounded,
-            color: AppColors.darkOlive,
-          ),
+          icon: const Icon(Icons.close_rounded, color: AppColors.darkOlive),
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
@@ -108,10 +105,7 @@ class PaymentReceiptScreen extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               _formatDateTime(paidAt),
-              style: const TextStyle(
-                color: AppColors.mutedOlive,
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
             ),
             const SizedBox(height: 32),
 
@@ -243,10 +237,7 @@ class PaymentReceiptScreen extends StatelessWidget {
                       _DetailRow('SAC Code', sacCode!),
                     ],
                     _Divider(),
-                    _DetailRow(
-                      'Total Paid',
-                      '₹${amount.toStringAsFixed(2)}',
-                    ),
+                    _DetailRow('Total Paid', '₹${amount.toStringAsFixed(2)}'),
                   ],
                 ),
               ),
@@ -317,11 +308,17 @@ class PaymentReceiptScreen extends StatelessWidget {
     }
     if (studentName != null) lines.add('Student: $studentName');
     if (_hasTax) {
-      lines.add('Tax (GST ${gstRate.toStringAsFixed(0)}%): ₹${taxAmount.toStringAsFixed(2)}');
-      if (cgstAmount > 0) lines.add('  CGST: ₹${cgstAmount.toStringAsFixed(2)}');
-      if (sgstAmount > 0) lines.add('  SGST: ₹${sgstAmount.toStringAsFixed(2)}');
-      if (igstAmount > 0) lines.add('  IGST: ₹${igstAmount.toStringAsFixed(2)}');
-      if (cessAmount > 0) lines.add('  Cess: ₹${cessAmount.toStringAsFixed(2)}');
+      lines.add(
+        'Tax (GST ${gstRate.toStringAsFixed(0)}%): ₹${taxAmount.toStringAsFixed(2)}',
+      );
+      if (cgstAmount > 0)
+        lines.add('  CGST: ₹${cgstAmount.toStringAsFixed(2)}');
+      if (sgstAmount > 0)
+        lines.add('  SGST: ₹${sgstAmount.toStringAsFixed(2)}');
+      if (igstAmount > 0)
+        lines.add('  IGST: ₹${igstAmount.toStringAsFixed(2)}');
+      if (cessAmount > 0)
+        lines.add('  Cess: ₹${cessAmount.toStringAsFixed(2)}');
     }
     lines.addAll([
       'Payment Mode: Razorpay',
@@ -344,10 +341,24 @@ class PaymentReceiptScreen extends StatelessWidget {
 
   String _formatDateTime(DateTime dt) {
     final months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+      'Jan',
+      'Feb',
+      'Mar',
+      'Apr',
+      'May',
+      'Jun',
+      'Jul',
+      'Aug',
+      'Sep',
+      'Oct',
+      'Nov',
+      'Dec',
     ];
-    final h = dt.hour > 12 ? dt.hour - 12 : dt.hour == 0 ? 12 : dt.hour;
+    final h = dt.hour > 12
+        ? dt.hour - 12
+        : dt.hour == 0
+        ? 12
+        : dt.hour;
     final amPm = dt.hour >= 12 ? 'PM' : 'AM';
     final min = dt.minute.toString().padLeft(2, '0');
     return '${dt.day} ${months[dt.month - 1]} ${dt.year}, $h:$min $amPm';
@@ -370,10 +381,7 @@ class _DetailRow extends StatelessWidget {
             width: 110,
             child: Text(
               label,
-              style: const TextStyle(
-                color: AppColors.mutedOlive,
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
             ),
           ),
           Expanded(
@@ -396,9 +404,6 @@ class _DetailRow extends StatelessWidget {
 class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Divider(
-      height: 1,
-      color: AppColors.softGrey.withValues(alpha: 0.5),
-    );
+    return Divider(height: 1, color: AppColors.softGrey.withValues(alpha: 0.5));
   }
 }

@@ -80,19 +80,23 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
         widget.coachingId,
         gstNumber: _gstCtrl.text.trim().isEmpty ? null : _gstCtrl.text.trim(),
         panNumber: _panCtrl.text.trim().isEmpty ? null : _panCtrl.text.trim(),
-        bankName:
-            _bankNameCtrl.text.trim().isEmpty ? null : _bankNameCtrl.text.trim(),
-        bankAccountName:
-            _accNameCtrl.text.trim().isEmpty ? null : _accNameCtrl.text.trim(),
-        bankAccountNumber:
-            _accNumCtrl.text.trim().isEmpty ? null : _accNumCtrl.text.trim(),
-        bankIfscCode:
-            _ifscCtrl.text.trim().isEmpty ? null : _ifscCtrl.text.trim(),
+        bankName: _bankNameCtrl.text.trim().isEmpty
+            ? null
+            : _bankNameCtrl.text.trim(),
+        bankAccountName: _accNameCtrl.text.trim().isEmpty
+            ? null
+            : _accNameCtrl.text.trim(),
+        bankAccountNumber: _accNumCtrl.text.trim().isEmpty
+            ? null
+            : _accNumCtrl.text.trim(),
+        bankIfscCode: _ifscCtrl.text.trim().isEmpty
+            ? null
+            : _ifscCtrl.text.trim(),
       );
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Payment settings saved')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('Payment settings saved')));
       }
     } catch (e) {
       if (mounted) {
@@ -134,203 +138,202 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(_error!, style: const TextStyle(color: Colors.red)),
-                      const SizedBox(height: 12),
-                      OutlinedButton(
-                          onPressed: _load, child: const Text('Retry')),
-                    ],
-                  ),
-                )
-              : SingleChildScrollView(
-                  padding: const EdgeInsets.all(20),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        // ── Razorpay Status ──
-                        Container(
-                          width: double.infinity,
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
+          ? Center(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(_error!, style: const TextStyle(color: Colors.red)),
+                  const SizedBox(height: 12),
+                  OutlinedButton(onPressed: _load, child: const Text('Retry')),
+                ],
+              ),
+            )
+          : SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // ── Razorpay Status ──
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: _razorpayActivated
+                            ? const Color(0xFFE8F5E9)
+                            : const Color(0xFFFFF3E0),
+                        borderRadius: BorderRadius.circular(14),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _razorpayActivated
+                                ? Icons.check_circle_rounded
+                                : Icons.info_outline_rounded,
                             color: _razorpayActivated
-                                ? const Color(0xFFE8F5E9)
-                                : const Color(0xFFFFF3E0),
-                            borderRadius: BorderRadius.circular(14),
+                                ? const Color(0xFF2E7D32)
+                                : const Color(0xFFE65100),
                           ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                _razorpayActivated
-                                    ? Icons.check_circle_rounded
-                                    : Icons.info_outline_rounded,
-                                color: _razorpayActivated
-                                    ? const Color(0xFF2E7D32)
-                                    : const Color(0xFFE65100),
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      _razorpayActivated
-                                          ? 'Razorpay Route Active'
-                                          : 'Razorpay Route Not Configured',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        color: _razorpayActivated
-                                            ? const Color(0xFF2E7D32)
-                                            : const Color(0xFFE65100),
-                                        fontSize: 14,
-                                      ),
-                                    ),
-                                    Text(
-                                      _razorpayActivated
-                                          ? 'Payments will be routed to your bank account'
-                                          : 'Contact Tutorix support to link your Razorpay account',
-                                      style: TextStyle(
-                                        color: _razorpayActivated
-                                            ? const Color(0xFF2E7D32)
-                                            : const Color(0xFFE65100),
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                    if (_razorpayAccountId != null)
-                                      Text(
-                                        'Account: $_razorpayAccountId',
-                                        style: const TextStyle(
-                                          color: AppColors.mutedOlive,
-                                          fontSize: 11,
-                                        ),
-                                      ),
-                                  ],
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  _razorpayActivated
+                                      ? 'Razorpay Route Active'
+                                      : 'Razorpay Route Not Configured',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w700,
+                                    color: _razorpayActivated
+                                        ? const Color(0xFF2E7D32)
+                                        : const Color(0xFFE65100),
+                                    fontSize: 14,
+                                  ),
                                 ),
-                              ),
-                            ],
-                          ),
-                        ),
-
-                        // ── Tax Details ──
-                        const SizedBox(height: 24),
-                        const Text(
-                          'Tax Details',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.darkOlive,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _gstCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'GSTIN',
-                            hintText: 'e.g. 27AADCB2230M1ZT',
-                          ),
-                          textCapitalization: TextCapitalization.characters,
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _panCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'PAN Number',
-                            hintText: 'e.g. AADCB2230M',
-                          ),
-                          textCapitalization: TextCapitalization.characters,
-                        ),
-
-                        // ── Bank Details ──
-                        const SizedBox(height: 24),
-                        const Text(
-                          'Bank Account Details',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: AppColors.darkOlive,
-                            fontSize: 16,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        const Text(
-                          'Required for receiving payments via Razorpay Route',
-                          style: TextStyle(
-                            color: AppColors.mutedOlive,
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _accNameCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Account Holder Name',
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _accNumCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Account Number',
-                          ),
-                          keyboardType: TextInputType.number,
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _ifscCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'IFSC Code',
-                            hintText: 'e.g. SBIN0001234',
-                          ),
-                          textCapitalization: TextCapitalization.characters,
-                        ),
-                        const SizedBox(height: 12),
-                        TextFormField(
-                          controller: _bankNameCtrl,
-                          decoration: const InputDecoration(
-                            labelText: 'Bank Name',
-                            hintText: 'e.g. State Bank of India',
-                          ),
-                        ),
-
-                        // ── Save Button ──
-                        const SizedBox(height: 32),
-                        SizedBox(
-                          width: double.infinity,
-                          height: 50,
-                          child: FilledButton(
-                            onPressed: _saving ? null : _save,
-                            style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.darkOlive,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            child: _saving
-                                ? const SizedBox(
-                                    height: 20,
-                                    width: 20,
-                                    child: CircularProgressIndicator(
-                                      color: AppColors.cream,
-                                      strokeWidth: 2,
-                                    ),
-                                  )
-                                : const Text(
-                                    'Save Settings',
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.w700,
-                                      fontSize: 15,
+                                Text(
+                                  _razorpayActivated
+                                      ? 'Payments will be routed to your bank account'
+                                      : 'Contact Tutorix support to link your Razorpay account',
+                                  style: TextStyle(
+                                    color: _razorpayActivated
+                                        ? const Color(0xFF2E7D32)
+                                        : const Color(0xFFE65100),
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                if (_razorpayAccountId != null)
+                                  Text(
+                                    'Account: $_razorpayAccountId',
+                                    style: const TextStyle(
+                                      color: AppColors.mutedOlive,
+                                      fontSize: 11,
                                     ),
                                   ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // ── Tax Details ──
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Tax Details',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.darkOlive,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _gstCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'GSTIN',
+                        hintText: 'e.g. 27AADCB2230M1ZT',
+                      ),
+                      textCapitalization: TextCapitalization.characters,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _panCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'PAN Number',
+                        hintText: 'e.g. AADCB2230M',
+                      ),
+                      textCapitalization: TextCapitalization.characters,
+                    ),
+
+                    // ── Bank Details ──
+                    const SizedBox(height: 24),
+                    const Text(
+                      'Bank Account Details',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.darkOlive,
+                        fontSize: 16,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    const Text(
+                      'Required for receiving payments via Razorpay Route',
+                      style: TextStyle(
+                        color: AppColors.mutedOlive,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _accNameCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Account Holder Name',
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _accNumCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Account Number',
+                      ),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _ifscCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'IFSC Code',
+                        hintText: 'e.g. SBIN0001234',
+                      ),
+                      textCapitalization: TextCapitalization.characters,
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      controller: _bankNameCtrl,
+                      decoration: const InputDecoration(
+                        labelText: 'Bank Name',
+                        hintText: 'e.g. State Bank of India',
+                      ),
+                    ),
+
+                    // ── Save Button ──
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 50,
+                      child: FilledButton(
+                        onPressed: _saving ? null : _save,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.darkOlive,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
                           ),
                         ),
-                        const SizedBox(height: 32),
-                      ],
+                        child: _saving
+                            ? const SizedBox(
+                                height: 20,
+                                width: 20,
+                                child: CircularProgressIndicator(
+                                  color: AppColors.cream,
+                                  strokeWidth: 2,
+                                ),
+                              )
+                            : const Text(
+                                'Save Settings',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 15,
+                                ),
+                              ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(height: 32),
+                  ],
                 ),
+              ),
+            ),
     );
   }
 }

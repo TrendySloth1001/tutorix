@@ -7,7 +7,7 @@ class FeeStructureModel {
   final double amount;
   final String currency;
   final String
-      cycle; // ONCE | MONTHLY | QUARTERLY | HALF_YEARLY | YEARLY | INSTALLMENT
+  cycle; // ONCE | MONTHLY | QUARTERLY | HALF_YEARLY | YEARLY | INSTALLMENT
   final double lateFinePerDay;
   final bool isActive;
   final int assignmentCount;
@@ -78,9 +78,7 @@ class FeeStructureModel {
       cessRate: (json['cessRate'] as num?)?.toDouble() ?? 0,
       lineItems:
           itemsJson
-              ?.map(
-                (e) => LineItemModel.fromJson(e as Map<String, dynamic>),
-              )
+              ?.map((e) => LineItemModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
     );
@@ -362,9 +360,7 @@ class FeeRecordModel {
       hsnCode: json['hsnCode'] as String?,
       lineItems:
           itemsJson
-              ?.map(
-                (e) => LineItemModel.fromJson(e as Map<String, dynamic>),
-              )
+              ?.map((e) => LineItemModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
       member: memberJson != null ? FeeMemberInfo.fromJson(memberJson) : null,

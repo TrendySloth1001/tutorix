@@ -141,10 +141,7 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
     try {
       // 1. Create order
       debugPrint('[PayOnline] Creating order...');
-      final orderData = await _paySvc.createOrder(
-        widget.coachingId,
-        record.id,
-      );
+      final orderData = await _paySvc.createOrder(widget.coachingId, record.id);
 
       debugPrint('[PayOnline] Order created: $orderData');
 
@@ -177,9 +174,8 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
 
       // 4. Extract enriched payment data
       final vp = verified['verifiedPayment'] as Map<String, dynamic>?;
-      final receiptNo = vp?['receiptNo'] as String? ??
-          verified['receiptNo'] as String? ??
-          '';
+      final receiptNo =
+          vp?['receiptNo'] as String? ?? verified['receiptNo'] as String? ?? '';
       final paidAmount = (vp?['amount'] as num?)?.toDouble() ?? record.balance;
 
       // 5. Show receipt with tax breakdown
@@ -409,7 +405,8 @@ class _MyFeeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = _statusColor(record.status);
-    final canPay = record.status == 'PENDING' ||
+    final canPay =
+        record.status == 'PENDING' ||
         record.status == 'OVERDUE' ||
         record.status == 'PARTIALLY_PAID';
     return Material(

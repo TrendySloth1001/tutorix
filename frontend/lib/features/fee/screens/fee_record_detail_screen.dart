@@ -314,10 +314,10 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
       if (!mounted) return;
 
       final vp = verified['verifiedPayment'] as Map<String, dynamic>?;
-      final receiptNo = vp?['receiptNo'] as String? ??
-          verified['receiptNo'] as String? ??
-          '';
-      final paidAmount = (vp?['amount'] as num?)?.toDouble() ?? _record!.balance;
+      final receiptNo =
+          vp?['receiptNo'] as String? ?? verified['receiptNo'] as String? ?? '';
+      final paidAmount =
+          (vp?['amount'] as num?)?.toDouble() ?? _record!.balance;
 
       Navigator.push(
         context,
@@ -504,18 +504,19 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
             _paySvc
                 .getOnlinePayments(widget.coachingId, widget.recordId)
                 .then((data) {
-              setSt(() {
-                payments = data;
-                loading = false;
-              });
-            }).catchError((e) {
-              setSt(() => loading = false);
-              if (ctx.mounted) {
-                ScaffoldMessenger.of(ctx).showSnackBar(
-                  SnackBar(content: Text(e.toString())),
-                );
-              }
-            });
+                  setSt(() {
+                    payments = data;
+                    loading = false;
+                  });
+                })
+                .catchError((e) {
+                  setSt(() => loading = false);
+                  if (ctx.mounted) {
+                    ScaffoldMessenger.of(
+                      ctx,
+                    ).showSnackBar(SnackBar(content: Text(e.toString())));
+                  }
+                });
           }
 
           return Container(
@@ -555,10 +556,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                 const SizedBox(height: 4),
                 const Text(
                   'Select an online payment to refund via Razorpay',
-                  style: TextStyle(
-                    color: AppColors.mutedOlive,
-                    fontSize: 13,
-                  ),
+                  style: TextStyle(color: AppColors.mutedOlive, fontSize: 13),
                 ),
                 const SizedBox(height: 16),
                 if (loading)
@@ -582,7 +580,9 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                   ...payments.map((p) {
                     final id = p['id'] as String;
                     final amt = (p['amount'] as num).toDouble();
-                    final date = DateTime.tryParse(p['paidAt'] as String? ?? '');
+                    final date = DateTime.tryParse(
+                      p['paidAt'] as String? ?? '',
+                    );
                     final selected = selectedPaymentId == id;
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8),
@@ -650,8 +650,9 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: amtCtrl,
-                    keyboardType:
-                        const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(
                       labelText: 'Refund Amount (₹)',
                       prefixText: '₹ ',
@@ -672,8 +673,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                       onPressed: submitting || selectedPaymentId == null
                           ? null
                           : () async {
-                              final amt =
-                                  double.tryParse(amtCtrl.text.trim());
+                              final amt = double.tryParse(amtCtrl.text.trim());
                               if (amt == null || amt <= 0) return;
                               setSt(() => submitting = true);
                               try {
@@ -1081,10 +1081,7 @@ class _BreakdownCard extends StatelessWidget {
           // ── Line Items (if present) ──
           if (record.lineItems.isNotEmpty) ...[
             ...record.lineItems.map(
-              (item) => _Row(
-                item.label,
-                '₹${item.amount.toStringAsFixed(0)}',
-              ),
+              (item) => _Row(item.label, '₹${item.amount.toStringAsFixed(0)}'),
             ),
             const Divider(height: 16),
           ],
@@ -1134,8 +1131,7 @@ class _BreakdownCard extends StatelessWidget {
                 '₹${record.cessAmount.toStringAsFixed(0)}',
                 color: AppColors.mutedOlive,
               ),
-            if (record.sacCode != null)
-              _Row('SAC Code', record.sacCode!),
+            if (record.sacCode != null) _Row('SAC Code', record.sacCode!),
           ],
           const Divider(height: 20),
           _Row(
@@ -1259,11 +1255,13 @@ class _PaymentHistory extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 10),
-        ...payments.map((p) => _PaymentRow(
-              payment: p,
-              coachingName: coachingName,
-              record: record,
-            )),
+        ...payments.map(
+          (p) => _PaymentRow(
+            payment: p,
+            coachingName: coachingName,
+            record: record,
+          ),
+        ),
       ],
     );
   }
@@ -1283,30 +1281,30 @@ class _PaymentRow extends StatelessWidget {
     return GestureDetector(
       onTap: payment.isOnline
           ? () => Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => PaymentReceiptScreen(
-                    coachingName: coachingName,
-                    feeTitle: record.title,
-                    amount: payment.amount,
-                    paymentId: payment.razorpayPaymentId ?? '',
-                    orderId: payment.razorpayOrderId ?? '',
-                    paidAt: payment.paidAt,
-                    receiptNo: payment.receiptNo ?? '',
-                    taxType: record.taxType,
-                    taxAmount: record.taxAmount,
-                    cgstAmount: record.cgstAmount,
-                    sgstAmount: record.sgstAmount,
-                    igstAmount: record.igstAmount,
-                    cessAmount: record.cessAmount,
-                    gstRate: record.gstRate,
-                    sacCode: record.sacCode,
-                    baseAmount: record.baseAmount,
-                    discountAmount: record.discountAmount,
-                    fineAmount: record.fineAmount,
-                  ),
+              context,
+              MaterialPageRoute(
+                builder: (_) => PaymentReceiptScreen(
+                  coachingName: coachingName,
+                  feeTitle: record.title,
+                  amount: payment.amount,
+                  paymentId: payment.razorpayPaymentId ?? '',
+                  orderId: payment.razorpayOrderId ?? '',
+                  paidAt: payment.paidAt,
+                  receiptNo: payment.receiptNo ?? '',
+                  taxType: record.taxType,
+                  taxAmount: record.taxAmount,
+                  cgstAmount: record.cgstAmount,
+                  sgstAmount: record.sgstAmount,
+                  igstAmount: record.igstAmount,
+                  cessAmount: record.cessAmount,
+                  gstRate: record.gstRate,
+                  sacCode: record.sacCode,
+                  baseAmount: record.baseAmount,
+                  discountAmount: record.discountAmount,
+                  fineAmount: record.fineAmount,
                 ),
-              )
+              ),
+            )
           : null,
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),

@@ -137,13 +137,15 @@ class PaymentService {
 
     final completer = Completer<PaymentSuccessResponse>();
 
-    _razorpay!.on(Razorpay.EVENT_PAYMENT_SUCCESS,
-        (PaymentSuccessResponse response) {
+    _razorpay!.on(Razorpay.EVENT_PAYMENT_SUCCESS, (
+      PaymentSuccessResponse response,
+    ) {
       if (!completer.isCompleted) completer.complete(response);
     });
 
-    _razorpay!.on(Razorpay.EVENT_PAYMENT_ERROR,
-        (PaymentFailureResponse response) {
+    _razorpay!.on(Razorpay.EVENT_PAYMENT_ERROR, (
+      PaymentFailureResponse response,
+    ) {
       if (!completer.isCompleted) {
         completer.completeError(
           Exception(response.message ?? 'Payment failed'),
@@ -151,8 +153,9 @@ class PaymentService {
       }
     });
 
-    _razorpay!.on(Razorpay.EVENT_EXTERNAL_WALLET,
-        (ExternalWalletResponse response) {
+    _razorpay!.on(Razorpay.EVENT_EXTERNAL_WALLET, (
+      ExternalWalletResponse response,
+    ) {
       if (!completer.isCompleted) {
         completer.completeError(Exception('External wallet not supported'));
       }
