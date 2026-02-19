@@ -598,7 +598,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                           const SizedBox(height: 16),
                           Text(
                             _isStudent
-                                ? 'All Caught Up! 🎉'
+                                ? 'All Caught Up!'
                                 : 'No Recent Activity',
                             style: theme.textTheme.titleMedium?.copyWith(
                               color: theme.colorScheme.onSurface.withValues(

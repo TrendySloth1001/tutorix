@@ -488,7 +488,6 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
     bool loading = true;
     List<Map<String, dynamic>> payments = [];
     String? selectedPaymentId;
-    double? selectedAmount;
     final amtCtrl = TextEditingController();
     final reasonCtrl = TextEditingController();
     bool submitting = false;
@@ -594,7 +593,6 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                           borderRadius: BorderRadius.circular(12),
                           onTap: () => setSt(() {
                             selectedPaymentId = id;
-                            selectedAmount = amt;
                             amtCtrl.text = amt.toStringAsFixed(0);
                           }),
                           child: Padding(
@@ -1762,13 +1760,24 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
                           : AppColors.mutedOlive.withValues(alpha: 0.3),
                     ),
                   ),
-                  child: Text(
-                    _modeLabel(m),
-                    style: TextStyle(
-                      color: sel ? AppColors.cream : AppColors.darkOlive,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w600,
-                    ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        _modeIcon(m),
+                        size: 13,
+                        color: sel ? AppColors.cream : AppColors.darkOlive,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        _modeLabel(m),
+                        style: TextStyle(
+                          color: sel ? AppColors.cream : AppColors.darkOlive,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               );
@@ -1897,17 +1906,36 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
   String _modeLabel(String m) {
     switch (m) {
       case 'CASH':
-        return '💵 Cash';
+        return 'Cash';
       case 'UPI':
-        return '📱 UPI';
+        return 'UPI';
       case 'ONLINE':
-        return '💳 Online';
+        return 'Online';
       case 'BANK_TRANSFER':
-        return '🏦 Bank Transfer';
+        return 'Bank Transfer';
       case 'CHEQUE':
-        return '📝 Cheque';
+        return 'Cheque';
+      case 'OTHER':
+        return 'Other';
       default:
         return m;
+    }
+  }
+
+  IconData _modeIcon(String m) {
+    switch (m) {
+      case 'CASH':
+        return Icons.payments_rounded;
+      case 'UPI':
+        return Icons.qr_code_rounded;
+      case 'ONLINE':
+        return Icons.credit_card_rounded;
+      case 'BANK_TRANSFER':
+        return Icons.account_balance_rounded;
+      case 'CHEQUE':
+        return Icons.receipt_long_rounded;
+      default:
+        return Icons.more_horiz_rounded;
     }
   }
 }

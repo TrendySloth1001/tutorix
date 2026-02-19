@@ -116,7 +116,7 @@ class PaymentService {
       ApiConstants.paymentSettings(coachingId),
       body: body,
     );
-    return data as Map<String, dynamic>;
+    return data;
   }
 
   // ── Multi-Pay (select & pay multiple records) ────────────────────
