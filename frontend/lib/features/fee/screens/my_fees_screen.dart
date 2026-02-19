@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
@@ -354,13 +355,13 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFC62828).withValues(alpha: 0.1),
+                      color: Theme.of(context).colorScheme.error.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       '${payable.length}',
-                      style: const TextStyle(
-                        color: Color(0xFFC62828),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
                         fontWeight: FontWeight.w700,
                         fontSize: 12,
                       ),
@@ -441,13 +442,13 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                       vertical: 2,
                     ),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+                      color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
                       '${settled.length}',
-                      style: const TextStyle(
-                        color: Color(0xFF2E7D32),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.primary,
                         fontWeight: FontWeight.w700,
                         fontSize: 12,
                       ),
@@ -567,28 +568,27 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       if (!mounted) return;
       final msg = e.toString().replaceFirst('Exception: ', '');
       if (msg == 'Payment cancelled') return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          backgroundColor: const Color(0xFFC62828),
-          action: SnackBarAction(
-            label: 'View Details',
-            textColor: Colors.white,
-            onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (_) => FeeRecordDetailScreen(
-                    coachingId: widget.coachingId,
-                    recordId: record.id,
-                    coachingName: widget.coachingName,
-                  ),
-                ),
-              ).then((_) => _load());
-            },
-          ),
-        ),
+      final viewDetails = await AppAlert.confirm(
+        context,
+        title: 'Payment Failed',
+        message: msg,
+        confirmText: 'View Details',
+        cancelText: 'Close',
+        icon: Icons.error_outline_rounded,
+        confirmColor: Theme.of(context).colorScheme.error,
       );
+      if (viewDetails && mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => FeeRecordDetailScreen(
+              coachingId: widget.coachingId,
+              recordId: record.id,
+              coachingName: widget.coachingName,
+            ),
+          ),
+        ).then((_) => _load());
+      }
     }
   }
 
@@ -626,12 +626,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       );
       if (!mounted) return;
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Payment successful!'),
-          backgroundColor: Color(0xFF2E7D32),
-        ),
-      );
+      AppAlert.success(context, 'Payment successful! All fees have been paid.');
       setState(() {
         _selected.clear();
         _selectMode = false;
@@ -649,9 +644,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       if (!mounted) return;
       final msg = e.toString().replaceFirst('Exception: ', '');
       if (msg == 'Payment cancelled') return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg), backgroundColor: const Color(0xFFC62828)),
-      );
+      AppAlert.error(context, msg);
     }
   }
 
@@ -761,13 +754,14 @@ class _PayBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: theme.colorScheme.surface,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.08),
+            color: theme.colorScheme.primary.withValues(alpha: 0.06),
             blurRadius: 12,
             offset: const Offset(0, -2),
           ),
@@ -987,10 +981,11 @@ class _FeeCard extends StatelessWidget {
         record.status == 'OVERDUE' ||
         record.status == 'PARTIALLY_PAID';
 
+    final theme = Theme.of(context);
     return Material(
       color: isSelected
-          ? AppColors.darkOlive.withValues(alpha: 0.08)
-          : Colors.white.withValues(alpha: 0.6),
+          ? theme.colorScheme.primary.withValues(alpha: 0.08)
+          : theme.colorScheme.surface,
       borderRadius: BorderRadius.circular(16),
       child: InkWell(
         borderRadius: BorderRadius.circular(16),
@@ -1077,7 +1072,7 @@ class _FeeCard extends StatelessWidget {
                     'Due ${_fmtDate(record.dueDate)}',
                     style: TextStyle(
                       color: record.isOverdue
-                          ? const Color(0xFFC62828)
+                          ? theme.colorScheme.error
                           : AppColors.mutedOlive,
                       fontSize: 12,
                       fontWeight: record.isOverdue
@@ -1093,13 +1088,13 @@ class _FeeCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFEBEE),
+                        color: theme.colorScheme.error.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         '${record.daysOverdue}d overdue',
-                        style: const TextStyle(
-                          color: Color(0xFFC62828),
+                        style: TextStyle(
+                          color: theme.colorScheme.error,
                           fontSize: 10,
                           fontWeight: FontWeight.w700,
                         ),
@@ -1114,13 +1109,13 @@ class _FeeCard extends StatelessWidget {
                         vertical: 2,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+                        color: theme.colorScheme.primary.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(6),
                       ),
                       child: Text(
                         '-₹${record.discountAmount.toStringAsFixed(0)}',
-                        style: const TextStyle(
-                          color: Color(0xFF2E7D32),
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
                           fontSize: 10,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1131,8 +1126,8 @@ class _FeeCard extends StatelessWidget {
                   if (record.isPartial) ...[
                     Text(
                       '₹${record.paidAmount.toStringAsFixed(0)} paid',
-                      style: const TextStyle(
-                        color: Color(0xFF2E7D32),
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
                         fontSize: 12,
                       ),
                     ),
@@ -1459,38 +1454,39 @@ class _TxnCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final type = txn['type'] as String? ?? '';
     final isPayment = type == 'PAYMENT';
     final orderStatus = txn['status'] as String? ?? '';
 
-    // Visual theme by status
+    // Visual theme — semantic status colours grounded in app theme
     late Color bgColor, accentColor, labelBg;
     late IconData icon;
     late String statusLabel;
 
     if (isPayment) {
-      bgColor = const Color(0xFFEBF5EB);
-      accentColor = const Color(0xFF2E7D32);
-      labelBg = const Color(0xFFD0EDD0);
+      bgColor = theme.colorScheme.primary.withValues(alpha: 0.07);
+      accentColor = theme.colorScheme.primary;
+      labelBg = theme.colorScheme.primary.withValues(alpha: 0.13);
       icon = Icons.check_circle_rounded;
       statusLabel = 'Paid';
     } else if (orderStatus == 'FAILED') {
-      bgColor = const Color(0xFFFFEBEE);
-      accentColor = const Color(0xFFC62828);
-      labelBg = const Color(0xFFFFCDD2);
+      bgColor = theme.colorScheme.error.withValues(alpha: 0.07);
+      accentColor = theme.colorScheme.error;
+      labelBg = theme.colorScheme.error.withValues(alpha: 0.13);
       icon = Icons.cancel_rounded;
       statusLabel = 'Failed';
     } else if (orderStatus == 'EXPIRED') {
-      bgColor = const Color(0xFFFFF8E1);
-      accentColor = const Color(0xFFF57F17);
-      labelBg = const Color(0xFFFFECB3);
+      bgColor = theme.colorScheme.tertiary.withValues(alpha: 0.25);
+      accentColor = theme.colorScheme.secondary;
+      labelBg = theme.colorScheme.tertiary.withValues(alpha: 0.45);
       icon = Icons.access_time_rounded;
       statusLabel = 'Expired';
     } else {
       // CREATED — initiated but not completed
-      bgColor = const Color(0xFFF3F4F6);
-      accentColor = const Color(0xFF5E6A82);
-      labelBg = const Color(0xFFE3E6EC);
+      bgColor = theme.colorScheme.secondary.withValues(alpha: 0.07);
+      accentColor = theme.colorScheme.secondary;
+      labelBg = theme.colorScheme.secondary.withValues(alpha: 0.13);
       icon = Icons.pending_rounded;
       statusLabel = 'Initiated';
     }

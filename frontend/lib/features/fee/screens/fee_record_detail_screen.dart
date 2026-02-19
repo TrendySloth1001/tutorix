@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
@@ -190,18 +191,10 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
     if (action == 'remind') {
       try {
         await _svc.sendReminder(widget.coachingId, widget.recordId);
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Reminder marked as sent')),
-          );
-        }
+        if (mounted) AppAlert.success(context, 'Reminder marked as sent');
         _load();
       } catch (e) {
-        if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(e.toString())));
-        }
+        if (mounted) AppAlert.error(context, e);
       }
     } else if (action == 'waive') {
       _showWaiveDialog();
@@ -242,18 +235,10 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                       ? null
                       : notesCtrl.text.trim(),
                 );
-                if (mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(const SnackBar(content: Text('Fee waived')));
-                }
+                if (mounted) AppAlert.success(context, 'Fee waived successfully');
                 _load();
               } catch (e) {
-                if (mounted) {
-                  ScaffoldMessenger.of(
-                    context,
-                  ).showSnackBar(SnackBar(content: Text(e.toString())));
-                }
+                if (mounted) AppAlert.error(context, e);
               }
             },
             child: const Text('Waive'),
@@ -367,9 +352,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
       if (!mounted) return;
       final msg = e.toString().replaceFirst('Exception: ', '');
       if (msg == 'Payment cancelled') return; // user dismissed — no snackbar
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg), backgroundColor: const Color(0xFFC62828)),
-      );
+      AppAlert.error(context, msg);
     }
   }
 
