@@ -181,20 +181,17 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-              ? _ErrorRetry(error: _error!, onRetry: _load)
-              : RefreshIndicator(
-                  color: AppColors.darkOlive,
-                  onRefresh: _load,
-                  child: _records.isEmpty
-                      ? ListView(
-                          physics: const AlwaysScrollableScrollPhysics(),
-                          children: const [
-                            SizedBox(height: 200),
-                            _EmptyState(),
-                          ],
-                        )
-                      : _buildBody(),
-                ),
+          ? _ErrorRetry(error: _error!, onRetry: _load)
+          : RefreshIndicator(
+              color: AppColors.darkOlive,
+              onRefresh: _load,
+              child: _records.isEmpty
+                  ? ListView(
+                      physics: const AlwaysScrollableScrollPhysics(),
+                      children: const [SizedBox(height: 200), _EmptyState()],
+                    )
+                  : _buildBody(),
+            ),
       bottomNavigationBar: _selectMode && _selected.isNotEmpty
           ? _PayBar(
               selectedCount: _selected.length,
@@ -400,10 +397,7 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
     final user = auth.user;
 
     try {
-      final orderData = await _paySvc.createOrder(
-        widget.coachingId,
-        record.id,
-      );
+      final orderData = await _paySvc.createOrder(widget.coachingId, record.id);
       if (!mounted) return;
 
       final response = await _paySvc.openCheckout(
@@ -428,11 +422,8 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
 
       final vp = verified['verifiedPayment'] as Map<String, dynamic>?;
       final receiptNo =
-          vp?['receiptNo'] as String? ??
-          verified['receiptNo'] as String? ??
-          '';
-      final paidAmount =
-          (vp?['amount'] as num?)?.toDouble() ?? record.balance;
+          vp?['receiptNo'] as String? ?? verified['receiptNo'] as String? ?? '';
+      final paidAmount = (vp?['amount'] as num?)?.toDouble() ?? record.balance;
 
       Navigator.push(
         context,
@@ -467,10 +458,7 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
       if (!mounted) return;
       final msg = e.toString().replaceFirst('Exception: ', '');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          backgroundColor: const Color(0xFFC62828),
-        ),
+        SnackBar(content: Text(msg), backgroundColor: const Color(0xFFC62828)),
       );
     }
   }
@@ -493,8 +481,7 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
         orderId: orderData['orderId'] as String,
         amountPaise: (orderData['amount'] as num).toInt(),
         key: orderData['key'] as String,
-        feeTitle:
-            '${_selected.length} fee${_selected.length > 1 ? 's' : ''}',
+        feeTitle: '${_selected.length} fee${_selected.length > 1 ? 's' : ''}',
         userEmail: user?.email,
         userPhone: user?.phone,
         userName: user?.name,
@@ -524,18 +511,13 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
       if (!mounted) return;
       final msg = e.toString().replaceFirst('Exception: ', '');
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(msg),
-          backgroundColor: const Color(0xFFC62828),
-        ),
+        SnackBar(content: Text(msg), backgroundColor: const Color(0xFFC62828)),
       );
     }
   }
 
   void _showCustomAmountSheet() {
-    final ctrl = TextEditingController(
-      text: _selectedTotal.toStringAsFixed(0),
-    );
+    final ctrl = TextEditingController(text: _selectedTotal.toStringAsFixed(0));
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -567,16 +549,14 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
             Text(
               'Total due: ₹${_selectedTotal.toStringAsFixed(0)} '
               'for ${_selected.length} fee${_selected.length > 1 ? 's' : ''}',
-              style: const TextStyle(
-                color: AppColors.mutedOlive,
-                fontSize: 13,
-              ),
+              style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
             ),
             const SizedBox(height: 16),
             TextField(
               controller: ctrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               autofocus: true,
               decoration: const InputDecoration(
                 labelText: 'Amount (₹)',
@@ -592,8 +572,7 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
                 return ActionChip(
                   label: Text('$pct% · ₹$amt'),
                   onPressed: () => ctrl.text = amt.toString(),
-                  backgroundColor:
-                      AppColors.softGrey.withValues(alpha: 0.3),
+                  backgroundColor: AppColors.softGrey.withValues(alpha: 0.3),
                 );
               }).toList(),
             ),
@@ -613,10 +592,7 @@ class _MyFeesScreenState extends State<MyFeesScreen> {
                 },
                 child: const Text(
                   'Pay Now',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 15,
-                  ),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
                 ),
               ),
             ),
@@ -867,7 +843,8 @@ class _FeeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final statusColor = _statusColor(record.status);
-    final canPay = record.status == 'PENDING' ||
+    final canPay =
+        record.status == 'PENDING' ||
         record.status == 'OVERDUE' ||
         record.status == 'PARTIALLY_PAID';
 
@@ -884,10 +861,7 @@ class _FeeCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: isSelected
               ? BoxDecoration(
-                  border: Border.all(
-                    color: AppColors.darkOlive,
-                    width: 1.5,
-                  ),
+                  border: Border.all(color: AppColors.darkOlive, width: 1.5),
                   borderRadius: BorderRadius.circular(16),
                 )
               : null,

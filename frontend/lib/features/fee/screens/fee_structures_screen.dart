@@ -244,14 +244,22 @@ class _StructureTile extends StatelessWidget {
         decoration: BoxDecoration(
           color: AppColors.softGrey.withValues(alpha: 0.25),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: isInactive ? Colors.grey.withValues(alpha: 0.3) : AppColors.mutedOlive.withValues(alpha: 0.2)),
+          border: Border.all(
+            color: isInactive
+                ? Colors.grey.withValues(alpha: 0.3)
+                : AppColors.mutedOlive.withValues(alpha: 0.2),
+          ),
         ),
         child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 8,
+          ),
           leading: Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: (isInactive ? Colors.grey : AppColors.darkOlive).withValues(alpha: 0.1),
+              color: (isInactive ? Colors.grey : AppColors.darkOlive)
+                  .withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Icon(
@@ -273,61 +281,84 @@ class _StructureTile extends StatelessWidget {
               ),
               if (isInactive)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 2,
+                  ),
                   decoration: BoxDecoration(
                     color: Colors.grey.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: const Text(
                     'Archived',
-                    style: TextStyle(color: Colors.grey, fontSize: 10, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ),
             ],
           ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '₹${structure.amount.toStringAsFixed(0)} · ${structure.cycleLabel}',
-              style: const TextStyle(color: AppColors.mutedOlive, fontSize: 12),
-            ),
-            if (structure.lateFinePerDay > 0)
+          subtitle: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
               Text(
-                'Late fine: ₹${structure.lateFinePerDay}/day',
-                style: const TextStyle(color: Color(0xFFC62828), fontSize: 11),
+                '₹${structure.amount.toStringAsFixed(0)} · ${structure.cycleLabel}',
+                style: const TextStyle(
+                  color: AppColors.mutedOlive,
+                  fontSize: 12,
+                ),
               ),
-            if (structure.hasTax)
+              if (structure.lateFinePerDay > 0)
+                Text(
+                  'Late fine: ₹${structure.lateFinePerDay}/day',
+                  style: const TextStyle(
+                    color: Color(0xFFC62828),
+                    fontSize: 11,
+                  ),
+                ),
+              if (structure.hasTax)
+                Text(
+                  'GST ${structure.gstRate.toStringAsFixed(0)}% (${structure.taxType == 'GST_INCLUSIVE' ? 'Incl.' : 'Excl.'})',
+                  style: const TextStyle(
+                    color: Color(0xFF1565C0),
+                    fontSize: 11,
+                  ),
+                ),
+              if (structure.lineItems.isNotEmpty)
+                Text(
+                  '${structure.lineItems.length} line item${structure.lineItems.length == 1 ? '' : 's'}',
+                  style: const TextStyle(
+                    color: AppColors.mutedOlive,
+                    fontSize: 11,
+                  ),
+                ),
               Text(
-                'GST ${structure.gstRate.toStringAsFixed(0)}% (${structure.taxType == 'GST_INCLUSIVE' ? 'Incl.' : 'Excl.'})',
-                style: const TextStyle(color: Color(0xFF1565C0), fontSize: 11),
-              ),
-            if (structure.lineItems.isNotEmpty)
-              Text(
-                '${structure.lineItems.length} line item${structure.lineItems.length == 1 ? '' : 's'}',
+                '${structure.assignmentCount} student${structure.assignmentCount == 1 ? '' : 's'}',
                 style: const TextStyle(
                   color: AppColors.mutedOlive,
                   fontSize: 11,
                 ),
               ),
-            Text(
-              '${structure.assignmentCount} student${structure.assignmentCount == 1 ? '' : 's'}',
-              style: const TextStyle(color: AppColors.mutedOlive, fontSize: 11),
-            ),
-          ],
-        ),
-        trailing: PopupMenuButton<String>(
-          icon: const Icon(
-            Icons.more_vert_rounded,
-            color: AppColors.mutedOlive,
+            ],
           ),
-          onSelected: (v) => v == 'edit' ? onEdit() : onDelete(),
-          itemBuilder: (_) => [
-            if (!isInactive) const PopupMenuItem(value: 'edit', child: Text('Edit')),
-            PopupMenuItem(value: 'delete', child: Text(isInactive ? 'Remove' : 'Delete')),
-          ],
+          trailing: PopupMenuButton<String>(
+            icon: const Icon(
+              Icons.more_vert_rounded,
+              color: AppColors.mutedOlive,
+            ),
+            onSelected: (v) => v == 'edit' ? onEdit() : onDelete(),
+            itemBuilder: (_) => [
+              if (!isInactive)
+                const PopupMenuItem(value: 'edit', child: Text('Edit')),
+              PopupMenuItem(
+                value: 'delete',
+                child: Text(isInactive ? 'Remove' : 'Delete'),
+              ),
+            ],
+          ),
         ),
-      ),
       ),
     );
   }
