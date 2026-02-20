@@ -24,6 +24,9 @@ router.post('/structures', ...adminAuth, ctrl.createStructure.bind(ctrl));
 router.patch('/structures/:structureId', ...adminAuth, ctrl.updateStructure.bind(ctrl));
 router.delete('/structures/:structureId', ...adminAuth, ctrl.deleteStructure.bind(ctrl));
 
+// ── Assignment preview (admin-only) ───────────────────────────────
+router.get('/members/:memberId/assignment-preview', ...adminAuth, ctrl.getAssignmentPreview.bind(ctrl));
+
 // ── Assignments (admin-only) ────────────────────────────────────────
 router.post('/assign', ...adminAuth, ctrl.assignFee.bind(ctrl));
 router.delete('/assignments/:assignmentId', ...adminAuth, ctrl.removeFeeAssignment.bind(ctrl));

@@ -350,6 +350,64 @@ export class FeeService {
         return { hasCurrent: true, current, memberCount: totalCount, memberNames };
     }
 
+    /**
+     * Preview an existing member assignment before reassigning.
+     * Returns partial-payment records so the admin UI can warn and offer a credit.
+     */
+    async getAssignmentPreview(coachingId: string, memberId: string) {
+        const assignment = await prisma.feeAssignment.findFirst({
+            where: { coachingId, memberId },
+            include: { feeStructure: { select: { id: true, name: true } } },
+        });
+        if (!assignment) return { hasAssignment: false, partialRecords: [], totalPaid: 0, totalBalance: 0, lastLog: null };
+
+        const partialRecords = await prisma.feeRecord.findMany({
+            where: { assignmentId: assignment.id, status: 'PARTIALLY_PAID' },
+            select: { id: true, title: true, finalAmount: true, paidAmount: true },
+        });
+
+        const totalPaid = partialRecords.reduce((s, r) => s + r.paidAmount, 0);
+        const totalBalance = partialRecords.reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0);
+
+        // Pull last ASSIGNMENT_CREATED audit log to offer "restore settings" in the UI
+        const lastLog = await prisma.feeAuditLog.findFirst({
+            where: { coachingId, entityType: 'ASSIGNMENT', event: 'ASSIGNMENT_CREATED', entityId: assignment.id },
+            orderBy: { createdAt: 'desc' },
+            select: { after: true, createdAt: true, actor: { select: { name: true } } },
+        });
+
+        const lastLogAfter = lastLog?.after as Record<string, unknown> | null ?? null;
+        const hasNonTrivialSettings =
+            lastLogAfter != null &&
+            ((lastLogAfter.customAmount != null) ||
+             ((lastLogAfter.discountAmount as number ?? 0) > 0) ||
+             (lastLogAfter.scholarshipTag != null));
+
+        return {
+            hasAssignment: true,
+            currentStructureId: assignment.feeStructureId,
+            currentStructureName: assignment.feeStructure.name,
+            partialRecords: partialRecords.map(r => ({
+                id: r.id,
+                title: r.title,
+                totalAmount: r.finalAmount,
+                paidAmount: r.paidAmount,
+                balance: r.finalAmount - r.paidAmount,
+            })),
+            totalPaid,
+            totalBalance,
+            lastLog: hasNonTrivialSettings ? {
+                customAmount: lastLogAfter!.customAmount ?? null,
+                discountAmount: lastLogAfter!.discountAmount ?? 0,
+                discountReason: (lastLogAfter!.discountReason as string | null) ?? null,
+                scholarshipTag: (lastLogAfter!.scholarshipTag as string | null) ?? null,
+                scholarshipAmount: (lastLogAfter!.scholarshipAmount as number | null) ?? null,
+                assignedAt: lastLog!.createdAt,
+                assignedBy: lastLog!.actor?.name ?? null,
+            } : null,
+        };
+    }
+
     async createStructure(coachingId: string, dto: CreateFeeStructureDto, actorId?: string) {
         // Each structure is independent — multiple can coexist per coaching.
         // No "current" enforcement or demotion.

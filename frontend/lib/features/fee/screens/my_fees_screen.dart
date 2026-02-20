@@ -570,6 +570,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
         fixedItems: structure.installmentAmounts,
         installmentCount: structure.installmentCount,
         balance: record.balance,
+        paidAmount: record.paidAmount,
         onSelected: (double? amount) => _paySingle(record, amount: amount),
       ),
     );
@@ -1211,20 +1212,25 @@ class _FeeCard extends StatelessWidget {
   }
 
   /// Compute label for the installment button.
+  /// Shows the next-due per-installment amount based on structure config.
   static String _installmentLabel(FeeRecordModel r) {
     final s = r.feeStructure;
     if (s == null) return r.balance.toStringAsFixed(0);
+    // If admin defined fixed amounts, find the first unpaid installment
     if (s.installmentAmounts.isNotEmpty) {
-      final affordable = s.installmentAmounts
-          .where((a) => a.amount <= r.balance + 0.01)
-          .toList();
-      if (affordable.isNotEmpty) {
-        return affordable.first.amount.toStringAsFixed(0);
+      double cumulative = 0;
+      for (final item in s.installmentAmounts) {
+        cumulative += item.amount;
+        if (r.paidAmount < cumulative - 0.01) {
+          return item.amount.toStringAsFixed(0);
+        }
       }
-      return s.installmentAmounts.first.amount.toStringAsFixed(0);
+      return s.installmentAmounts.last.amount.toStringAsFixed(0);
     }
+    // Auto-computed from installmentCount — use TOTAL amount, not remaining balance
     if (s.installmentCount > 0) {
-      final per = (r.balance / s.installmentCount).ceil();
+      final total = r.balance + r.paidAmount; // equals finalAmount
+      final per = (total / s.installmentCount * 100).ceilToDouble() / 100;
       return per.toStringAsFixed(0);
     }
     return r.balance.toStringAsFixed(0);
@@ -1667,24 +1673,27 @@ class _FeeInstallmentSheet extends StatelessWidget {
   final List<InstallmentAmountItem> fixedItems;
   final int installmentCount;
   final double balance;
+  final double paidAmount;
   final void Function(double? amount) onSelected;
 
   const _FeeInstallmentSheet({
     required this.fixedItems,
     required this.installmentCount,
     required this.balance,
+    required this.paidAmount,
     required this.onSelected,
   });
 
-  /// Build the effective options list.
+  double get _totalAmount => balance + paidAmount;
+
   List<InstallmentAmountItem> get _options {
     if (fixedItems.isNotEmpty) return fixedItems;
     if (installmentCount > 0) {
-      final perInstallment =
-          (balance / installmentCount * 100).ceilToDouble() / 100;
+      final total = _totalAmount;
+      final per = (total / installmentCount * 100).ceilToDouble() / 100;
       return List.generate(installmentCount, (i) {
         final isLast = i == installmentCount - 1;
-        final amt = isLast ? balance - perInstallment * i : perInstallment;
+        final amt = isLast ? total - per * i : per;
         return InstallmentAmountItem(
           label: 'Installment ${i + 1} of $installmentCount',
           amount: amt > 0 ? amt : 0,
@@ -1692,6 +1701,14 @@ class _FeeInstallmentSheet extends StatelessWidget {
       });
     }
     return [];
+  }
+
+  bool _isPaid(List<InstallmentAmountItem> options, int index) {
+    double cumulative = 0;
+    for (int i = 0; i <= index; i++) {
+      cumulative += options[i].amount;
+    }
+    return paidAmount >= cumulative - 0.01;
   }
 
   @override
@@ -1746,12 +1763,15 @@ class _FeeInstallmentSheet extends StatelessWidget {
           ],
           const SizedBox(height: 16),
           // Installment options
-          ...options.map((item) {
-            final isAffordable = item.amount <= balance + 0.01;
+          ...options.asMap().entries.map((entry) {
+            final i = entry.key;
+            final item = entry.value;
+            final paid = _isPaid(options, i);
+            final isPayable = !paid && item.amount <= balance + 0.01;
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: InkWell(
-                onTap: isAffordable
+                onTap: isPayable
                     ? () {
                         Navigator.pop(context);
                         onSelected(item.amount);
@@ -1764,14 +1784,18 @@ class _FeeInstallmentSheet extends StatelessWidget {
                     vertical: 14,
                   ),
                   decoration: BoxDecoration(
-                    color: isAffordable
-                        ? AppColors.darkOlive.withValues(alpha: 0.07)
-                        : AppColors.softGrey.withValues(alpha: 0.3),
+                    color: paid
+                        ? const Color(0xFF2E7D32).withValues(alpha: 0.07)
+                        : isPayable
+                            ? AppColors.darkOlive.withValues(alpha: 0.07)
+                            : AppColors.softGrey.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isAffordable
-                          ? AppColors.darkOlive.withValues(alpha: 0.25)
-                          : AppColors.softGrey,
+                      color: paid
+                          ? const Color(0xFF2E7D32).withValues(alpha: 0.35)
+                          : isPayable
+                              ? AppColors.darkOlive.withValues(alpha: 0.25)
+                              : AppColors.softGrey,
                     ),
                   ),
                   child: Row(
@@ -1780,9 +1804,11 @@ class _FeeInstallmentSheet extends StatelessWidget {
                         child: Text(
                           item.label,
                           style: TextStyle(
-                            color: isAffordable
-                                ? AppColors.darkOlive
-                                : AppColors.mutedOlive,
+                            color: paid
+                                ? const Color(0xFF2E7D32)
+                                : isPayable
+                                    ? AppColors.darkOlive
+                                    : AppColors.mutedOlive,
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
                           ),
@@ -1791,21 +1817,28 @@ class _FeeInstallmentSheet extends StatelessWidget {
                       Text(
                         '₹${item.amount.toStringAsFixed(0)}',
                         style: TextStyle(
-                          color: isAffordable
-                              ? AppColors.darkOlive
-                              : AppColors.mutedOlive,
+                          color: paid
+                              ? const Color(0xFF2E7D32)
+                              : isPayable
+                                  ? AppColors.darkOlive
+                                  : AppColors.mutedOlive,
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                         ),
                       ),
-                      if (!isAffordable) ...[
-                        const SizedBox(width: 6),
+                      const SizedBox(width: 8),
+                      if (paid)
+                        const Icon(
+                          Icons.check_circle_rounded,
+                          size: 18,
+                          color: Color(0xFF2E7D32),
+                        )
+                      else if (!isPayable)
                         const Icon(
                           Icons.lock_outline_rounded,
                           size: 14,
                           color: AppColors.mutedOlive,
                         ),
-                      ],
                     ],
                   ),
                 ),

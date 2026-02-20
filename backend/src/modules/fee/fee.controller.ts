@@ -92,6 +92,16 @@ export class FeeController {
         }
     }
 
+    async getAssignmentPreview(req: Request, res: Response) {
+        try {
+            const { coachingId, memberId } = req.params as { coachingId: string; memberId: string };
+            const data = await svc.getAssignmentPreview(coachingId, memberId);
+            res.json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+
     // ── Assignments ──────────────────────────────────────────────
 
     async assignFee(req: Request, res: Response) {

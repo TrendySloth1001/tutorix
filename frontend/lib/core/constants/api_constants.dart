@@ -249,6 +249,8 @@ class ApiConstants {
       '$baseUrl/coaching/$coachingId/fee/records/$recordId/waive';
   static String feeMember(String coachingId, String memberId) =>
       '$baseUrl/coaching/$coachingId/fee/members/$memberId';
+  static String feeAssignmentPreview(String coachingId, String memberId) =>
+      '$baseUrl/coaching/$coachingId/fee/members/$memberId/assignment-preview';
   static String feesMy(String coachingId) =>
       '$baseUrl/coaching/$coachingId/fee/my';
   static String feeMemberLedger(String coachingId, String memberId) =>

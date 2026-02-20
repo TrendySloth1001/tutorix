@@ -287,6 +287,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
 
   void _showInstallmentPicker(FeeStructureModel structure) {
     final balance = _record?.balance ?? 0;
+    final paidAmount = _record?.paidAmount ?? 0;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -295,6 +296,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
         fixedItems: structure.installmentAmounts,
         installmentCount: structure.installmentCount,
         balance: balance,
+        paidAmount: paidAmount,
         onSelected: (double? amount) => _payOnline(amount),
       ),
     );
@@ -822,23 +824,25 @@ class _Body extends StatelessWidget {
   }
 
   /// Compute label for the installment button.
-  /// Shows the per-installment amount based on structure config.
+  /// Shows the next-due per-installment amount based on structure config.
   static String _installmentLabel(FeeRecordModel r) {
     final s = r.feeStructure;
     if (s == null) return r.balance.toStringAsFixed(0);
-    // If admin defined fixed amounts, show the smallest affordable one
+    // If admin defined fixed amounts, find the first unpaid installment
     if (s.installmentAmounts.isNotEmpty) {
-      final affordable = s.installmentAmounts
-          .where((a) => a.amount <= r.balance + 0.01)
-          .toList();
-      if (affordable.isNotEmpty) {
-        return affordable.first.amount.toStringAsFixed(0);
+      double cumulative = 0;
+      for (final item in s.installmentAmounts) {
+        cumulative += item.amount;
+        if (r.paidAmount < cumulative - 0.01) {
+          return item.amount.toStringAsFixed(0);
+        }
       }
-      return s.installmentAmounts.first.amount.toStringAsFixed(0);
+      return s.installmentAmounts.last.amount.toStringAsFixed(0);
     }
-    // Auto-computed from installmentCount
+    // Auto-computed from installmentCount — use TOTAL amount, not remaining balance
     if (s.installmentCount > 0) {
-      final per = (r.balance / s.installmentCount).ceil();
+      final total = r.balance + r.paidAmount; // equals finalAmount
+      final per = (total / s.installmentCount * 100).ceilToDouble() / 100;
       return per.toStringAsFixed(0);
     }
     return r.balance.toStringAsFixed(0);
@@ -1513,14 +1517,14 @@ class _PaymentRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: const Color(0xFFE8F5E9),
+          color: AppColors.softGrey.withValues(alpha: 0.22),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
           children: [
             const Icon(
               Icons.check_circle_rounded,
-              color: Color(0xFF2E7D32),
+              color: AppColors.primaryGreen,
               size: 18,
             ),
             const SizedBox(width: 10),
@@ -1550,7 +1554,7 @@ class _PaymentRow extends StatelessWidget {
               '₹${payment.amount.toStringAsFixed(0)}',
               style: const TextStyle(
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF2E7D32),
+                color: AppColors.primaryGreen,
                 fontSize: 14,
               ),
             ),
@@ -1600,14 +1604,14 @@ class _RefundRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFE3F2FD),
+        color: AppColors.softGrey.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
           const Icon(
             Icons.keyboard_return_rounded,
-            color: Color(0xFF1565C0),
+            color: AppColors.darkOlive,
             size: 18,
           ),
           const SizedBox(width: 10),
@@ -1637,7 +1641,7 @@ class _RefundRow extends StatelessWidget {
             '- ₹${refund.amount.toStringAsFixed(0)}',
             style: const TextStyle(
               fontWeight: FontWeight.w700,
-              color: Color(0xFF1565C0),
+              color: AppColors.darkOlive,
               fontSize: 14,
             ),
           ),
@@ -1685,7 +1689,7 @@ class _FailedAttempts extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFEBEE),
+              color: AppColors.softGrey.withValues(alpha: 0.22),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -2227,27 +2231,29 @@ class _InstallmentPickerSheet extends StatelessWidget {
   final List<InstallmentAmountItem> fixedItems;
   final int installmentCount;
   final double balance;
+  final double paidAmount;
   final void Function(double? amount) onSelected;
 
   const _InstallmentPickerSheet({
     required this.fixedItems,
     required this.installmentCount,
     required this.balance,
+    required this.paidAmount,
     required this.onSelected,
   });
 
-  /// Build the effective options list.
-  /// If admin defined fixed amounts → use those.
-  /// Else if installmentCount > 0 → auto-divide balance into equal parts.
+  double get _totalAmount => balance + paidAmount;
+
+  /// All options computed from the FULL fee (not just remaining balance).
+  /// Paid installments are included so they can be shown as ticked.
   List<InstallmentAmountItem> get _options {
     if (fixedItems.isNotEmpty) return fixedItems;
     if (installmentCount > 0) {
-      final perInstallment =
-          (balance / installmentCount * 100).ceilToDouble() / 100;
+      final total = _totalAmount;
+      final per = (total / installmentCount * 100).ceilToDouble() / 100;
       return List.generate(installmentCount, (i) {
-        // Last installment gets the remainder to avoid rounding overshoot
         final isLast = i == installmentCount - 1;
-        final amt = isLast ? balance - perInstallment * i : perInstallment;
+        final amt = isLast ? total - per * i : per;
         return InstallmentAmountItem(
           label: 'Installment ${i + 1} of $installmentCount',
           amount: amt > 0 ? amt : 0,
@@ -2255,6 +2261,16 @@ class _InstallmentPickerSheet extends StatelessWidget {
       });
     }
     return [];
+  }
+
+  /// Returns whether option at [index] has already been paid.
+  /// Uses cumulative sum of options vs. paidAmount.
+  bool _isPaid(List<InstallmentAmountItem> options, int index) {
+    double cumulative = 0;
+    for (int i = 0; i <= index; i++) {
+      cumulative += options[i].amount;
+    }
+    return paidAmount >= cumulative - 0.01;
   }
 
   @override
@@ -2310,12 +2326,16 @@ class _InstallmentPickerSheet extends StatelessWidget {
           ],
           const SizedBox(height: 16),
           // Installment options
-          ...options.map((item) {
-            final isAffordable = item.amount <= balance + 0.01;
+          ...options.asMap().entries.map((entry) {
+            final i = entry.key;
+            final item = entry.value;
+            final paid = _isPaid(options, i);
+            // An option is payable if not already paid and its amount ≤ balance
+            final isPayable = !paid && item.amount <= balance + 0.01;
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
               child: InkWell(
-                onTap: isAffordable
+                onTap: isPayable
                     ? () {
                         Navigator.pop(context);
                         onSelected(item.amount);
@@ -2328,12 +2348,16 @@ class _InstallmentPickerSheet extends StatelessWidget {
                     vertical: 14,
                   ),
                   decoration: BoxDecoration(
-                    color: isAffordable
+                    color: paid
+                        ? const Color(0xFF2E7D32).withValues(alpha: 0.07)
+                        : isPayable
                         ? AppColors.darkOlive.withValues(alpha: 0.07)
                         : AppColors.softGrey.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
-                      color: isAffordable
+                      color: paid
+                          ? const Color(0xFF2E7D32).withValues(alpha: 0.35)
+                          : isPayable
                           ? AppColors.darkOlive.withValues(alpha: 0.25)
                           : AppColors.softGrey,
                     ),
@@ -2344,7 +2368,9 @@ class _InstallmentPickerSheet extends StatelessWidget {
                         child: Text(
                           item.label,
                           style: TextStyle(
-                            color: isAffordable
+                            color: paid
+                                ? const Color(0xFF2E7D32)
+                                : isPayable
                                 ? AppColors.darkOlive
                                 : AppColors.mutedOlive,
                             fontWeight: FontWeight.w600,
@@ -2355,21 +2381,28 @@ class _InstallmentPickerSheet extends StatelessWidget {
                       Text(
                         '₹${item.amount.toStringAsFixed(0)}',
                         style: TextStyle(
-                          color: isAffordable
+                          color: paid
+                              ? const Color(0xFF2E7D32)
+                              : isPayable
                               ? AppColors.darkOlive
                               : AppColors.mutedOlive,
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                         ),
                       ),
-                      if (!isAffordable) ...[
-                        const SizedBox(width: 6),
+                      const SizedBox(width: 8),
+                      if (paid)
+                        const Icon(
+                          Icons.check_circle_rounded,
+                          size: 18,
+                          color: Color(0xFF2E7D32),
+                        )
+                      else if (!isPayable)
                         const Icon(
                           Icons.lock_outline_rounded,
                           size: 14,
                           color: AppColors.mutedOlive,
                         ),
-                      ],
                     ],
                   ),
                 ),

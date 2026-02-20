@@ -219,6 +219,16 @@ class FeeService {
     return data;
   }
 
+  Future<Map<String, dynamic>> getAssignmentPreview(
+    String coachingId,
+    String memberId,
+  ) async {
+    final data = await _api.getAuthenticated(
+      ApiConstants.feeAssignmentPreview(coachingId, memberId),
+    );
+    return data as Map<String, dynamic>;
+  }
+
   // ── Fee Records ─────────────────────────────────────────────────
 
   Future<Map<String, dynamic>> listRecords(
