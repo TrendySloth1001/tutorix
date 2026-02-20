@@ -39,6 +39,11 @@ const installmentPlanItemSchema = z.object({
     amount: positiveNumber,
 });
 
+const installmentAmountItemSchema = z.object({
+    label: z.string().min(1).max(200),
+    amount: z.number().positive(),
+});
+
 export const createFeeStructureSchema = z.object({
     name: z.string().min(1, 'Name is required').max(200),
     description: z.string().max(1000).optional(),
@@ -56,6 +61,10 @@ export const createFeeStructureSchema = z.object({
     gstSupplyType: z.enum(VALID_SUPPLY_TYPES).default('INTRA_STATE'),
     cessRate: nonNegativeNumber.max(50).default(0),
     lineItems: z.array(lineItemSchema).optional(),
+    // installment control
+    allowInstallments: z.boolean().default(false),
+    installmentCount: z.number().int().min(0).default(0),
+    installmentAmounts: z.array(installmentAmountItemSchema).optional(),
 }).refine((data) => {
     // If cycle is INSTALLMENT, installmentPlan must be provided
     if (data.cycle === 'INSTALLMENT') {
@@ -93,6 +102,10 @@ export const updateFeeStructureSchema = z.object({
     gstSupplyType: z.enum(VALID_SUPPLY_TYPES).optional(),
     cessRate: nonNegativeNumber.max(50).optional(),
     lineItems: z.array(lineItemSchema).nullable().optional(),
+    // installment control
+    allowInstallments: z.boolean().optional(),
+    installmentCount: z.number().int().min(0).optional(),
+    installmentAmounts: z.array(installmentAmountItemSchema).nullable().optional(),
 });
 
 // ─── Fee Assignment Schema ──────────────────────────────────────────
@@ -199,6 +212,18 @@ export const paymentSettingsSchema = z.object({
     bankAccountNumber: z.string().min(8).max(20).optional().or(z.literal('')),
     bankIfscCode: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Invalid IFSC format').or(z.literal('')).optional(),
     bankName: z.string().max(200).optional(),
+});
+
+// ─── Audit Log Schema ───────────────────────────────────────────────
+
+export const listAuditLogSchema = z.object({
+    entityType: z.string().optional(),
+    entityId: z.string().optional(),
+    event: z.string().optional(),
+    from: isoDateString.optional(),
+    to: isoDateString.optional(),
+    page: z.coerce.number().int().positive().default(1),
+    limit: z.coerce.number().int().positive().max(100).default(50),
 });
 
 // ─── Validate Helper ────────────────────────────────────────────────

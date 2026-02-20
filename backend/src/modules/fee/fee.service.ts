@@ -21,6 +21,10 @@ export interface CreateFeeStructureDto {
     gstSupplyType?: string | undefined;
     cessRate?: number | undefined;
     lineItems?: Array<{ label: string; amount: number }> | undefined;
+    // installment control fields
+    allowInstallments?: boolean | undefined;
+    installmentCount?: number | undefined;
+    installmentAmounts?: Array<{ label: string; amount: number }> | undefined;
 }
 
 export interface UpdateFeeStructureDto {
@@ -39,6 +43,10 @@ export interface UpdateFeeStructureDto {
     gstSupplyType?: string | null | undefined;
     cessRate?: number | null | undefined;
     lineItems?: Array<{ label: string; amount: number }> | null | undefined;
+    // installment control fields
+    allowInstallments?: boolean | undefined;
+    installmentCount?: number | undefined;
+    installmentAmounts?: Array<{ label: string; amount: number }> | null | undefined;
 }
 
 export interface AssignFeeDto {
@@ -85,6 +93,16 @@ export interface ListFeeRecordsQuery {
     page?: number;
     limit?: number;
     search?: string;
+}
+
+export interface ListAuditLogQuery {
+    entityType?: string | undefined;
+    entityId?: string | undefined;
+    event?: string | undefined;
+    from?: string | undefined;
+    to?: string | undefined;
+    page?: number | undefined;
+    limit?: number | undefined;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
@@ -237,6 +255,45 @@ const OVERDUE_DEBOUNCE_MS = 5 * 60 * 1000; // 5 minutes
 const _healLastRun = new Map<string, number>();
 const HEAL_DEBOUNCE_MS = 60 * 1000; // 60 seconds
 
+// ─── Audit Logger ─────────────────────────────────────────────────────
+
+interface AuditParams {
+    coachingId: string;
+    entityType: string;
+    entityId: string;
+    event: string;
+    actorId?: string | null;    // null / undefined → SYSTEM
+    feeStructureId?: string | null;
+    before?: object | null;
+    after?: object | null;
+    meta?: object | null;
+    note?: string | null;
+}
+
+/** Fire-and-forget audit log write — never throws so it doesn't break main flow. */
+async function writeAuditLog(params: AuditParams): Promise<void> {
+    try {
+        await prisma.feeAuditLog.create({
+            data: {
+                coachingId: params.coachingId,
+                entityType: params.entityType,
+                entityId: params.entityId,
+                event: params.event,
+                actorType: params.actorId ? 'ADMIN' : 'SYSTEM',
+                actorId: params.actorId ?? null,
+                feeStructureId: params.feeStructureId ?? null,
+                before: params.before != null ? params.before as Prisma.InputJsonValue : Prisma.JsonNull,
+                after: params.after != null ? params.after as Prisma.InputJsonValue : Prisma.JsonNull,
+                meta: params.meta != null ? params.meta as Prisma.InputJsonValue : Prisma.JsonNull,
+                note: params.note ?? null,
+            },
+        });
+    } catch (err) {
+        // Audit log failure must never crash the main operation
+        console.error('[FeeAuditLog] write failed:', err);
+    }
+}
+
 export class FeeService {
 
     // ── Fee Structures ─────────────────────────────────────────────
@@ -244,15 +301,74 @@ export class FeeService {
     async listStructures(coachingId: string) {
         return prisma.feeStructure.findMany({
             where: { coachingId },
-            orderBy: { createdAt: 'desc' },
+            orderBy: [{ isCurrent: 'desc' }, { createdAt: 'desc' }],
             include: {
                 _count: { select: { assignments: true } },
             },
         });
     }
 
-    async createStructure(coachingId: string, dto: CreateFeeStructureDto) {
-        return prisma.feeStructure.create({
+    /**
+     * Get the current (active) fee structure for a coaching.
+     * Returns the one with isCurrent=true, or the most recently created active one.
+     */
+    async getCurrentStructure(coachingId: string) {
+        const current = await prisma.feeStructure.findFirst({
+            where: { coachingId, isCurrent: true, isActive: true },
+            include: { _count: { select: { assignments: true } } },
+        });
+        return current;
+    }
+
+    /**
+     * Preview info for "warning" bottom sheet before replacing a structure.
+     * Returns the current structure + count + sample member names.
+     */
+    async getStructureReplacePreview(coachingId: string) {
+        const current = await prisma.feeStructure.findFirst({
+            where: { coachingId, isCurrent: true, isActive: true },
+            include: { _count: { select: { assignments: true } } },
+        });
+        if (!current) return { hasCurrent: false, current: null, memberCount: 0, memberNames: [] };
+
+        // Get up to 10 member names mapped to the current structure
+        const assignments = await prisma.feeAssignment.findMany({
+            where: { feeStructureId: current.id, isActive: true },
+            take: 10,
+            include: {
+                member: {
+                    select: {
+                        user: { select: { name: true } },
+                        ward: { select: { name: true } },
+                    },
+                },
+            },
+        });
+        const memberNames = assignments.map((a) => a.member.user?.name ?? a.member.ward?.name ?? 'Unknown');
+        const totalCount = current._count.assignments;
+
+        return { hasCurrent: true, current, memberCount: totalCount, memberNames };
+    }
+
+    async createStructure(coachingId: string, dto: CreateFeeStructureDto, actorId?: string) {
+        // ── isCurrent enforcement ───────────────────────────────
+        // When creating a new structure, it automatically becomes the current one.
+        // The previously current structure is demoted.
+
+        const previousCurrent = await prisma.feeStructure.findFirst({
+            where: { coachingId, isCurrent: true },
+            select: { id: true, name: true, amount: true, taxType: true, gstRate: true },
+        });
+
+        // Demote old current in same transaction
+        if (previousCurrent) {
+            await prisma.feeStructure.update({
+                where: { id: previousCurrent.id },
+                data: { isCurrent: false, replacedAt: new Date() },
+            });
+        }
+
+        const created = await prisma.feeStructure.create({
             data: {
                 coachingId,
                 name: dto.name,
@@ -271,12 +387,46 @@ export class FeeService {
                 cessRate: dto.cessRate ?? 0,
                 // Line items
                 lineItems: dto.lineItems != null ? dto.lineItems as Prisma.InputJsonValue : Prisma.JsonNull,
+                // New: isCurrent = true (this is the new active template)
+                isCurrent: true,
+                // Installment controls
+                allowInstallments: dto.allowInstallments ?? false,
+                installmentCount: dto.installmentCount ?? 0,
+                installmentAmounts: dto.installmentAmounts != null ? dto.installmentAmounts as Prisma.InputJsonValue : Prisma.JsonNull,
             },
         });
+
+        // Audit: STRUCTURE_CREATED (and STRUCTURE_REPLACED if we demoted a previous one)
+        if (previousCurrent) {
+            void writeAuditLog({
+                coachingId,
+                entityType: 'STRUCTURE',
+                entityId: created.id,
+                event: 'STRUCTURE_REPLACED',
+                actorId: actorId ?? null,
+                feeStructureId: created.id,
+                before: { id: previousCurrent.id, name: previousCurrent.name, amount: previousCurrent.amount },
+                after: { id: created.id, name: created.name, amount: created.amount },
+                meta: { replacedStructureId: previousCurrent.id },
+                note: `Structure "${previousCurrent.name}" replaced by "${created.name}"`,
+            });
+        } else {
+            void writeAuditLog({
+                coachingId,
+                entityType: 'STRUCTURE',
+                entityId: created.id,
+                event: 'STRUCTURE_CREATED',
+                actorId: actorId ?? null,
+                feeStructureId: created.id,
+                after: { id: created.id, name: created.name, amount: created.amount, cycle: created.cycle },
+            });
+        }
+
+        return created;
     }
 
-    async updateStructure(coachingId: string, structureId: string, dto: UpdateFeeStructureDto) {
-        await this._ensureStructureOwned(coachingId, structureId);
+    async updateStructure(coachingId: string, structureId: string, dto: UpdateFeeStructureDto, actorId?: string) {
+        const before = await this._ensureStructureOwned(coachingId, structureId);
         const data: Record<string, unknown> = {};
         if (dto.name !== undefined) data.name = dto.name;
         if (dto.description !== undefined) data.description = dto.description ?? null;
@@ -300,6 +450,18 @@ export class FeeService {
         if (dto.lineItems !== undefined) {
             data.lineItems = dto.lineItems != null ? dto.lineItems as Prisma.InputJsonValue : Prisma.JsonNull;
         }
+        // Installment control fields
+        if (dto.allowInstallments !== undefined) data.allowInstallments = dto.allowInstallments;
+        if (dto.installmentCount !== undefined) data.installmentCount = dto.installmentCount;
+        if (dto.installmentAmounts !== undefined) {
+            data.installmentAmounts = dto.installmentAmounts != null ? dto.installmentAmounts as Prisma.InputJsonValue : Prisma.JsonNull;
+        }
+
+        const installmentSettingChanged =
+            dto.allowInstallments !== undefined ||
+            dto.installmentCount !== undefined ||
+            dto.installmentAmounts !== undefined;
+
         const priceOrTaxChanged =
             dto.amount !== undefined ||
             dto.taxType !== undefined ||
@@ -310,6 +472,20 @@ export class FeeService {
         const updated = await prisma.feeStructure.update({
             where: { id: structureId },
             data,
+        });
+
+        // Audit log
+        void writeAuditLog({
+            coachingId,
+            entityType: 'STRUCTURE',
+            entityId: structureId,
+            event: installmentSettingChanged ? 'INSTALLMENT_SETTINGS_CHANGED' : 'STRUCTURE_UPDATED',
+            actorId: actorId ?? null,
+            feeStructureId: structureId,
+            before: { name: before.name, amount: before.amount, taxType: before.taxType, gstRate: before.gstRate,
+                      allowInstallments: before.allowInstallments, installmentCount: before.installmentCount },
+            after: { name: updated.name, amount: updated.amount, taxType: updated.taxType, gstRate: updated.gstRate,
+                     allowInstallments: updated.allowInstallments, installmentCount: updated.installmentCount },
         });
 
         // Cascade price/tax changes to all PENDING unpaid records linked to this structure
@@ -386,17 +562,32 @@ export class FeeService {
         return updated;
     }
 
-    async deleteStructure(coachingId: string, structureId: string) {
-        await this._ensureStructureOwned(coachingId, structureId);
+    async deleteStructure(coachingId: string, structureId: string, actorId?: string) {
+        const structure = await this._ensureStructureOwned(coachingId, structureId);
         // Check if any fee records exist under this structure
         const recordCount = await prisma.feeRecord.count({ where: { assignment: { feeStructureId: structureId } } });
+        let result;
         if (recordCount > 0) {
             // Soft-delete: deactivate structure + all its assignments
             await prisma.feeAssignment.updateMany({ where: { feeStructureId: structureId }, data: { isActive: false } });
-            return prisma.feeStructure.update({ where: { id: structureId }, data: { isActive: false } });
+            result = await prisma.feeStructure.update({ where: { id: structureId }, data: { isActive: false, isCurrent: false } });
+        } else {
+            // No records: safe to hard-delete (cascades to assignments)
+            result = await prisma.feeStructure.delete({ where: { id: structureId } });
         }
-        // No records: safe to hard-delete (cascades to assignments)
-        return prisma.feeStructure.delete({ where: { id: structureId } });
+
+        void writeAuditLog({
+            coachingId,
+            entityType: 'STRUCTURE',
+            entityId: structureId,
+            event: 'STRUCTURE_DELETED',
+            actorId: actorId ?? null,
+            feeStructureId: structureId,
+            before: { name: structure.name, amount: structure.amount },
+            meta: { softDelete: recordCount > 0 },
+        });
+
+        return result;
     }
 
     // ── Assignments ─────────────────────────────────────────────────
@@ -504,19 +695,46 @@ export class FeeService {
             ));
         }
 
+        void writeAuditLog({
+            coachingId,
+            entityType: 'ASSIGNMENT',
+            entityId: assignment.id,
+            event: 'ASSIGNMENT_CREATED',
+            actorId: assignedById,
+            feeStructureId: dto.feeStructureId,
+            after: {
+                memberId: dto.memberId,
+                feeStructureId: dto.feeStructureId,
+                customAmount: dto.customAmount ?? null,
+                discountAmount: totalDiscount,
+                scholarshipTag: dto.scholarshipTag ?? null,
+            },
+        });
+
         return assignment;
     }
 
-    async removeFeeAssignment(coachingId: string, assignmentId: string) {
+    async removeFeeAssignment(coachingId: string, assignmentId: string, actorId?: string) {
         const assignment = await prisma.feeAssignment.findFirst({ where: { id: assignmentId, coachingId } });
         if (!assignment) throw Object.assign(new Error('Assignment not found'), { status: 404 });
-        return prisma.feeAssignment.update({ where: { id: assignmentId }, data: { isActive: false } });
+        const result = await prisma.feeAssignment.update({ where: { id: assignmentId }, data: { isActive: false } });
+        void writeAuditLog({
+            coachingId,
+            entityType: 'ASSIGNMENT',
+            entityId: assignmentId,
+            event: 'ASSIGNMENT_REMOVED',
+            actorId: actorId ?? null,
+            feeStructureId: assignment.feeStructureId,
+            before: { memberId: assignment.memberId, isActive: true },
+            after: { isActive: false },
+        });
+        return result;
     }
 
-    async toggleFeePause(coachingId: string, assignmentId: string, pause: boolean, note?: string) {
+    async toggleFeePause(coachingId: string, assignmentId: string, pause: boolean, note?: string, actorId?: string) {
         const a = await prisma.feeAssignment.findFirst({ where: { id: assignmentId, coachingId } });
         if (!a) throw Object.assign(new Error('Assignment not found'), { status: 404 });
-        return prisma.feeAssignment.update({
+        const result = await prisma.feeAssignment.update({
             where: { id: assignmentId },
             data: {
                 isPaused: pause,
@@ -524,6 +742,16 @@ export class FeeService {
                 pauseNote: pause ? (note ?? null) : null,
             },
         });
+        void writeAuditLog({
+            coachingId,
+            entityType: 'ASSIGNMENT',
+            entityId: assignmentId,
+            event: pause ? 'ASSIGNMENT_PAUSED' : 'ASSIGNMENT_UNPAUSED',
+            actorId: actorId ?? null,
+            feeStructureId: a.feeStructureId,
+            meta: { note: note ?? null },
+        });
+        return result;
     }
 
     async getMemberFeeProfile(coachingId: string, memberId: string) {
@@ -738,10 +966,26 @@ export class FeeService {
             }
         }
 
-        return prisma.feeRecord.findUniqueOrThrow({
+        const updatedRecord = await prisma.feeRecord.findUniqueOrThrow({
             where: { id: recordId },
             include: RECORD_INCLUDE,
         });
+
+        void writeAuditLog({
+            coachingId,
+            entityType: 'PAYMENT',
+            entityId: recordId,
+            event: 'PAYMENT_RECORDED',
+            actorId: userId,
+            after: {
+                amount: dto.amount,
+                mode: dto.mode,
+                transactionRef: dto.transactionRef ?? null,
+                isPaid: result.isPaid,
+            },
+        });
+
+        return updatedRecord;
     }
 
     async waiveFee(coachingId: string, recordId: string, dto: WaiveFeeDto, userId: string) {
@@ -766,6 +1010,17 @@ export class FeeService {
             where: { id: recordId },
             data: waiveData,
         });
+
+        void writeAuditLog({
+            coachingId,
+            entityType: 'RECORD',
+            entityId: recordId,
+            event: 'FEE_WAIVED',
+            actorId: userId,
+            before: { status: record.status, finalAmount: record.finalAmount, paidAmount: record.paidAmount },
+            after: { status: 'WAIVED', notes: dto.notes ?? null },
+        });
+
         // Re-fetch full record to avoid fromJson parse errors on frontend
         return this.getRecordById(coachingId, recordId);
     }
@@ -814,6 +1069,15 @@ export class FeeService {
                 },
             });
         }, { isolationLevel: 'Serializable' });
+
+        void writeAuditLog({
+            coachingId,
+            entityType: 'REFUND',
+            entityId: recordId,
+            event: 'REFUND_ISSUED',
+            actorId: userId,
+            after: { amount: dto.amount, mode: dto.mode ?? 'CASH', reason: dto.reason ?? null },
+        });
 
         return this.getRecordById(coachingId, recordId);
     }
@@ -1228,6 +1492,38 @@ export class FeeService {
     }
 
     // ── Internal helpers ────────────────────────────────────────────
+
+    async listAuditLog(coachingId: string, query: ListAuditLogQuery) {
+        const page = query.page ?? 1;
+        const limit = Math.min(query.limit ?? 50, 100);
+        const skip = (page - 1) * limit;
+
+        const where: Record<string, unknown> = { coachingId };
+        if (query.entityType) where.entityType = query.entityType;
+        if (query.entityId) where.entityId = query.entityId;
+        if (query.event) where.event = query.event;
+        if (query.from || query.to) {
+            where.createdAt = {};
+            if (query.from) (where.createdAt as Record<string, unknown>).gte = new Date(query.from);
+            if (query.to) (where.createdAt as Record<string, unknown>).lte = new Date(query.to);
+        }
+
+        const [total, logs] = await Promise.all([
+            prisma.feeAuditLog.count({ where }),
+            prisma.feeAuditLog.findMany({
+                where,
+                orderBy: { createdAt: 'desc' },
+                skip,
+                take: limit,
+                include: {
+                    actor: { select: { id: true, name: true, email: true, picture: true } },
+                    feeStructure: { select: { id: true, name: true } },
+                },
+            }),
+        ]);
+
+        return { total, page, limit, logs };
+    }
 
     private async _ensureStructureOwned(coachingId: string, structureId: string) {
         const s = await prisma.feeStructure.findFirst({ where: { id: structureId, coachingId } });

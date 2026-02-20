@@ -16,6 +16,27 @@ class FeeService {
         .toList();
   }
 
+  Future<FeeStructureModel?> getCurrentStructure(String coachingId) async {
+    try {
+      final data = await _api.getAuthenticated(
+        ApiConstants.feeStructureCurrent(coachingId),
+      );
+      if (data == null) return null;
+      return FeeStructureModel.fromJson(data as Map<String, dynamic>);
+    } catch (_) {
+      return null;
+    }
+  }
+
+  Future<Map<String, dynamic>> getStructureReplacePreview(
+    String coachingId,
+  ) async {
+    final data = await _api.getAuthenticated(
+      ApiConstants.feeStructureReplacePreview(coachingId),
+    );
+    return data as Map<String, dynamic>;
+  }
+
   Future<FeeStructureModel> createStructure(
     String coachingId, {
     required String name,
@@ -30,6 +51,9 @@ class FeeService {
     String? gstSupplyType,
     double? cessRate,
     List<Map<String, dynamic>>? lineItems,
+    bool allowInstallments = false,
+    int installmentCount = 0,
+    List<Map<String, dynamic>>? installmentAmounts,
   }) async {
     final body = <String, dynamic>{
       'name': name,
@@ -44,6 +68,11 @@ class FeeService {
       'gstSupplyType': ?gstSupplyType,
       'cessRate': ?cessRate,
       'lineItems': ?lineItems,
+      'allowInstallments': allowInstallments,
+      if (allowInstallments && installmentCount > 0)
+        'installmentCount': installmentCount,
+      if (allowInstallments && installmentAmounts != null)
+        'installmentAmounts': installmentAmounts,
     };
     final data = await _api.postAuthenticated(
       ApiConstants.feeStructures(coachingId),
@@ -68,6 +97,9 @@ class FeeService {
     String? gstSupplyType,
     double? cessRate,
     List<Map<String, dynamic>>? lineItems,
+    bool? allowInstallments,
+    int? installmentCount,
+    List<Map<String, dynamic>>? installmentAmounts,
   }) async {
     final body = <String, dynamic>{
       'name': ?name,
@@ -83,6 +115,9 @@ class FeeService {
       'gstSupplyType': ?gstSupplyType,
       'cessRate': ?cessRate,
       'lineItems': ?lineItems,
+      'allowInstallments': ?allowInstallments,
+      'installmentCount': ?installmentCount,
+      'installmentAmounts': ?installmentAmounts,
     };
     final data = await _api.patchAuthenticated(
       ApiConstants.feeStructureById(coachingId, structureId),
@@ -95,6 +130,39 @@ class FeeService {
     await _api.deleteAuthenticated(
       ApiConstants.feeStructureById(coachingId, structureId),
     );
+  }
+
+  Future<Map<String, dynamic>> listAuditLog(
+    String coachingId, {
+    String? entityType,
+    String? entityId,
+    String? event,
+    DateTime? from,
+    DateTime? to,
+    int page = 1,
+    int limit = 30,
+  }) async {
+    final params = <String, String>{
+      'page': '$page',
+      'limit': '$limit',
+      if (entityType != null) 'entityType': entityType,
+      if (entityId != null) 'entityId': entityId,
+      if (event != null) 'event': event,
+      if (from != null) 'from': from.toIso8601String(),
+      if (to != null) 'to': to.toIso8601String(),
+    };
+    final uri = Uri.parse(
+      ApiConstants.feeAuditLog(coachingId),
+    ).replace(queryParameters: params);
+    final data = await _api.getAuthenticated(uri.toString());
+    return {
+      'total': data['total'],
+      'page': data['page'],
+      'limit': data['limit'],
+      'logs': (data['logs'] as List<dynamic>)
+          .map((e) => FeeAuditLogModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
+    };
   }
 
   // ── Assignments ─────────────────────────────────────────────────

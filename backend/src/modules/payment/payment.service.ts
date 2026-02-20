@@ -106,16 +106,16 @@ function computeTax(
         cess = baseAmount * (cessRate / 100);
     }
 
-    gstAmount = Math.round(gstAmount * 100) / 100;
-    cess = Math.round(cess * 100) / 100;
+    gstAmount = Math.round(gstAmount);
+    cess = Math.round(cess);
 
     let cgst = 0, sgst = 0, igst = 0;
     if (supplyType === 'INTER_STATE') {
         igst = gstAmount;
     } else {
-        // L3: Floor/round pattern to avoid ±0.01 mismatch
-        cgst = Math.floor(gstAmount * 50) / 100;
-        sgst = Math.round((gstAmount - cgst) * 100) / 100;
+        // Integer floor/ceil split: cgst + sgst === gstAmount exactly at 0dp
+        cgst = Math.floor(gstAmount / 2);
+        sgst = gstAmount - cgst;
     }
 
     const totalTax = gstAmount + cess;
@@ -157,6 +157,36 @@ export class PaymentService {
         const balance = record.finalAmount - record.paidAmount;
         const payAmount = dto?.amount ? Math.min(dto.amount, balance) : balance;
         if (payAmount <= 0) throw Object.assign(new Error('Nothing to pay'), { status: 400 });
+
+        // ── Installment enforcement ─────────────────────────────────────────────
+        // If the fee structure has admin-defined installment amounts, the submitted
+        // amount MUST match one of those amounts exactly (within ₹1 tolerance).
+        // If allowInstallments=false, the full balance must be paid in one shot.
+        const feeStructure = record.assignment?.feeStructure;
+        if (feeStructure) {
+            const allowInst = feeStructure.allowInstallments;
+            const adminAmounts = feeStructure.installmentAmounts as Array<{ label: string; amount: number }> | null;
+            const isPartialPayment = dto?.amount !== undefined && Math.abs(dto.amount - balance) > 0.01;
+
+            if (isPartialPayment && !allowInst) {
+                throw Object.assign(
+                    new Error('Partial payments are not allowed for this fee. Please pay the full amount.'),
+                    { status: 400 },
+                );
+            }
+
+            if (isPartialPayment && allowInst && adminAmounts && adminAmounts.length > 0) {
+                const requested = dto!.amount!;
+                const matches = adminAmounts.some((item) => Math.abs(item.amount - requested) <= 1);
+                if (!matches) {
+                    const allowedList = adminAmounts.map((x) => `₹${x.amount} (${x.label})`).join(', ');
+                    throw Object.assign(
+                        new Error(`Amount ₹${requested} is not one of the allowed installment amounts: ${allowedList}`),
+                        { status: 400, allowedAmounts: adminAmounts },
+                    );
+                }
+            }
+        }
 
         const amountPaise = toPaise(payAmount);
 
@@ -254,8 +284,8 @@ export class PaymentService {
         }
 
         // 2. Find our order
-        const order = await prisma.razorpayOrder.findUnique({
-            where: { razorpayOrderId: dto.razorpay_order_id },
+        const order = await prisma.razorpayOrder.findFirst({
+            where: { razorpayOrderId: dto.razorpay_order_id, coachingId, recordId },
         });
         if (!order) throw Object.assign(new Error('Order not found'), { status: 404 });
         if (order.coachingId !== coachingId || order.recordId !== recordId) {

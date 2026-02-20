@@ -11,6 +11,7 @@ import {
     bulkRemindSchema,
     paginationSchema,
     financialYearSchema,
+    listAuditLogSchema,
 } from '../../shared/validation/fee.validation.js';
 
 const svc = new FeeService();
@@ -39,8 +40,9 @@ export class FeeController {
     async createStructure(req: Request, res: Response) {
         try {
             const { coachingId } = req.params as { coachingId: string };
+            const userId = requireUserId(req);
             const dto = validateBody(createFeeStructureSchema, req.body);
-            const data = await svc.createStructure(coachingId, dto);
+            const data = await svc.createStructure(coachingId, dto, userId);
             res.status(201).json(data);
         } catch (e: any) {
             res.status(e.status ?? 500).json({ error: e.message, ...(e.fieldErrors ? { fieldErrors: e.fieldErrors } : {}) });
@@ -50,8 +52,9 @@ export class FeeController {
     async updateStructure(req: Request, res: Response) {
         try {
             const { coachingId, structureId } = req.params as { coachingId: string; structureId: string };
+            const userId = requireUserId(req);
             const dto = validateBody(updateFeeStructureSchema, req.body);
-            const data = await svc.updateStructure(coachingId, structureId, dto);
+            const data = await svc.updateStructure(coachingId, structureId, dto, userId);
             res.json(data);
         } catch (e: any) {
             res.status(e.status ?? 500).json({ error: e.message, ...(e.fieldErrors ? { fieldErrors: e.fieldErrors } : {}) });
@@ -61,8 +64,29 @@ export class FeeController {
     async deleteStructure(req: Request, res: Response) {
         try {
             const { coachingId, structureId } = req.params as { coachingId: string; structureId: string };
-            await svc.deleteStructure(coachingId, structureId);
+            const userId = requireUserId(req);
+            await svc.deleteStructure(coachingId, structureId, userId);
             res.json({ success: true });
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+
+    async getCurrentStructure(req: Request, res: Response) {
+        try {
+            const { coachingId } = req.params as { coachingId: string };
+            const data = await svc.getCurrentStructure(coachingId);
+            res.json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+
+    async getStructureReplacePreview(req: Request, res: Response) {
+        try {
+            const { coachingId } = req.params as { coachingId: string };
+            const data = await svc.getStructureReplacePreview(coachingId);
+            res.json(data);
         } catch (e: any) {
             res.status(e.status ?? 500).json({ error: e.message });
         }
@@ -85,7 +109,8 @@ export class FeeController {
     async removeFeeAssignment(req: Request, res: Response) {
         try {
             const { coachingId, assignmentId } = req.params as { coachingId: string; assignmentId: string };
-            await svc.removeFeeAssignment(coachingId, assignmentId);
+            const userId = requireUserId(req);
+            await svc.removeFeeAssignment(coachingId, assignmentId, userId);
             res.json({ success: true });
         } catch (e: any) {
             res.status(e.status ?? 500).json({ error: e.message });
@@ -251,8 +276,29 @@ export class FeeController {
     async toggleFeePause(req: Request, res: Response) {
         try {
             const { coachingId, assignmentId } = req.params as { coachingId: string; assignmentId: string };
+            const userId = requireUserId(req);
             const { pause, note } = req.body as { pause: boolean; note?: string };
-            const data = await svc.toggleFeePause(coachingId, assignmentId, pause, note);
+            const data = await svc.toggleFeePause(coachingId, assignmentId, pause, note, userId);
+            res.json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+
+    async listAuditLog(req: Request, res: Response) {
+        try {
+            const { coachingId } = req.params as { coachingId: string };
+            const { entityType, entityId, event, from, to, page, limit } = req.query as Record<string, string | undefined>;
+            const query = validateBody(listAuditLogSchema, {
+                ...(entityType !== undefined && { entityType }),
+                ...(entityId !== undefined && { entityId }),
+                ...(event !== undefined && { event }),
+                ...(from !== undefined && { from }),
+                ...(to !== undefined && { to }),
+                page: page ? Number(page) : 1,
+                limit: limit ? Number(limit) : 50,
+            });
+            const data = await svc.listAuditLog(coachingId, query);
             res.json(data);
         } catch (e: any) {
             res.status(e.status ?? 500).json({ error: e.message });

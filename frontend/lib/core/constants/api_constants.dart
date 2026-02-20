@@ -227,6 +227,12 @@ class ApiConstants {
       '$baseUrl/coaching/$coachingId/fee/structures';
   static String feeStructureById(String coachingId, String structureId) =>
       '$baseUrl/coaching/$coachingId/fee/structures/$structureId';
+  static String feeStructureCurrent(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/fee/structures/current';
+  static String feeStructureReplacePreview(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/fee/structures/replace-preview';
+  static String feeAuditLog(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/fee/audit-log';
   static String assignFees(String coachingId) =>
       '$baseUrl/coaching/$coachingId/fee/assign';
   static String feeRecords(String coachingId) =>

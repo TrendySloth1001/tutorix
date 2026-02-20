@@ -18,6 +18,8 @@ const reminderLimiter = rateLimiter(60_000, 10, 'fee-reminder'); // 10 reminders
 
 // ── Fee Structures (admin-only) ─────────────────────────────────────
 router.get('/structures', ...adminAuth, ctrl.listStructures.bind(ctrl));
+router.get('/structures/current', ...adminAuth, ctrl.getCurrentStructure.bind(ctrl));
+router.get('/structures/replace-preview', ...adminAuth, ctrl.getStructureReplacePreview.bind(ctrl));
 router.post('/structures', ...adminAuth, ctrl.createStructure.bind(ctrl));
 router.patch('/structures/:structureId', ...adminAuth, ctrl.updateStructure.bind(ctrl));
 router.delete('/structures/:structureId', ...adminAuth, ctrl.deleteStructure.bind(ctrl));
@@ -46,6 +48,7 @@ router.post('/bulk-remind', ...adminAuth, reminderLimiter, ctrl.bulkRemind.bind(
 router.get('/summary', ...adminAuth, ctrl.getSummary.bind(ctrl));
 router.get('/overdue-report', ...adminAuth, ctrl.getOverdueReport.bind(ctrl));
 router.get('/calendar', ...adminAuth, ctrl.getFeeCalendar.bind(ctrl));
+router.get('/audit-log', ...adminAuth, ctrl.listAuditLog.bind(ctrl));
 
 // ── Student-facing (any member) ────────────────────────────────────
 router.get('/my', ...memberAuth, ctrl.getMyFees.bind(ctrl));

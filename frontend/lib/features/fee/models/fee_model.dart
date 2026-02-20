@@ -23,6 +23,15 @@ class FeeStructureModel {
   final double cessRate;
   final List<LineItemModel> lineItems;
 
+  // Single-structure-per-coaching
+  final bool isCurrent;
+  final DateTime? replacedAt;
+
+  // Admin-controlled installments
+  final bool allowInstallments;
+  final int installmentCount;
+  final List<InstallmentAmountItem> installmentAmounts;
+
   const FeeStructureModel({
     required this.id,
     required this.coachingId,
@@ -43,12 +52,18 @@ class FeeStructureModel {
     this.gstSupplyType = 'INTRA_STATE',
     this.cessRate = 0,
     this.lineItems = const [],
+    this.isCurrent = false,
+    this.replacedAt,
+    this.allowInstallments = false,
+    this.installmentCount = 0,
+    this.installmentAmounts = const [],
   });
 
   factory FeeStructureModel.fromJson(Map<String, dynamic> json) {
     final count = json['_count'] as Map<String, dynamic>?;
     final planJson = json['installmentPlan'] as List<dynamic>?;
     final itemsJson = json['lineItems'] as List<dynamic>?;
+    final instAmountsJson = json['installmentAmounts'] as List<dynamic>?;
     return FeeStructureModel(
       id: json['id'] as String? ?? '',
       coachingId: json['coachingId'] as String? ?? '',
@@ -81,6 +96,20 @@ class FeeStructureModel {
               ?.map((e) => LineItemModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      isCurrent: json['isCurrent'] as bool? ?? false,
+      replacedAt: json['replacedAt'] != null
+          ? DateTime.tryParse(json['replacedAt'] as String)
+          : null,
+      allowInstallments: json['allowInstallments'] as bool? ?? false,
+      installmentCount: (json['installmentCount'] as num?)?.toInt() ?? 0,
+      installmentAmounts:
+          instAmountsJson
+              ?.map(
+                (e) =>
+                    InstallmentAmountItem.fromJson(e as Map<String, dynamic>),
+              )
+              .toList() ??
+          [],
     );
   }
 
@@ -103,6 +132,10 @@ class FeeStructureModel {
       'lineItems': lineItems.map((e) => e.toJson()).toList(),
     if (installmentPlan.isNotEmpty)
       'installmentPlan': installmentPlan.map((e) => e.toJson()).toList(),
+    'allowInstallments': allowInstallments,
+    'installmentCount': installmentCount,
+    if (installmentAmounts.isNotEmpty)
+      'installmentAmounts': installmentAmounts.map((e) => e.toJson()).toList(),
   };
 
   String get cycleLabel {
@@ -157,6 +190,125 @@ class LineItemModel {
     amount: (json['amount'] as num?)?.toDouble() ?? 0,
   );
   Map<String, dynamic> toJson() => {'label': label, 'amount': amount};
+}
+
+/// Admin-defined fixed installment amount bucket.
+class InstallmentAmountItem {
+  final String label;
+  final double amount;
+  const InstallmentAmountItem({required this.label, required this.amount});
+  factory InstallmentAmountItem.fromJson(Map<String, dynamic> json) =>
+      InstallmentAmountItem(
+        label: json['label'] as String? ?? '',
+        amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      );
+  Map<String, dynamic> toJson() => {'label': label, 'amount': amount};
+}
+
+/// Single entry from the fee audit trail.
+class FeeAuditLogModel {
+  final String id;
+  final String coachingId;
+  final String entityType; // STRUCTURE | ASSIGNMENT | RECORD | PAYMENT | REFUND
+  final String entityId;
+  final String event; // e.g. STRUCTURE_CREATED, PAYMENT_RECORDED, FEE_WAIVED
+  final String actorType; // ADMIN | SYSTEM
+  final String? actorId;
+  final String? actorName;
+  final String? actorEmail;
+  final String? actorPicture;
+  final String? feeStructureId;
+  final String? feeStructureName;
+  final Map<String, dynamic>? before;
+  final Map<String, dynamic>? after;
+  final Map<String, dynamic>? meta;
+  final String? note;
+  final DateTime createdAt;
+
+  const FeeAuditLogModel({
+    required this.id,
+    required this.coachingId,
+    required this.entityType,
+    required this.entityId,
+    required this.event,
+    required this.actorType,
+    this.actorId,
+    this.actorName,
+    this.actorEmail,
+    this.actorPicture,
+    this.feeStructureId,
+    this.feeStructureName,
+    this.before,
+    this.after,
+    this.meta,
+    this.note,
+    required this.createdAt,
+  });
+
+  factory FeeAuditLogModel.fromJson(Map<String, dynamic> json) {
+    final actor = json['actor'] as Map<String, dynamic>?;
+    final structure = json['feeStructure'] as Map<String, dynamic>?;
+    return FeeAuditLogModel(
+      id: json['id'] as String? ?? '',
+      coachingId: json['coachingId'] as String? ?? '',
+      entityType: json['entityType'] as String? ?? '',
+      entityId: json['entityId'] as String? ?? '',
+      event: json['event'] as String? ?? '',
+      actorType: json['actorType'] as String? ?? 'ADMIN',
+      actorId: json['actorId'] as String?,
+      actorName: actor?['name'] as String?,
+      actorEmail: actor?['email'] as String?,
+      actorPicture: actor?['picture'] as String?,
+      feeStructureId: json['feeStructureId'] as String?,
+      feeStructureName: structure?['name'] as String?,
+      before: json['before'] as Map<String, dynamic>?,
+      after: json['after'] as Map<String, dynamic>?,
+      meta: json['meta'] as Map<String, dynamic>?,
+      note: json['note'] as String?,
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
+    );
+  }
+
+  /// Human-readable event label.
+  String get eventLabel {
+    switch (event) {
+      case 'STRUCTURE_CREATED':
+        return 'Structure Created';
+      case 'STRUCTURE_REPLACED':
+        return 'Structure Replaced';
+      case 'STRUCTURE_UPDATED':
+        return 'Structure Updated';
+      case 'STRUCTURE_DELETED':
+        return 'Structure Deleted';
+      case 'ASSIGNMENT_CREATED':
+        return 'Fee Assigned';
+      case 'ASSIGNMENT_REMOVED':
+        return 'Assignment Removed';
+      case 'ASSIGNMENT_PAUSED':
+        return 'Fee Paused';
+      case 'ASSIGNMENT_UNPAUSED':
+        return 'Fee Unpaused';
+      case 'PAYMENT_RECORDED':
+        return 'Payment Recorded';
+      case 'FEE_WAIVED':
+        return 'Fee Waived';
+      case 'REFUND_ISSUED':
+        return 'Refund Issued';
+      case 'INSTALLMENT_SETTINGS_CHANGED':
+        return 'Installment Settings Changed';
+      default:
+        return event
+            .replaceAll('_', ' ')
+            .toLowerCase()
+            .split(' ')
+            .map(
+              (w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}',
+            )
+            .join(' ');
+    }
+  }
 }
 
 /// A snapshot of a mini member for fee display.

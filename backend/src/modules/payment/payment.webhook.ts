@@ -68,7 +68,7 @@ webhookRouter.post('/razorpay', async (req: Request, res: Response) => {
         // Determine coachingId from the order's notes
         let coachingId: string | undefined;
         if (orderId) {
-            const order = await prisma.razorpayOrder.findUnique({
+            const order = await prisma.razorpayOrder.findFirst({
                 where: { razorpayOrderId: orderId },
                 select: { coachingId: true },
             });

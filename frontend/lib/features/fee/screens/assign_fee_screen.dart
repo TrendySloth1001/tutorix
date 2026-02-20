@@ -18,12 +18,11 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
   final _feeSvc = FeeService();
   final _memberSvc = MemberService();
 
-  List<FeeStructureModel> _structures = [];
+  FeeStructureModel? _currentStructure;
   List<MemberModel> _members = [];
   bool _loading = true;
   String? _error;
 
-  FeeStructureModel? _selectedStructure;
   final Set<String> _selectedMemberIds = {};
 
   final _customAmountCtrl = TextEditingController();
@@ -49,17 +48,20 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
     });
     try {
       final results = await Future.wait([
-        _feeSvc.listStructures(widget.coachingId),
+        _feeSvc.getCurrentStructure(widget.coachingId),
         _memberSvc.getMembers(widget.coachingId),
       ]);
-      final structures = results[0] as List<FeeStructureModel>;
+      final current = results[0] as FeeStructureModel?;
       final members = (results[1] as List<MemberModel>)
           .where((m) => m.role == 'STUDENT' && m.status == 'active')
           .toList();
       if (!mounted) return;
       setState(() {
-        _structures = structures.where((s) => s.isActive).toList();
+        _currentStructure = current;
         _members = members;
+        if (current != null) {
+          _customAmountCtrl.text = current.amount.toStringAsFixed(0);
+        }
         _loading = false;
       });
     } catch (e) {
@@ -99,9 +101,8 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
           : _error != null
           ? _ErrorRetry(error: _error!, onRetry: _load)
           : _Body(
-              structures: _structures,
+              currentStructure: _currentStructure,
               members: _members,
-              selectedStructure: _selectedStructure,
               selectedMemberIds: _selectedMemberIds,
               customAmountCtrl: _customAmountCtrl,
               discountAmountCtrl: _discountAmountCtrl,
@@ -111,10 +112,6 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
               startDate: _startDate,
               endDate: _endDate,
               customAmountEnabled: _customAmountEnabled,
-              onStructureChanged: (s) => setState(() {
-                _selectedStructure = s;
-                _customAmountCtrl.text = s.amount.toStringAsFixed(0);
-              }),
               onMemberToggled: (id) => setState(() {
                 if (_selectedMemberIds.contains(id)) {
                   _selectedMemberIds.remove(id);
@@ -147,10 +144,14 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
   }
 
   Future<void> _submit() async {
-    if (_selectedStructure == null) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Select a fee structure')));
+    if (_currentStructure == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'No active fee structure. Set one in Fee Structure settings first.',
+          ),
+        ),
+      );
       return;
     }
     if (_selectedMemberIds.isEmpty) {
@@ -180,7 +181,7 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
         await _feeSvc.assignFee(
           widget.coachingId,
           memberId: mId,
-          feeStructureId: _selectedStructure!.id,
+          feeStructureId: _currentStructure!.id,
           customAmount: customAmount,
           discountAmount: discount > 0 ? discount : null,
           discountReason: discountReason.isEmpty ? null : discountReason,
@@ -233,9 +234,8 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
 }
 
 class _Body extends StatelessWidget {
-  final List<FeeStructureModel> structures;
+  final FeeStructureModel? currentStructure;
   final List<MemberModel> members;
-  final FeeStructureModel? selectedStructure;
   final Set<String> selectedMemberIds;
   final TextEditingController customAmountCtrl;
   final TextEditingController discountAmountCtrl;
@@ -245,7 +245,6 @@ class _Body extends StatelessWidget {
   final DateTime? startDate;
   final DateTime? endDate;
   final bool customAmountEnabled;
-  final ValueChanged<FeeStructureModel> onStructureChanged;
   final ValueChanged<String> onMemberToggled;
   final VoidCallback onSelectAll;
   final VoidCallback onClearAll;
@@ -256,9 +255,8 @@ class _Body extends StatelessWidget {
   final bool submitting;
 
   const _Body({
-    required this.structures,
+    required this.currentStructure,
     required this.members,
-    required this.selectedStructure,
     required this.selectedMemberIds,
     required this.customAmountCtrl,
     required this.discountAmountCtrl,
@@ -268,7 +266,6 @@ class _Body extends StatelessWidget {
     required this.startDate,
     required this.endDate,
     required this.customAmountEnabled,
-    required this.onStructureChanged,
     required this.onMemberToggled,
     required this.onSelectAll,
     required this.onClearAll,
@@ -286,17 +283,124 @@ class _Body extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Step 1: Fee Structure
-          _StepHeader(step: '1', title: 'Select Fee Structure'),
+          // Step 1: Current fee structure (read-only)
+          _StepHeader(step: '1', title: 'Fee Structure'),
           const SizedBox(height: 12),
-          if (structures.isEmpty)
-            const _Hint('No active fee structures. Create one first.')
+          if (currentStructure == null)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3E0),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: const Color(0xFFE65100).withValues(alpha: 0.3),
+                ),
+              ),
+              child: const Row(
+                children: [
+                  Icon(
+                    Icons.warning_amber_rounded,
+                    color: Color(0xFFE65100),
+                    size: 20,
+                  ),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'No active fee structure set. Go to Fee Structure settings to create one.',
+                      style: TextStyle(color: Color(0xFFBF360C), fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            )
           else
-            ...structures.map(
-              (s) => _StructureOption(
-                structure: s,
-                isSelected: selectedStructure?.id == s.id,
-                onTap: () => onStructureChanged(s),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: AppColors.darkOlive.withValues(alpha: 0.07),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: AppColors.darkOlive.withValues(alpha: 0.3),
+                  width: 1.5,
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.darkOlive.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: const Icon(
+                      Icons.receipt_rounded,
+                      color: AppColors.darkOlive,
+                      size: 18,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                currentStructure!.name,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.w700,
+                                  color: AppColors.darkOlive,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.green.withValues(alpha: 0.12),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: const Text(
+                                'ACTIVE',
+                                style: TextStyle(
+                                  color: Colors.green,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w700,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          '₹${currentStructure!.amount.toStringAsFixed(0)} · ${currentStructure!.cycleLabel}',
+                          style: const TextStyle(
+                            color: AppColors.mutedOlive,
+                            fontSize: 12,
+                          ),
+                        ),
+                        if (currentStructure!.allowInstallments)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 2),
+                            child: Text(
+                              currentStructure!.installmentCount > 0
+                                  ? 'Installments: up to ${currentStructure!.installmentCount}'
+                                  : 'Installments: allowed',
+                              style: const TextStyle(
+                                color: Colors.green,
+                                fontSize: 11,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
             ),
 
@@ -561,75 +665,6 @@ class _StepHeader extends StatelessWidget {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _StructureOption extends StatelessWidget {
-  final FeeStructureModel structure;
-  final bool isSelected;
-  final VoidCallback onTap;
-  const _StructureOption({
-    required this.structure,
-    required this.isSelected,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.darkOlive.withValues(alpha: 0.08)
-              : AppColors.softGrey.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: isSelected
-                ? AppColors.darkOlive
-                : AppColors.mutedOlive.withValues(alpha: 0.3),
-            width: isSelected ? 1.5 : 1,
-          ),
-        ),
-        child: Row(
-          children: [
-            Icon(
-              isSelected
-                  ? Icons.radio_button_checked_rounded
-                  : Icons.radio_button_unchecked_rounded,
-              color: isSelected ? AppColors.darkOlive : AppColors.mutedOlive,
-              size: 20,
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    structure.name,
-                    style: TextStyle(
-                      fontWeight: FontWeight.w600,
-                      color: isSelected
-                          ? AppColors.darkOlive
-                          : AppColors.darkOlive.withValues(alpha: 0.8),
-                    ),
-                  ),
-                  Text(
-                    '₹${structure.amount.toStringAsFixed(0)} · ${structure.cycleLabel}',
-                    style: const TextStyle(
-                      color: AppColors.mutedOlive,
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

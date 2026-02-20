@@ -57,6 +57,7 @@ model User {
   recordedFeePayments FeePayment[]       @relation("FeePaymentRecorder")
   processedFeeRefunds FeeRefund[]        @relation("FeeRefundProcessor")
   razorpayOrders      RazorpayOrder[]    @relation("RazorpayOrderUser")
+  feeAuditActions     FeeAuditLog[]      @relation("FeeAuditActor")
 }
 
 model Ward {
@@ -149,6 +150,7 @@ model Coaching {
   razorpayWebhookLogs RazorpayWebhookLog[]
   razorpayRefunds RazorpayRefund[]
   receiptSequences ReceiptSequence[]
+  feeAuditLogs FeeAuditLog[]
 
   // Tax & Financial
   gstNumber     String?   // GSTIN (15-char) for tax invoices
@@ -779,8 +781,25 @@ model FeeStructure {
 
   isActive Boolean @default(true)
 
+  // ── Single-structure-per-coaching enforcement ───────────────────
+  // Only ONE FeeStructure per coaching may have isCurrent=true at a time.
+  // When a new structure is created/promoted it sets old one to false.
+  isCurrent  Boolean   @default(false) // the active structure for new assignments
+  replacedAt DateTime?                 // when this was superseded
+
+  // ── Admin-controlled Installments ──────────────────────────────
+  // Whether parents/students are allowed to pay in installments.
+  allowInstallments  Boolean @default(false)
+  // Max number of installments admin permits (0 = unlimited if allowed)
+  installmentCount   Int     @default(0)
+  // Admin-defined fixed installment buckets (JSON):
+  // [{ label: "Term 1", amount: 5000 }, { label: "Term 2", amount: 5000 }]
+  // If set, the payer MUST choose one of these amounts; free-form amount is blocked.
+  installmentAmounts Json?
+
   // Relations
   assignments FeeAssignment[]
+  auditLogs   FeeAuditLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1089,6 +1108,57 @@ model ReceiptSequence {
   updatedAt DateTime @updatedAt
 
   @@unique([coachingId, financialYear])
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Fee Audit Trail
+// ═══════════════════════════════════════════════════════════════════════
+
+/// Immutable audit trail for all fee-related events.
+/// Every important change (structure create/replace, payment, waive, refund,
+/// installment setting change, assignment add/remove) is recorded here.
+model FeeAuditLog {
+  id         String   @id @default(uuid())
+  coachingId String
+  coaching   Coaching @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+
+  // What entity was affected
+  entityType       String   // STRUCTURE | ASSIGNMENT | RECORD | PAYMENT | REFUND
+  entityId         String   // UUID of the affected entity
+
+  // Optional FK to the FeeStructure that this log is associated with
+  feeStructureId   String?
+  feeStructure     FeeStructure? @relation(fields: [feeStructureId], references: [id], onDelete: SetNull)
+
+  // What happened
+  // e.g. STRUCTURE_CREATED, STRUCTURE_REPLACED, STRUCTURE_UPDATED,
+  //      ASSIGNMENT_CREATED, ASSIGNMENT_REMOVED, ASSIGNMENT_PAUSED, ASSIGNMENT_UNPAUSED,
+  //      PAYMENT_RECORDED, FEE_WAIVED, REFUND_ISSUED,
+  //      INSTALLMENT_SETTINGS_CHANGED
+  event       String
+
+  // Who triggered the change
+  // actorType: ADMIN | SYSTEM
+  actorType   String   @default("ADMIN")
+  actorId     String?  // userId of the admin; null for SYSTEM events
+  actor       User?    @relation("FeeAuditActor", fields: [actorId], references: [id])
+
+  // Snapshots for diff view
+  before      Json?    // state before the change
+  after       Json?    // state after the change
+
+  // Extra context (membersAffected count, replacedStructureId, etc.)
+  meta        Json?
+
+  // Human-readable note (e.g. admin's reason)
+  note        String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([coachingId])
+  @@index([coachingId, entityType])
+  @@index([coachingId, createdAt])
+  @@index([entityId])
 }
 
 // ═══════════════════════════════════════════════════════════════════════
