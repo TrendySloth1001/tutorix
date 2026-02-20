@@ -1787,15 +1787,15 @@ class _FeeInstallmentSheet extends StatelessWidget {
                     color: paid
                         ? const Color(0xFF2E7D32).withValues(alpha: 0.07)
                         : isPayable
-                            ? AppColors.darkOlive.withValues(alpha: 0.07)
-                            : AppColors.softGrey.withValues(alpha: 0.3),
+                        ? AppColors.darkOlive.withValues(alpha: 0.07)
+                        : AppColors.softGrey.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: paid
                           ? const Color(0xFF2E7D32).withValues(alpha: 0.35)
                           : isPayable
-                              ? AppColors.darkOlive.withValues(alpha: 0.25)
-                              : AppColors.softGrey,
+                          ? AppColors.darkOlive.withValues(alpha: 0.25)
+                          : AppColors.softGrey,
                     ),
                   ),
                   child: Row(
@@ -1807,8 +1807,8 @@ class _FeeInstallmentSheet extends StatelessWidget {
                             color: paid
                                 ? const Color(0xFF2E7D32)
                                 : isPayable
-                                    ? AppColors.darkOlive
-                                    : AppColors.mutedOlive,
+                                ? AppColors.darkOlive
+                                : AppColors.mutedOlive,
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
                           ),
@@ -1820,8 +1820,8 @@ class _FeeInstallmentSheet extends StatelessWidget {
                           color: paid
                               ? const Color(0xFF2E7D32)
                               : isPayable
-                                  ? AppColors.darkOlive
-                                  : AppColors.mutedOlive,
+                              ? AppColors.darkOlive
+                              : AppColors.mutedOlive,
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                         ),

@@ -1205,29 +1205,37 @@ class _PullSettingsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final rows = <_SettingRow>[];
     if (log.customAmount != null)
-      rows.add(_SettingRow(
-        icon: Icons.edit_rounded,
-        label: 'Custom Amount',
-        value: '₹${log.customAmount!.toStringAsFixed(0)}',
-      ));
+      rows.add(
+        _SettingRow(
+          icon: Icons.edit_rounded,
+          label: 'Custom Amount',
+          value: '₹${log.customAmount!.toStringAsFixed(0)}',
+        ),
+      );
     if ((log.discountAmount ?? 0) > 0)
-      rows.add(_SettingRow(
-        icon: Icons.discount_outlined,
-        label: 'Discount',
-        value: '₹${log.discountAmount!.toStringAsFixed(0)}'  +
-            (log.discountReason != null && log.discountReason!.isNotEmpty
-                ? ' — ${log.discountReason}'
-                : ''),
-      ));
+      rows.add(
+        _SettingRow(
+          icon: Icons.discount_outlined,
+          label: 'Discount',
+          value:
+              '₹${log.discountAmount!.toStringAsFixed(0)}' +
+              (log.discountReason != null && log.discountReason!.isNotEmpty
+                  ? ' — ${log.discountReason}'
+                  : ''),
+        ),
+      );
     if (log.scholarshipTag != null && log.scholarshipTag!.isNotEmpty)
-      rows.add(_SettingRow(
-        icon: Icons.school_outlined,
-        label: 'Scholarship',
-        value: log.scholarshipTag! +
-            ((log.scholarshipAmount ?? 0) > 0
-                ? ' (₹${log.scholarshipAmount!.toStringAsFixed(0)})'
-                : ''),
-      ));
+      rows.add(
+        _SettingRow(
+          icon: Icons.school_outlined,
+          label: 'Scholarship',
+          value:
+              log.scholarshipTag! +
+              ((log.scholarshipAmount ?? 0) > 0
+                  ? ' (₹${log.scholarshipAmount!.toStringAsFixed(0)})'
+                  : ''),
+        ),
+      );
 
     return Container(
       decoration: const BoxDecoration(
@@ -1241,7 +1249,8 @@ class _PullSettingsSheet extends StatelessWidget {
         children: [
           Center(
             child: Container(
-              width: 40, height: 4,
+              width: 40,
+              height: 4,
               decoration: BoxDecoration(
                 color: AppColors.softGrey,
                 borderRadius: BorderRadius.circular(2),
@@ -1293,8 +1302,7 @@ class _PullSettingsSheet extends StatelessWidget {
             Text(
               [
                 if (log.assignedBy != null) 'by ${log.assignedBy}',
-                if (log.assignedAt != null)
-                  _fmtDate(log.assignedAt!),
+                if (log.assignedAt != null) _fmtDate(log.assignedAt!),
               ].join(' · '),
               style: const TextStyle(
                 color: AppColors.mutedOlive,
@@ -1320,11 +1328,7 @@ class _PullSettingsSheet extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          Icon(
-                            r.icon,
-                            size: 15,
-                            color: AppColors.mutedOlive,
-                          ),
+                          Icon(r.icon, size: 15, color: AppColors.mutedOlive),
                           const SizedBox(width: 10),
                           Text(
                             r.label,
