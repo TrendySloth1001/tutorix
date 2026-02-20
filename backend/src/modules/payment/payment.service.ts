@@ -771,7 +771,7 @@ export class PaymentService {
                     userId: uid,
                     coachingId: notifOrder.coachingId,
                     type: 'FEE_PAYMENT',
-                    title: '✅ Payment Successful',
+                    title: 'Payment Successful',
                     message: `Your payment of ₹${toRupees(notifOrder.amountPaise).toFixed(0)} for "${notifOrder.record.title}" has been received.`,
                     data: { recordId: notifOrder.recordId, paymentId: razorpayPaymentId },
                 });

@@ -697,7 +697,7 @@ export class FeeService {
                     userId: targetUserId,
                     coachingId,
                     type: 'FEE_REMINDER',
-                    title: '📋 Fee Payment Reminder',
+                    title: 'Fee Payment Reminder',
                     message: `Your fee "${record.title}" of ₹${balance.toFixed(0)} is due. Please pay at the earliest to avoid additional fines.`,
                     data: { recordId: record.id, amount: balance, dueDate: record.dueDate },
                 });
