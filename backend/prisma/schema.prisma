@@ -886,7 +886,7 @@ model FeeRecord {
   dueDate  DateTime
   paidAt   DateTime?
 
-  /// PENDING, PAID, PARTIALLY_PAID, WAIVED, OVERDUE, CANCELLED
+  /// PENDING, PAID, PARTIALLY_PAID, WAIVED, OVERDUE
   status String @default("PENDING")
 
   // Payment mode: CASH, ONLINE, UPI, BANK_TRANSFER, CHEQUE, OTHER

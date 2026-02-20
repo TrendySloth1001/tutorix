@@ -586,15 +586,34 @@ export class FeeService {
                     status: { in: ['PENDING', 'OVERDUE'] },
                 },
             });
-            // 2. Cancel partially-paid records — preserve payment history but mark clearly
-            //    so a fresh record is created under the new structure
-            await prisma.feeRecord.updateMany({
-                where: {
-                    assignmentId: existingAssignment.id,
-                    status: 'PARTIALLY_PAID',
-                },
-                data: { status: 'CANCELLED' },
+            // 2. Auto-waive partially-paid records using the same business rule as waiveFee:
+            //    finalAmount = paidAmount (remaining balance forgiven), status = WAIVED.
+            //    The collected amount stays — no refund, no manual labour needed.
+            const partialRecords = await prisma.feeRecord.findMany({
+                where: { assignmentId: existingAssignment.id, status: 'PARTIALLY_PAID' },
+                select: { id: true, paidAmount: true, finalAmount: true },
             });
+            await Promise.all(partialRecords.map(r =>
+                prisma.feeRecord.update({
+                    where: { id: r.id },
+                    data: {
+                        status: 'WAIVED',
+                        finalAmount: r.paidAmount, // zero out remaining balance
+                        notes: 'Remaining balance auto-waived — fee structure reassigned by admin',
+                    },
+                }),
+            ));
+            for (const r of partialRecords) {
+                void writeAuditLog({
+                    coachingId,
+                    entityType: 'RECORD',
+                    entityId: r.id,
+                    event: 'FEE_WAIVED',
+                    actorId: assignedById,
+                    before: { status: 'PARTIALLY_PAID', finalAmount: r.finalAmount, paidAmount: r.paidAmount },
+                    after: { status: 'WAIVED', notes: 'Remaining balance auto-waived — fee structure reassigned by admin' },
+                });
+            }
         }
 
         // Build amounts
