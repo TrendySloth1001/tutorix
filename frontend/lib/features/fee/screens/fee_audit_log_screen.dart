@@ -290,6 +290,7 @@ class _AuditLogTile extends StatelessWidget {
     'STRUCTURE_UPDATED': Color(0xFF1565C0),
     'STRUCTURE_DELETED': Color(0xFFC62828),
     'ASSIGNMENT_CREATED': Color(0xFF2E7D32),
+    'ASSIGNMENT_UPDATED': Color(0xFF1565C0),
     'ASSIGNMENT_REMOVED': Color(0xFFC62828),
     'ASSIGNMENT_PAUSED': Color(0xFF7B1FA2),
     'ASSIGNMENT_UNPAUSED': Color(0xFF2E7D32),
@@ -298,6 +299,75 @@ class _AuditLogTile extends StatelessWidget {
     'REFUND_ISSUED': Color(0xFF004D40),
     'INSTALLMENT_SETTINGS_CHANGED': Color(0xFF1565C0),
   };
+
+  // Human-readable labels for common JSON keys stored in before/after/meta
+  static const _fieldLabels = <String, String>{
+    'name': 'Name',
+    'amount': 'Amount',
+    'cycle': 'Billing Cycle',
+    'lateFinePerDay': 'Late Fine/Day',
+    'taxType': 'Tax Type',
+    'gstRate': 'GST Rate',
+    'sacCode': 'SAC Code',
+    'hsnCode': 'HSN Code',
+    'cessRate': 'Cess Rate',
+    'gstSupplyType': 'GST Supply Type',
+    'description': 'Description',
+    'isCurrent': 'Is Current',
+    'isActive': 'Active',
+    'allowInstallments': 'Allow Installments',
+    'installmentCount': 'Installment Count',
+    'installmentAmounts': 'Installment Amounts',
+    'memberId': 'Member',
+    'memberName': 'Member Name',
+    'feeStructureId': 'Fee Structure',
+    'feeStructureName': 'Structure Name',
+    'discountAmount': 'Discount Amount',
+    'discountReason': 'Discount Reason',
+    'scholarshipTag': 'Scholarship Tag',
+    'scholarshipAmount': 'Scholarship Amount',
+    'customAmount': 'Custom Amount',
+    'startDate': 'Start Date',
+    'endDate': 'End Date',
+    'pausedReason': 'Pause Reason',
+    'paymentAmount': 'Payment Amount',
+    'paymentMode': 'Payment Mode',
+    'transactionRef': 'Transaction Ref',
+    'notes': 'Notes',
+    'paidAt': 'Paid At',
+    'receiptNo': 'Receipt No.',
+    'waivedAmount': 'Waived Amount',
+    'waivedReason': 'Waive Reason',
+    'refundAmount': 'Refund Amount',
+    'refundMode': 'Refund Mode',
+    'reason': 'Reason',
+    'refundedAt': 'Refunded At',
+    'memberCount': 'Members Affected',
+    'previousStructureId': 'Previous Structure',
+    'newStructureId': 'New Structure',
+    'finalAmount': 'Final Amount',
+    'paidAmount': 'Paid Amount',
+    'status': 'Status',
+    'dueDate': 'Due Date',
+    'title': 'Fee Title',
+  };
+
+  // Keys that represent currency amounts — formatted with ₹ prefix
+  static const _currencyKeys = {
+    'amount',
+    'discountAmount',
+    'customAmount',
+    'scholarshipAmount',
+    'paymentAmount',
+    'waivedAmount',
+    'refundAmount',
+    'finalAmount',
+    'paidAmount',
+    'lateFinePerDay',
+  };
+
+  // Keys that represent rate/percentage values
+  static const _percentKeys = {'gstRate', 'cessRate'};
 
   @override
   Widget build(BuildContext context) {
@@ -318,10 +388,10 @@ class _AuditLogTile extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // ── Header row: event chip, entity chip, time ──
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Event chip
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 8,
@@ -341,7 +411,6 @@ class _AuditLogTile extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                // Entity type
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 6,
@@ -361,7 +430,6 @@ class _AuditLogTile extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
-                // Time
                 Text(
                   _fmtTime(log.createdAt),
                   style: const TextStyle(
@@ -372,7 +440,8 @@ class _AuditLogTile extends StatelessWidget {
               ],
             ),
             const SizedBox(height: 8),
-            // Structure name if available
+
+            // ── Structure / entity name ──
             if (log.feeStructureName != null) ...[
               Text(
                 log.feeStructureName!,
@@ -384,7 +453,8 @@ class _AuditLogTile extends StatelessWidget {
               ),
               const SizedBox(height: 4),
             ],
-            // Note
+
+            // ── Free-text note ──
             if (log.note != null && log.note!.isNotEmpty) ...[
               Text(
                 log.note!,
@@ -396,7 +466,12 @@ class _AuditLogTile extends StatelessWidget {
               ),
               const SizedBox(height: 4),
             ],
-            // Actor
+
+            // ── Changes section ──
+            ..._buildChanges(),
+
+            // ── Actor ──
+            const SizedBox(height: 4),
             Row(
               children: [
                 const Icon(
@@ -416,6 +491,222 @@ class _AuditLogTile extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  List<Widget> _buildChanges() {
+    final before = log.before ?? {};
+    final after = log.after ?? {};
+    final meta = log.meta ?? {};
+
+    final rows = <_DiffRow>[];
+
+    // ── Meta info (context data attached to the event) ──
+    for (final e in meta.entries) {
+      if (e.value == null) continue;
+      rows.add(
+        _DiffRow(
+          label: _fieldLabels[e.key] ?? _camelLabel(e.key),
+          oldVal: null,
+          newVal: _fmt(e.key, e.value),
+          isMeta: true,
+        ),
+      );
+    }
+
+    // ── Diff before → after ──
+    final allKeys = {...before.keys, ...after.keys};
+    for (final key in allKeys) {
+      final bVal = before[key];
+      final aVal = after[key];
+      // Skip if identical (including null == null)
+      if (_valEquals(bVal, aVal)) continue;
+      rows.add(
+        _DiffRow(
+          label: _fieldLabels[key] ?? _camelLabel(key),
+          oldVal: bVal != null ? _fmt(key, bVal) : null,
+          newVal: aVal != null ? _fmt(key, aVal) : null,
+        ),
+      );
+    }
+
+    if (rows.isEmpty) return [];
+
+    return [
+      const Divider(height: 16, color: AppColors.softGrey),
+      const Text(
+        'DETAILS',
+        style: TextStyle(
+          color: AppColors.mutedOlive,
+          fontSize: 10,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.5,
+        ),
+      ),
+      const SizedBox(height: 6),
+      ...rows,
+    ];
+  }
+
+  bool _valEquals(dynamic a, dynamic b) {
+    if (a == b) return true;
+    if (a is List && b is List) {
+      if (a.length != b.length) return false;
+      for (var i = 0; i < a.length; i++) {
+        if (a[i].toString() != b[i].toString()) return false;
+      }
+      return true;
+    }
+    return false;
+  }
+
+  String _fmt(String key, dynamic value) {
+    if (value == null) return '—';
+    if (value is bool) return value ? 'Yes' : 'No';
+    if (_currencyKeys.contains(key) && value is num) {
+      return '₹${value.toStringAsFixed(value.truncateToDouble() == value ? 0 : 2)}';
+    }
+    if (_percentKeys.contains(key) && value is num) return '$value%';
+    if (key == 'installmentAmounts' && value is List) {
+      if (value.isEmpty) return 'None';
+      return value
+          .map((x) => '${x['label'] ?? '?'}: ₹${x['amount'] ?? '?'}')
+          .join(', ');
+    }
+    if (value is List) {
+      if (value.isEmpty) return 'None';
+      return value.length == 1
+          ? value.first.toString()
+          : '(${value.length} items)';
+    }
+    return value.toString();
+  }
+
+  String _camelLabel(String key) => key
+      .replaceAllMapped(RegExp(r'([A-Z])'), (m) => ' ${m.group(0)!}')
+      .trim()
+      .split(' ')
+      .map((w) => w.isEmpty ? '' : '${w[0].toUpperCase()}${w.substring(1)}')
+      .join(' ');
+}
+
+// Compact row for a single diff entry inside the audit tile
+class _DiffRow extends StatelessWidget {
+  final String label;
+  final String? oldVal;
+  final String? newVal;
+  final bool isMeta;
+
+  const _DiffRow({
+    required this.label,
+    required this.oldVal,
+    required this.newVal,
+    this.isMeta = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Meta rows: just label + value (no arrow)
+    if (isMeta) {
+      return Padding(
+        padding: const EdgeInsets.only(bottom: 4),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 110,
+              child: Text(
+                label,
+                style: const TextStyle(
+                  color: AppColors.mutedOlive,
+                  fontSize: 11,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            Expanded(
+              child: Text(
+                newVal ?? '—',
+                style: const TextStyle(
+                  color: AppColors.darkOlive,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Diff rows: show old → new with color coding
+    final isAdded = oldVal == null && newVal != null;
+    final isRemoved = oldVal != null && newVal == null;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 5),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 110,
+            child: Text(
+              label,
+              style: const TextStyle(
+                color: AppColors.mutedOlive,
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ),
+          Expanded(
+            child: isAdded
+                ? Text(
+                    newVal!,
+                    style: const TextStyle(
+                      color: Color(0xFF2E7D32),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  )
+                : isRemoved
+                ? Text(
+                    oldVal!,
+                    style: const TextStyle(
+                      color: Color(0xFFC62828),
+                      fontSize: 11,
+                      decoration: TextDecoration.lineThrough,
+                    ),
+                  )
+                : Wrap(
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    spacing: 4,
+                    children: [
+                      Text(
+                        oldVal!,
+                        style: const TextStyle(
+                          color: Color(0xFFC62828),
+                          fontSize: 11,
+                          decoration: TextDecoration.lineThrough,
+                        ),
+                      ),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 11,
+                        color: AppColors.mutedOlive,
+                      ),
+                      Text(
+                        newVal!,
+                        style: const TextStyle(
+                          color: Color(0xFF2E7D32),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+          ),
+        ],
       ),
     );
   }

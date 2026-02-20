@@ -18,7 +18,8 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
   final _feeSvc = FeeService();
   final _memberSvc = MemberService();
 
-  FeeStructureModel? _currentStructure;
+  List<FeeStructureModel> _structures = [];
+  FeeStructureModel? _selectedStructure;
   List<MemberModel> _members = [];
   bool _loading = true;
   String? _error;
@@ -48,19 +49,22 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
     });
     try {
       final results = await Future.wait([
-        _feeSvc.getCurrentStructure(widget.coachingId),
+        _feeSvc.listStructures(widget.coachingId),
         _memberSvc.getMembers(widget.coachingId),
       ]);
-      final current = results[0] as FeeStructureModel?;
+      final structures = (results[0] as List).cast<FeeStructureModel>();
       final members = (results[1] as List<MemberModel>)
           .where((m) => m.role == 'STUDENT' && m.status == 'active')
           .toList();
       if (!mounted) return;
       setState(() {
-        _currentStructure = current;
+        _structures = structures;
+        _selectedStructure = structures.isNotEmpty ? structures.first : null;
         _members = members;
-        if (current != null) {
-          _customAmountCtrl.text = current.amount.toStringAsFixed(0);
+        if (_selectedStructure != null) {
+          _customAmountCtrl.text = _selectedStructure!.amount.toStringAsFixed(
+            0,
+          );
         }
         _loading = false;
       });
@@ -101,7 +105,14 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
           : _error != null
           ? _ErrorRetry(error: _error!, onRetry: _load)
           : _Body(
-              currentStructure: _currentStructure,
+              structures: _structures,
+              selectedStructure: _selectedStructure,
+              onStructureSelected: (s) => setState(() {
+                _selectedStructure = s;
+                if (!_customAmountEnabled) {
+                  _customAmountCtrl.text = s.amount.toStringAsFixed(0);
+                }
+              }),
               members: _members,
               selectedMemberIds: _selectedMemberIds,
               customAmountCtrl: _customAmountCtrl,
@@ -144,11 +155,11 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
   }
 
   Future<void> _submit() async {
-    if (_currentStructure == null) {
+    if (_selectedStructure == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text(
-            'No active fee structure. Set one in Fee Structure settings first.',
+            'No fee structure selected. Create one in Fee Structures first.',
           ),
         ),
       );
@@ -181,7 +192,7 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
         await _feeSvc.assignFee(
           widget.coachingId,
           memberId: mId,
-          feeStructureId: _currentStructure!.id,
+          feeStructureId: _selectedStructure!.id,
           customAmount: customAmount,
           discountAmount: discount > 0 ? discount : null,
           discountReason: discountReason.isEmpty ? null : discountReason,
@@ -234,7 +245,9 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
 }
 
 class _Body extends StatelessWidget {
-  final FeeStructureModel? currentStructure;
+  final List<FeeStructureModel> structures;
+  final FeeStructureModel? selectedStructure;
+  final ValueChanged<FeeStructureModel> onStructureSelected;
   final List<MemberModel> members;
   final Set<String> selectedMemberIds;
   final TextEditingController customAmountCtrl;
@@ -255,7 +268,9 @@ class _Body extends StatelessWidget {
   final bool submitting;
 
   const _Body({
-    required this.currentStructure,
+    required this.structures,
+    required this.selectedStructure,
+    required this.onStructureSelected,
     required this.members,
     required this.selectedMemberIds,
     required this.customAmountCtrl,
@@ -283,10 +298,10 @@ class _Body extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Step 1: Current fee structure (read-only)
+          // Step 1: Choose fee structure
           _StepHeader(step: '1', title: 'Fee Structure'),
           const SizedBox(height: 12),
-          if (currentStructure == null)
+          if (structures.isEmpty)
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -306,7 +321,7 @@ class _Body extends StatelessWidget {
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'No active fee structure set. Go to Fee Structure settings to create one.',
+                      'No fee structures found. Create one in Fee Structures first.',
                       style: TextStyle(color: Color(0xFFBF360C), fontSize: 13),
                     ),
                   ),
@@ -314,94 +329,94 @@ class _Body extends StatelessWidget {
               ),
             )
           else
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-              decoration: BoxDecoration(
-                color: AppColors.darkOlive.withValues(alpha: 0.07),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: AppColors.darkOlive.withValues(alpha: 0.3),
-                  width: 1.5,
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
+            Column(
+              children: structures.map((s) {
+                final isSelected = selectedStructure?.id == s.id;
+                return GestureDetector(
+                  onTap: () => onStructureSelected(s),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 150),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 12,
+                    ),
                     decoration: BoxDecoration(
-                      color: AppColors.darkOlive.withValues(alpha: 0.12),
-                      borderRadius: BorderRadius.circular(8),
+                      color: isSelected
+                          ? AppColors.darkOlive.withValues(alpha: 0.07)
+                          : AppColors.softGrey.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isSelected
+                            ? AppColors.darkOlive.withValues(alpha: 0.5)
+                            : AppColors.mutedOlive.withValues(alpha: 0.15),
+                        width: isSelected ? 1.5 : 1,
+                      ),
                     ),
-                    child: const Icon(
-                      Icons.receipt_rounded,
-                      color: AppColors.darkOlive,
-                      size: 18,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
                       children: [
-                        Row(
-                          children: [
-                            Expanded(
-                              child: Text(
-                                currentStructure!.name,
-                                style: const TextStyle(
+                        Container(
+                          width: 20,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            color: isSelected
+                                ? AppColors.darkOlive
+                                : Colors.transparent,
+                            border: Border.all(
+                              color: isSelected
+                                  ? AppColors.darkOlive
+                                  : AppColors.mutedOlive,
+                              width: 2,
+                            ),
+                          ),
+                          child: isSelected
+                              ? const Icon(
+                                  Icons.check,
+                                  size: 12,
+                                  color: AppColors.cream,
+                                )
+                              : null,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                s.name,
+                                style: TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  color: AppColors.darkOlive,
+                                  color: isSelected
+                                      ? AppColors.darkOlive
+                                      : AppColors.darkOlive,
                                   fontSize: 14,
                                 ),
                               ),
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.green.withValues(alpha: 0.12),
-                                borderRadius: BorderRadius.circular(6),
-                              ),
-                              child: const Text(
-                                'ACTIVE',
-                                style: TextStyle(
-                                  color: Colors.green,
-                                  fontSize: 9,
-                                  fontWeight: FontWeight.w700,
-                                  letterSpacing: 0.8,
+                              const SizedBox(height: 2),
+                              Text(
+                                '₹${s.amount.toStringAsFixed(0)} · ${s.cycleLabel}'
+                                '${s.allowInstallments ? ' · Installments' : ''}',
+                                style: const TextStyle(
+                                  color: AppColors.mutedOlive,
+                                  fontSize: 12,
                                 ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
-                        const SizedBox(height: 2),
                         Text(
-                          '₹${currentStructure!.amount.toStringAsFixed(0)} · ${currentStructure!.cycleLabel}',
+                          '${s.assignmentCount} student${s.assignmentCount == 1 ? '' : 's'}',
                           style: const TextStyle(
                             color: AppColors.mutedOlive,
-                            fontSize: 12,
+                            fontSize: 11,
                           ),
                         ),
-                        if (currentStructure!.allowInstallments)
-                          Padding(
-                            padding: const EdgeInsets.only(top: 2),
-                            child: Text(
-                              currentStructure!.installmentCount > 0
-                                  ? 'Installments: up to ${currentStructure!.installmentCount}'
-                                  : 'Installments: allowed',
-                              style: const TextStyle(
-                                color: Colors.green,
-                                fontSize: 11,
-                              ),
-                            ),
-                          ),
                       ],
                     ),
                   ),
-                ],
-              ),
+                );
+              }).toList(),
             ),
 
           const SizedBox(height: 20),

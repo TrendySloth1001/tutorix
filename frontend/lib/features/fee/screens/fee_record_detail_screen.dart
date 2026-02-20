@@ -180,7 +180,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
               onRemind: () => _onAction('remind'),
               onWaive: () => _onAction('waive'),
               onRefund: () => _onAction('refund'),
-              onPayOnline: _payOnline,
+              onPayOnline: _initiateOnlinePayment,
               coachingName: widget.coachingName ?? 'Institute',
               failedOrders: _failedOrders,
             ),
@@ -272,14 +272,46 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
     );
   }
 
-  Future<void> _payOnline() async {
+  /// Entry point: shows installment picker if admin has configured installment
+  /// amounts, otherwise goes straight to full-balance payment.
+  Future<void> _initiateOnlinePayment() async {
+    if (_record == null) return;
+    final structure = _record!.feeStructure;
+    if (structure != null &&
+        structure.allowInstallments &&
+        structure.installmentAmounts.isNotEmpty) {
+      _showInstallmentPicker(structure.installmentAmounts);
+    } else {
+      await _payOnline(null);
+    }
+  }
+
+  void _showInstallmentPicker(List<InstallmentAmountItem> items) {
+    final balance = _record?.balance ?? 0;
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _InstallmentPickerSheet(
+        items: items,
+        balance: balance,
+        onSelected: (double? amount) => _payOnline(amount),
+      ),
+    );
+  }
+
+  Future<void> _payOnline(double? amount) async {
     if (_record == null) return;
     final auth = Provider.of<AuthController>(context, listen: false);
     final user = auth.user;
 
     Map<String, dynamic>? orderData;
     try {
-      orderData = await _paySvc.createOrder(widget.coachingId, widget.recordId);
+      orderData = await _paySvc.createOrder(
+        widget.coachingId,
+        widget.recordId,
+        amount: amount,
+      );
 
       if (!mounted) return;
 
@@ -2102,4 +2134,148 @@ String _fmtDateLong(DateTime d) {
     'Dec',
   ];
   return '${d.day} ${months[d.month - 1]} ${d.year}';
+}
+
+// ── Installment amount picker bottom sheet ──────────────────────────────────
+
+class _InstallmentPickerSheet extends StatelessWidget {
+  final List<InstallmentAmountItem> items;
+  final double balance;
+  final void Function(double? amount) onSelected;
+
+  const _InstallmentPickerSheet({
+    required this.items,
+    required this.balance,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.cream,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Handle bar
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.softGrey,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Choose Installment',
+            style: TextStyle(
+              color: AppColors.darkOlive,
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Outstanding balance: ₹${balance.toStringAsFixed(0)}',
+            style: const TextStyle(color: AppColors.mutedOlive, fontSize: 12),
+          ),
+          const SizedBox(height: 16),
+          // Admin-defined installment options
+          ...items.map((item) {
+            final isAffordable = item.amount <= balance + 0.01;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: InkWell(
+                onTap: isAffordable
+                    ? () {
+                        Navigator.pop(context);
+                        onSelected(item.amount);
+                      }
+                    : null,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isAffordable
+                        ? AppColors.darkOlive.withValues(alpha: 0.07)
+                        : AppColors.softGrey.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isAffordable
+                          ? AppColors.darkOlive.withValues(alpha: 0.25)
+                          : AppColors.softGrey,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.label,
+                          style: TextStyle(
+                            color: isAffordable
+                                ? AppColors.darkOlive
+                                : AppColors.mutedOlive,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '₹${item.amount.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          color: isAffordable
+                              ? AppColors.darkOlive
+                              : AppColors.mutedOlive,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                      if (!isAffordable) ...[
+                        const SizedBox(width: 6),
+                        const Icon(
+                          Icons.lock_outline_rounded,
+                          size: 14,
+                          color: AppColors.mutedOlive,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          const Divider(height: 24),
+          // Pay full balance option
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.darkOlive,
+              side: const BorderSide(color: AppColors.darkOlive),
+              minimumSize: const Size.fromHeight(48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              onSelected(null); // null = pay full balance
+            },
+            child: Text(
+              'Pay Full Balance  ₹${balance.toStringAsFixed(0)}',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

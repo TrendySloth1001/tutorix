@@ -23,6 +23,9 @@ const razorpay = new Razorpay({
 
 export interface CreateOrderDto {
     recordId?: string | undefined;
+    /** Optional partial amount — only allowed when the fee structure has allowInstallments=true
+     *  and the amount matches one of the admin-defined installmentAmounts. */
+    amount?: number | undefined;
 }
 
 export interface VerifyPaymentDto {
@@ -151,11 +154,48 @@ export class PaymentService {
             throw Object.assign(new Error('You cannot pay for this fee record'), { status: 403 });
         }
 
-        // 2. Calculate payable amount — payer always pays the full balance
+        // 2. Calculate payable amount
         const balance = record.finalAmount - record.paidAmount;
         if (balance <= 0) throw Object.assign(new Error('Nothing to pay'), { status: 400 });
 
-        const amountPaise = toPaise(balance);
+        // Installment enforcement: if a partial amount is requested, validate it
+        let payAmount = balance;
+        if (dto?.amount !== undefined) {
+            const requestedAmount = dto.amount;
+            const feeStructure = record.assignment?.feeStructure as any;
+            const isPartial = Math.abs(requestedAmount - balance) > 0.01;
+
+            if (isPartial) {
+                if (!feeStructure?.allowInstallments) {
+                    throw Object.assign(
+                        new Error('Partial payments are not allowed for this fee. Please pay the full balance.'),
+                        { status: 400 },
+                    );
+                }
+                // If admin defined specific installment amounts, enforce them
+                const adminAmounts = feeStructure?.installmentAmounts as Array<{ label: string; amount: number }> | null | undefined;
+                if (adminAmounts && adminAmounts.length > 0) {
+                    const matches = adminAmounts.some((x) => Math.abs(x.amount - requestedAmount) <= 1);
+                    if (!matches) {
+                        const allowed = adminAmounts.map((x) => `${x.label}: ₹${x.amount}`).join(', ');
+                        throw Object.assign(
+                            new Error(`Invalid amount. Please choose one of the allowed installment amounts: ${allowed}`),
+                            { status: 400 },
+                        );
+                    }
+                }
+            }
+            // Ensure requested amount does not exceed balance
+            if (requestedAmount > balance + 0.01) {
+                throw Object.assign(
+                    new Error(`Requested amount ₹${requestedAmount} exceeds outstanding balance ₹${balance}`),
+                    { status: 400 },
+                );
+            }
+            payAmount = requestedAmount;
+        }
+
+        const amountPaise = toPaise(payAmount);
 
         // 3. Idempotency — reuse existing CREATED order if < 30 min old and same amount
         const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
@@ -180,7 +220,7 @@ export class PaymentService {
                     id: record.id,
                     title: record.title,
                     balance,
-                    payAmount: balance,
+                    payAmount,
                 },
                 internalOrderId: existingOrder.id,
             };
@@ -223,7 +263,7 @@ export class PaymentService {
                 id: record.id,
                 title: record.title,
                 balance,
-                payAmount: balance,
+                payAmount,
             },
             internalOrderId: order.id,
         };

@@ -18,11 +18,15 @@ class PaymentService {
   // ── API Calls ───────────────────────────────────────────────────
 
   /// Create a Razorpay order for a pending fee record.
+  /// Pass [amount] to pay a specific admin-defined installment amount;
+  /// omit to pay the full outstanding balance.
   Future<Map<String, dynamic>> createOrder(
     String coachingId,
-    String recordId,
-  ) async {
+    String recordId, {
+    double? amount,
+  }) async {
     final body = <String, dynamic>{'recordId': recordId};
+    if (amount != null) body['amount'] = amount;
     final data = await _api.postAuthenticated(
       ApiConstants.feeCreateOrder(coachingId, recordId),
       body: body,

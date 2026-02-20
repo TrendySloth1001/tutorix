@@ -300,8 +300,8 @@ export class FeeService {
 
     async listStructures(coachingId: string) {
         return prisma.feeStructure.findMany({
-            where: { coachingId },
-            orderBy: [{ isCurrent: 'desc' }, { createdAt: 'desc' }],
+            where: { coachingId, isActive: true },
+            orderBy: [{ createdAt: 'desc' }],
             include: {
                 _count: { select: { assignments: true } },
             },
@@ -351,23 +351,8 @@ export class FeeService {
     }
 
     async createStructure(coachingId: string, dto: CreateFeeStructureDto, actorId?: string) {
-        // ── isCurrent enforcement ───────────────────────────────
-        // When creating a new structure, it automatically becomes the current one.
-        // The previously current structure is demoted.
-
-        const previousCurrent = await prisma.feeStructure.findFirst({
-            where: { coachingId, isCurrent: true },
-            select: { id: true, name: true, amount: true, taxType: true, gstRate: true },
-        });
-
-        // Demote old current in same transaction
-        if (previousCurrent) {
-            await prisma.feeStructure.update({
-                where: { id: previousCurrent.id },
-                data: { isCurrent: false, replacedAt: new Date() },
-            });
-        }
-
+        // Each structure is independent — multiple can coexist per coaching.
+        // No "current" enforcement or demotion.
         const created = await prisma.feeStructure.create({
             data: {
                 coachingId,
@@ -387,8 +372,6 @@ export class FeeService {
                 cessRate: dto.cessRate ?? 0,
                 // Line items
                 lineItems: dto.lineItems != null ? dto.lineItems as Prisma.InputJsonValue : Prisma.JsonNull,
-                // New: isCurrent = true (this is the new active template)
-                isCurrent: true,
                 // Installment controls
                 allowInstallments: dto.allowInstallments ?? false,
                 installmentCount: dto.installmentCount ?? 0,
@@ -396,31 +379,15 @@ export class FeeService {
             },
         });
 
-        // Audit: STRUCTURE_CREATED (and STRUCTURE_REPLACED if we demoted a previous one)
-        if (previousCurrent) {
-            void writeAuditLog({
-                coachingId,
-                entityType: 'STRUCTURE',
-                entityId: created.id,
-                event: 'STRUCTURE_REPLACED',
-                actorId: actorId ?? null,
-                feeStructureId: created.id,
-                before: { id: previousCurrent.id, name: previousCurrent.name, amount: previousCurrent.amount },
-                after: { id: created.id, name: created.name, amount: created.amount },
-                meta: { replacedStructureId: previousCurrent.id },
-                note: `Structure "${previousCurrent.name}" replaced by "${created.name}"`,
-            });
-        } else {
-            void writeAuditLog({
-                coachingId,
-                entityType: 'STRUCTURE',
-                entityId: created.id,
-                event: 'STRUCTURE_CREATED',
-                actorId: actorId ?? null,
-                feeStructureId: created.id,
-                after: { id: created.id, name: created.name, amount: created.amount, cycle: created.cycle },
-            });
-        }
+        void writeAuditLog({
+            coachingId,
+            entityType: 'STRUCTURE',
+            entityId: created.id,
+            event: 'STRUCTURE_CREATED',
+            actorId: actorId ?? null,
+            feeStructureId: created.id,
+            after: { id: created.id, name: created.name, amount: created.amount, cycle: created.cycle },
+        });
 
         return created;
     }
@@ -1508,7 +1475,7 @@ export class FeeService {
         };
     }
 
-    // ── Internal helpers ────────────────────────────────────────────
+    //Internal helpers
 
     async listAuditLog(coachingId: string, query: ListAuditLogQuery) {
         const page = query.page ?? 1;

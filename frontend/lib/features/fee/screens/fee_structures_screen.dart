@@ -5,8 +5,7 @@ import '../services/fee_service.dart';
 import 'fee_audit_log_screen.dart';
 
 /// Manages fee structures (templates) for a coaching.
-/// Only ONE structure can be "current" at a time.
-/// Creating a new structure automatically demotes the existing one.
+/// Multiple independent structures can coexist — each can be assigned to any number of students.
 class FeeStructuresScreen extends StatefulWidget {
   final String coachingId;
   const FeeStructuresScreen({super.key, required this.coachingId});
@@ -18,8 +17,7 @@ class FeeStructuresScreen extends StatefulWidget {
 class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
   final _svc = FeeService();
 
-  FeeStructureModel? _current;
-  List<FeeStructureModel> _previous = [];
+  List<FeeStructureModel> _structures = [];
   bool _loading = true;
   String? _error;
 
@@ -38,13 +36,7 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
       final all = await _svc.listStructures(widget.coachingId);
       if (!mounted) return;
       setState(() {
-        _current = all.where((s) => s.isCurrent).firstOrNull;
-        _previous = all.where((s) => !s.isCurrent).toList()
-          ..sort((a, b) {
-            final aT = a.replacedAt ?? a.createdAt ?? DateTime(0);
-            final bT = b.replacedAt ?? b.createdAt ?? DateTime(0);
-            return bT.compareTo(aT);
-          });
+        _structures = all;
         _loading = false;
       });
     } catch (e) {
@@ -54,37 +46,6 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
         _loading = false;
       });
     }
-  }
-
-  Future<void> _initiateNewStructure() async {
-    Map<String, dynamic>? preview;
-    try {
-      preview = await _svc.getStructureReplacePreview(widget.coachingId);
-    } catch (_) {
-      preview = {'hasCurrent': false, 'memberCount': 0, 'memberNames': []};
-    }
-    if (!mounted) return;
-
-    final hasCurrent = preview['hasCurrent'] as bool? ?? false;
-
-    if (hasCurrent) {
-      final confirmed = await showModalBottomSheet<bool>(
-        context: context,
-        isScrollControlled: true,
-        backgroundColor: Colors.transparent,
-        builder: (_) => _ReplaceWarningSheet(
-          currentName: _current?.name ?? 'Current Structure',
-          memberCount: (preview!['memberCount'] as num?)?.toInt() ?? 0,
-          memberNames: List<String>.from(
-            preview['memberNames'] as List<dynamic>? ?? [],
-          ),
-        ),
-      );
-      if (confirmed != true || !mounted) return;
-    }
-
-    if (!mounted) return;
-    _showCreateSheet();
   }
 
   void _showCreateSheet() {
@@ -260,6 +221,14 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
           ),
         ],
       ),
+      floatingActionButton: _loading || _error != null
+          ? null
+          : FloatingActionButton(
+              onPressed: _showCreateSheet,
+              backgroundColor: AppColors.darkOlive,
+              tooltip: 'New Fee Structure',
+              child: const Icon(Icons.add_rounded, color: AppColors.cream),
+            ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
@@ -267,235 +236,248 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
           : RefreshIndicator(
               color: AppColors.darkOlive,
               onRefresh: _load,
-              child: ListView(
-                padding: const EdgeInsets.all(16),
-                children: [
-                  if (_current != null) ...[
-                    _SectionLabel(label: 'CURRENT STRUCTURE'),
-                    const SizedBox(height: 8),
-                    _CurrentStructureCard(
-                      structure: _current!,
-                      onEdit: () => _showEditSheet(_current!),
-                      onReplace: _initiateNewStructure,
+              child: _structures.isEmpty
+                  ? ListView(
+                      children: [
+                        SizedBox(
+                          height: MediaQuery.of(context).size.height * 0.55,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Icon(
+                                Icons.receipt_long_outlined,
+                                size: 56,
+                                color: AppColors.mutedOlive,
+                              ),
+                              const SizedBox(height: 16),
+                              const Text(
+                                'No fee structures yet',
+                                style: TextStyle(
+                                  color: AppColors.darkOlive,
+                                  fontWeight: FontWeight.w700,
+                                  fontSize: 16,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              const Padding(
+                                padding: EdgeInsets.symmetric(horizontal: 40),
+                                child: Text(
+                                  'Tap + to create structures like "Monthly Tuition" or "Annual Fee". Each can be assigned to multiple students.',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: AppColors.mutedOlive,
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    )
+                  : ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                      children: _structures
+                          .map(
+                            (s) => _StructureCard(
+                              structure: s,
+                              onEdit: () => _showEditSheet(s),
+                              onDelete: () => _deleteStructure(s),
+                            ),
+                          )
+                          .toList(),
                     ),
-                  ] else ...[
-                    _EmptyCurrentCard(onCreate: _initiateNewStructure),
-                  ],
-                  const SizedBox(height: 24),
-                  if (_previous.isNotEmpty) ...[
-                    _SectionLabel(label: 'PREVIOUS STRUCTURES'),
-                    const SizedBox(height: 8),
-                    ..._previous.map(
-                      (s) => _PreviousStructureTile(
-                        structure: s,
-                        onDelete: () => _deleteStructure(s),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
             ),
     );
   }
 }
 
-// ── Section label ───────────────────────────────────────────────────────────
+// ── Structure card ─────────────────────────────────────────────────────────
 
-class _SectionLabel extends StatelessWidget {
-  final String label;
-  const _SectionLabel({required this.label});
-  @override
-  Widget build(BuildContext context) {
-    return Text(
-      label,
-      style: const TextStyle(
-        color: AppColors.mutedOlive,
-        fontSize: 11,
-        fontWeight: FontWeight.w700,
-        letterSpacing: 1.2,
-      ),
-    );
-  }
-}
-
-// ── Current structure card ──────────────────────────────────────────────────
-
-class _CurrentStructureCard extends StatelessWidget {
+class _StructureCard extends StatelessWidget {
   final FeeStructureModel structure;
   final VoidCallback onEdit;
-  final VoidCallback onReplace;
+  final VoidCallback onDelete;
 
-  const _CurrentStructureCard({
+  const _StructureCard({
     required this.structure,
     required this.onEdit,
-    required this.onReplace,
+    required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: AppColors.darkOlive,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.mutedOlive.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
-            color: AppColors.darkOlive.withValues(alpha: 0.25),
-            blurRadius: 12,
-            offset: const Offset(0, 4),
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(
-                child: Text(
-                  structure.name,
-                  style: const TextStyle(
-                    color: AppColors.cream,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 18,
+          // Header row
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 14, 8, 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: AppColors.darkOlive.withValues(alpha: 0.08),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: const Icon(
+                    Icons.receipt_rounded,
+                    color: AppColors.darkOlive,
+                    size: 18,
                   ),
                 ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: AppColors.cream.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: const Text(
-                  'ACTIVE',
-                  style: TextStyle(
-                    color: AppColors.cream,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w700,
-                    letterSpacing: 1,
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        structure.name,
+                        style: const TextStyle(
+                          color: AppColors.darkOlive,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                      if (structure.description != null &&
+                          structure.description!.isNotEmpty)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 2),
+                          child: Text(
+                            structure.description!,
+                            style: const TextStyle(
+                              color: AppColors.mutedOlive,
+                              fontSize: 12,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                    ],
                   ),
                 ),
-              ),
-            ],
-          ),
-          if (structure.description != null &&
-              structure.description!.isNotEmpty) ...[
-            const SizedBox(height: 4),
-            Text(
-              structure.description!,
-              style: TextStyle(
-                color: AppColors.cream.withValues(alpha: 0.7),
-                fontSize: 12,
-              ),
-            ),
-          ],
-          const SizedBox(height: 16),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.end,
-            children: [
-              Text(
-                '₹${structure.amount.toStringAsFixed(0)}',
-                style: const TextStyle(
-                  color: AppColors.cream,
-                  fontWeight: FontWeight.w900,
-                  fontSize: 28,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Text(
-                  '/ ${structure.cycleLabel}',
-                  style: TextStyle(
-                    color: AppColors.cream.withValues(alpha: 0.7),
-                    fontSize: 13,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 8,
-            runSpacing: 6,
-            children: [
-              if (structure.lateFinePerDay > 0)
-                _InfoChip(
-                  label:
-                      'Late ₹${structure.lateFinePerDay.toStringAsFixed(0)}/day',
-                  icon: Icons.access_time_rounded,
-                ),
-              if (structure.hasTax)
-                _InfoChip(
-                  label:
-                      'GST ${structure.gstRate.toStringAsFixed(0)}% (${structure.taxType == 'GST_INCLUSIVE' ? 'Incl.' : 'Excl.'})',
-                  icon: Icons.receipt_outlined,
-                ),
-              if (structure.lineItems.isNotEmpty)
-                _InfoChip(
-                  label:
-                      '${structure.lineItems.length} line item${structure.lineItems.length == 1 ? '' : 's'}',
-                  icon: Icons.list_rounded,
-                ),
-              _InfoChip(
-                label:
-                    '${structure.assignmentCount} student${structure.assignmentCount == 1 ? '' : 's'}',
-                icon: Icons.people_rounded,
-              ),
-              if (structure.allowInstallments)
-                _InfoChip(
-                  label: structure.installmentCount > 0
-                      ? '${structure.installmentCount} installments'
-                      : 'Installments on',
-                  icon: Icons.credit_card_rounded,
-                ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          const Divider(color: Colors.white24),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.cream,
-                    side: const BorderSide(color: Colors.white30),
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                  ),
-                  icon: const Icon(Icons.edit_rounded, size: 16),
-                  label: const Text(
-                    'Edit',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
+                // Actions
+                IconButton(
+                  icon: const Icon(Icons.edit_rounded, size: 18),
+                  color: AppColors.mutedOlive,
+                  tooltip: 'Edit',
                   onPressed: onEdit,
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.cream,
-                    foregroundColor: AppColors.darkOlive,
-                    padding: const EdgeInsets.symmetric(vertical: 10),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+                PopupMenuButton<String>(
+                  icon: const Icon(
+                    Icons.more_vert_rounded,
+                    size: 18,
+                    color: AppColors.mutedOlive,
+                  ),
+                  onSelected: (v) {
+                    if (v == 'delete') onDelete();
+                  },
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(
+                      value: 'delete',
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.delete_outline_rounded,
+                            size: 18,
+                            color: Colors.redAccent,
+                          ),
+                          SizedBox(width: 10),
+                          Text(
+                            'Remove',
+                            style: TextStyle(color: Colors.redAccent),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // Amount + cycle
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '\u20b9${structure.amount.toStringAsFixed(0)}',
+                  style: const TextStyle(
+                    color: AppColors.darkOlive,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 26,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 3),
+                  child: Text(
+                    '/ ${structure.cycleLabel}',
+                    style: const TextStyle(
+                      color: AppColors.mutedOlive,
+                      fontSize: 13,
                     ),
                   ),
-                  icon: const Icon(Icons.swap_horiz_rounded, size: 16),
-                  label: const Text(
-                    'Change',
-                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-                  ),
-                  onPressed: onReplace,
                 ),
-              ),
-            ],
+              ],
+            ),
+          ),
+          // Chips
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+            child: Wrap(
+              spacing: 8,
+              runSpacing: 6,
+              children: [
+                _Chip(
+                  icon: Icons.people_rounded,
+                  label:
+                      '${structure.assignmentCount} student${structure.assignmentCount == 1 ? "" : "s"}',
+                ),
+                if (structure.lateFinePerDay > 0)
+                  _Chip(
+                    icon: Icons.access_time_rounded,
+                    label:
+                        'Late \u20b9${structure.lateFinePerDay.toStringAsFixed(0)}/day',
+                  ),
+                if (structure.hasTax)
+                  _Chip(
+                    icon: Icons.receipt_outlined,
+                    label:
+                        'GST ${structure.gstRate.toStringAsFixed(0)}% (${structure.taxType == "GST_INCLUSIVE" ? "Incl." : "Excl."})',
+                  ),
+                if (structure.lineItems.isNotEmpty)
+                  _Chip(
+                    icon: Icons.list_rounded,
+                    label:
+                        '${structure.lineItems.length} line item${structure.lineItems.length == 1 ? "" : "s"}',
+                  ),
+                if (structure.allowInstallments)
+                  _Chip(
+                    icon: Icons.credit_card_rounded,
+                    label: structure.installmentCount > 0
+                        ? '${structure.installmentCount} installments'
+                        : 'Installments on',
+                  ),
+              ],
+            ),
           ),
         ],
       ),
@@ -503,27 +485,27 @@ class _CurrentStructureCard extends StatelessWidget {
   }
 }
 
-class _InfoChip extends StatelessWidget {
-  final String label;
+class _Chip extends StatelessWidget {
   final IconData icon;
-  const _InfoChip({required this.label, required this.icon});
+  final String label;
+  const _Chip({required this.icon, required this.label});
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.12),
+        color: AppColors.softGrey.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 11, color: AppColors.cream.withValues(alpha: 0.8)),
+          Icon(icon, size: 11, color: AppColors.mutedOlive),
           const SizedBox(width: 4),
           Text(
             label,
-            style: TextStyle(
-              color: AppColors.cream.withValues(alpha: 0.9),
+            style: const TextStyle(
+              color: AppColors.mutedOlive,
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
@@ -532,342 +514,6 @@ class _InfoChip extends StatelessWidget {
       ),
     );
   }
-}
-
-// ── Empty current card ──────────────────────────────────────────────────────
-
-class _EmptyCurrentCard extends StatelessWidget {
-  final VoidCallback onCreate;
-  const _EmptyCurrentCard({required this.onCreate});
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.softGrey.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.mutedOlive.withValues(alpha: 0.3)),
-      ),
-      padding: const EdgeInsets.all(24),
-      child: Column(
-        children: [
-          const Icon(
-            Icons.receipt_long_outlined,
-            size: 48,
-            color: AppColors.mutedOlive,
-          ),
-          const SizedBox(height: 12),
-          const Text(
-            'No active fee structure',
-            style: TextStyle(
-              color: AppColors.darkOlive,
-              fontWeight: FontWeight.w700,
-              fontSize: 15,
-            ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            'Set a fee structure like "Monthly Tuition" to begin assigning fees to students.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.mutedOlive, fontSize: 13),
-          ),
-          const SizedBox(height: 20),
-          FilledButton.icon(
-            style: FilledButton.styleFrom(
-              backgroundColor: AppColors.darkOlive,
-              foregroundColor: AppColors.cream,
-            ),
-            onPressed: onCreate,
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('Set Fee Structure'),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Replace-warning bottom sheet ────────────────────────────────────────────
-
-class _ReplaceWarningSheet extends StatelessWidget {
-  final String currentName;
-  final int memberCount;
-  final List<String> memberNames;
-
-  const _ReplaceWarningSheet({
-    required this.currentName,
-    required this.memberCount,
-    required this.memberNames,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.75,
-      ),
-      decoration: const BoxDecoration(
-        color: AppColors.cream,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: AppColors.softGrey,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFFFF3E0),
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                child: const Icon(
-                  Icons.warning_amber_rounded,
-                  color: Color(0xFFE65100),
-                  size: 22,
-                ),
-              ),
-              const SizedBox(width: 12),
-              const Expanded(
-                child: Text(
-                  'Change Fee Structure?',
-                  style: TextStyle(
-                    color: AppColors.darkOlive,
-                    fontWeight: FontWeight.w800,
-                    fontSize: 17,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            decoration: BoxDecoration(
-              color: AppColors.softGrey.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Row(
-              children: [
-                const Icon(
-                  Icons.receipt_rounded,
-                  size: 16,
-                  color: AppColors.mutedOlive,
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    'Current: $currentName',
-                    style: const TextStyle(
-                      color: AppColors.darkOlive,
-                      fontWeight: FontWeight.w600,
-                      fontSize: 13,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 14),
-          if (memberCount > 0) ...[
-            Text(
-              '$memberCount student${memberCount == 1 ? ' is' : 's are'} currently assigned to this structure:',
-              style: const TextStyle(
-                color: AppColors.darkOlive,
-                fontSize: 13,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Flexible(
-              child: SingleChildScrollView(
-                child: Column(
-                  children: memberNames.take(10).map((name) {
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.person_rounded,
-                            size: 14,
-                            color: AppColors.mutedOlive,
-                          ),
-                          const SizedBox(width: 6),
-                          Text(
-                            name,
-                            style: const TextStyle(
-                              color: AppColors.darkOlive,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }).toList(),
-                ),
-              ),
-            ),
-            if (memberCount > 10) ...[
-              const SizedBox(height: 4),
-              Text(
-                '...and ${memberCount - 10} more',
-                style: const TextStyle(
-                  color: AppColors.mutedOlive,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-            const SizedBox(height: 14),
-          ],
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF3E0),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Text(
-              'Existing students will keep their current records under the old structure. New assignments will use the new structure.',
-              style: TextStyle(
-                color: Color(0xFFBF360C),
-                fontSize: 12,
-                height: 1.5,
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: () => Navigator.pop(context, false),
-                  child: const Text('Cancel'),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: FilledButton(
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.darkOlive,
-                    foregroundColor: AppColors.cream,
-                  ),
-                  onPressed: () => Navigator.pop(context, true),
-                  child: const Text('Proceed'),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-// ── Previous structure tile ─────────────────────────────────────────────────
-
-class _PreviousStructureTile extends StatelessWidget {
-  final FeeStructureModel structure;
-  final VoidCallback onDelete;
-
-  const _PreviousStructureTile({
-    required this.structure,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Opacity(
-      opacity: 0.65,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 8),
-        decoration: BoxDecoration(
-          color: AppColors.softGrey.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: AppColors.mutedOlive.withValues(alpha: 0.2),
-          ),
-        ),
-        child: ListTile(
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 6,
-          ),
-          leading: Container(
-            padding: const EdgeInsets.all(8),
-            decoration: BoxDecoration(
-              color: Colors.grey.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: const Icon(
-              Icons.archive_rounded,
-              color: Colors.grey,
-              size: 18,
-            ),
-          ),
-          title: Text(
-            structure.name,
-            style: const TextStyle(
-              fontWeight: FontWeight.w600,
-              color: Colors.grey,
-              fontSize: 14,
-            ),
-          ),
-          subtitle: Text(
-            '₹${structure.amount.toStringAsFixed(0)} · ${structure.cycleLabel}'
-            '${structure.replacedAt != null ? ' · Replaced ${_fmtDate(structure.replacedAt!)}' : ''}',
-            style: const TextStyle(color: Colors.grey, fontSize: 12),
-          ),
-          trailing: PopupMenuButton<String>(
-            icon: const Icon(
-              Icons.more_vert_rounded,
-              color: Colors.grey,
-              size: 18,
-            ),
-            onSelected: (v) {
-              if (v == 'delete') onDelete();
-            },
-            itemBuilder: (_) => [
-              const PopupMenuItem(value: 'delete', child: Text('Remove')),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-String _fmtDate(DateTime d) {
-  const months = [
-    'Jan',
-    'Feb',
-    'Mar',
-    'Apr',
-    'May',
-    'Jun',
-    'Jul',
-    'Aug',
-    'Sep',
-    'Oct',
-    'Nov',
-    'Dec',
-  ];
-  return '${d.day} ${months[d.month - 1]} ${d.year}';
 }
 
 // ── Structure form sheet ────────────────────────────────────────────────────
