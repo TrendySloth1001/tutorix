@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_colors.dart';
 import '../models/fee_model.dart';
@@ -34,6 +35,9 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
   final _searchCtrl = TextEditingController();
   final _scrollCtrl = ScrollController();
 
+  /// Debounce timer for search input to avoid excessive API calls
+  Timer? _searchDebounce;
+
   @override
   void initState() {
     super.initState();
@@ -45,6 +49,7 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
   void dispose() {
     _scrollCtrl.dispose();
     _searchCtrl.dispose();
+    _searchDebounce?.cancel();
     super.dispose();
   }
 
@@ -128,7 +133,11 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
             controller: _searchCtrl,
             onChanged: (v) {
               _searchQuery = v;
-              _load(reset: true);
+              // Debounce search: wait 400ms after last keystroke before querying
+              _searchDebounce?.cancel();
+              _searchDebounce = Timer(const Duration(milliseconds: 400), () {
+                if (mounted) _load(reset: true);
+              });
             },
           ),
           _FilterBar(

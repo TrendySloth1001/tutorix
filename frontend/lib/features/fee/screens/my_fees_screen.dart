@@ -7,6 +7,8 @@ import '../models/fee_model.dart';
 import '../services/fee_service.dart';
 import '../services/payment_service.dart';
 import 'fee_record_detail_screen.dart';
+import 'fee_member_profile_screen.dart';
+import 'fee_ledger_screen.dart';
 import 'payment_receipt_screen.dart';
 
 /// Student / Parent fee view for a specific coaching.
@@ -32,11 +34,15 @@ class _MyFeesScreenState extends State<MyFeesScreen>
   List<FeeRecordModel> _records = [];
   bool _loading = true;
   String? _error;
+  String? _myMemberId; // student's own memberId in this coaching
 
   // Transaction history tab
   List<Map<String, dynamic>> _transactions = [];
   bool _txLoading = false;
   String? _txError;
+  int _txPage = 1;
+  int _txTotal = 0;
+  bool _txHasMore = true;
 
   // Multi-select state
   final Set<String> _selected = {};
@@ -52,7 +58,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
           !_tab.indexIsChanging &&
           _transactions.isEmpty &&
           !_txLoading) {
-        _loadTransactions();
+        _loadTransactions(reset: true);
       }
     });
     _load();
@@ -65,16 +71,34 @@ class _MyFeesScreenState extends State<MyFeesScreen>
     super.dispose();
   }
 
-  Future<void> _loadTransactions() async {
-    setState(() {
-      _txLoading = true;
-      _txError = null;
-    });
-    try {
-      final txns = await _paySvc.getMyTransactions(widget.coachingId);
-      if (!mounted) return;
+  Future<void> _loadTransactions({bool reset = false}) async {
+    if (reset) {
       setState(() {
-        _transactions = txns;
+        _txLoading = true;
+        _txError = null;
+        _txPage = 1;
+        _transactions.clear();
+        _txHasMore = true;
+      });
+    } else {
+      if (!_txHasMore || _txLoading) return;
+      setState(() => _txLoading = true);
+    }
+    try {
+      final result = await _paySvc.getMyTransactions(
+        widget.coachingId,
+        page: reset ? 1 : _txPage,
+      );
+      if (!mounted) return;
+      final txns = (result['transactions'] as List<dynamic>?)
+              ?.cast<Map<String, dynamic>>() ?? [];
+      final total = result['total'] as int? ?? 0;
+      setState(() {
+        if (reset) _transactions.clear();
+        _transactions.addAll(txns);
+        _txTotal = total;
+        _txPage = (reset ? 1 : _txPage) + 1;
+        _txHasMore = _transactions.length < _txTotal;
         _txLoading = false;
       });
     } catch (e) {
@@ -98,8 +122,11 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       records.sort(
         (a, b) => _statusOrder(a.status).compareTo(_statusOrder(b.status)),
       );
+      // Derive own memberId from the first direct record (not ward)
+      final firstMemberId = records.isNotEmpty ? records.first.memberId : null;
       setState(() {
         _records = records;
+        if (firstMemberId != null) _myMemberId = firstMemberId;
         _loading = false;
         _selected.removeWhere((id) => !records.any((r) => r.id == id));
       });
@@ -312,6 +339,50 @@ class _MyFeesScreenState extends State<MyFeesScreen>
     return CustomScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       slivers: [
+        // ─── Account shortcuts ───
+        if (_myMemberId != null)
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 14, 16, 4),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _AccountShortcutButton(
+                      icon: Icons.account_balance_wallet_rounded,
+                      label: 'Account Summary',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FeeMemberProfileScreen(
+                            coachingId: widget.coachingId,
+                            memberId: _myMemberId!,
+                            isAdmin: false,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _AccountShortcutButton(
+                      icon: Icons.receipt_long_rounded,
+                      label: 'Full Ledger',
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => FeeLedgerScreen(
+                            coachingId: widget.coachingId,
+                            memberId: _myMemberId!,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+
         // ─── Payable Section ───
         if (payable.isNotEmpty) ...[
           SliverToBoxAdapter(
@@ -735,6 +806,54 @@ class _MyFeesScreenState extends State<MyFeesScreen>
 // ═══════════════════════════════════════════════════════════════════════
 // ─── WIDGETS ──────────────────────────────────────────────────────────
 // ═══════════════════════════════════════════════════════════════════════
+
+/// Quick-access shortcut button for account summary / ledger.
+class _AccountShortcutButton extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+  const _AccountShortcutButton({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.darkOlive.withValues(alpha: 0.07),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: AppColors.darkOlive),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    color: AppColors.darkOlive,
+                    fontWeight: FontWeight.w600,
+                    fontSize: 13,
+                  ),
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 18,
+                color: AppColors.mutedOlive,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
 
 /// Bottom payment bar when records are selected.
 class _PayBar extends StatelessWidget {

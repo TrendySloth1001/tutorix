@@ -66,11 +66,13 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
       final records = await _svc.getOverdueReport(widget.coachingId);
       // Sort by most overdue first
       records.sort((a, b) => b.daysOverdue.compareTo(a.daysOverdue));
+      if (!mounted) return;
       setState(() {
         _overdueRecords = records;
         _loadingOverdue = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _overdueError = e.toString();
         _loadingOverdue = false;
@@ -88,11 +90,13 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
         widget.coachingId,
         financialYear: _selectedFY,
       );
+      if (!mounted) return;
       setState(() {
         _summary = s;
         _loadingSummary = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _summaryError = e.toString();
         _loadingSummary = false;

@@ -47,14 +47,16 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
         newMap[item['date']] = item;
       }
 
+      if (!mounted) return;
       setState(() {
         _calendarData = newMap;
       });
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(
         context,
       ).showSnackBar(SnackBar(content: Text('Error loading calendar: $e')));
-    } finally {}
+    }
   }
 
   @override

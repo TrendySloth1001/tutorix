@@ -86,6 +86,24 @@ class FeeStructureModel {
 
   bool get hasTax => taxType != 'NONE' && gstRate > 0;
 
+  /// Serialize to JSON for API calls (create/update).
+  Map<String, dynamic> toJson() => {
+    'name': name,
+    'amount': amount,
+    'cycle': cycle,
+    'lateFinePerDay': lateFinePerDay,
+    if (description != null) 'description': description,
+    if (taxType != 'NONE') 'taxType': taxType,
+    if (gstRate > 0) 'gstRate': gstRate,
+    if (sacCode != null) 'sacCode': sacCode,
+    if (hsnCode != null) 'hsnCode': hsnCode,
+    if (gstSupplyType != 'INTRA_STATE') 'gstSupplyType': gstSupplyType,
+    if (cessRate > 0) 'cessRate': cessRate,
+    if (lineItems.isNotEmpty) 'lineItems': lineItems.map((e) => e.toJson()).toList(),
+    if (installmentPlan.isNotEmpty)
+      'installmentPlan': installmentPlan.map((e) => e.toJson()).toList(),
+  };
+
   String get cycleLabel {
     switch (cycle) {
       case 'ONCE':
@@ -121,6 +139,7 @@ class InstallmentPlanItem {
         dueDay: (json['dueDay'] as num?)?.toInt() ?? 1,
         amount: (json['amount'] as num?)?.toDouble() ?? 0,
       );
+  Map<String, dynamic> toJson() => {'label': label, 'dueDay': dueDay, 'amount': amount};
 }
 
 /// A single line item within a fee structure (e.g. "Books", "Lab Fee").
@@ -405,6 +424,95 @@ class FeeRecordModel {
   bool get isPartial => status == 'PARTIALLY_PAID';
   bool get isWaived => status == 'WAIVED';
   bool get hasTax => taxType != 'NONE' && taxAmount > 0;
+}
+
+/// A fee assignment linking a structure to a student.
+class FeeAssignmentModel {
+  final String id;
+  final String coachingId;
+  final String memberId;
+  final String feeStructureId;
+  final double? customAmount;
+  final double discountAmount;
+  final String? discountReason;
+  final String? scholarshipTag;
+  final double scholarshipAmount;
+  final bool isActive;
+  final bool isPaused;
+  final String? pauseNote;
+  final DateTime? pausedAt;
+  final DateTime? startDate;
+  final DateTime? endDate;
+  final DateTime? createdAt;
+  final FeeStructureModel? feeStructure;
+  final List<FeeRecordModel> records;
+  final FeeMemberInfo? member;
+
+  const FeeAssignmentModel({
+    required this.id,
+    required this.coachingId,
+    required this.memberId,
+    required this.feeStructureId,
+    this.customAmount,
+    this.discountAmount = 0,
+    this.discountReason,
+    this.scholarshipTag,
+    this.scholarshipAmount = 0,
+    this.isActive = true,
+    this.isPaused = false,
+    this.pauseNote,
+    this.pausedAt,
+    this.startDate,
+    this.endDate,
+    this.createdAt,
+    this.feeStructure,
+    this.records = const [],
+    this.member,
+  });
+
+  factory FeeAssignmentModel.fromJson(Map<String, dynamic> json) {
+    final structureJson = json['feeStructure'] as Map<String, dynamic>?;
+    final recordsList = json['records'] as List<dynamic>?;
+    final memberJson = json['member'] as Map<String, dynamic>?;
+    return FeeAssignmentModel(
+      id: json['id'] as String? ?? '',
+      coachingId: json['coachingId'] as String? ?? '',
+      memberId: json['memberId'] as String? ?? '',
+      feeStructureId: json['feeStructureId'] as String? ?? '',
+      customAmount: (json['customAmount'] as num?)?.toDouble(),
+      discountAmount: (json['discountAmount'] as num?)?.toDouble() ?? 0,
+      discountReason: json['discountReason'] as String?,
+      scholarshipTag: json['scholarshipTag'] as String?,
+      scholarshipAmount: (json['scholarshipAmount'] as num?)?.toDouble() ?? 0,
+      isActive: json['isActive'] as bool? ?? true,
+      isPaused: json['isPaused'] as bool? ?? false,
+      pauseNote: json['pauseNote'] as String?,
+      pausedAt: json['pausedAt'] != null
+          ? DateTime.tryParse(json['pausedAt'] as String)
+          : null,
+      startDate: json['startDate'] != null
+          ? DateTime.tryParse(json['startDate'] as String)
+          : null,
+      endDate: json['endDate'] != null
+          ? DateTime.tryParse(json['endDate'] as String)
+          : null,
+      createdAt: json['createdAt'] != null
+          ? DateTime.tryParse(json['createdAt'] as String)
+          : null,
+      feeStructure: structureJson != null
+          ? FeeStructureModel.fromJson(structureJson)
+          : null,
+      records: recordsList
+              ?.map((e) => FeeRecordModel.fromJson(e as Map<String, dynamic>))
+              .toList() ??
+          [],
+      member: memberJson != null ? FeeMemberInfo.fromJson(memberJson) : null,
+    );
+  }
+
+  /// Effective amount per cycle (custom or structure amount minus discounts).
+  double get effectiveAmount =>
+      (customAmount ?? feeStructure?.amount ?? 0) - discountAmount - scholarshipAmount;
 }
 
 /// A single refund entry.

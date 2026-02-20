@@ -6,6 +6,8 @@
     "outDir": "dist",
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
+    "target": "ES2022",
+    "lib": ["ES2022"],
     "module": "ESNext",
     "moduleResolution": "Node",
     // For nodejs:

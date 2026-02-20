@@ -2,56 +2,67 @@ import { Router } from 'express';
 import { FeeController } from './fee.controller.js';
 import { PaymentController } from '../payment/payment.controller.js';
 import { authMiddleware } from '../../shared/middleware/auth.middleware.js';
+import { requireCoachingRole, requireCoachingMember } from '../../shared/middleware/coaching-role.middleware.js';
+import { rateLimiter } from '../../shared/middleware/rate-limiter.middleware.js';
 
 const router = Router({ mergeParams: true }); // access :coachingId from parent
 const ctrl = new FeeController();
 const payCtrl = new PaymentController();
 
+// Shared middleware stacks
+const adminAuth = [authMiddleware, requireCoachingRole('ADMIN', 'OWNER')] as const;
+const memberAuth = [authMiddleware, requireCoachingMember()] as const;
+const reminderLimiter = rateLimiter(60_000, 10, 'fee-reminder'); // 10 reminders/min per user
+
 // All routes under /coaching/:coachingId/fee
 
-// ── Fee Structures ──────────────────────────────────────────────────
-router.get('/structures', authMiddleware, ctrl.listStructures.bind(ctrl));
-router.post('/structures', authMiddleware, ctrl.createStructure.bind(ctrl));
-router.patch('/structures/:structureId', authMiddleware, ctrl.updateStructure.bind(ctrl));
-router.delete('/structures/:structureId', authMiddleware, ctrl.deleteStructure.bind(ctrl));
+// ── Fee Structures (admin-only) ─────────────────────────────────────
+router.get('/structures', ...adminAuth, ctrl.listStructures.bind(ctrl));
+router.post('/structures', ...adminAuth, ctrl.createStructure.bind(ctrl));
+router.patch('/structures/:structureId', ...adminAuth, ctrl.updateStructure.bind(ctrl));
+router.delete('/structures/:structureId', ...adminAuth, ctrl.deleteStructure.bind(ctrl));
 
-// ── Assignments ─────────────────────────────────────────────────────
-router.post('/assign', authMiddleware, ctrl.assignFee.bind(ctrl));
-router.delete('/assignments/:assignmentId', authMiddleware, ctrl.removeFeeAssignment.bind(ctrl));
-router.get('/members/:memberId', authMiddleware, ctrl.getMemberFeeProfile.bind(ctrl));
+// ── Assignments (admin-only) ────────────────────────────────────────
+router.post('/assign', ...adminAuth, ctrl.assignFee.bind(ctrl));
+router.delete('/assignments/:assignmentId', ...adminAuth, ctrl.removeFeeAssignment.bind(ctrl));
+router.patch('/assignments/:assignmentId/pause', ...adminAuth, ctrl.toggleFeePause.bind(ctrl));
 
-// ── Records ─────────────────────────────────────────────────────────
-router.get('/records', authMiddleware, ctrl.listRecords.bind(ctrl));
-router.get('/records/:recordId', authMiddleware, ctrl.getRecord.bind(ctrl));
-router.post('/records/:recordId/pay', authMiddleware, ctrl.recordPayment.bind(ctrl));
-router.post('/records/:recordId/waive', authMiddleware, ctrl.waiveFee.bind(ctrl));
-router.post('/records/:recordId/remind', authMiddleware, ctrl.sendReminder.bind(ctrl));
+// ── Member profiles & ledger (admin sees all; student sees own only) ──
+router.get('/members/:memberId', ...memberAuth, ctrl.getMemberFeeProfile.bind(ctrl));
+router.get('/members/:memberId/ledger', ...memberAuth, ctrl.getStudentLedger.bind(ctrl));
 
-// ── Summary & My Fees ────────────────────────────────────────────────
-router.get('/summary', authMiddleware, ctrl.getSummary.bind(ctrl));
-router.get('/my', authMiddleware, ctrl.getMyFees.bind(ctrl));
-router.get('/my-transactions', authMiddleware, ctrl.getMyTransactions.bind(ctrl));
-router.get('/calendar', authMiddleware, ctrl.getFeeCalendar.bind(ctrl));
+// ── Records (admin sees all; student can view their own record detail) ─
+router.get('/records', ...adminAuth, ctrl.listRecords.bind(ctrl));
+router.get('/records/:recordId', ...memberAuth, ctrl.getRecord.bind(ctrl));
+router.post('/records/:recordId/pay', ...adminAuth, ctrl.recordPayment.bind(ctrl));
+router.post('/records/:recordId/waive', ...adminAuth, ctrl.waiveFee.bind(ctrl));
+router.post('/records/:recordId/refund', ...adminAuth, ctrl.recordRefund.bind(ctrl));
 
-// ── New endpoints ────────────────────────────────────────────────────
-router.patch('/assignments/:assignmentId/pause', authMiddleware, ctrl.toggleFeePause.bind(ctrl));
-router.post('/records/:recordId/refund', authMiddleware, ctrl.recordRefund.bind(ctrl));
-router.post('/bulk-remind', authMiddleware, ctrl.bulkRemind.bind(ctrl));
-router.get('/overdue-report', authMiddleware, ctrl.getOverdueReport.bind(ctrl));
-router.get('/members/:memberId/ledger', authMiddleware, ctrl.getStudentLedger.bind(ctrl));
+// ── Reminders (admin-only, rate-limited) ────────────────────────────
+router.post('/records/:recordId/remind', ...adminAuth, reminderLimiter, ctrl.sendReminder.bind(ctrl));
+router.post('/bulk-remind', ...adminAuth, reminderLimiter, ctrl.bulkRemind.bind(ctrl));
 
-// ── Online Payment (Razorpay) ─────────────────────────────────────────
-router.post('/records/:recordId/create-order', authMiddleware, payCtrl.createOrder.bind(payCtrl));
-router.post('/records/:recordId/verify-payment', authMiddleware, payCtrl.verifyPayment.bind(payCtrl));
-router.get('/records/:recordId/online-payments', authMiddleware, payCtrl.getOnlinePayments.bind(payCtrl));
-router.post('/records/:recordId/online-refund', authMiddleware, payCtrl.initiateOnlineRefund.bind(payCtrl));
+// ── Summary & Reports (admin-only) ─────────────────────────────────
+router.get('/summary', ...adminAuth, ctrl.getSummary.bind(ctrl));
+router.get('/overdue-report', ...adminAuth, ctrl.getOverdueReport.bind(ctrl));
+router.get('/calendar', ...adminAuth, ctrl.getFeeCalendar.bind(ctrl));
 
-// ── Multi-record payment (select & pay multiple fees) ─────────────────
-router.post('/multi-pay/create-order', authMiddleware, payCtrl.createMultiOrder.bind(payCtrl));
-router.post('/multi-pay/verify', authMiddleware, payCtrl.verifyMultiPayment.bind(payCtrl));
+// ── Student-facing (any member) ────────────────────────────────────
+router.get('/my', ...memberAuth, ctrl.getMyFees.bind(ctrl));
+router.get('/my-transactions', ...memberAuth, ctrl.getMyTransactions.bind(ctrl));
 
-// ── Failed order tracking ──────────────────────────────────────────────
-router.post('/orders/:internalOrderId/fail', authMiddleware, payCtrl.failOrder.bind(payCtrl));
-router.get('/records/:recordId/failed-orders', authMiddleware, payCtrl.getFailedOrders.bind(payCtrl));
+// ── Online Payment — student-facing (any member) ───────────────────
+router.post('/records/:recordId/create-order', ...memberAuth, payCtrl.createOrder.bind(payCtrl));
+router.post('/records/:recordId/verify-payment', ...memberAuth, payCtrl.verifyPayment.bind(payCtrl));
+router.get('/records/:recordId/online-payments', ...adminAuth, payCtrl.getOnlinePayments.bind(payCtrl));
+router.post('/records/:recordId/online-refund', ...adminAuth, payCtrl.initiateOnlineRefund.bind(payCtrl));
+
+// ── Multi-record payment — student-facing ──────────────────────────
+router.post('/multi-pay/create-order', ...memberAuth, payCtrl.createMultiOrder.bind(payCtrl));
+router.post('/multi-pay/verify', ...memberAuth, payCtrl.verifyMultiPayment.bind(payCtrl));
+
+// ── Failed order tracking ──────────────────────────────────────────
+router.post('/orders/:internalOrderId/fail', ...memberAuth, payCtrl.failOrder.bind(payCtrl));
+router.get('/records/:recordId/failed-orders', ...memberAuth, payCtrl.getFailedOrders.bind(payCtrl));
 
 export default router;

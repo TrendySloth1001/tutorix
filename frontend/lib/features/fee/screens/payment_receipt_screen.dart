@@ -188,6 +188,15 @@ class PaymentReceiptScreen extends StatelessWidget {
                         '- ₹${discountAmount!.toStringAsFixed(2)}',
                       ),
                     ],
+                    // After-discount row: makes taxable base transparent for exclusive GST
+                    if (discountAmount != null && discountAmount! > 0 &&
+                        taxType == 'GST_EXCLUSIVE' && _hasTax) ...[
+                      _Divider(),
+                      _DetailRow(
+                        'After Discount',
+                        '₹${(baseAmount! - discountAmount!).toStringAsFixed(2)}',
+                      ),
+                    ],
                     if (fineAmount != null && fineAmount! > 0) ...[
                       _Divider(),
                       _DetailRow(
@@ -195,13 +204,12 @@ class PaymentReceiptScreen extends StatelessWidget {
                         '+ ₹${fineAmount!.toStringAsFixed(2)}',
                       ),
                     ],
-                    if (_hasTax) ...[
+                    // GST_EXCLUSIVE: shown as additive above total
+                    if (_hasTax && taxType == 'GST_EXCLUSIVE') ...[
                       _Divider(),
                       _DetailRow(
-                        taxType == 'GST_INCLUSIVE'
-                            ? 'GST (Inclusive @ ${gstRate.toStringAsFixed(0)}%)'
-                            : 'GST @ ${gstRate.toStringAsFixed(0)}%',
-                        '₹${taxAmount.toStringAsFixed(2)}',
+                        'GST @ ${gstRate.toStringAsFixed(0)}%',
+                        '+ ₹${taxAmount.toStringAsFixed(2)}',
                       ),
                       if (cgstAmount > 0) ...[
                         _Divider(),
@@ -226,10 +234,7 @@ class PaymentReceiptScreen extends StatelessWidget {
                       ],
                       if (cessAmount > 0) ...[
                         _Divider(),
-                        _DetailRow(
-                          '  Cess',
-                          '₹${cessAmount.toStringAsFixed(2)}',
-                        ),
+                        _DetailRow('  Cess', '₹${cessAmount.toStringAsFixed(2)}'),
                       ],
                     ],
                     if (sacCode != null && sacCode!.isNotEmpty) ...[
@@ -238,6 +243,39 @@ class PaymentReceiptScreen extends StatelessWidget {
                     ],
                     _Divider(),
                     _DetailRow('Total Paid', '₹${amount.toStringAsFixed(2)}'),
+                    // GST_INCLUSIVE: tax shown as informational sub-rows after total
+                    if (_hasTax && taxType == 'GST_INCLUSIVE') ...[
+                      _Divider(),
+                      _DetailRow(
+                        '  incl. GST @ ${gstRate.toStringAsFixed(0)}%',
+                        '₹${taxAmount.toStringAsFixed(2)}',
+                      ),
+                      if (cgstAmount > 0) ...[
+                        _Divider(),
+                        _DetailRow(
+                          '  incl. CGST @ ${(gstRate / 2).toStringAsFixed(1)}%',
+                          '₹${cgstAmount.toStringAsFixed(2)}',
+                        ),
+                      ],
+                      if (sgstAmount > 0) ...[
+                        _Divider(),
+                        _DetailRow(
+                          '  incl. SGST @ ${(gstRate / 2).toStringAsFixed(1)}%',
+                          '₹${sgstAmount.toStringAsFixed(2)}',
+                        ),
+                      ],
+                      if (igstAmount > 0) ...[
+                        _Divider(),
+                        _DetailRow(
+                          '  incl. IGST @ ${gstRate.toStringAsFixed(1)}%',
+                          '₹${igstAmount.toStringAsFixed(2)}',
+                        ),
+                      ],
+                      if (cessAmount > 0) ...[
+                        _Divider(),
+                        _DetailRow('  incl. Cess', '₹${cessAmount.toStringAsFixed(2)}'),
+                      ],
+                    ],
                   ],
                 ),
               ),

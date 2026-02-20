@@ -8,75 +8,73 @@ const notifSvc = new NotificationService();
 
 export interface CreateFeeStructureDto {
     name: string;
-    description?: string;
+    description?: string | undefined;
     amount: number;
-    cycle?: string; // ONCE | MONTHLY | QUARTERLY | HALF_YEARLY | YEARLY | INSTALLMENT
-    lateFinePerDay?: number;
-    discounts?: object;
-    installmentPlan?: Array<{ label: string; dueDay: number; amount: number }>;
-    // Tax fields
-    taxType?: string;        // NONE | GST_INCLUSIVE | GST_EXCLUSIVE
-    gstRate?: number;        // 0, 5, 12, 18, 28
-    sacCode?: string;
-    hsnCode?: string;
-    gstSupplyType?: string;  // INTRA_STATE | INTER_STATE
-    cessRate?: number;
-    // Line item breakdowns
-    lineItems?: Array<{ label: string; amount: number }>;
+    cycle?: string | undefined;
+    lateFinePerDay?: number | undefined;
+    discounts?: object | undefined;
+    installmentPlan?: Array<{ label: string; dueDay: number; amount: number }> | undefined;
+    taxType?: string | undefined;
+    gstRate?: number | undefined;
+    sacCode?: string | undefined;
+    hsnCode?: string | undefined;
+    gstSupplyType?: string | undefined;
+    cessRate?: number | undefined;
+    lineItems?: Array<{ label: string; amount: number }> | undefined;
 }
 
 export interface UpdateFeeStructureDto {
-    name?: string;
-    description?: string;
-    amount?: number;
-    cycle?: string;
-    lateFinePerDay?: number;
-    discounts?: object;
-    installmentPlan?: object;
-    isActive?: boolean;
-    taxType?: string;
-    gstRate?: number;
-    sacCode?: string;
-    hsnCode?: string;
-    gstSupplyType?: string;
-    cessRate?: number;
-    lineItems?: Array<{ label: string; amount: number }> | null;
+    name?: string | undefined;
+    description?: string | null | undefined;
+    amount?: number | undefined;
+    cycle?: string | undefined;
+    lateFinePerDay?: number | undefined;
+    discounts?: object | undefined;
+    installmentPlan?: object | undefined;
+    isActive?: boolean | undefined;
+    taxType?: string | null | undefined;
+    gstRate?: number | null | undefined;
+    sacCode?: string | null | undefined;
+    hsnCode?: string | null | undefined;
+    gstSupplyType?: string | null | undefined;
+    cessRate?: number | null | undefined;
+    lineItems?: Array<{ label: string; amount: number }> | null | undefined;
 }
 
 export interface AssignFeeDto {
     memberId: string;
     feeStructureId: string;
-    customAmount?: number;
-    discountAmount?: number;
-    discountReason?: string;
-    scholarshipTag?: string;
-    scholarshipAmount?: number;
-    startDate?: string;
-    endDate?: string;
+    customAmount?: number | undefined;
+    discountAmount?: number | undefined;
+    discountReason?: string | undefined;
+    scholarshipTag?: string | undefined;
+    scholarshipAmount?: number | undefined;
+    startDate?: string | undefined;
+    endDate?: string | undefined;
 }
 
 export interface RecordPaymentDto {
     amount: number;
-    mode: string; // CASH | ONLINE | UPI | BANK_TRANSFER | CHEQUE | OTHER
-    transactionRef?: string;
-    notes?: string;
-    paidAt?: string; // ISO string — allows back-dating
+    mode: string;
+    transactionRef?: string | undefined;
+    notes?: string | undefined;
+    paidAt?: string | undefined;
 }
 
 export interface WaiveFeeDto {
-    notes?: string;
+    notes?: string | undefined;
 }
 
 export interface RecordRefundDto {
     amount: number;
-    reason?: string;
-    mode?: string;
-    refundedAt?: string;
+    reason?: string | undefined;
+    mode?: string | undefined;
+    refundedAt?: string | undefined;
 }
 
 export interface BulkRemindDto {
-    statusFilter?: string;
-    memberIds?: string[];
+    statusFilter?: string | undefined;
+    memberIds?: string[] | undefined;
 }
 
 export interface ListFeeRecordsQuery {
@@ -100,22 +98,16 @@ function getFinancialYear(date: Date = new Date()): string {
     return `${startYear}-${endYear.toString().padStart(2, '0')}`;
 }
 
-/** Generate sequential receipt number: TXR/2025-26/0042 */
-async function generateSequentialReceiptNo(coachingId: string): Promise<string> {
+/** Generate sequential receipt number INSIDE a transaction context: TXR/2025-26/0042 */
+async function generateSequentialReceiptNo(coachingId: string, tx?: any): Promise<string> {
+    const db = tx ?? prisma;
     const fy = getFinancialYear();
-    const seq = await prisma.receiptSequence.upsert({
+    const seq = await db.receiptSequence.upsert({
         where: { coachingId_financialYear: { coachingId, financialYear: fy } },
         create: { coachingId, financialYear: fy, lastNumber: 1 },
         update: { lastNumber: { increment: 1 } },
     });
-    return `TXR/${fy}/${seq.lastNumber.toString().padStart(4, '0')}`;
-}
-
-/** Legacy random receipt (fallback, kept for compatibility) */
-function generateReceiptNo(): string {
-    const ts = Date.now().toString(36).toUpperCase();
-    const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
-    return `RCP-${ts}-${rand}`;
+    return `TXR/${fy}/${seq.lastNumber.toString().padStart(6, '0')}`;
 }
 
 // ── Tax Computation ─────────────────────────────────────────────────
@@ -166,17 +158,19 @@ function computeTax(
         cess = baseAmount * (cessRate / 100);
     }
 
-    // Round to 2 decimals
-    gstAmount = Math.round(gstAmount * 100) / 100;
-    cess = Math.round(cess * 100) / 100;
-    taxableAmount = Math.round(taxableAmount * 100) / 100;
+    // Round gstAmount and cess to nearest whole rupee so CGST+SGST always
+    // sums to the displayed total (avoids 252+252=504 ≠ 503 rounding drift).
+    gstAmount = Math.round(gstAmount);
+    cess = Math.round(cess);
+    taxableAmount = Math.round(taxableAmount * 100) / 100; // keep 2dp for reference
 
     let cgst = 0, sgst = 0, igst = 0;
     if (supplyType === 'INTER_STATE') {
         igst = gstAmount;
     } else {
-        cgst = Math.round((gstAmount / 2) * 100) / 100;
-        sgst = Math.round((gstAmount / 2) * 100) / 100;
+        // Integer floor/ceil split: cgst + sgst === gstAmount exactly at 0dp
+        cgst = Math.floor(gstAmount / 2);
+        sgst = gstAmount - cgst;
     }
 
     const totalTax = gstAmount + cess;
@@ -199,6 +193,10 @@ function nextDueDateFromCycle(from: Date, cycle: string): Date {
         case 'QUARTERLY': d.setMonth(d.getMonth() + 3); break;
         case 'HALF_YEARLY': d.setMonth(d.getMonth() + 6); break;
         case 'YEARLY': d.setFullYear(d.getFullYear() + 1); break;
+        case 'CUSTOM':
+            // Custom cycles don't auto-generate; return far future to stop auto-creation
+            d.setFullYear(d.getFullYear() + 100);
+            break;
         default: break;
     }
     return d;
@@ -234,6 +232,10 @@ const RECORD_INCLUDE = {
 // Per-coaching debounce cache for _markOverdueRecords (avoids N+1 queries on every read)
 const _overdueLastRun = new Map<string, number>();
 const OVERDUE_DEBOUNCE_MS = 5 * 60 * 1000; // 5 minutes
+
+// Separate debounce for the self-heal scan (runs more frequently than the overdue sweep)
+const _healLastRun = new Map<string, number>();
+const HEAL_DEBOUNCE_MS = 60 * 1000; // 60 seconds
 
 export class FeeService {
 
@@ -298,10 +300,90 @@ export class FeeService {
         if (dto.lineItems !== undefined) {
             data.lineItems = dto.lineItems != null ? dto.lineItems as Prisma.InputJsonValue : Prisma.JsonNull;
         }
-        return prisma.feeStructure.update({
+        const priceOrTaxChanged =
+            dto.amount !== undefined ||
+            dto.taxType !== undefined ||
+            dto.gstRate !== undefined ||
+            dto.gstSupplyType !== undefined ||
+            dto.cessRate !== undefined;
+
+        const updated = await prisma.feeStructure.update({
             where: { id: structureId },
             data,
         });
+
+        // Cascade price/tax changes to all PENDING unpaid records linked to this structure
+        if (priceOrTaxChanged && updated.cycle !== 'INSTALLMENT') {
+            const assignments = await prisma.feeAssignment.findMany({
+                where: { feeStructureId: structureId, isActive: true },
+                select: { id: true, customAmount: true, discountAmount: true, scholarshipAmount: true },
+            });
+
+            await Promise.all(assignments.map(async (a) => {
+                const totalDiscount = a.discountAmount + (a.scholarshipAmount ?? 0);
+                const netAmount = (a.customAmount ?? updated.amount) - totalDiscount;
+                if (netAmount < 0) return; // skip — negative net is a data integrity issue
+
+                const tax = computeTax(
+                    netAmount,
+                    updated.taxType ?? 'NONE',
+                    updated.gstRate ?? 0,
+                    updated.gstSupplyType ?? 'INTRA_STATE',
+                    updated.cessRate ?? 0,
+                );
+                const newFinal = tax.totalWithTax;
+                const grossBase = netAmount + totalDiscount;
+
+                // 1. PENDING with no payments — batch update
+                await prisma.feeRecord.updateMany({
+                    where: { assignmentId: a.id, status: 'PENDING', paidAmount: 0 },
+                    data: {
+                        baseAmount: grossBase,
+                        discountAmount: totalDiscount,
+                        amount: newFinal,
+                        finalAmount: newFinal,
+                        taxType: updated.taxType ?? 'NONE',
+                        taxAmount: tax.taxAmount,
+                        cgstAmount: tax.cgstAmount,
+                        sgstAmount: tax.sgstAmount,
+                        igstAmount: tax.igstAmount,
+                        cessAmount: tax.cessAmount,
+                        gstRate: updated.gstRate ?? 0,
+                        sacCode: updated.sacCode ?? null,
+                        hsnCode: updated.hsnCode ?? null,
+                    },
+                });
+
+                // 2. OVERDUE with no payments — update individually to preserve accrued fine
+                //    finalAmount = newFinal (net+tax) + existing fineAmount
+                const overdueUnpaid = await prisma.feeRecord.findMany({
+                    where: { assignmentId: a.id, status: 'OVERDUE', paidAmount: 0 },
+                    select: { id: true, fineAmount: true },
+                });
+                await Promise.all(overdueUnpaid.map(r =>
+                    prisma.feeRecord.update({
+                        where: { id: r.id },
+                        data: {
+                            baseAmount: grossBase,
+                            discountAmount: totalDiscount,
+                            amount: newFinal,
+                            finalAmount: newFinal + r.fineAmount,
+                            taxType: updated.taxType ?? 'NONE',
+                            taxAmount: tax.taxAmount,
+                            cgstAmount: tax.cgstAmount,
+                            sgstAmount: tax.sgstAmount,
+                            igstAmount: tax.igstAmount,
+                            cessAmount: tax.cessAmount,
+                            gstRate: updated.gstRate ?? 0,
+                            sacCode: updated.sacCode ?? null,
+                            hsnCode: updated.hsnCode ?? null,
+                        },
+                    }),
+                ));
+            }));
+        }
+
+        return updated;
     }
 
     async deleteStructure(coachingId: string, structureId: string) {
@@ -323,9 +405,22 @@ export class FeeService {
     async assignFee(coachingId: string, dto: AssignFeeDto, assignedById: string) {
         const structure = await this._ensureStructureOwned(coachingId, dto.feeStructureId);
 
+        // M4: Verify member belongs to this coaching
+        const memberExists = await prisma.coachingMember.findFirst({
+            where: { id: dto.memberId, coachingId },
+            select: { id: true },
+        });
+        if (!memberExists) throw Object.assign(new Error('Member not found in this coaching'), { status: 404 });
+
         // Upsert assignment
         const totalDiscount = (dto.discountAmount ?? 0) + (dto.scholarshipAmount ?? 0);
         const finalAmount = (dto.customAmount ?? structure.amount) - totalDiscount;
+
+        // H5: Guard against negative finalAmount
+        if (finalAmount < 0) {
+            throw Object.assign(new Error('Total discount + scholarship cannot exceed the fee amount'), { status: 400 });
+        }
+
         const startDate = dto.startDate ? new Date(dto.startDate) : new Date();
 
         const assignment = await prisma.feeAssignment.upsert({
@@ -355,7 +450,7 @@ export class FeeService {
             },
         });
 
-        // For INSTALLMENT cycle: create records for each installment
+        // For INSTALLMENT cycle: create records for each installment with per-installment amounts
         if (structure.cycle === 'INSTALLMENT' && structure.installmentPlan) {
             const plan = structure.installmentPlan as Array<{ label: string; dueDay: number; amount: number }>;
             for (let idx = 0; idx < plan.length; idx++) {
@@ -375,29 +470,39 @@ export class FeeService {
             }
         }
 
-        // Fix #15: Update existing PENDING records when discount/amount changes on reassignment
-        // Only update records that haven't been partially paid yet
-        const tax = computeTax(finalAmount, structure.taxType ?? 'NONE', structure.gstRate ?? 0, structure.gstSupplyType ?? 'INTRA_STATE', structure.cessRate ?? 0);
-        const updatedFinalAmount = tax.totalWithTax;
-        const grossBase = finalAmount + totalDiscount;
-        await prisma.feeRecord.updateMany({
-            where: {
-                assignmentId: assignment.id,
-                status: 'PENDING',
-                paidAmount: 0,
-            },
-            data: {
-                baseAmount: grossBase,
-                discountAmount: totalDiscount,
-                amount: updatedFinalAmount,
-                finalAmount: updatedFinalAmount,
+        // H7: Update PENDING and OVERDUE unpaid records for non-installment cycles
+        if (structure.cycle !== 'INSTALLMENT') {
+            const tax = computeTax(finalAmount, structure.taxType ?? 'NONE', structure.gstRate ?? 0, structure.gstSupplyType ?? 'INTRA_STATE', structure.cessRate ?? 0);
+            const updatedFinalAmount = tax.totalWithTax;
+            const grossBase = finalAmount + totalDiscount;
+            const taxSnapshot = {
+                taxType: structure.taxType ?? 'NONE',
                 taxAmount: tax.taxAmount,
                 cgstAmount: tax.cgstAmount,
                 sgstAmount: tax.sgstAmount,
                 igstAmount: tax.igstAmount,
                 cessAmount: tax.cessAmount,
-            },
-        });
+                gstRate: structure.gstRate ?? 0,
+                sacCode: structure.sacCode ?? null,
+                hsnCode: structure.hsnCode ?? null,
+            };
+            // 1. PENDING with no payments
+            await prisma.feeRecord.updateMany({
+                where: { assignmentId: assignment.id, status: 'PENDING', paidAmount: 0 },
+                data: { baseAmount: grossBase, discountAmount: totalDiscount, amount: updatedFinalAmount, finalAmount: updatedFinalAmount, ...taxSnapshot },
+            });
+            // 2. OVERDUE with no payments — preserve accrued fine in finalAmount
+            const overdueUnpaid = await prisma.feeRecord.findMany({
+                where: { assignmentId: assignment.id, status: 'OVERDUE', paidAmount: 0 },
+                select: { id: true, fineAmount: true },
+            });
+            await Promise.all(overdueUnpaid.map(r =>
+                prisma.feeRecord.update({
+                    where: { id: r.id },
+                    data: { baseAmount: grossBase, discountAmount: totalDiscount, amount: updatedFinalAmount, finalAmount: updatedFinalAmount + r.fineAmount, ...taxSnapshot },
+                }),
+            ));
+        }
 
         return assignment;
     }
@@ -451,6 +556,8 @@ export class FeeService {
             records: a.records.map(r => ({ ...r, daysOverdue: r.status === 'OVERDUE' ? calcDaysOverdue(r.dueDate) : 0 })),
         }));
 
+        // H1 fix: paidAmount is already net-of-refunds, so balance = totalFee - totalPaid.
+        // totalRefunded is reported separately for display purposes only.
         return {
             member,
             assignments: enriched,
@@ -458,7 +565,7 @@ export class FeeService {
                 totalFee,
                 totalPaid,
                 totalRefunded: totalRefund,
-                balance: totalFee - totalPaid - totalRefund,
+                balance: totalFee - totalPaid,
                 totalOverdue: allRecords.filter(r => r.status === 'OVERDUE').reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0),
                 nextDue: nextDueBill,
             },
@@ -529,39 +636,53 @@ export class FeeService {
 
     /** Record a payment (full or partial) against a FeeRecord. */
     async recordPayment(coachingId: string, recordId: string, dto: RecordPaymentDto, userId: string) {
-        const record = await prisma.feeRecord.findFirst({ where: { id: recordId, coachingId } });
-        if (!record) throw Object.assign(new Error('Record not found'), { status: 404 });
-        if (record.status === 'PAID' || record.status === 'WAIVED') {
-            throw Object.assign(new Error('This record is already settled'), { status: 400 });
-        }
         if (dto.amount <= 0) throw Object.assign(new Error('Amount must be positive'), { status: 400 });
-
         const paidAt = dto.paidAt ? new Date(dto.paidAt) : new Date();
 
-        // Lock current fine at payment time
-        const assignment = await prisma.feeAssignment.findUnique({
-            where: { id: record.assignmentId },
-            include: { feeStructure: true },
-        });
-        const lateFine = assignment?.feeStructure?.lateFinePerDay ?? 0;
-        const days = calcDaysOverdue(record.dueDate);
-        const fineNow = lateFine > 0 && days > 0 ? lateFine * days : record.fineAmount;
-        const finalAmountLocked = record.baseAmount - record.discountAmount + fineNow + record.taxAmount;
+        // C3 fix: Use interactive transaction with Serializable isolation to prevent
+        // concurrent payments from double-crediting.
+        const result = await prisma.$transaction(async (tx) => {
+            // Read record INSIDE the transaction for consistent snapshot
+            const record = await tx.feeRecord.findFirst({ where: { id: recordId, coachingId } });
+            if (!record) throw Object.assign(new Error('Record not found'), { status: 404 });
+            if (record.status === 'PAID' || record.status === 'WAIVED') {
+                throw Object.assign(new Error('This record is already settled'), { status: 400 });
+            }
 
-        // Guard against overpayment
-        const balance = finalAmountLocked - record.paidAmount;
-        if (dto.amount > balance + 0.01) {
-            throw Object.assign(new Error(`Amount exceeds outstanding balance of ₹${balance.toFixed(2)}`), { status: 400 });
-        }
+            // Lock current fine at payment time
+            const assignment = await tx.feeAssignment.findUnique({
+                where: { id: record.assignmentId },
+                include: { feeStructure: true },
+            });
+            const lateFine = assignment?.feeStructure?.lateFinePerDay ?? 0;
+            const days = calcDaysOverdue(record.dueDate);
+            const fineNow = lateFine > 0 && days > 0 ? lateFine * days : record.fineAmount;
+            const netFee = record.baseAmount - record.discountAmount;
+            // Always recompute tax from live structure (fixes stale/zero snapshot on old records)
+            const fs = assignment?.feeStructure;
+            const liveTax = computeTax(
+                netFee,
+                fs?.taxType ?? record.taxType ?? 'NONE',
+                fs?.gstRate ?? record.gstRate ?? 0,
+                fs?.gstSupplyType ?? 'INTRA_STATE',
+                fs?.cessRate ?? 0,
+            );
+            const liveTaxType = fs?.taxType ?? record.taxType ?? 'NONE';
+            const finalAmountLocked = netFee + fineNow + (liveTaxType === 'GST_INCLUSIVE' ? 0 : liveTax.taxAmount);
 
-        const newPaidAmount = record.paidAmount + dto.amount;
-        const isPaid = newPaidAmount >= finalAmountLocked - 0.01;
+            // Guard against overpayment
+            const balance = finalAmountLocked - record.paidAmount;
+            if (dto.amount > balance + 0.01) {
+                throw Object.assign(new Error(`Amount exceeds outstanding balance of ₹${balance.toFixed(2)}`), { status: 400 });
+            }
 
-        // Generate sequential receipt number for each payment
-        const paymentReceiptNo = await generateSequentialReceiptNo(coachingId);
+            const newPaidAmount = record.paidAmount + dto.amount;
+            const isPaid = newPaidAmount >= finalAmountLocked - 0.01;
 
-        await prisma.$transaction([
-            prisma.feePayment.create({
+            // Generate sequential receipt number INSIDE transaction
+            const paymentReceiptNo = await generateSequentialReceiptNo(coachingId, tx);
+
+            await tx.feePayment.create({
                 data: {
                     coachingId,
                     recordId,
@@ -573,8 +694,9 @@ export class FeeService {
                     paidAt,
                     recordedById: userId,
                 },
-            }),
-            prisma.feeRecord.update({
+            });
+
+            await tx.feeRecord.update({
                 where: { id: recordId },
                 data: {
                     paidAmount: newPaidAmount,
@@ -586,20 +708,32 @@ export class FeeService {
                     paymentMode: dto.mode,
                     transactionRef: dto.transactionRef ?? null,
                     receiptNo: isPaid ? paymentReceiptNo : record.receiptNo,
+                    // Refresh tax snapshot from live structure so receipt shows correct values
+                    taxType: liveTaxType,
+                    taxAmount: liveTax.taxAmount,
+                    cgstAmount: liveTax.cgstAmount,
+                    sgstAmount: liveTax.sgstAmount,
+                    igstAmount: liveTax.igstAmount,
+                    cessAmount: liveTax.cessAmount,
+                    gstRate: fs?.gstRate ?? record.gstRate ?? 0,
+                    sacCode: fs?.sacCode ?? record.sacCode ?? null,
+                    hsnCode: fs?.hsnCode ?? record.hsnCode ?? null,
                 },
-            }),
-        ]);
+            });
 
-        // If paid and cycle-based, generate next record
-        if (isPaid && assignment && assignment.isActive && !assignment.isPaused) {
-            const cycle = assignment.feeStructure.cycle;
+            return { isPaid, assignment, record };
+        }, { isolationLevel: 'Serializable' });
+
+        // After transaction: if paid and cycle-based, generate next record
+        if (result.isPaid && result.assignment && result.assignment.isActive && !result.assignment.isPaused) {
+            const cycle = result.assignment.feeStructure.cycle;
             if (cycle !== 'ONCE' && cycle !== 'INSTALLMENT') {
-                const dueDate = nextDueDateFromCycle(record.dueDate, cycle);
-                const isBeforeEnd = !assignment.endDate || dueDate <= assignment.endDate;
+                const dueDate = nextDueDateFromCycle(result.record.dueDate, cycle);
+                const isBeforeEnd = !result.assignment.endDate || dueDate <= result.assignment.endDate;
                 if (isBeforeEnd) {
-                    const totalDiscount = assignment.discountAmount + (assignment.scholarshipAmount ?? 0);
-                    const fa = (assignment.customAmount ?? assignment.feeStructure.amount) - totalDiscount;
-                    await this._createFeeRecord(coachingId, assignment.id, record.memberId, assignment.feeStructure, fa, dueDate, undefined, totalDiscount);
+                    const totalDiscount = result.assignment.discountAmount + (result.assignment.scholarshipAmount ?? 0);
+                    const fa = (result.assignment.customAmount ?? result.assignment.feeStructure.amount) - totalDiscount;
+                    await this._createFeeRecord(coachingId, result.assignment.id, result.record.memberId, result.assignment.feeStructure, fa, dueDate, undefined, totalDiscount);
                 }
             }
         }
@@ -614,6 +748,8 @@ export class FeeService {
         const record = await prisma.feeRecord.findFirst({ where: { id: recordId, coachingId } });
         if (!record) throw Object.assign(new Error('Record not found'), { status: 404 });
         if (record.status === 'PAID') throw Object.assign(new Error('Already paid'), { status: 400 });
+        // L7: Guard against waiving an already-waived record
+        if (record.status === 'WAIVED') throw Object.assign(new Error('Already waived'), { status: 400 });
 
         // When waiving a partially paid record, set finalAmount = paidAmount
         // so remaining balance becomes zero (partial payment is kept, rest forgiven).
@@ -635,24 +771,30 @@ export class FeeService {
     }
 
     async recordRefund(coachingId: string, recordId: string, dto: RecordRefundDto, userId: string) {
-        const record = await prisma.feeRecord.findFirst({ where: { id: recordId, coachingId } });
-        if (!record) throw Object.assign(new Error('Record not found'), { status: 404 });
         if (dto.amount <= 0) throw Object.assign(new Error('Refund amount must be positive'), { status: 400 });
-        if (dto.amount > record.paidAmount) throw Object.assign(new Error('Cannot refund more than paid amount'), { status: 400 });
 
         const refundedAt = dto.refundedAt ? new Date(dto.refundedAt) : new Date();
-        const newPaidAmount = record.paidAmount - dto.amount;
 
-        const isPastDue = record.dueDate < new Date();
-        const newStatus =
-            newPaidAmount >= record.finalAmount - 0.01 ? 'PAID'
-                : newPaidAmount <= 0 && isPastDue ? 'OVERDUE'
-                    : newPaidAmount <= 0 ? 'PENDING'
-                        : isPastDue ? 'OVERDUE'
-                            : 'PARTIALLY_PAID';
+        // C4 fix: Interactive transaction with Serializable isolation to prevent
+        // concurrent refunds from over-refunding.
+        await prisma.$transaction(async (tx) => {
+            const record = await tx.feeRecord.findFirst({ where: { id: recordId, coachingId } });
+            if (!record) throw Object.assign(new Error('Record not found'), { status: 404 });
+            if (dto.amount > record.paidAmount) {
+                throw Object.assign(new Error('Cannot refund more than paid amount'), { status: 400 });
+            }
 
-        await prisma.$transaction([
-            prisma.feeRefund.create({
+            const newPaidAmount = record.paidAmount - dto.amount;
+
+            const isPastDue = record.dueDate < new Date();
+            const newStatus =
+                newPaidAmount >= record.finalAmount - 0.01 ? 'PAID'
+                    : newPaidAmount <= 0 && isPastDue ? 'OVERDUE'
+                        : newPaidAmount <= 0 ? 'PENDING'
+                            : isPastDue ? 'OVERDUE'
+                                : 'PARTIALLY_PAID';
+
+            await tx.feeRefund.create({
                 data: {
                     coachingId,
                     recordId,
@@ -662,15 +804,16 @@ export class FeeService {
                     refundedAt,
                     processedById: userId,
                 },
-            }),
-            prisma.feeRecord.update({
+            });
+
+            await tx.feeRecord.update({
                 where: { id: recordId },
                 data: {
                     paidAmount: newPaidAmount,
                     status: newStatus,
                 },
-            }),
-        ]);
+            });
+        }, { isolationLevel: 'Serializable' });
 
         return this.getRecordById(coachingId, recordId);
     }
@@ -873,10 +1016,16 @@ export class FeeService {
         }
         raw.sort((a, b) => a.date.getTime() - b.date.getTime());
 
+        // H2 fix: Running balance tracks what the student owes.
+        // RECORD  → increases balance (student charged)
+        // PAYMENT → decreases balance (student paid)
+        // REFUND  → increases balance (money returned, student owes again)
+        // Note: refund entries have negative `amount` (-rf.amount), so we handle sign explicitly.
         let running = 0;
         const timeline = raw.map(e => {
             if (e.type === 'RECORD') running += e.amount;
-            else running -= Math.abs(e.amount);
+            else if (e.type === 'PAYMENT') running -= e.amount;
+            else if (e.type === 'REFUND') running += Math.abs(e.amount); // refund increases outstanding
             return { ...e, runningBalance: running };
         });
 
@@ -884,11 +1033,13 @@ export class FeeService {
             .filter(r => r.status === 'PENDING' || r.status === 'PARTIALLY_PAID')
             .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())[0];
 
+        // H2 fix: paidAmount already reflects refunds (recordRefund decrements paidAmount),
+        // so balance = totalCharged - totalPaid. totalRefunded is informational only.
         return {
             member,
             summary: {
                 totalCharged, totalPaid, totalRefunded,
-                balance: totalCharged - totalPaid - totalRefunded,
+                balance: totalCharged - totalPaid,
                 totalOverdue: records.filter(r => r.status === 'OVERDUE').reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0),
                 nextDueDate: nextDueBill?.dueDate ?? null,
                 nextDueAmount: nextDueBill ? nextDueBill.finalAmount - nextDueBill.paidAmount : 0,
@@ -899,12 +1050,13 @@ export class FeeService {
     }
 
     /** Fees for the logged-in student/parent. */
-    async getMyTransactions(coachingId: string, userId: string) {
+    async getMyTransactions(coachingId: string, userId: string, pagination: { page: number; limit: number } = { page: 1, limit: 20 }) {
+        const { page, limit } = pagination;
         // Resolve memberIds for this user (direct + wards)
         const member = await prisma.coachingMember.findFirst({ where: { coachingId, userId } });
         const wardMembers = await prisma.coachingMember.findMany({ where: { coachingId, ward: { parentId: userId } } });
         const memberIds = [...(member ? [member.id] : []), ...wardMembers.map(w => w.id)];
-        if (memberIds.length === 0) return [];
+        if (memberIds.length === 0) return { transactions: [], total: 0, page, limit };
 
         const records = await prisma.feeRecord.findMany({
             where: { coachingId, memberId: { in: memberIds } },
@@ -1023,9 +1175,14 @@ export class FeeService {
             });
         }
 
-        // Sort newest first
+        // Sort newest first, then paginate (M8 fix)
         txns.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-        return txns;
+
+        const total = txns.length;
+        const skip = (page - 1) * limit;
+        const paginated = txns.slice(skip, skip + limit);
+
+        return { transactions: paginated, total, page, limit };
     }
 
     async getMyFees(coachingId: string, userId: string) {
@@ -1092,14 +1249,14 @@ export class FeeService {
         customTitle?: string,
         discountAmount: number = 0,
     ) {
-        // Check no duplicate for this assignment + dueDate month
+        // H6 fix: Cycle-aware dedup — use exact dueDate match instead of month boundary
+        // Monthly: same month. But QUARTERLY/YEARLY records share no month overlap,
+        // so the original month-only check would never dedup them. Exact date match is safe
+        // because nextDueDateFromCycle produces deterministic dates.
         const existing = await prisma.feeRecord.findFirst({
             where: {
                 assignmentId,
-                dueDate: {
-                    gte: new Date(dueDate.getFullYear(), dueDate.getMonth(), 1),
-                    lt: new Date(dueDate.getFullYear(), dueDate.getMonth() + 1, 1),
-                },
+                dueDate,
             },
         });
         if (existing) return existing;
@@ -1147,47 +1304,140 @@ export class FeeService {
     }
 
     private async _markOverdueRecords(coachingId: string) {
-        // Debounce: skip if already ran for this coaching within the last 5 minutes
+        const TAX_SELECT = { lateFinePerDay: true, taxType: true, gstRate: true, gstSupplyType: true, cessRate: true, sacCode: true, hsnCode: true } as const;
+
+        // ── Self-heal (own 60s debounce, runs before the overdue gate) ──
+        // Fixes PENDING records whose finalAmount / taxAmount are stale (created before
+        // tax was configured, or before cascade fixes were deployed).
+        // No dueDate filter: records past due but still PENDING are caught here first,
+        // then immediately converted to OVERDUE by the sweep below.
+        const lastHeal = _healLastRun.get(coachingId) ?? 0;
+        if (Date.now() - lastHeal >= HEAL_DEBOUNCE_MS) {
+            _healLastRun.set(coachingId, Date.now());
+            const pendingUnpaid = await prisma.feeRecord.findMany({
+                where: { coachingId, status: 'PENDING', paidAmount: 0 },
+                include: { assignment: { include: { feeStructure: { select: TAX_SELECT } } } },
+            });
+            const pendingFixes: Promise<unknown>[] = [];
+            for (const r of pendingUnpaid) {
+                const fs = r.assignment?.feeStructure;
+                const netFee = r.baseAmount - r.discountAmount;
+                const liveTax = computeTax(
+                    netFee,
+                    fs?.taxType ?? r.taxType ?? 'NONE',
+                    fs?.gstRate ?? r.gstRate ?? 0,
+                    fs?.gstSupplyType ?? 'INTRA_STATE',
+                    fs?.cessRate ?? 0,
+                );
+                const expectedFinal = liveTax.totalWithTax; // no fine on PENDING
+                const taxStale = Math.abs(liveTax.taxAmount - r.taxAmount) > 0.01;
+                const amountWrong = Math.abs(r.finalAmount - expectedFinal) > 0.01;
+                if (taxStale || amountWrong) {
+                    const taxType = fs?.taxType ?? r.taxType ?? 'NONE';
+                    pendingFixes.push(prisma.feeRecord.update({
+                        where: { id: r.id },
+                        data: {
+                            amount: expectedFinal,
+                            finalAmount: expectedFinal,
+                            taxType,
+                            taxAmount: liveTax.taxAmount,
+                            cgstAmount: liveTax.cgstAmount,
+                            sgstAmount: liveTax.sgstAmount,
+                            igstAmount: liveTax.igstAmount,
+                            cessAmount: liveTax.cessAmount,
+                            gstRate: fs?.gstRate ?? r.gstRate ?? 0,
+                            sacCode: fs?.sacCode ?? r.sacCode ?? null,
+                            hsnCode: fs?.hsnCode ?? r.hsnCode ?? null,
+                        },
+                    }));
+                }
+            }
+            if (pendingFixes.length > 0) await Promise.all(pendingFixes);
+        }
+
+        // ── Overdue sweep (5-minute debounce) ──
         const lastRun = _overdueLastRun.get(coachingId) ?? 0;
         if (Date.now() - lastRun < OVERDUE_DEBOUNCE_MS) return;
         _overdueLastRun.set(coachingId, Date.now());
 
-        // 1. Mark new PENDING → OVERDUE and compute initial fine
+        // H3 fix: Mark both PENDING and PARTIALLY_PAID → OVERDUE when past due
+        // Include full tax config from feeStructure so we can recompute accurately (stale snapshot fix)
         const newOverdue = await prisma.feeRecord.findMany({
-            where: { coachingId, status: 'PENDING', dueDate: { lt: new Date() } },
-            include: { assignment: { include: { feeStructure: { select: { lateFinePerDay: true } } } } },
+            where: { coachingId, status: { in: ['PENDING', 'PARTIALLY_PAID'] }, dueDate: { lt: new Date() } },
+            include: { assignment: { include: { feeStructure: { select: TAX_SELECT } } } },
         });
         if (newOverdue.length > 0) {
             await Promise.all(newOverdue.map(r => {
                 const days = calcDaysOverdue(r.dueDate);
-                const lateFine = r.assignment?.feeStructure?.lateFinePerDay ?? 0;
+                const fs = r.assignment?.feeStructure;
+                const lateFine = fs?.lateFinePerDay ?? 0;
                 const fineAmount = lateFine > 0 ? lateFine * days : 0;
+                const netFee = r.baseAmount - r.discountAmount;
+                // Recompute tax from live structure — fixes records with stale/zero snapshot
+                const liveTax = computeTax(
+                    netFee,
+                    fs?.taxType ?? r.taxType ?? 'NONE',
+                    fs?.gstRate ?? r.gstRate ?? 0,
+                    fs?.gstSupplyType ?? 'INTRA_STATE',
+                    fs?.cessRate ?? 0,
+                );
+                const taxType = fs?.taxType ?? r.taxType ?? 'NONE';
+                const newFinalAmount = liveTax.totalWithTax + fineAmount;
                 return prisma.feeRecord.update({
                     where: { id: r.id },
-                    data: { status: 'OVERDUE', fineAmount, finalAmount: r.baseAmount - r.discountAmount + fineAmount + r.taxAmount },
+                    data: {
+                        status: 'OVERDUE', fineAmount, finalAmount: newFinalAmount,
+                        // Refresh tax snapshot from live structure
+                        taxType, taxAmount: liveTax.taxAmount,
+                        cgstAmount: liveTax.cgstAmount, sgstAmount: liveTax.sgstAmount,
+                        igstAmount: liveTax.igstAmount, cessAmount: liveTax.cessAmount,
+                        gstRate: fs?.gstRate ?? r.gstRate ?? 0,
+                        sacCode: fs?.sacCode ?? r.sacCode ?? null,
+                        hsnCode: fs?.hsnCode ?? r.hsnCode ?? null,
+                    },
                 });
             }));
         }
 
-        // 2. Refresh accrued fine on already-OVERDUE records (daily tick)
+        // H4 fix: Refresh accrued fine on OVERDUE records (includes formerly PARTIALLY_PAID)
         const alreadyOverdue = await prisma.feeRecord.findMany({
             where: { coachingId, status: 'OVERDUE' },
-            include: { assignment: { include: { feeStructure: { select: { lateFinePerDay: true } } } } },
+            include: { assignment: { include: { feeStructure: { select: TAX_SELECT } } } },
         });
-        const overdueUpdates: { id: string; fineAmount: number; finalAmount: number }[] = [];
+        type OverdueUpdate = { id: string; fineAmount: number; finalAmount: number; taxType: string; taxAmount: number; cgstAmount: number; sgstAmount: number; igstAmount: number; cessAmount: number; gstRate: number; sacCode: string | null; hsnCode: string | null };
+        const overdueUpdates: OverdueUpdate[] = [];
         for (const r of alreadyOverdue) {
-            const lateFine = r.assignment?.feeStructure?.lateFinePerDay ?? 0;
-            if (lateFine > 0) {
-                const fineAmount = lateFine * calcDaysOverdue(r.dueDate);
-                if (Math.abs(fineAmount - r.fineAmount) > 0.01) {
-                    overdueUpdates.push({ id: r.id, fineAmount, finalAmount: r.baseAmount - r.discountAmount + fineAmount + r.taxAmount });
-                }
+            const fs = r.assignment?.feeStructure;
+            const lateFine = fs?.lateFinePerDay ?? 0;
+            const netFee = r.baseAmount - r.discountAmount;
+            const liveTax = computeTax(
+                netFee,
+                fs?.taxType ?? r.taxType ?? 'NONE',
+                fs?.gstRate ?? r.gstRate ?? 0,
+                fs?.gstSupplyType ?? 'INTRA_STATE',
+                fs?.cessRate ?? 0,
+            );
+            const taxType = fs?.taxType ?? r.taxType ?? 'NONE';
+            const fineAmount = lateFine > 0 ? lateFine * calcDaysOverdue(r.dueDate) : r.fineAmount;
+            const updatedFinal = liveTax.totalWithTax + fineAmount;
+            // Update if fine changed OR tax snapshot is stale (taxAmount mismatch)
+            const taxStale = Math.abs(liveTax.taxAmount - r.taxAmount) > 0.01;
+            const fineChanged = Math.abs(fineAmount - r.fineAmount) > 0.01;
+            if (fineChanged || taxStale) {
+                overdueUpdates.push({
+                    id: r.id, fineAmount, finalAmount: updatedFinal,
+                    taxType, taxAmount: liveTax.taxAmount,
+                    cgstAmount: liveTax.cgstAmount, sgstAmount: liveTax.sgstAmount,
+                    igstAmount: liveTax.igstAmount, cessAmount: liveTax.cessAmount,
+                    gstRate: fs?.gstRate ?? r.gstRate ?? 0,
+                    sacCode: fs?.sacCode ?? r.sacCode ?? null,
+                    hsnCode: fs?.hsnCode ?? r.hsnCode ?? null,
+                });
             }
         }
-        // Batch update overdue records to avoid N+1 queries
         if (overdueUpdates.length > 0) {
             await Promise.all(overdueUpdates.map(u =>
-                prisma.feeRecord.update({ where: { id: u.id }, data: { fineAmount: u.fineAmount, finalAmount: u.finalAmount } })
+                prisma.feeRecord.update({ where: { id: u.id }, data: u })
             ));
         }
     }

@@ -29,7 +29,10 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
   final _customAmountCtrl = TextEditingController();
   final _discountAmountCtrl = TextEditingController();
   final _discountReasonCtrl = TextEditingController();
+  final _scholarshipTagCtrl = TextEditingController();
+  final _scholarshipAmountCtrl = TextEditingController();
   DateTime? _startDate;
+  DateTime? _endDate;
   bool _customAmountEnabled = false;
   bool _submitting = false;
 
@@ -53,12 +56,14 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
       final members = (results[1] as List<MemberModel>)
           .where((m) => m.role == 'STUDENT' && m.status == 'active')
           .toList();
+      if (!mounted) return;
       setState(() {
         _structures = structures.where((s) => s.isActive).toList();
         _members = members;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;
@@ -101,7 +106,10 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
               customAmountCtrl: _customAmountCtrl,
               discountAmountCtrl: _discountAmountCtrl,
               discountReasonCtrl: _discountReasonCtrl,
+              scholarshipTagCtrl: _scholarshipTagCtrl,
+              scholarshipAmountCtrl: _scholarshipAmountCtrl,
               startDate: _startDate,
+              endDate: _endDate,
               customAmountEnabled: _customAmountEnabled,
               onStructureChanged: (s) => setState(() {
                 _selectedStructure = s;
@@ -121,10 +129,21 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
               onCustomAmountToggled: (v) =>
                   setState(() => _customAmountEnabled = v),
               onStartDateChanged: (d) => setState(() => _startDate = d),
+              onEndDateChanged: (d) => setState(() => _endDate = d),
               onSubmit: _submit,
               submitting: _submitting,
             ),
     );
+  }
+
+  @override
+  void dispose() {
+    _customAmountCtrl.dispose();
+    _discountAmountCtrl.dispose();
+    _discountReasonCtrl.dispose();
+    _scholarshipTagCtrl.dispose();
+    _scholarshipAmountCtrl.dispose();
+    super.dispose();
   }
 
   Future<void> _submit() async {
@@ -141,45 +160,77 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
       return;
     }
     setState(() => _submitting = true);
-    try {
-      final customAmount = _customAmountEnabled
-          ? double.tryParse(_customAmountCtrl.text.trim())
-          : null;
-      final discount = double.tryParse(_discountAmountCtrl.text.trim()) ?? 0;
-      await Future.wait(
-        _selectedMemberIds.map(
-          (mId) => _feeSvc.assignFee(
-            widget.coachingId,
-            memberId: mId,
-            feeStructureId: _selectedStructure!.id,
-            customAmount: customAmount,
-            discountAmount: discount > 0 ? discount : null,
-            discountReason: _discountReasonCtrl.text.trim().isEmpty
-                ? null
-                : _discountReasonCtrl.text.trim(),
-            startDate: _startDate,
+
+    final customAmount = _customAmountEnabled
+        ? double.tryParse(_customAmountCtrl.text.trim())
+        : null;
+    final discount = double.tryParse(_discountAmountCtrl.text.trim()) ?? 0;
+    final scholarshipAmt =
+        double.tryParse(_scholarshipAmountCtrl.text.trim()) ?? 0;
+    final scholarshipTag = _scholarshipTagCtrl.text.trim();
+    final discountReason = _discountReasonCtrl.text.trim();
+
+    // M19: Handle partial failures — don't let one failure abort all
+    final memberIds = _selectedMemberIds.toList();
+    final List<String> succeeded = [];
+    final List<String> failed = [];
+
+    for (final mId in memberIds) {
+      try {
+        await _feeSvc.assignFee(
+          widget.coachingId,
+          memberId: mId,
+          feeStructureId: _selectedStructure!.id,
+          customAmount: customAmount,
+          discountAmount: discount > 0 ? discount : null,
+          discountReason: discountReason.isEmpty ? null : discountReason,
+          scholarshipTag: scholarshipTag.isEmpty ? null : scholarshipTag,
+          scholarshipAmount: scholarshipAmt > 0 ? scholarshipAmt : null,
+          startDate: _startDate,
+          endDate: _endDate,
+        );
+        succeeded.add(mId);
+      } catch (_) {
+        failed.add(mId);
+      }
+    }
+
+    if (!mounted) return;
+
+    if (failed.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Fee assigned to ${succeeded.length} student(s)',
           ),
         ),
       );
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              'Fee assigned to ${_selectedMemberIds.length} student(s)',
-            ),
+      Navigator.pop(context);
+    } else if (succeeded.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Failed to assign fee to all students'),
+          backgroundColor: Colors.redAccent,
+        ),
+      );
+    } else {
+      // Partial success — remove succeeded from selection
+      setState(() {
+        for (final id in succeeded) {
+          _selectedMemberIds.remove(id);
+        }
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Assigned to ${succeeded.length}, failed for ${failed.length} student(s). Retry for remaining.',
           ),
-        );
-        Navigator.pop(context);
-      }
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
-      }
-    } finally {
-      if (mounted) setState(() => _submitting = false);
+          duration: const Duration(seconds: 4),
+        ),
+      );
     }
+
+    if (mounted) setState(() => _submitting = false);
   }
 }
 
@@ -191,7 +242,10 @@ class _Body extends StatelessWidget {
   final TextEditingController customAmountCtrl;
   final TextEditingController discountAmountCtrl;
   final TextEditingController discountReasonCtrl;
+  final TextEditingController scholarshipTagCtrl;
+  final TextEditingController scholarshipAmountCtrl;
   final DateTime? startDate;
+  final DateTime? endDate;
   final bool customAmountEnabled;
   final ValueChanged<FeeStructureModel> onStructureChanged;
   final ValueChanged<String> onMemberToggled;
@@ -199,6 +253,7 @@ class _Body extends StatelessWidget {
   final VoidCallback onClearAll;
   final ValueChanged<bool> onCustomAmountToggled;
   final ValueChanged<DateTime> onStartDateChanged;
+  final ValueChanged<DateTime> onEndDateChanged;
   final VoidCallback onSubmit;
   final bool submitting;
 
@@ -210,7 +265,10 @@ class _Body extends StatelessWidget {
     required this.customAmountCtrl,
     required this.discountAmountCtrl,
     required this.discountReasonCtrl,
+    required this.scholarshipTagCtrl,
+    required this.scholarshipAmountCtrl,
     required this.startDate,
+    required this.endDate,
     required this.customAmountEnabled,
     required this.onStructureChanged,
     required this.onMemberToggled,
@@ -218,6 +276,7 @@ class _Body extends StatelessWidget {
     required this.onClearAll,
     required this.onCustomAmountToggled,
     required this.onStartDateChanged,
+    required this.onEndDateChanged,
     required this.onSubmit,
     required this.submitting,
   });
@@ -295,6 +354,25 @@ class _Body extends StatelessWidget {
               hintText: 'e.g. Sibling discount',
             ),
           ),
+          const SizedBox(height: 16),
+          // Scholarship fields (M18)
+          TextField(
+            controller: scholarshipTagCtrl,
+            decoration: const InputDecoration(
+              labelText: 'Scholarship Tag',
+              hintText: 'e.g. Merit, Sports, Need-based',
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextField(
+            controller: scholarshipAmountCtrl,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              labelText: 'Scholarship Amount (₹)',
+              prefixText: '₹ ',
+              hintText: '0',
+            ),
+          ),
           const SizedBox(height: 12),
           GestureDetector(
             onTap: () async {
@@ -328,6 +406,48 @@ class _Body extends StatelessWidget {
                     startDate != null
                         ? 'Starts ${_fmtDate(startDate!)}'
                         : 'Start date: Today',
+                    style: const TextStyle(
+                      color: AppColors.darkOlive,
+                      fontSize: 13,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          GestureDetector(
+            onTap: () async {
+              final d = await showDatePicker(
+                context: context,
+                initialDate: endDate ?? DateTime.now().add(const Duration(days: 365)),
+                firstDate: startDate ?? DateTime.now(),
+                lastDate: DateTime(2035),
+              );
+              if (d != null) {
+                onEndDateChanged(d);
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: AppColors.mutedOlive.withValues(alpha: 0.4),
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.event_rounded,
+                    size: 16,
+                    color: AppColors.mutedOlive,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    endDate != null
+                        ? 'Ends ${_fmtDate(endDate!)}'
+                        : 'End date: None (ongoing)',
                     style: const TextStyle(
                       color: AppColors.darkOlive,
                       fontSize: 13,

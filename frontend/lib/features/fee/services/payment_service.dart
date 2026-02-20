@@ -6,7 +6,14 @@ import '../../../shared/services/api_client.dart';
 /// Handles Razorpay payment flow: order creation, checkout, verification.
 class PaymentService {
   final ApiClient _api = ApiClient.instance;
+
+  /// Single reusable Razorpay instance to avoid memory leaks from
+  /// repeatedly creating/destroying native SDK instances.
   Razorpay? _razorpay;
+  Completer<PaymentSuccessResponse>? _activeCompleter;
+
+  /// Checkout timeout — prevents dangling Completers if user leaves app.
+  static const _checkoutTimeout = Duration(minutes: 10);
 
   // ── API Calls ───────────────────────────────────────────────────
 
@@ -189,19 +196,24 @@ class PaymentService {
   }
 
   /// Get all transactions (successful + failed) for the current user in a coaching.
-  Future<List<Map<String, dynamic>>> getMyTransactions(
-    String coachingId,
-  ) async {
-    final data = await _api.getAuthenticatedRaw(
-      ApiConstants.feeMyTransactions(coachingId),
+  /// Backend now returns paginated response: { transactions, total, page, limit }.
+  Future<Map<String, dynamic>> getMyTransactions(
+    String coachingId, {
+    int page = 1,
+    int limit = 20,
+  }) async {
+    final uri = Uri.parse(ApiConstants.feeMyTransactions(coachingId)).replace(
+      queryParameters: {'page': '$page', 'limit': '$limit'},
     );
-    return (data as List).cast<Map<String, dynamic>>();
+    final data = await _api.getAuthenticatedRaw(uri.toString());
+    return data as Map<String, dynamic>;
   }
 
   // ── Razorpay Checkout Flow ──────────────────────────────────────
 
   /// Opens Razorpay checkout. Returns the payment response on success.
   /// Throws on failure or user cancellation.
+  /// Includes a timeout to prevent dangling Completers.
   Future<PaymentSuccessResponse> openCheckout({
     required String orderId,
     required int amountPaise,
@@ -211,10 +223,16 @@ class PaymentService {
     String? userPhone,
     String? userName,
   }) async {
-    _razorpay?.clear();
-    _razorpay = Razorpay();
+    // Cancel any previous active checkout
+    if (_activeCompleter != null && !_activeCompleter!.isCompleted) {
+      _activeCompleter!.completeError(Exception('New checkout started'));
+    }
+
+    // Reuse or create Razorpay instance
+    _razorpay ??= Razorpay();
 
     final completer = Completer<PaymentSuccessResponse>();
+    _activeCompleter = completer;
 
     _razorpay!.on(Razorpay.EVENT_PAYMENT_SUCCESS, (
       PaymentSuccessResponse response,
@@ -236,11 +254,17 @@ class PaymentService {
       }
     });
 
+    // Handle external wallet selection (e.g., PayTM, PhonePe) gracefully
     _razorpay!.on(Razorpay.EVENT_EXTERNAL_WALLET, (
       ExternalWalletResponse response,
     ) {
+      // External wallets redirect and verify via webhook, not client-side.
+      // Complete with error so the UI shows "verifying" state and the webhook
+      // will process the payment when it arrives.
       if (!completer.isCompleted) {
-        completer.completeError(Exception('External wallet not supported'));
+        completer.completeError(
+          Exception('Payment is being processed via ${response.walletName ?? 'external wallet'}. You will be notified once confirmed.'),
+        );
       }
     });
 
@@ -257,14 +281,26 @@ class PaymentService {
         if (userName != null) 'name': userName,
       },
       'theme': {'color': '#3D4F2F'},
+      // Enable external wallets for broader payment support
+      'external': {
+        'wallets': ['paytm'],
+      },
     };
 
     _razorpay!.open(options);
 
-    return completer.future;
+    // Add timeout to prevent dangling Completers
+    return completer.future.timeout(
+      _checkoutTimeout,
+      onTimeout: () => throw TimeoutException('Payment checkout timed out', _checkoutTimeout),
+    );
   }
 
   void dispose() {
+    if (_activeCompleter != null && !_activeCompleter!.isCompleted) {
+      _activeCompleter!.completeError(Exception('Service disposed'));
+    }
+    _activeCompleter = null;
     _razorpay?.clear();
     _razorpay = null;
   }

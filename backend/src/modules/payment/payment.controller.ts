@@ -1,7 +1,19 @@
 import { type Request, type Response } from 'express';
 import { PaymentService } from './payment.service.js';
+import {
+    createOrderSchema, verifyPaymentSchema, initiateRefundSchema,
+    multiPayCreateOrderSchema, failOrderSchema, paymentSettingsSchema,
+    validateBody,
+} from '../../shared/validation/fee.validation.js';
 
 const svc = new PaymentService();
+
+/** Require user.id from auth middleware, throw 401 if missing */
+function requireUserId(req: Request): string {
+    const userId = (req as any).user?.id;
+    if (!userId) throw Object.assign(new Error('Authentication required'), { status: 401 });
+    return userId;
+}
 
 export class PaymentController {
 
@@ -9,11 +21,12 @@ export class PaymentController {
     async createOrder(req: Request, res: Response) {
         try {
             const { coachingId, recordId } = req.params as { coachingId: string; recordId: string };
-            const userId = (req as any).user?.id;
-            const data = await svc.createOrder(coachingId, recordId, userId, req.body);
+            const userId = requireUserId(req);
+            const body = validateBody(createOrderSchema, req.body);
+            const data = await svc.createOrder(coachingId, recordId, userId, body);
             res.status(201).json(data);
         } catch (e: any) {
-            res.status(e.status ?? 500).json({ error: e.message });
+            res.status(e.status ?? 500).json({ error: e.message, fieldErrors: e.fieldErrors });
         }
     }
 
@@ -21,11 +34,12 @@ export class PaymentController {
     async verifyPayment(req: Request, res: Response) {
         try {
             const { coachingId, recordId } = req.params as { coachingId: string; recordId: string };
-            const userId = (req as any).user?.id;
-            const data = await svc.verifyPayment(coachingId, recordId, req.body, userId);
+            const userId = requireUserId(req);
+            const body = validateBody(verifyPaymentSchema, req.body);
+            const data = await svc.verifyPayment(coachingId, recordId, body, userId);
             res.json(data);
         } catch (e: any) {
-            res.status(e.status ?? 500).json({ error: e.message });
+            res.status(e.status ?? 500).json({ error: e.message, fieldErrors: e.fieldErrors });
         }
     }
 
@@ -33,11 +47,12 @@ export class PaymentController {
     async initiateOnlineRefund(req: Request, res: Response) {
         try {
             const { coachingId, recordId } = req.params as { coachingId: string; recordId: string };
-            const userId = (req as any).user?.id;
-            const data = await svc.initiateOnlineRefund(coachingId, recordId, req.body, userId);
+            const userId = requireUserId(req);
+            const body = validateBody(initiateRefundSchema, req.body);
+            const data = await svc.initiateOnlineRefund(coachingId, recordId, body, userId);
             res.json(data);
         } catch (e: any) {
-            res.status(e.status ?? 500).json({ error: e.message });
+            res.status(e.status ?? 500).json({ error: e.message, fieldErrors: e.fieldErrors });
         }
     }
 
@@ -66,11 +81,12 @@ export class PaymentController {
     async updatePaymentSettings(req: Request, res: Response) {
         try {
             const { coachingId } = req.params as { coachingId: string };
-            const userId = (req as any).user?.id;
-            const data = await svc.updatePaymentSettings(coachingId, userId, req.body);
+            const userId = requireUserId(req);
+            const body = validateBody(paymentSettingsSchema, req.body);
+            const data = await svc.updatePaymentSettings(coachingId, userId, body);
             res.json(data);
         } catch (e: any) {
-            res.status(e.status ?? 500).json({ error: e.message });
+            res.status(e.status ?? 500).json({ error: e.message, fieldErrors: e.fieldErrors });
         }
     }
 
@@ -78,11 +94,12 @@ export class PaymentController {
     async createMultiOrder(req: Request, res: Response) {
         try {
             const { coachingId } = req.params as { coachingId: string };
-            const userId = (req as any).user?.id;
-            const data = await svc.createMultiOrder(coachingId, userId, req.body);
+            const userId = requireUserId(req);
+            const body = validateBody(multiPayCreateOrderSchema, req.body);
+            const data = await svc.createMultiOrder(coachingId, userId, body);
             res.status(201).json(data);
         } catch (e: any) {
-            res.status(e.status ?? 500).json({ error: e.message });
+            res.status(e.status ?? 500).json({ error: e.message, fieldErrors: e.fieldErrors });
         }
     }
 
@@ -90,11 +107,12 @@ export class PaymentController {
     async verifyMultiPayment(req: Request, res: Response) {
         try {
             const { coachingId } = req.params as { coachingId: string };
-            const userId = (req as any).user?.id;
-            const data = await svc.verifyMultiPayment(coachingId, req.body, userId);
+            const userId = requireUserId(req);
+            const body = validateBody(verifyPaymentSchema, req.body);
+            const data = await svc.verifyMultiPayment(coachingId, body, userId);
             res.json(data);
         } catch (e: any) {
-            res.status(e.status ?? 500).json({ error: e.message });
+            res.status(e.status ?? 500).json({ error: e.message, fieldErrors: e.fieldErrors });
         }
     }
 
@@ -113,11 +131,11 @@ export class PaymentController {
     async failOrder(req: Request, res: Response) {
         try {
             const { coachingId, internalOrderId } = req.params as { coachingId: string; internalOrderId: string };
-            const reason: string = req.body?.reason ?? 'User cancelled';
-            await svc.markOrderFailed(coachingId, internalOrderId, reason);
+            const body = validateBody(failOrderSchema, req.body);
+            await svc.markOrderFailed(coachingId, internalOrderId, body.reason ?? 'User cancelled');
             res.json({ ok: true });
         } catch (e: any) {
-            res.status(e.status ?? 500).json({ error: e.message });
+            res.status(e.status ?? 500).json({ error: e.message, fieldErrors: e.fieldErrors });
         }
     }
 

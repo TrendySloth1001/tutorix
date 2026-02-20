@@ -31,11 +31,13 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
     });
     try {
       final d = await _svc.listStructures(widget.coachingId);
+      if (!mounted) return;
       setState(() {
         _structures = d;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;

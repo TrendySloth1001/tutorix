@@ -48,6 +48,7 @@ class _FeeLedgerScreenState extends State<FeeLedgerScreen> {
       final summaryData = data['summary'] as Map<String, dynamic>?;
       final timelineData = data['timeline'] as List<dynamic>?;
 
+      if (!mounted) return;
       setState(() {
         _member = data['member'] as Map<String, dynamic>?;
         _summary = summaryData != null
@@ -59,6 +60,7 @@ class _FeeLedgerScreenState extends State<FeeLedgerScreen> {
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;

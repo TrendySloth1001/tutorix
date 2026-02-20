@@ -443,6 +443,16 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                       : () async {
                           final amt = double.tryParse(amtCtrl.text.trim());
                           if (amt == null || amt <= 0) return;
+                          if (_record != null && amt > _record!.paidAmount) {
+                            ScaffoldMessenger.of(ctx).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'Cannot refund more than paid amount (₹${_record!.paidAmount.toStringAsFixed(0)})',
+                                ),
+                              ),
+                            );
+                            return;
+                          }
                           setSt(() => submitting = true);
                           try {
                             await _svc.recordRefund(
@@ -498,23 +508,30 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSt) {
-          if (loading) {
-            _paySvc
-                .getOnlinePayments(widget.coachingId, widget.recordId)
-                .then((data) {
-                  setSt(() {
-                    payments = data;
-                    loading = false;
+          // Load payments once, not on every rebuild
+          if (loading && payments.isEmpty) {
+            // Use Future.microtask to avoid side-effect in build
+            Future.microtask(() {
+              _paySvc
+                  .getOnlinePayments(widget.coachingId, widget.recordId)
+                  .then((data) {
+                    if (ctx.mounted) {
+                      setSt(() {
+                        payments = data;
+                        loading = false;
+                      });
+                    }
+                  })
+                  .catchError((e) {
+                    if (ctx.mounted) {
+                      setSt(() => loading = false);
+                      ScaffoldMessenger.of(ctx).showSnackBar(
+                        SnackBar(content: Text(e.toString())),
+                      );
+                    }
                   });
-                })
-                .catchError((e) {
-                  setSt(() => loading = false);
-                  if (ctx.mounted) {
-                    ScaffoldMessenger.of(
-                      ctx,
-                    ).showSnackBar(SnackBar(content: Text(e.toString())));
-                  }
-                });
+              loading = false; // prevent re-trigger on rebuild
+            });
           }
 
           return Container(
@@ -672,6 +689,24 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                           : () async {
                               final amt = double.tryParse(amtCtrl.text.trim());
                               if (amt == null || amt <= 0) return;
+                              // Upper-bound: find selected payment's amount
+                              final selPay = payments.firstWhere(
+                                (p) => p['id'] == selectedPaymentId,
+                                orElse: () => <String, dynamic>{},
+                              );
+                              final payAmt = (selPay['amount'] as num?)?.toDouble() ?? 0;
+                              if (amt > payAmt) {
+                                if (ctx.mounted) {
+                                  ScaffoldMessenger.of(ctx).showSnackBar(
+                                    SnackBar(
+                                      content: Text(
+                                        'Cannot refund more than payment amount (₹${payAmt.toStringAsFixed(0)})',
+                                      ),
+                                    ),
+                                  );
+                                }
+                                return;
+                              }
                               setSt(() => submitting = true);
                               try {
                                 await _paySvc.initiateOnlineRefund(
@@ -1064,6 +1099,8 @@ class _BreakdownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isInclusive = record.taxType == 'GST_INCLUSIVE';
+    final isExclusive = record.taxType == 'GST_EXCLUSIVE';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -1081,34 +1118,41 @@ class _BreakdownCard extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 12),
-          // ── Line Items (if present) ──
-          if (record.lineItems.isNotEmpty) ...[
-            ...record.lineItems.map(
+          // ── Line items replace Base Amount when present ──
+          if (record.lineItems.isNotEmpty) ...[            ...record.lineItems.map(
               (item) => _Row(item.label, '₹${item.amount.toStringAsFixed(0)}'),
             ),
-            const Divider(height: 16),
-          ],
-          _Row('Base Amount', '₹${record.baseAmount.toStringAsFixed(0)}'),
+            _Row(
+              'Subtotal',
+              '₹${record.baseAmount.toStringAsFixed(0)}',
+              bold: true,
+            ),
+          ] else
+            _Row('Base Amount', '₹${record.baseAmount.toStringAsFixed(0)}'),
+          // ── Discount ──
           if (record.discountAmount > 0)
             _Row(
               'Discount',
               '- ₹${record.discountAmount.toStringAsFixed(0)}',
               color: const Color(0xFF2E7D32),
             ),
+          // ── Late Fine ──
           if (record.fineAmount > 0)
             _Row(
               'Late Fine',
               '+ ₹${record.fineAmount.toStringAsFixed(0)}',
               color: const Color(0xFFC62828),
             ),
-          // ── Tax Breakdown ──
-          if (record.hasTax) ...[
+          // ── GST_EXCLUSIVE: show taxable base + additive GST above total ──
+          if (record.hasTax && isExclusive) ...[            if (record.discountAmount > 0)
+              _Row(
+                'After Discount',
+                '₹${(record.baseAmount - record.discountAmount).toStringAsFixed(0)}',
+              ),
             const Divider(height: 16),
             _Row(
-              record.taxType == 'GST_INCLUSIVE'
-                  ? 'GST (Incl. ${record.gstRate.toStringAsFixed(0)}%)'
-                  : 'GST @ ${record.gstRate.toStringAsFixed(0)}%',
-              '₹${record.taxAmount.toStringAsFixed(0)}',
+              'GST @ ${record.gstRate.toStringAsFixed(0)}%',
+              '+ ₹${record.taxAmount.toStringAsFixed(0)}',
             ),
             if (record.cgstAmount > 0)
               _Row(
@@ -1134,14 +1178,49 @@ class _BreakdownCard extends StatelessWidget {
                 '₹${record.cessAmount.toStringAsFixed(0)}',
                 color: AppColors.mutedOlive,
               ),
-            if (record.sacCode != null) _Row('SAC Code', record.sacCode!),
           ],
+          // ── Total ──
           const Divider(height: 20),
           _Row(
             'Total',
             '₹${record.finalAmount.toStringAsFixed(0)}',
             bold: true,
           ),
+          // ── GST_INCLUSIVE: informational sub-rows after total ──
+          // GST is already inside the Total — shown for transparency only.
+          if (record.hasTax && isInclusive) ...[            _Row(
+              '  incl. GST ${record.gstRate.toStringAsFixed(0)}%',
+              '₹${record.taxAmount.toStringAsFixed(0)}',
+              color: AppColors.mutedOlive,
+            ),
+            if (record.cgstAmount > 0)
+              _Row(
+                '  CGST @ ${(record.gstRate / 2).toStringAsFixed(1)}%',
+                '₹${record.cgstAmount.toStringAsFixed(0)}',
+                color: AppColors.mutedOlive,
+              ),
+            if (record.sgstAmount > 0)
+              _Row(
+                '  SGST @ ${(record.gstRate / 2).toStringAsFixed(1)}%',
+                '₹${record.sgstAmount.toStringAsFixed(0)}',
+                color: AppColors.mutedOlive,
+              ),
+            if (record.igstAmount > 0)
+              _Row(
+                '  IGST @ ${record.gstRate.toStringAsFixed(1)}%',
+                '₹${record.igstAmount.toStringAsFixed(0)}',
+                color: AppColors.mutedOlive,
+              ),
+            if (record.cessAmount > 0)
+              _Row(
+                '  incl. Cess',
+                '₹${record.cessAmount.toStringAsFixed(0)}',
+                color: AppColors.mutedOlive,
+              ),
+          ],
+          if (record.hasTax && record.sacCode != null)
+            _Row('SAC Code', record.sacCode!),
+          // ── Paid / Balance ──
           if (record.paidAmount > 0)
             _Row(
               'Paid',

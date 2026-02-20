@@ -19,6 +19,7 @@ import notificationRoutes from './modules/notification/notification.route.js';
 import academicRoutes from './modules/academic/academic.route.js';
 import adminRoutes from './modules/admin/admin.route.js';
 // import { webhookRouter } from './modules/payment/payment.webhook.js'; // Uncomment for production
+import { webhookRouter } from './modules/payment/payment.webhook.js';
 import { PaymentController } from './modules/payment/payment.controller.js';
 import { requestLoggerMiddleware } from './shared/middleware/request-logger.middleware.js';
 import { authMiddleware } from './shared/middleware/auth.middleware.js';
@@ -38,8 +39,9 @@ app.use(cors(allowedOrigins.length > 0 ? {
   credentials: true,
 } : undefined));
 
-// Webhook route — commented out during test mode (no webhook secret configured)
-// app.use('/webhooks', express.json(), webhookRouter);
+// C6 fix: Webhook route MUST be mounted BEFORE express.json() with express.raw()
+// so the body arrives as a raw Buffer for accurate signature verification.
+app.use('/webhooks', express.raw({ type: 'application/json' }), webhookRouter);
 
 app.use(express.json({ limit: '100kb' }));
 

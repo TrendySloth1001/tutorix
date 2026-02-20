@@ -10,12 +10,14 @@ class FeeMemberProfileScreen extends StatefulWidget {
   final String coachingId;
   final String memberId;
   final String? memberName;
+  final bool isAdmin;
 
   const FeeMemberProfileScreen({
     super.key,
     required this.coachingId,
     required this.memberId,
     this.memberName,
+    this.isAdmin = true,
   });
 
   @override
@@ -44,11 +46,13 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
         widget.coachingId,
         widget.memberId,
       );
+      if (!mounted) return;
       setState(() {
         _feeProfile = data;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;
@@ -77,7 +81,7 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
             CircleAvatar(
               radius: 16,
               backgroundImage: picture != null ? NetworkImage(picture) : null,
-              backgroundColor: AppColors.mutedOlive.withOpacity(0.2),
+              backgroundColor: AppColors.mutedOlive.withValues(alpha: 0.2),
               child: picture == null
                   ? Text(
                       displayName[0].toUpperCase(),
@@ -119,7 +123,7 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
         ],
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: Colors.grey.withOpacity(0.2), height: 1),
+          child: Container(color: Colors.grey.withValues(alpha: 0.2), height: 1),
         ),
       ),
       body: DefaultTabController(
@@ -149,6 +153,7 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
                           profile: _feeProfile!,
                           coachingId: widget.coachingId,
                           onRefresh: _load,
+                          isAdmin: widget.isAdmin,
                         ),
                         _AcademicTab(
                           coachingId: widget.coachingId,
@@ -171,11 +176,13 @@ class _FeeTab extends StatelessWidget {
   final Map<String, dynamic> profile;
   final String coachingId;
   final VoidCallback onRefresh;
+  final bool isAdmin;
 
   const _FeeTab({
     required this.profile,
     required this.coachingId,
     required this.onRefresh,
+    this.isAdmin = true,
   });
 
   Future<void> _sendReminder(BuildContext context, String recordId) async {
@@ -261,7 +268,7 @@ class _FeeTab extends StatelessWidget {
             final assignment = a as Map<String, dynamic>;
             return _AssignmentSection(
               assignment: assignment,
-              onRemind: (id) => _sendReminder(context, id),
+              onRemind: isAdmin ? (id) => _sendReminder(context, id) : null,
               onRecordTap: (recordId) async {
                 await Navigator.push(
                   context,
@@ -269,7 +276,7 @@ class _FeeTab extends StatelessWidget {
                     builder: (_) => FeeRecordDetailScreen(
                       coachingId: coachingId,
                       recordId: recordId,
-                      isAdmin: true,
+                      isAdmin: isAdmin,
                     ),
                   ),
                 );
@@ -377,7 +384,7 @@ class _AcademicTabState extends State<_AcademicTab>
           margin: const EdgeInsets.only(bottom: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: AppColors.softGrey.withOpacity(0.5)),
+            side: BorderSide(color: AppColors.softGrey.withValues(alpha: 0.5)),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -387,7 +394,7 @@ class _AcademicTabState extends State<_AcademicTab>
                   width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: _gradeColor(percent).withOpacity(0.1),
+                    color: _gradeColor(percent).withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   alignment: Alignment.center,
@@ -539,7 +546,7 @@ class _InfoCard extends StatelessWidget {
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.softGrey.withOpacity(0.5)),
+        side: BorderSide(color: AppColors.softGrey.withValues(alpha: 0.5)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -753,12 +760,12 @@ class _BannerStat extends StatelessWidget {
 
 class _AssignmentSection extends StatelessWidget {
   final Map<String, dynamic> assignment;
-  final Function(String) onRemind;
+  final Function(String)? onRemind; // null = student view (no remind action)
   final Function(String) onRecordTap;
 
   const _AssignmentSection({
     required this.assignment,
-    required this.onRemind,
+    this.onRemind,
     required this.onRecordTap,
   });
 
@@ -843,7 +850,7 @@ class _AssignmentSection extends StatelessWidget {
             return _RecordRow(
               record: rec,
               onTap: () => onRecordTap(recordId),
-              onRemind: () => onRemind(recordId),
+              onRemind: onRemind != null ? () => onRemind!(recordId) : null,
             );
           }),
         ],
@@ -897,12 +904,12 @@ class _StatusBar extends StatelessWidget {
 class _RecordRow extends StatelessWidget {
   final Map<String, dynamic> record;
   final VoidCallback onTap;
-  final VoidCallback onRemind;
+  final VoidCallback? onRemind; // null = hide remind button (student view)
 
   const _RecordRow({
     required this.record,
     required this.onTap,
-    required this.onRemind,
+    this.onRemind,
   });
 
   @override
@@ -920,7 +927,7 @@ class _RecordRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: AppColors.softGrey.withOpacity(0.2),
+        color: AppColors.softGrey.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
@@ -989,14 +996,14 @@ class _RecordRow extends StatelessWidget {
                       ),
                   ],
                 ),
-                if (!isPaid) ...[
+                if (!isPaid && onRemind != null) ...[
                   const SizedBox(width: 8),
                   GestureDetector(
                     onTap: onRemind,
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: AppColors.mutedOlive.withOpacity(0.1),
+                        color: AppColors.mutedOlive.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
@@ -1025,7 +1032,7 @@ class _SmallChip extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.12),
+        color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(5),
       ),
       child: Text(

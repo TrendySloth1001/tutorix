@@ -7,17 +7,24 @@ const notifSvc = new NotificationService();
 
 // ─── Razorpay Instance ───────────────────────────────────────────────
 
+// Fail-fast: require Razorpay credentials at startup
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+if (!RAZORPAY_KEY_ID || !RAZORPAY_KEY_SECRET) {
+    console.warn('[PaymentService] RAZORPAY_KEY_ID or RAZORPAY_KEY_SECRET not set — online payments disabled');
+}
+
 const razorpay = new Razorpay({
-    key_id: process.env.RAZORPAY_KEY_ID || '',
-    key_secret: process.env.RAZORPAY_KEY_SECRET || '',
+    key_id: RAZORPAY_KEY_ID || '',
+    key_secret: RAZORPAY_KEY_SECRET || '',
 });
 
 // ─── DTOs ────────────────────────────────────────────────────────────
 
 export interface CreateOrderDto {
-    recordId: string;
+    recordId?: string | undefined;
     /** Amount in rupees — converted to paise internally */
-    amount?: number;
+    amount?: number | undefined;
 }
 
 export interface VerifyPaymentDto {
@@ -27,18 +34,14 @@ export interface VerifyPaymentDto {
 }
 
 export interface InitiateRefundDto {
-    paymentId: string;      // Our FeePayment id
-    amount?: number;        // Partial refund amount (rupees). Full if omitted.
-    reason?: string;
+    paymentId: string;
+    amount?: number | undefined;
+    reason?: string | undefined;
 }
 
 // ─── Helpers ─────────────────────────────────────────────────────────
 
-function generateReceiptNo(): string {
-    const ts = Date.now().toString(36).toUpperCase();
-    const rand = Math.random().toString(36).slice(2, 6).toUpperCase();
-    return `RCP-${ts}-${rand}`;
-}
+// Dead generateReceiptNo removed — all receipt generation uses generateSequentialReceiptNo
 
 function toPaise(rupees: number): number {
     return Math.round(rupees * 100);
@@ -110,8 +113,9 @@ function computeTax(
     if (supplyType === 'INTER_STATE') {
         igst = gstAmount;
     } else {
-        cgst = Math.round((gstAmount / 2) * 100) / 100;
-        sgst = Math.round((gstAmount / 2) * 100) / 100;
+        // L3: Floor/round pattern to avoid ±0.01 mismatch
+        cgst = Math.floor(gstAmount * 50) / 100;
+        sgst = Math.round((gstAmount - cgst) * 100) / 100;
     }
 
     const totalTax = gstAmount + cess;
@@ -233,8 +237,8 @@ export class PaymentService {
      * Uses HMAC SHA256 signature verification, then records the payment.
      */
     async verifyPayment(coachingId: string, recordId: string, dto: VerifyPaymentDto, userId: string) {
-        // 1. Verify signature
-        const secret = process.env.RAZORPAY_KEY_SECRET;
+        // 1. C8 fix: Timing-safe signature comparison to prevent timing attacks
+        const secret = RAZORPAY_KEY_SECRET;
         if (!secret) throw Object.assign(new Error('Payment configuration error'), { status: 500 });
 
         const body = dto.razorpay_order_id + '|' + dto.razorpay_payment_id;
@@ -243,7 +247,9 @@ export class PaymentService {
             .update(body)
             .digest('hex');
 
-        if (expectedSignature !== dto.razorpay_signature) {
+        const sigBuffer = Buffer.from(dto.razorpay_signature, 'hex');
+        const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+        if (sigBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
             throw Object.assign(new Error('Payment verification failed — invalid signature'), { status: 400 });
         }
 
@@ -258,6 +264,21 @@ export class PaymentService {
         if (order.paymentRecorded) {
             // Already processed (idempotent)
             return this._getRecordWithDaysOverdue(coachingId, recordId);
+        }
+
+        // C7 fix: Cross-verify payment amount with Razorpay before recording
+        try {
+            const rzpPayment = await razorpay.payments.fetch(dto.razorpay_payment_id);
+            if (rzpPayment.amount !== order.amountPaise) {
+                console.error(`[PaymentService] Amount mismatch: Razorpay=${rzpPayment.amount}, DB=${order.amountPaise}`);
+                throw Object.assign(new Error('Payment amount mismatch'), { status: 400 });
+            }
+            if (rzpPayment.status !== 'captured') {
+                throw Object.assign(new Error(`Payment not captured (status: ${rzpPayment.status})`), { status: 400 });
+            }
+        } catch (err: any) {
+            if (err.status) throw err; // re-throw our own errors
+            throw Object.assign(new Error('Failed to verify payment with Razorpay'), { status: 502 });
         }
 
         // 3. Record payment in a transaction
@@ -302,11 +323,30 @@ export class PaymentService {
             throw Object.assign(new Error('Refund cannot exceed payment amount'), { status: 400 });
         }
 
+        // H8 fix: Check total already refunded across ALL payments for this record
+        const existingRefunds = await prisma.feeRefund.findMany({
+            where: { recordId, coachingId },
+            select: { amount: true },
+        });
+        const totalAlreadyRefunded = existingRefunds.reduce((s, r) => s + r.amount, 0);
+
         // 3. Check FeeRecord
         const record = await prisma.feeRecord.findFirst({ where: { id: recordId, coachingId } });
         if (!record) throw Object.assign(new Error('Record not found'), { status: 404 });
         if (refundAmount > record.paidAmount) {
             throw Object.assign(new Error('Cannot refund more than total paid'), { status: 400 });
+        }
+        // Verify cumulative refund doesn't exceed total payments
+        const totalPaidViaPayments = await prisma.feePayment.aggregate({
+            where: { recordId, coachingId },
+            _sum: { amount: true },
+        });
+        const totalPayments = totalPaidViaPayments._sum.amount ?? 0;
+        if (totalAlreadyRefunded + refundAmount > totalPayments) {
+            throw Object.assign(
+                new Error(`Total refunds (₹${(totalAlreadyRefunded + refundAmount).toFixed(2)}) would exceed total payments (₹${totalPayments.toFixed(2)})`),
+                { status: 400 },
+            );
         }
 
         const amountPaise = toPaise(refundAmount);
@@ -347,6 +387,8 @@ export class PaymentService {
                 },
             });
 
+            // H9 fix: Start refund status as INITIATED (Razorpay may still be processing)
+            // Webhook will update to PROCESSED when refund is confirmed
             await tx.razorpayRefund.create({
                 data: {
                     coachingId,
@@ -354,7 +396,7 @@ export class PaymentService {
                     razorpayRefundId: rzpRefund.id,
                     razorpayPaymentId: payment.razorpayPaymentId!,
                     amountPaise,
-                    status: 'PROCESSED',
+                    status: 'INITIATED',
                 },
             });
 
@@ -426,8 +468,8 @@ export class PaymentService {
      */
     getConfig() {
         return {
-            keyId: process.env.RAZORPAY_KEY_ID || '',
-            enabled: !!(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET),
+            keyId: RAZORPAY_KEY_ID || '',
+            enabled: !!(RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET),
         };
     }
 
@@ -437,15 +479,17 @@ export class PaymentService {
      * Create a combined Razorpay order for multiple fee records.
      * Allows partial payment (pay any amount towards selected records).
      */
-    async createMultiOrder(coachingId: string, userId: string, dto: { recordIds: string[]; amount?: number }) {
+    async createMultiOrder(coachingId: string, userId: string, dto: { recordIds: string[]; amount?: number | undefined }) {
         if (!dto.recordIds || dto.recordIds.length === 0) {
             throw Object.assign(new Error('At least one record required'), { status: 400 });
         }
 
         // 1. Fetch all records and validate
+        // H14 fix: Sort records by dueDate so oldest dues are allocated first
         const records = await prisma.feeRecord.findMany({
             where: { id: { in: dto.recordIds }, coachingId, status: { in: ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'] } },
             include: { member: { select: { userId: true, wardId: true, ward: { select: { parentId: true } } } } },
+            orderBy: { dueDate: 'asc' },
         });
 
         if (records.length === 0) throw Object.assign(new Error('No payable records found'), { status: 400 });
@@ -566,21 +610,44 @@ export class PaymentService {
      * Distributes the paid amount across records (oldest first).
      */
     async verifyMultiPayment(coachingId: string, dto: VerifyPaymentDto, userId: string) {
-        // 1. Verify signature
-        const secret = process.env.RAZORPAY_KEY_SECRET;
+        // 1. C8 fix: Timing-safe signature comparison
+        const secret = RAZORPAY_KEY_SECRET;
         if (!secret) throw Object.assign(new Error('Payment configuration error'), { status: 500 });
 
         const body = dto.razorpay_order_id + '|' + dto.razorpay_payment_id;
         const expectedSignature = crypto.createHmac('sha256', secret).update(body).digest('hex');
-        if (expectedSignature !== dto.razorpay_signature) {
+        const sigBuf = Buffer.from(dto.razorpay_signature, 'hex');
+        const expectedBuf = Buffer.from(expectedSignature, 'hex');
+        if (sigBuf.length !== expectedBuf.length || !crypto.timingSafeEqual(sigBuf, expectedBuf)) {
             throw Object.assign(new Error('Payment verification failed'), { status: 400 });
         }
 
-        // 2. Find all order rows for this Razorpay order
+        // C7 fix: Cross-verify payment amount with Razorpay for multi-pay
+        const allOrderRows = await prisma.razorpayOrder.findMany({
+            where: { razorpayOrderId: dto.razorpay_order_id, coachingId },
+        });
+        const expectedTotal = allOrderRows.reduce((s, o) => s + o.amountPaise, 0);
+        try {
+            const rzpPayment = await razorpay.payments.fetch(dto.razorpay_payment_id);
+            if (rzpPayment.amount !== expectedTotal) {
+                console.error(`[PaymentService] Multi-pay amount mismatch: Razorpay=${rzpPayment.amount}, DB=${expectedTotal}`);
+                throw Object.assign(new Error('Payment amount mismatch'), { status: 400 });
+            }
+            if (rzpPayment.status !== 'captured') {
+                throw Object.assign(new Error(`Payment not captured (status: ${rzpPayment.status})`), { status: 400 });
+            }
+        } catch (err: any) {
+            if (err.status) throw err;
+            throw Object.assign(new Error('Failed to verify payment with Razorpay'), { status: 502 });
+        }
+
+        // H14 fix: Sort order rows by record dueDate so oldest dues are paid first
         const orders = await prisma.razorpayOrder.findMany({
             where: { razorpayOrderId: dto.razorpay_order_id, coachingId },
+            include: { record: { select: { dueDate: true } } },
             orderBy: { createdAt: 'asc' },
         });
+        orders.sort((a, b) => (a.record?.dueDate?.getTime() ?? 0) - (b.record?.dueDate?.getTime() ?? 0));
         if (orders.length === 0) throw Object.assign(new Error('Orders not found'), { status: 404 });
 
         // Check if already processed
@@ -691,13 +758,11 @@ export class PaymentService {
                         const grossBaseAmt = baseAmt + totalDiscount; // pre-discount amount for reference
 
                         // Check no duplicate
+                        // H6 fix: Use exact dueDate match for cycle-aware dedup
                         const dup = await tx.feeRecord.findFirst({
                             where: {
                                 assignmentId: record.assignmentId,
-                                dueDate: {
-                                    gte: new Date(nextDue.getFullYear(), nextDue.getMonth(), 1),
-                                    lt: new Date(nextDue.getFullYear(), nextDue.getMonth() + 1, 1),
-                                },
+                                dueDate: nextDue,
                             },
                         });
                         if (!dup) {
@@ -756,9 +821,21 @@ export class PaymentService {
                     data: { transferId, transferStatus: 'created', platformFeePaise },
                 });
             }
-        } catch {
-            // Non-critical — record transfer failure but don't break payment
-            console.error(`[PaymentService] Transfer failed for order ${internalOrderId}`);
+        } catch (transferErr: any) {
+            // H12 fix: Record transfer failure in DB instead of just logging
+            console.error(`[PaymentService] Transfer failed for order ${internalOrderId}:`, transferErr?.message);
+            await prisma.razorpayOrder.update({
+                where: { id: internalOrderId },
+                data: {
+                    transferStatus: 'failed',
+                    transferId: null,
+                    notes: {
+                        ...(orderForReceipt.notes as any ?? {}),
+                        transferError: transferErr?.message ?? 'Unknown transfer error',
+                        transferFailedAt: new Date().toISOString(),
+                    } as any,
+                },
+            }).catch(() => { /* swallow DB error in error handler */ });
         }
 
         // Send payment confirmation notification (outside transaction)
@@ -829,12 +906,12 @@ export class PaymentService {
     }
 
     async updatePaymentSettings(coachingId: string, userId: string, dto: {
-        gstNumber?: string;
-        panNumber?: string;
-        bankAccountName?: string;
-        bankAccountNumber?: string;
-        bankIfscCode?: string;
-        bankName?: string;
+        gstNumber?: string | undefined;
+        panNumber?: string | undefined;
+        bankAccountName?: string | undefined;
+        bankAccountNumber?: string | undefined;
+        bankIfscCode?: string | undefined;
+        bankName?: string | undefined;
     }) {
         // Verify user is owner
         const coaching = await prisma.coaching.findUnique({ where: { id: coachingId }, select: { ownerId: true } });

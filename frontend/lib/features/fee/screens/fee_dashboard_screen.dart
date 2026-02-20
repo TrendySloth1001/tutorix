@@ -54,11 +54,13 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
         widget.coachingId,
         financialYear: _selectedFY,
       );
+      if (!mounted) return;
       setState(() {
         _summary = s;
         _loading = false;
       });
     } catch (e) {
+      if (!mounted) return;
       setState(() {
         _error = e.toString();
         _loading = false;
