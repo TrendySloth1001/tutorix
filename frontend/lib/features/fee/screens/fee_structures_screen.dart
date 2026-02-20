@@ -1163,7 +1163,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                         ),
                       )
                     : Text(
-                        widget.existing != null ? 'Update' : 'Set as Current',
+                        widget.existing != null ? 'Update' : 'Create Structure',
                       ),
               ),
             ),

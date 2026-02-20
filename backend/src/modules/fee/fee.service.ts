@@ -570,19 +570,30 @@ export class FeeService {
         });
         if (!memberExists) throw Object.assign(new Error('Member not found in this coaching'), { status: 404 });
 
-        // One assignment per member per coaching — if structure is changing, clear unpaid records
+        // One assignment per member per coaching — if structure is changing, clean up old records
         const existingAssignment = await prisma.feeAssignment.findFirst({
             where: { coachingId, memberId: dto.memberId },
             select: { id: true, feeStructureId: true },
         });
+        let structureChanged = false;
         if (existingAssignment && existingAssignment.feeStructureId !== dto.feeStructureId) {
-            // New structure assigned — cancel all PENDING/OVERDUE records that haven't been paid
+            structureChanged = true;
+            // 1. Hard-delete fully unpaid records — no payment history to preserve
             await prisma.feeRecord.deleteMany({
                 where: {
                     assignmentId: existingAssignment.id,
                     paidAmount: 0,
                     status: { in: ['PENDING', 'OVERDUE'] },
                 },
+            });
+            // 2. Cancel partially-paid records — preserve payment history but mark clearly
+            //    so a fresh record is created under the new structure
+            await prisma.feeRecord.updateMany({
+                where: {
+                    assignmentId: existingAssignment.id,
+                    status: 'PARTIALLY_PAID',
+                },
+                data: { status: 'CANCELLED' },
             });
         }
 
