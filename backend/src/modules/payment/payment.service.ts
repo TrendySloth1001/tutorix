@@ -23,8 +23,6 @@ const razorpay = new Razorpay({
 
 export interface CreateOrderDto {
     recordId?: string | undefined;
-    /** Amount in rupees — converted to paise internally */
-    amount?: number | undefined;
 }
 
 export interface VerifyPaymentDto {
@@ -153,42 +151,11 @@ export class PaymentService {
             throw Object.assign(new Error('You cannot pay for this fee record'), { status: 403 });
         }
 
-        // 2. Calculate payable amount (balance = finalAmount - paidAmount)
+        // 2. Calculate payable amount — payer always pays the full balance
         const balance = record.finalAmount - record.paidAmount;
-        const payAmount = dto?.amount ? Math.min(dto.amount, balance) : balance;
-        if (payAmount <= 0) throw Object.assign(new Error('Nothing to pay'), { status: 400 });
+        if (balance <= 0) throw Object.assign(new Error('Nothing to pay'), { status: 400 });
 
-        // ── Installment enforcement ─────────────────────────────────────────────
-        // If the fee structure has admin-defined installment amounts, the submitted
-        // amount MUST match one of those amounts exactly (within ₹1 tolerance).
-        // If allowInstallments=false, the full balance must be paid in one shot.
-        const feeStructure = record.assignment?.feeStructure;
-        if (feeStructure) {
-            const allowInst = feeStructure.allowInstallments;
-            const adminAmounts = feeStructure.installmentAmounts as Array<{ label: string; amount: number }> | null;
-            const isPartialPayment = dto?.amount !== undefined && Math.abs(dto.amount - balance) > 0.01;
-
-            if (isPartialPayment && !allowInst) {
-                throw Object.assign(
-                    new Error('Partial payments are not allowed for this fee. Please pay the full amount.'),
-                    { status: 400 },
-                );
-            }
-
-            if (isPartialPayment && allowInst && adminAmounts && adminAmounts.length > 0) {
-                const requested = dto!.amount!;
-                const matches = adminAmounts.some((item) => Math.abs(item.amount - requested) <= 1);
-                if (!matches) {
-                    const allowedList = adminAmounts.map((x) => `₹${x.amount} (${x.label})`).join(', ');
-                    throw Object.assign(
-                        new Error(`Amount ₹${requested} is not one of the allowed installment amounts: ${allowedList}`),
-                        { status: 400, allowedAmounts: adminAmounts },
-                    );
-                }
-            }
-        }
-
-        const amountPaise = toPaise(payAmount);
+        const amountPaise = toPaise(balance);
 
         // 3. Idempotency — reuse existing CREATED order if < 30 min old and same amount
         const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
@@ -213,7 +180,7 @@ export class PaymentService {
                     id: record.id,
                     title: record.title,
                     balance,
-                    payAmount,
+                    payAmount: balance,
                 },
                 internalOrderId: existingOrder.id,
             };
@@ -256,7 +223,7 @@ export class PaymentService {
                 id: record.id,
                 title: record.title,
                 balance,
-                payAmount,
+                payAmount: balance,
             },
             internalOrderId: order.id,
         };
@@ -509,7 +476,7 @@ export class PaymentService {
      * Create a combined Razorpay order for multiple fee records.
      * Allows partial payment (pay any amount towards selected records).
      */
-    async createMultiOrder(coachingId: string, userId: string, dto: { recordIds: string[]; amount?: number | undefined }) {
+    async createMultiOrder(coachingId: string, userId: string, dto: { recordIds: string[] }) {
         if (!dto.recordIds || dto.recordIds.length === 0) {
             throw Object.assign(new Error('At least one record required'), { status: 400 });
         }
@@ -533,9 +500,9 @@ export class PaymentService {
             }
         }
 
-        // 2. Calculate total balance
+        // 2. Calculate total balance — payer always pays the full total balance
         const totalBalance = records.reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0);
-        const payAmount = dto.amount ? Math.min(dto.amount, totalBalance) : totalBalance;
+        const payAmount = totalBalance;
         if (payAmount <= 0) throw Object.assign(new Error('Nothing to pay'), { status: 400 });
 
         const amountPaise = toPaise(payAmount);

@@ -845,8 +845,7 @@ model FeeAssignment {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  @@unique([feeStructureId, memberId]) // one assignment per structure per member
-  @@index([coachingId])
+  @@unique([coachingId, memberId]) // one active assignment per student per coaching
   @@index([memberId])
   @@index([feeStructureId])
 }

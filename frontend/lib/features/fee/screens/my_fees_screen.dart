@@ -324,8 +324,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
           ? _PayBar(
               selectedCount: _selected.length,
               totalAmount: _selectedTotal,
-              onPayFull: () => _payMulti(null),
-              onPayCustom: _showCustomAmountSheet,
+              onPayFull: _payMulti,
             )
           : null,
     );
@@ -656,7 +655,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
   }
 
   // ─── Multi-record online pay ───
-  Future<void> _payMulti(double? customAmount) async {
+  Future<void> _payMulti() async {
     if (_selected.isEmpty) return;
     final auth = Provider.of<AuthController>(context, listen: false);
     final user = auth.user;
@@ -666,7 +665,6 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       orderData = await _paySvc.createMultiOrder(
         widget.coachingId,
         recordIds: _selected.toList(),
-        amount: customAmount,
       );
       if (!mounted) return;
 
@@ -716,92 +714,6 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       if (msg == 'Payment cancelled') return;
       AppAlert.error(context, msg);
     }
-  }
-
-  void _showCustomAmountSheet() {
-    final ctrl = TextEditingController(text: _selectedTotal.toStringAsFixed(0));
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: EdgeInsets.fromLTRB(
-          24,
-          24,
-          24,
-          MediaQuery.of(ctx).viewInsets.bottom + 24,
-        ),
-        decoration: BoxDecoration(
-          color: Theme.of(ctx).colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Pay Custom Amount',
-              style: TextStyle(
-                fontWeight: FontWeight.w700,
-                fontSize: 18,
-                color: AppColors.darkOlive,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              'Total due: ₹${_selectedTotal.toStringAsFixed(0)} '
-              'for ${_selected.length} fee${_selected.length > 1 ? 's' : ''}',
-              style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
-            ),
-            const SizedBox(height: 16),
-            TextField(
-              controller: ctrl,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-              ),
-              autofocus: true,
-              decoration: const InputDecoration(
-                labelText: 'Amount (₹)',
-                prefixText: '₹ ',
-                border: OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              children: [25, 50, 75, 100].map((pct) {
-                final amt = (_selectedTotal * pct / 100).round();
-                return ActionChip(
-                  label: Text('$pct% · ₹$amt'),
-                  onPressed: () => ctrl.text = amt.toString(),
-                  backgroundColor: AppColors.softGrey.withValues(alpha: 0.3),
-                );
-              }).toList(),
-            ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.darkOlive,
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                ),
-                onPressed: () {
-                  final amt = double.tryParse(ctrl.text.trim());
-                  if (amt == null || amt <= 0) return;
-                  Navigator.pop(ctx);
-                  _payMulti(amt);
-                },
-                child: const Text(
-                  'Pay Now',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 15),
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }
 
@@ -862,12 +774,10 @@ class _PayBar extends StatelessWidget {
   final int selectedCount;
   final double totalAmount;
   final VoidCallback onPayFull;
-  final VoidCallback onPayCustom;
   const _PayBar({
     required this.selectedCount,
     required this.totalAmount,
     required this.onPayFull,
-    required this.onPayCustom,
   });
 
   @override
@@ -901,7 +811,7 @@ class _PayBar extends StatelessWidget {
                     ),
                   ),
                   Text(
-                    '₹${totalAmount.toStringAsFixed(0)}',
+                    '\u20b9${totalAmount.toStringAsFixed(0)}',
                     style: const TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 22,
@@ -912,25 +822,6 @@ class _PayBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            OutlinedButton(
-              onPressed: onPayCustom,
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.darkOlive,
-                side: const BorderSide(color: AppColors.darkOlive),
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              child: const Text(
-                'Custom',
-                style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
-              ),
-            ),
-            const SizedBox(width: 8),
             FilledButton.icon(
               onPressed: onPayFull,
               style: FilledButton.styleFrom(

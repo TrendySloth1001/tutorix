@@ -603,7 +603,23 @@ export class FeeService {
         });
         if (!memberExists) throw Object.assign(new Error('Member not found in this coaching'), { status: 404 });
 
-        // Upsert assignment
+        // One assignment per member per coaching — if structure is changing, clear unpaid records
+        const existingAssignment = await prisma.feeAssignment.findFirst({
+            where: { coachingId, memberId: dto.memberId },
+            select: { id: true, feeStructureId: true },
+        });
+        if (existingAssignment && existingAssignment.feeStructureId !== dto.feeStructureId) {
+            // New structure assigned — cancel all PENDING/OVERDUE records that haven't been paid
+            await prisma.feeRecord.deleteMany({
+                where: {
+                    assignmentId: existingAssignment.id,
+                    paidAmount: 0,
+                    status: { in: ['PENDING', 'OVERDUE'] },
+                },
+            });
+        }
+
+        // Build amounts
         const totalDiscount = (dto.discountAmount ?? 0) + (dto.scholarshipAmount ?? 0);
         const finalAmount = (dto.customAmount ?? structure.amount) - totalDiscount;
 
@@ -615,7 +631,7 @@ export class FeeService {
         const startDate = dto.startDate ? new Date(dto.startDate) : new Date();
 
         const assignment = await prisma.feeAssignment.upsert({
-            where: { feeStructureId_memberId: { feeStructureId: dto.feeStructureId, memberId: dto.memberId } },
+            where: { coachingId_memberId: { coachingId, memberId: dto.memberId } },
             create: {
                 coachingId,
                 feeStructureId: dto.feeStructureId,
@@ -631,6 +647,7 @@ export class FeeService {
                 isPaused: false,
             },
             update: {
+                feeStructureId: dto.feeStructureId,
                 customAmount: dto.customAmount ?? null,
                 discountAmount: dto.discountAmount ?? 0,
                 discountReason: dto.discountReason ?? null,

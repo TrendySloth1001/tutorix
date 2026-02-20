@@ -165,7 +165,6 @@ export const bulkRemindSchema = z.object({
 
 export const createOrderSchema = z.object({
     recordId: uuidString.optional(),
-    amount: positiveNumber.optional(),
 });
 
 export const verifyPaymentSchema = z.object({
@@ -182,7 +181,6 @@ export const initiateRefundSchema = z.object({
 
 export const multiPayCreateOrderSchema = z.object({
     recordIds: z.array(uuidString).min(1, 'At least one record required'),
-    amount: positiveNumber.optional(),
 });
 
 export const failOrderSchema = z.object({

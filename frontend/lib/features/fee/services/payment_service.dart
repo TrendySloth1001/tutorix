@@ -20,13 +20,9 @@ class PaymentService {
   /// Create a Razorpay order for a pending fee record.
   Future<Map<String, dynamic>> createOrder(
     String coachingId,
-    String recordId, {
-    double? amount,
-  }) async {
-    final body = <String, dynamic>{
-      'recordId': recordId,
-      if (amount != null) 'amount': amount,
-    };
+    String recordId,
+  ) async {
+    final body = <String, dynamic>{'recordId': recordId};
     final data = await _api.postAuthenticated(
       ApiConstants.feeCreateOrder(coachingId, recordId),
       body: body,
@@ -132,12 +128,8 @@ class PaymentService {
   Future<Map<String, dynamic>> createMultiOrder(
     String coachingId, {
     required List<String> recordIds,
-    double? amount,
   }) async {
-    final body = <String, dynamic>{
-      'recordIds': recordIds,
-      if (amount != null) 'amount': amount,
-    };
+    final body = <String, dynamic>{'recordIds': recordIds};
     return _api.postAuthenticated(
       ApiConstants.feeMultiPayCreateOrder(coachingId),
       body: body,
