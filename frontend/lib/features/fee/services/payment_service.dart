@@ -179,7 +179,7 @@ class PaymentService {
     String recordId,
   ) async {
     try {
-      final res = await _api.getAuthenticated(
+      final res = await _api.getAuthenticatedRaw(
         ApiConstants.feeFailedOrders(coachingId, recordId),
       );
       return (res as List).cast<Map<String, dynamic>>();

@@ -606,10 +606,8 @@ export class PaymentService {
      * Idempotent: checks `paymentRecorded` flag.
      */
     async _processPayment(internalOrderId: string, razorpayPaymentId: string, signature: string, userId?: string) {
-        // Generate sequential receipt BEFORE the transaction (can't await inside tx easily)
         const orderForReceipt = await prisma.razorpayOrder.findUniqueOrThrow({ where: { id: internalOrderId } });
         if (orderForReceipt.paymentRecorded) return; // already processed
-        const receiptNo = await generateSequentialReceiptNo(orderForReceipt.coachingId);
 
         await prisma.$transaction(async (tx) => {
             // Lock the order row
@@ -618,6 +616,15 @@ export class PaymentService {
             });
 
             if (order.paymentRecorded) return; // double-check inside tx
+
+            // Generate receipt inside tx to avoid gaps on concurrent calls
+            const fy = getFinancialYear();
+            const seq = await tx.receiptSequence.upsert({
+                where: { coachingId_financialYear: { coachingId: order.coachingId, financialYear: fy } },
+                create: { coachingId: order.coachingId, financialYear: fy, lastNumber: 1 },
+                update: { lastNumber: { increment: 1 } },
+            });
+            const receiptNo = `TXR/${fy}/${seq.lastNumber.toString().padStart(4, '0')}`;
 
             const record = await tx.feeRecord.findUniqueOrThrow({
                 where: { id: order.recordId },
@@ -669,7 +676,7 @@ export class PaymentService {
             });
 
             // If paid and cycle-based, generate next record (with tax snapshot)
-            if (isPaid && record.assignment && record.assignment.isActive) {
+            if (isPaid && record.assignment && record.assignment.isActive && !record.assignment.isPaused) {
                 const fs = record.assignment.feeStructure;
                 const cycle = fs.cycle;
                 if (cycle !== 'ONCE' && cycle !== 'INSTALLMENT') {
@@ -679,8 +686,8 @@ export class PaymentService {
                         const totalDiscount = record.assignment.discountAmount + (record.assignment.scholarshipAmount ?? 0);
                         const baseAmt = (record.assignment.customAmount ?? fs.amount) - totalDiscount;
                         const tax = computeTax(baseAmt, fs.taxType, fs.gstRate, fs.gstSupplyType, fs.cessRate);
-                        // finalAmount = net (post-discount) + taxAmount — consistent with _createFeeRecord
-                        const finalAmt = baseAmt + tax.taxAmount;
+                        // finalAmount = totalWithTax — handles both GST_INCLUSIVE and GST_EXCLUSIVE correctly
+                        const finalAmt = tax.totalWithTax;
                         const grossBaseAmt = baseAmt + totalDiscount; // pre-discount amount for reference
 
                         // Check no duplicate

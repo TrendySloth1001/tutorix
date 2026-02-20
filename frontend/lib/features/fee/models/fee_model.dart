@@ -204,12 +204,13 @@ class FeePaymentModel {
   factory FeePaymentModel.fromJson(Map<String, dynamic> json) {
     return FeePaymentModel(
       id: json['id'] as String? ?? '',
-      amount: (json['amount'] as num).toDouble(),
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
       mode: json['mode'] as String? ?? 'CASH',
       transactionRef: json['transactionRef'] as String?,
       receiptNo: json['receiptNo'] as String?,
       notes: json['notes'] as String?,
-      paidAt: DateTime.parse(json['paidAt'] as String),
+      paidAt:
+          DateTime.tryParse(json['paidAt'] as String? ?? '') ?? DateTime.now(),
       razorpayPaymentId: json['razorpayPaymentId'] as String?,
       razorpayOrderId: json['razorpayOrderId'] as String?,
     );
@@ -424,10 +425,12 @@ class FeeRefundModel {
 
   factory FeeRefundModel.fromJson(Map<String, dynamic> json) => FeeRefundModel(
     id: json['id'] as String? ?? '',
-    amount: (json['amount'] as num).toDouble(),
+    amount: (json['amount'] as num?)?.toDouble() ?? 0,
     reason: json['reason'] as String?,
     mode: json['mode'] as String? ?? 'CASH',
-    refundedAt: DateTime.parse(json['refundedAt'] as String),
+    refundedAt:
+        DateTime.tryParse(json['refundedAt'] as String? ?? '') ??
+        DateTime.now(),
   );
 }
 
@@ -571,16 +574,17 @@ class LedgerEntryModel {
 
   factory LedgerEntryModel.fromJson(Map<String, dynamic> json) =>
       LedgerEntryModel(
-        date: DateTime.parse(json['date'] as String),
+        date:
+            DateTime.tryParse(json['date'] as String? ?? '') ?? DateTime.now(),
         type: json['type'] as String? ?? 'UNKNOWN',
         label: json['label'] as String? ?? '',
-        amount: (json['amount'] as num).toDouble(),
+        amount: (json['amount'] as num?)?.toDouble() ?? 0,
         mode: json['mode'] as String?,
         ref: json['ref'] as String?,
         receiptNo: json['receiptNo'] as String?,
         status: json['status'] as String?,
         recordId: json['recordId'] as String? ?? '',
-        runningBalance: (json['runningBalance'] as num).toDouble(),
+        runningBalance: (json['runningBalance'] as num?)?.toDouble() ?? 0,
       );
 }
 

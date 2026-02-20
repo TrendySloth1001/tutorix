@@ -118,4 +118,72 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData get darkTheme {
+  const colorScheme = ColorScheme.dark(
+    primary: Color(0xFF66BB6A),
+    onPrimary: Color(0xFF0F110F),
+
+    secondary: AppColors.mutedOlive,
+    onSecondary: Color(0xFF101210),
+
+    surface: Color(0xFF1B1E1A),
+    onSurface: Color(0xFFE6E5C8),
+
+    background: Color(0xFF121412),
+    onBackground: Color(0xFFE6E5C8),
+
+    error: Colors.redAccent,
+    onError: Colors.white,
+  );
+
+  return ThemeData(
+    useMaterial3: true,
+    brightness: Brightness.dark,
+    fontFamily: 'SF Pro',
+    colorScheme: colorScheme,
+
+    scaffoldBackgroundColor: const Color(0xFF121412),
+
+    cardTheme: CardThemeData(
+      color: const Color(0xFF1B1E1A),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(
+          color: AppColors.mutedOlive.withValues(alpha: 0.15),
+        ),
+      ),
+    ),
+
+    filledButtonTheme: FilledButtonThemeData(
+      style: FilledButton.styleFrom(
+        backgroundColor: const Color(0xFF66BB6A),
+        foregroundColor: const Color(0xFF0F110F),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+      ),
+    ),
+
+    inputDecorationTheme: InputDecorationTheme(
+      filled: true,
+      fillColor: const Color(0xFF1F221E),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(
+          color: AppColors.mutedOlive.withValues(alpha: 0.3),
+        ),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(
+          color: Color(0xFF66BB6A),
+          width: 2,
+        ),
+      ),
+    ),
+  );
+}
+
 }

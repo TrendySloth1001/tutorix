@@ -231,6 +231,10 @@ const RECORD_INCLUDE = {
 
 // ─── Service ─────────────────────────────────────────────────────────
 
+// Per-coaching debounce cache for _markOverdueRecords (avoids N+1 queries on every read)
+const _overdueLastRun = new Map<string, number>();
+const OVERDUE_DEBOUNCE_MS = 5 * 60 * 1000; // 5 minutes
+
 export class FeeService {
 
     // ── Fee Structures ─────────────────────────────────────────────
@@ -370,6 +374,30 @@ export class FeeService {
                 await this._createFeeRecord(coachingId, assignment.id, dto.memberId, structure, finalAmount, startDate, undefined, totalDiscount);
             }
         }
+
+        // Fix #15: Update existing PENDING records when discount/amount changes on reassignment
+        // Only update records that haven't been partially paid yet
+        const tax = computeTax(finalAmount, structure.taxType ?? 'NONE', structure.gstRate ?? 0, structure.gstSupplyType ?? 'INTRA_STATE', structure.cessRate ?? 0);
+        const updatedFinalAmount = tax.totalWithTax;
+        const grossBase = finalAmount + totalDiscount;
+        await prisma.feeRecord.updateMany({
+            where: {
+                assignmentId: assignment.id,
+                status: 'PENDING',
+                paidAmount: 0,
+            },
+            data: {
+                baseAmount: grossBase,
+                discountAmount: totalDiscount,
+                amount: updatedFinalAmount,
+                finalAmount: updatedFinalAmount,
+                taxAmount: tax.taxAmount,
+                cgstAmount: tax.cgstAmount,
+                sgstAmount: tax.sgstAmount,
+                igstAmount: tax.igstAmount,
+                cessAmount: tax.cessAmount,
+            },
+        });
 
         return assignment;
     }
@@ -520,6 +548,12 @@ export class FeeService {
         const fineNow = lateFine > 0 && days > 0 ? lateFine * days : record.fineAmount;
         const finalAmountLocked = record.baseAmount - record.discountAmount + fineNow + record.taxAmount;
 
+        // Guard against overpayment
+        const balance = finalAmountLocked - record.paidAmount;
+        if (dto.amount > balance + 0.01) {
+            throw Object.assign(new Error(`Amount exceeds outstanding balance of ₹${balance.toFixed(2)}`), { status: 400 });
+        }
+
         const newPaidAmount = record.paidAmount + dto.amount;
         const isPaid = newPaidAmount >= finalAmountLocked - 0.01;
 
@@ -581,9 +615,20 @@ export class FeeService {
         if (!record) throw Object.assign(new Error('Record not found'), { status: 404 });
         if (record.status === 'PAID') throw Object.assign(new Error('Already paid'), { status: 400 });
 
+        // When waiving a partially paid record, set finalAmount = paidAmount
+        // so remaining balance becomes zero (partial payment is kept, rest forgiven).
+        const waiveData: Record<string, unknown> = {
+            status: 'WAIVED',
+            notes: dto.notes ?? null,
+            markedById: userId,
+        };
+        if (record.paidAmount > 0) {
+            waiveData.finalAmount = record.paidAmount;
+        }
+
         await prisma.feeRecord.update({
             where: { id: recordId },
-            data: { status: 'WAIVED', notes: dto.notes ?? null, markedById: userId },
+            data: waiveData,
         });
         // Re-fetch full record to avoid fromJson parse errors on frontend
         return this.getRecordById(coachingId, recordId);
@@ -654,7 +699,7 @@ export class FeeService {
                 userId: targetUserId,
                 coachingId,
                 type: 'FEE_REMINDER',
-                title: '📋 Fee Payment Reminder',
+                title: 'Fee Payment Reminder',
                 message: `Your fee "${record.title}" of ₹${balance.toFixed(0)} is due. Please pay at the earliest to avoid additional fines.`,
                 data: { recordId, amount: balance, dueDate: record.dueDate },
             });
@@ -935,10 +980,13 @@ export class FeeService {
         }
 
         // 2. All RazorpayOrder groups — skip PAID (already in FeePayments) to avoid duplicates
+        //    Also skip stale CREATED orders (checkout sessions abandoned > 30 min ago)
+        const staleThreshold = Date.now() - 30 * 60 * 1000;
         for (const [rzpId, rows] of Array.from(orderGroups.entries())) {
             const first = rows[0]!;
             const status = first.status; // all rows in group share same razorpayOrderId, status changes together
             if (status === 'PAID') continue; // covered by FeePayment rows above
+            if (status === 'CREATED' && new Date(first.createdAt).getTime() < staleThreshold) continue; // stale checkout
 
             const isMulti = rows.length > 1 || (first.notes as any)?.multiPay === true;
             const totalPaise = rows.reduce((s: number, r: { amountPaise: number }) => s + r.amountPaise, 0);
@@ -1063,12 +1111,9 @@ export class FeeService {
         const cessRate = structure.cessRate ?? 0;
         const tax = computeTax(netAmount, taxType, gstRate, supplyType, cessRate);
 
-        // finalAmount = net (post-discount) + tax portion.
-        // For GST_EXCLUSIVE: tax.taxAmount is on top → correct.
-        // For GST_INCLUSIVE: tax.taxAmount is extracted from the inclusive price and we
-        // still add it back so finalAmount = taxableAmount + taxAmount = invoiced total.
-        // This matches the formula: baseAmount − discountAmount + taxAmount used everywhere else.
-        const recordFinalAmount = netAmount + tax.taxAmount;
+        // finalAmount = totalWithTax — handles both GST_INCLUSIVE and GST_EXCLUSIVE correctly.
+        // GST_EXCLUSIVE: totalWithTax = net + tax. GST_INCLUSIVE: totalWithTax = net (tax is inside).
+        const recordFinalAmount = tax.totalWithTax;
         // baseAmount = structure amount (pre-discount), discountAmount = total discount
         const baseAmount = netAmount + discountAmount;
 
@@ -1102,6 +1147,11 @@ export class FeeService {
     }
 
     private async _markOverdueRecords(coachingId: string) {
+        // Debounce: skip if already ran for this coaching within the last 5 minutes
+        const lastRun = _overdueLastRun.get(coachingId) ?? 0;
+        if (Date.now() - lastRun < OVERDUE_DEBOUNCE_MS) return;
+        _overdueLastRun.set(coachingId, Date.now());
+
         // 1. Mark new PENDING → OVERDUE and compute initial fine
         const newOverdue = await prisma.feeRecord.findMany({
             where: { coachingId, status: 'PENDING', dueDate: { lt: new Date() } },

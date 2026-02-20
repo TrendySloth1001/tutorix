@@ -496,12 +496,19 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       );
       if (!mounted) return;
 
+      final oid = response.orderId;
+      final pid = response.paymentId;
+      final sig = response.signature;
+      if (oid == null || pid == null || sig == null) {
+        throw Exception('Incomplete payment response from Razorpay');
+      }
+
       final verified = await _paySvc.verifyPayment(
         widget.coachingId,
         record.id,
-        razorpayOrderId: response.orderId!,
-        razorpayPaymentId: response.paymentId!,
-        razorpaySignature: response.signature!,
+        razorpayOrderId: oid,
+        razorpayPaymentId: pid,
+        razorpaySignature: sig,
       );
       if (!mounted) return;
 
@@ -517,8 +524,8 @@ class _MyFeesScreenState extends State<MyFeesScreen>
             coachingName: widget.coachingName,
             feeTitle: record.title,
             amount: paidAmount,
-            paymentId: response.paymentId!,
-            orderId: response.orderId!,
+            paymentId: pid,
+            orderId: oid,
             paidAt: vp?['paidAt'] != null
                 ? DateTime.tryParse(vp!['paidAt'] as String) ?? DateTime.now()
                 : DateTime.now(),
@@ -601,11 +608,18 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       );
       if (!mounted) return;
 
+      final oid = response.orderId;
+      final pid = response.paymentId;
+      final sig = response.signature;
+      if (oid == null || pid == null || sig == null) {
+        throw Exception('Incomplete payment response from Razorpay');
+      }
+
       await _paySvc.verifyMultiPayment(
         widget.coachingId,
-        razorpayOrderId: response.orderId!,
-        razorpayPaymentId: response.paymentId!,
-        razorpaySignature: response.signature!,
+        razorpayOrderId: oid,
+        razorpayPaymentId: pid,
+        razorpaySignature: sig,
       );
       if (!mounted) return;
 
@@ -644,9 +658,9 @@ class _MyFeesScreenState extends State<MyFeesScreen>
           24,
           MediaQuery.of(ctx).viewInsets.bottom + 24,
         ),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        decoration: BoxDecoration(
+          color: Theme.of(ctx).colorScheme.surface,
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,

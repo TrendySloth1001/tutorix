@@ -80,37 +80,46 @@ webhookRouter.post('/razorpay', async (req: Request, res: Response) => {
             case 'payment.captured':
             case 'order.paid': {
                 if (!orderId || !paymentId) break;
-                const order = await prisma.razorpayOrder.findUnique({
+                // Multi-pay: multiple RazorpayOrder rows may share the same razorpayOrderId
+                const orders = await prisma.razorpayOrder.findMany({
                     where: { razorpayOrderId: orderId },
                 });
-                if (order && !order.paymentRecorded) {
+                for (const order of orders) {
+                    if (order.paymentRecorded) continue;
                     try {
                         await paymentSvc._processPayment(order.id, paymentId, signature);
                         await prisma.razorpayOrder.update({
                             where: { id: order.id },
                             data: { webhookReceived: true, webhookReceivedAt: new Date() },
                         });
-                        // Mark webhook log as processed
-                        await prisma.razorpayWebhookLog.updateMany({
-                            where: { orderId, event, processed: false },
-                            data: { processed: true },
-                        });
                     } catch (err: any) {
-                        console.error(`[Webhook] Error processing ${event}:`, err.message);
+                        console.error(`[Webhook] Error processing ${event} for order ${order.id}:`, err.message);
                         await prisma.razorpayWebhookLog.updateMany({
                             where: { orderId, event, processed: false },
                             data: { error: err.message },
                         });
                     }
                 }
+                // Mark webhook log as processed
+                await prisma.razorpayWebhookLog.updateMany({
+                    where: { orderId, event, processed: false },
+                    data: { processed: true },
+                });
                 break;
             }
 
             case 'payment.failed': {
                 if (!orderId) break;
+                const failureReason = paymentEntity?.error_description ?? paymentEntity?.error_reason ?? null;
                 await prisma.razorpayOrder.updateMany({
                     where: { razorpayOrderId: orderId, status: 'CREATED' },
-                    data: { status: 'FAILED', webhookReceived: true, webhookReceivedAt: new Date() },
+                    data: {
+                        status: 'FAILED',
+                        failureReason,
+                        failedAt: new Date(),
+                        webhookReceived: true,
+                        webhookReceivedAt: new Date(),
+                    },
                 });
                 await prisma.razorpayWebhookLog.updateMany({
                     where: { orderId, event, processed: false },
