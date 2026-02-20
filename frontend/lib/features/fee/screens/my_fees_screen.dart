@@ -466,7 +466,8 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                       }
                     },
                     onLongPress: () => _toggleSelect(r.id),
-                    onPayOnline: () => _paySingle(r),
+                    onPayOnline: () => _initiatePayment(r),
+                    onPayFull: () => _paySingle(r),
                   ),
                 );
               }, childCount: payable.length),
@@ -547,14 +548,45 @@ class _MyFeesScreenState extends State<MyFeesScreen>
     );
   }
 
+  // ─── Installment-aware entry point ───
+  void _initiatePayment(FeeRecordModel record) {
+    final structure = record.feeStructure;
+    if (structure != null && structure.allowInstallments) {
+      _showInstallmentPickerForRecord(record, structure);
+    } else {
+      _paySingle(record);
+    }
+  }
+
+  void _showInstallmentPickerForRecord(
+    FeeRecordModel record,
+    FeeStructureModel structure,
+  ) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _FeeInstallmentSheet(
+        fixedItems: structure.installmentAmounts,
+        installmentCount: structure.installmentCount,
+        balance: record.balance,
+        onSelected: (double? amount) => _paySingle(record, amount: amount),
+      ),
+    );
+  }
+
   // ─── Single-record online pay ───
-  Future<void> _paySingle(FeeRecordModel record) async {
+  Future<void> _paySingle(FeeRecordModel record, {double? amount}) async {
     final auth = Provider.of<AuthController>(context, listen: false);
     final user = auth.user;
 
     Map<String, dynamic>? orderData;
     try {
-      orderData = await _paySvc.createOrder(widget.coachingId, record.id);
+      orderData = await _paySvc.createOrder(
+        widget.coachingId,
+        record.id,
+        amount: amount,
+      );
       if (!mounted) return;
 
       final response = await _paySvc.openCheckout(
@@ -855,6 +887,7 @@ class _FeeCard extends StatelessWidget {
   final VoidCallback onTap;
   final VoidCallback? onLongPress;
   final VoidCallback? onPayOnline;
+  final VoidCallback? onPayFull;
   const _FeeCard({
     required this.record,
     required this.isSelected,
@@ -862,6 +895,7 @@ class _FeeCard extends StatelessWidget {
     required this.onTap,
     this.onLongPress,
     this.onPayOnline,
+    this.onPayFull,
   });
 
   @override
@@ -1080,34 +1114,120 @@ class _FeeCard extends StatelessWidget {
               // Pay Online (only in non-select mode)
               if (canPay && !selectMode) ...[
                 const SizedBox(height: 10),
-                SizedBox(
-                  width: double.infinity,
-                  height: 36,
-                  child: FilledButton.icon(
-                    onPressed: onPayOnline,
-                    style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.darkOlive,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
+                if (_hasInstallments(record)) ...[
+                  // Two-button layout: installment (primary) + full (outlined)
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 36,
+                          child: FilledButton.icon(
+                            onPressed: onPayOnline,
+                            style: FilledButton.styleFrom(
+                              backgroundColor: AppColors.darkOlive,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: EdgeInsets.zero,
+                            ),
+                            icon: const Icon(
+                              Icons.splitscreen_rounded,
+                              size: 16,
+                            ),
+                            label: Text(
+                              'Pay ₹${_installmentLabel(record)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
-                      padding: EdgeInsets.zero,
-                    ),
-                    icon: const Icon(Icons.bolt_rounded, size: 18),
-                    label: Text(
-                      'Pay ₹${record.balance.toStringAsFixed(0)} Online',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 13,
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: SizedBox(
+                          height: 36,
+                          child: OutlinedButton.icon(
+                            onPressed: onPayFull,
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: AppColors.darkOlive,
+                              side: const BorderSide(
+                                color: AppColors.darkOlive,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              padding: EdgeInsets.zero,
+                            ),
+                            icon: const Icon(Icons.bolt_rounded, size: 16),
+                            label: Text(
+                              'Full ₹${record.balance.toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ] else ...[
+                  SizedBox(
+                    width: double.infinity,
+                    height: 36,
+                    child: FilledButton.icon(
+                      onPressed: onPayFull,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: AppColors.darkOlive,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        padding: EdgeInsets.zero,
+                      ),
+                      icon: const Icon(Icons.bolt_rounded, size: 18),
+                      label: Text(
+                        'Pay ₹${record.balance.toStringAsFixed(0)} Online',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
+                        ),
                       ),
                     ),
                   ),
-                ),
+                ],
               ],
             ],
           ),
         ),
       ),
     );
+  }
+
+  static bool _hasInstallments(FeeRecordModel r) {
+    final s = r.feeStructure;
+    return s != null && s.allowInstallments;
+  }
+
+  /// Compute label for the installment button.
+  static String _installmentLabel(FeeRecordModel r) {
+    final s = r.feeStructure;
+    if (s == null) return r.balance.toStringAsFixed(0);
+    if (s.installmentAmounts.isNotEmpty) {
+      final affordable = s.installmentAmounts
+          .where((a) => a.amount <= r.balance + 0.01)
+          .toList();
+      if (affordable.isNotEmpty) {
+        return affordable.first.amount.toStringAsFixed(0);
+      }
+      return s.installmentAmounts.first.amount.toStringAsFixed(0);
+    }
+    if (s.installmentCount > 0) {
+      final per = (r.balance / s.installmentCount).ceil();
+      return per.toStringAsFixed(0);
+    }
+    return r.balance.toStringAsFixed(0);
   }
 
   static String _validityLabel(DateTime? from, DateTime? until) {
@@ -1538,5 +1658,182 @@ class _TxnCard extends StatelessWidget {
       'Dec',
     ];
     return months[m - 1];
+  }
+}
+
+// ─── Installment picker sheet (used by MyFeesScreen) ──────────────────────
+
+class _FeeInstallmentSheet extends StatelessWidget {
+  final List<InstallmentAmountItem> fixedItems;
+  final int installmentCount;
+  final double balance;
+  final void Function(double? amount) onSelected;
+
+  const _FeeInstallmentSheet({
+    required this.fixedItems,
+    required this.installmentCount,
+    required this.balance,
+    required this.onSelected,
+  });
+
+  /// Build the effective options list.
+  List<InstallmentAmountItem> get _options {
+    if (fixedItems.isNotEmpty) return fixedItems;
+    if (installmentCount > 0) {
+      final perInstallment =
+          (balance / installmentCount * 100).ceilToDouble() / 100;
+      return List.generate(installmentCount, (i) {
+        final isLast = i == installmentCount - 1;
+        final amt = isLast ? balance - perInstallment * i : perInstallment;
+        return InstallmentAmountItem(
+          label: 'Installment ${i + 1} of $installmentCount',
+          amount: amt > 0 ? amt : 0,
+        );
+      });
+    }
+    return [];
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final options = _options;
+    return Container(
+      decoration: const BoxDecoration(
+        color: AppColors.cream,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Center(
+            child: Container(
+              width: 40,
+              height: 4,
+              decoration: BoxDecoration(
+                color: AppColors.softGrey,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Text(
+            'Choose Payment Option',
+            style: TextStyle(
+              color: AppColors.darkOlive,
+              fontSize: 17,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            'Outstanding balance: ₹${balance.toStringAsFixed(0)}',
+            style: const TextStyle(color: AppColors.mutedOlive, fontSize: 12),
+          ),
+          if (options.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              options.length == installmentCount && fixedItems.isEmpty
+                  ? 'Split into $installmentCount equal installments'
+                  : '${options.length} payment options available',
+              style: const TextStyle(
+                color: AppColors.mutedOlive,
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
+          const SizedBox(height: 16),
+          // Installment options
+          ...options.map((item) {
+            final isAffordable = item.amount <= balance + 0.01;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: InkWell(
+                onTap: isAffordable
+                    ? () {
+                        Navigator.pop(context);
+                        onSelected(item.amount);
+                      }
+                    : null,
+                borderRadius: BorderRadius.circular(12),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: isAffordable
+                        ? AppColors.darkOlive.withValues(alpha: 0.07)
+                        : AppColors.softGrey.withValues(alpha: 0.3),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(
+                      color: isAffordable
+                          ? AppColors.darkOlive.withValues(alpha: 0.25)
+                          : AppColors.softGrey,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          item.label,
+                          style: TextStyle(
+                            color: isAffordable
+                                ? AppColors.darkOlive
+                                : AppColors.mutedOlive,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                      Text(
+                        '₹${item.amount.toStringAsFixed(0)}',
+                        style: TextStyle(
+                          color: isAffordable
+                              ? AppColors.darkOlive
+                              : AppColors.mutedOlive,
+                          fontWeight: FontWeight.w700,
+                          fontSize: 15,
+                        ),
+                      ),
+                      if (!isAffordable) ...[
+                        const SizedBox(width: 6),
+                        const Icon(
+                          Icons.lock_outline_rounded,
+                          size: 14,
+                          color: AppColors.mutedOlive,
+                        ),
+                      ],
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }),
+          const Divider(height: 16),
+          // Pay full balance
+          OutlinedButton(
+            style: OutlinedButton.styleFrom(
+              foregroundColor: AppColors.darkOlive,
+              side: const BorderSide(color: AppColors.darkOlive),
+              minimumSize: const Size.fromHeight(48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            onPressed: () {
+              Navigator.pop(context);
+              onSelected(null);
+            },
+            child: Text(
+              'Pay Full Balance  ₹${balance.toStringAsFixed(0)}',
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

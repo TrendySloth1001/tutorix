@@ -181,6 +181,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
               onWaive: () => _onAction('waive'),
               onRefund: () => _onAction('refund'),
               onPayOnline: _initiateOnlinePayment,
+              onPayFull: () => _payOnline(null),
               coachingName: widget.coachingName ?? 'Institute',
               failedOrders: _failedOrders,
             ),
@@ -272,28 +273,27 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
     );
   }
 
-  /// Entry point: shows installment picker if admin has configured installment
-  /// amounts, otherwise goes straight to full-balance payment.
+  /// Entry point: shows installment picker if admin has configured installments,
+  /// otherwise goes straight to full-balance payment.
   Future<void> _initiateOnlinePayment() async {
     if (_record == null) return;
     final structure = _record!.feeStructure;
-    if (structure != null &&
-        structure.allowInstallments &&
-        structure.installmentAmounts.isNotEmpty) {
-      _showInstallmentPicker(structure.installmentAmounts);
+    if (structure != null && structure.allowInstallments) {
+      _showInstallmentPicker(structure);
     } else {
       await _payOnline(null);
     }
   }
 
-  void _showInstallmentPicker(List<InstallmentAmountItem> items) {
+  void _showInstallmentPicker(FeeStructureModel structure) {
     final balance = _record?.balance ?? 0;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _InstallmentPickerSheet(
-        items: items,
+        fixedItems: structure.installmentAmounts,
+        installmentCount: structure.installmentCount,
         balance: balance,
         onSelected: (double? amount) => _payOnline(amount),
       ),
@@ -799,6 +799,7 @@ class _Body extends StatelessWidget {
   final VoidCallback onWaive;
   final VoidCallback onRefund;
   final VoidCallback onPayOnline;
+  final VoidCallback onPayFull;
   final String coachingName;
   final List<Map<String, dynamic>> failedOrders;
 
@@ -810,9 +811,38 @@ class _Body extends StatelessWidget {
     required this.onWaive,
     required this.onRefund,
     required this.onPayOnline,
+    required this.onPayFull,
     required this.coachingName,
     this.failedOrders = const [],
   });
+
+  static bool _hasInstallments(FeeRecordModel r) {
+    final s = r.feeStructure;
+    return s != null && s.allowInstallments;
+  }
+
+  /// Compute label for the installment button.
+  /// Shows the per-installment amount based on structure config.
+  static String _installmentLabel(FeeRecordModel r) {
+    final s = r.feeStructure;
+    if (s == null) return r.balance.toStringAsFixed(0);
+    // If admin defined fixed amounts, show the smallest affordable one
+    if (s.installmentAmounts.isNotEmpty) {
+      final affordable = s.installmentAmounts
+          .where((a) => a.amount <= r.balance + 0.01)
+          .toList();
+      if (affordable.isNotEmpty) {
+        return affordable.first.amount.toStringAsFixed(0);
+      }
+      return s.installmentAmounts.first.amount.toStringAsFixed(0);
+    }
+    // Auto-computed from installmentCount
+    if (s.installmentCount > 0) {
+      final per = (r.balance / s.installmentCount).ceil();
+      return per.toStringAsFixed(0);
+    }
+    return r.balance.toStringAsFixed(0);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -883,30 +913,85 @@ class _Body extends StatelessWidget {
               ),
             ),
           // ─── Pay Online (Student / Parent) ───
-          if (!isAdmin && !record.isPaid && !record.isWaived)
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: FilledButton.icon(
-                onPressed: onPayOnline,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.darkOlive,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+          if (!isAdmin && !record.isPaid && !record.isWaived) ...[
+            if (_hasInstallments(record)) ...[
+              // Two-button row: installment (primary) + full (outlined)
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: FilledButton.icon(
+                        onPressed: onPayOnline,
+                        style: FilledButton.styleFrom(
+                          backgroundColor: AppColors.darkOlive,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.splitscreen_rounded, size: 20),
+                        label: Text(
+                          'Pay ₹${_installmentLabel(record)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-                icon: const Icon(Icons.bolt_rounded),
-                label: Text(
-                  record.isPartial
-                      ? 'Pay ₹${record.balance.toStringAsFixed(0)} Online'
-                      : 'Pay ₹${record.finalAmount.toStringAsFixed(0)} Online',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: OutlinedButton.icon(
+                        onPressed: onPayFull,
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.darkOlive,
+                          side: const BorderSide(color: AppColors.darkOlive),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        icon: const Icon(Icons.bolt_rounded, size: 20),
+                        label: Text(
+                          'Full ₹${record.balance.toStringAsFixed(0)}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ] else ...[
+              SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: FilledButton.icon(
+                  onPressed: onPayFull,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.darkOlive,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  icon: const Icon(Icons.bolt_rounded),
+                  label: Text(
+                    record.isPartial
+                        ? 'Pay ₹${record.balance.toStringAsFixed(0)} Online'
+                        : 'Pay ₹${record.finalAmount.toStringAsFixed(0)} Online',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 16,
+                    ),
                   ),
                 ),
               ),
-            ),
+            ],
+          ],
           const SizedBox(height: 32),
         ],
       ),
@@ -2139,18 +2224,42 @@ String _fmtDateLong(DateTime d) {
 // ── Installment amount picker bottom sheet ──────────────────────────────────
 
 class _InstallmentPickerSheet extends StatelessWidget {
-  final List<InstallmentAmountItem> items;
+  final List<InstallmentAmountItem> fixedItems;
+  final int installmentCount;
   final double balance;
   final void Function(double? amount) onSelected;
 
   const _InstallmentPickerSheet({
-    required this.items,
+    required this.fixedItems,
+    required this.installmentCount,
     required this.balance,
     required this.onSelected,
   });
 
+  /// Build the effective options list.
+  /// If admin defined fixed amounts → use those.
+  /// Else if installmentCount > 0 → auto-divide balance into equal parts.
+  List<InstallmentAmountItem> get _options {
+    if (fixedItems.isNotEmpty) return fixedItems;
+    if (installmentCount > 0) {
+      final perInstallment =
+          (balance / installmentCount * 100).ceilToDouble() / 100;
+      return List.generate(installmentCount, (i) {
+        // Last installment gets the remainder to avoid rounding overshoot
+        final isLast = i == installmentCount - 1;
+        final amt = isLast ? balance - perInstallment * i : perInstallment;
+        return InstallmentAmountItem(
+          label: 'Installment ${i + 1} of $installmentCount',
+          amount: amt > 0 ? amt : 0,
+        );
+      });
+    }
+    return [];
+  }
+
   @override
   Widget build(BuildContext context) {
+    final options = _options;
     return Container(
       decoration: const BoxDecoration(
         color: AppColors.cream,
@@ -2174,7 +2283,7 @@ class _InstallmentPickerSheet extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           const Text(
-            'Choose Installment',
+            'Choose Payment Option',
             style: TextStyle(
               color: AppColors.darkOlive,
               fontSize: 17,
@@ -2186,9 +2295,22 @@ class _InstallmentPickerSheet extends StatelessWidget {
             'Outstanding balance: ₹${balance.toStringAsFixed(0)}',
             style: const TextStyle(color: AppColors.mutedOlive, fontSize: 12),
           ),
+          if (options.isNotEmpty) ...[
+            const SizedBox(height: 6),
+            Text(
+              options.length == installmentCount && fixedItems.isEmpty
+                  ? 'Split into $installmentCount equal installments'
+                  : '${options.length} payment options available',
+              style: const TextStyle(
+                color: AppColors.mutedOlive,
+                fontSize: 11,
+                fontStyle: FontStyle.italic,
+              ),
+            ),
+          ],
           const SizedBox(height: 16),
-          // Admin-defined installment options
-          ...items.map((item) {
+          // Installment options
+          ...options.map((item) {
             final isAffordable = item.amount <= balance + 0.01;
             return Padding(
               padding: const EdgeInsets.only(bottom: 10),
@@ -2254,7 +2376,7 @@ class _InstallmentPickerSheet extends StatelessWidget {
               ),
             );
           }),
-          const Divider(height: 24),
+          const Divider(height: 16),
           // Pay full balance option
           OutlinedButton(
             style: OutlinedButton.styleFrom(
