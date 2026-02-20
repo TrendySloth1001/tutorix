@@ -1314,12 +1314,13 @@ export class FeeService {
         const lastHeal = _healLastRun.get(coachingId) ?? 0;
         if (Date.now() - lastHeal >= HEAL_DEBOUNCE_MS) {
             _healLastRun.set(coachingId, Date.now());
-            const pendingUnpaid = await prisma.feeRecord.findMany({
-                where: { coachingId, status: 'PENDING', paidAmount: 0 },
+            // Fix PENDING + OVERDUE unpaid records with stale tax snapshots
+            const staleUnpaid = await prisma.feeRecord.findMany({
+                where: { coachingId, status: { in: ['PENDING', 'OVERDUE'] }, paidAmount: 0 },
                 include: { assignment: { include: { feeStructure: { select: TAX_SELECT } } } },
             });
-            const pendingFixes: Promise<unknown>[] = [];
-            for (const r of pendingUnpaid) {
+            const healFixes: Promise<unknown>[] = [];
+            for (const r of staleUnpaid) {
                 const fs = r.assignment?.feeStructure;
                 const netFee = r.baseAmount - r.discountAmount;
                 const liveTax = computeTax(
@@ -1329,15 +1330,15 @@ export class FeeService {
                     fs?.gstSupplyType ?? 'INTRA_STATE',
                     fs?.cessRate ?? 0,
                 );
-                const expectedFinal = liveTax.totalWithTax; // no fine on PENDING
+                const expectedFinal = liveTax.totalWithTax + r.fineAmount;
                 const taxStale = Math.abs(liveTax.taxAmount - r.taxAmount) > 0.01;
                 const amountWrong = Math.abs(r.finalAmount - expectedFinal) > 0.01;
                 if (taxStale || amountWrong) {
                     const taxType = fs?.taxType ?? r.taxType ?? 'NONE';
-                    pendingFixes.push(prisma.feeRecord.update({
+                    healFixes.push(prisma.feeRecord.update({
                         where: { id: r.id },
                         data: {
-                            amount: expectedFinal,
+                            amount: liveTax.totalWithTax,
                             finalAmount: expectedFinal,
                             taxType,
                             taxAmount: liveTax.taxAmount,
@@ -1352,7 +1353,7 @@ export class FeeService {
                     }));
                 }
             }
-            if (pendingFixes.length > 0) await Promise.all(pendingFixes);
+            if (healFixes.length > 0) await Promise.all(healFixes);
         }
 
         // ── Overdue sweep (5-minute debounce) ──
