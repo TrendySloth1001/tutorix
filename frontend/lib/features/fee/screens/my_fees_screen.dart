@@ -90,8 +90,10 @@ class _MyFeesScreenState extends State<MyFeesScreen>
         page: reset ? 1 : _txPage,
       );
       if (!mounted) return;
-      final txns = (result['transactions'] as List<dynamic>?)
-              ?.cast<Map<String, dynamic>>() ?? [];
+      final txns =
+          (result['transactions'] as List<dynamic>?)
+              ?.cast<Map<String, dynamic>>() ??
+          [];
       final total = result['total'] as int? ?? 0;
       setState(() {
         if (reset) _transactions.clear();

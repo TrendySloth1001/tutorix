@@ -202,9 +202,9 @@ class PaymentService {
     int page = 1,
     int limit = 20,
   }) async {
-    final uri = Uri.parse(ApiConstants.feeMyTransactions(coachingId)).replace(
-      queryParameters: {'page': '$page', 'limit': '$limit'},
-    );
+    final uri = Uri.parse(
+      ApiConstants.feeMyTransactions(coachingId),
+    ).replace(queryParameters: {'page': '$page', 'limit': '$limit'});
     final data = await _api.getAuthenticatedRaw(uri.toString());
     return data as Map<String, dynamic>;
   }
@@ -263,7 +263,9 @@ class PaymentService {
       // will process the payment when it arrives.
       if (!completer.isCompleted) {
         completer.completeError(
-          Exception('Payment is being processed via ${response.walletName ?? 'external wallet'}. You will be notified once confirmed.'),
+          Exception(
+            'Payment is being processed via ${response.walletName ?? 'external wallet'}. You will be notified once confirmed.',
+          ),
         );
       }
     });
@@ -292,7 +294,10 @@ class PaymentService {
     // Add timeout to prevent dangling Completers
     return completer.future.timeout(
       _checkoutTimeout,
-      onTimeout: () => throw TimeoutException('Payment checkout timed out', _checkoutTimeout),
+      onTimeout: () => throw TimeoutException(
+        'Payment checkout timed out',
+        _checkoutTimeout,
+      ),
     );
   }
 

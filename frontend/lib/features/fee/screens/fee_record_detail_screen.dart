@@ -525,9 +525,9 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                   .catchError((e) {
                     if (ctx.mounted) {
                       setSt(() => loading = false);
-                      ScaffoldMessenger.of(ctx).showSnackBar(
-                        SnackBar(content: Text(e.toString())),
-                      );
+                      ScaffoldMessenger.of(
+                        ctx,
+                      ).showSnackBar(SnackBar(content: Text(e.toString())));
                     }
                   });
               loading = false; // prevent re-trigger on rebuild
@@ -694,7 +694,8 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                                 (p) => p['id'] == selectedPaymentId,
                                 orElse: () => <String, dynamic>{},
                               );
-                              final payAmt = (selPay['amount'] as num?)?.toDouble() ?? 0;
+                              final payAmt =
+                                  (selPay['amount'] as num?)?.toDouble() ?? 0;
                               if (amt > payAmt) {
                                 if (ctx.mounted) {
                                   ScaffoldMessenger.of(ctx).showSnackBar(
@@ -1119,7 +1120,8 @@ class _BreakdownCard extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           // ── Line items replace Base Amount when present ──
-          if (record.lineItems.isNotEmpty) ...[            ...record.lineItems.map(
+          if (record.lineItems.isNotEmpty) ...[
+            ...record.lineItems.map(
               (item) => _Row(item.label, '₹${item.amount.toStringAsFixed(0)}'),
             ),
             _Row(
@@ -1144,7 +1146,8 @@ class _BreakdownCard extends StatelessWidget {
               color: const Color(0xFFC62828),
             ),
           // ── GST_EXCLUSIVE: show taxable base + additive GST above total ──
-          if (record.hasTax && isExclusive) ...[            if (record.discountAmount > 0)
+          if (record.hasTax && isExclusive) ...[
+            if (record.discountAmount > 0)
               _Row(
                 'After Discount',
                 '₹${(record.baseAmount - record.discountAmount).toStringAsFixed(0)}',
@@ -1188,7 +1191,8 @@ class _BreakdownCard extends StatelessWidget {
           ),
           // ── GST_INCLUSIVE: informational sub-rows after total ──
           // GST is already inside the Total — shown for transparency only.
-          if (record.hasTax && isInclusive) ...[            _Row(
+          if (record.hasTax && isInclusive) ...[
+            _Row(
               '  incl. GST ${record.gstRate.toStringAsFixed(0)}%',
               '₹${record.taxAmount.toStringAsFixed(0)}',
               color: AppColors.mutedOlive,

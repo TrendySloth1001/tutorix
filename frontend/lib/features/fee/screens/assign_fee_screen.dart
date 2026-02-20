@@ -200,9 +200,7 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
     if (failed.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(
-            'Fee assigned to ${succeeded.length} student(s)',
-          ),
+          content: Text('Fee assigned to ${succeeded.length} student(s)'),
         ),
       );
       Navigator.pop(context);
@@ -420,7 +418,8 @@ class _Body extends StatelessWidget {
             onTap: () async {
               final d = await showDatePicker(
                 context: context,
-                initialDate: endDate ?? DateTime.now().add(const Duration(days: 365)),
+                initialDate:
+                    endDate ?? DateTime.now().add(const Duration(days: 365)),
                 firstDate: startDate ?? DateTime.now(),
                 lastDate: DateTime(2035),
               );

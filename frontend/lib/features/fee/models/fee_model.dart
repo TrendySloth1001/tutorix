@@ -99,7 +99,8 @@ class FeeStructureModel {
     if (hsnCode != null) 'hsnCode': hsnCode,
     if (gstSupplyType != 'INTRA_STATE') 'gstSupplyType': gstSupplyType,
     if (cessRate > 0) 'cessRate': cessRate,
-    if (lineItems.isNotEmpty) 'lineItems': lineItems.map((e) => e.toJson()).toList(),
+    if (lineItems.isNotEmpty)
+      'lineItems': lineItems.map((e) => e.toJson()).toList(),
     if (installmentPlan.isNotEmpty)
       'installmentPlan': installmentPlan.map((e) => e.toJson()).toList(),
   };
@@ -139,7 +140,11 @@ class InstallmentPlanItem {
         dueDay: (json['dueDay'] as num?)?.toInt() ?? 1,
         amount: (json['amount'] as num?)?.toDouble() ?? 0,
       );
-  Map<String, dynamic> toJson() => {'label': label, 'dueDay': dueDay, 'amount': amount};
+  Map<String, dynamic> toJson() => {
+    'label': label,
+    'dueDay': dueDay,
+    'amount': amount,
+  };
 }
 
 /// A single line item within a fee structure (e.g. "Books", "Lab Fee").
@@ -502,7 +507,8 @@ class FeeAssignmentModel {
       feeStructure: structureJson != null
           ? FeeStructureModel.fromJson(structureJson)
           : null,
-      records: recordsList
+      records:
+          recordsList
               ?.map((e) => FeeRecordModel.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
@@ -512,7 +518,9 @@ class FeeAssignmentModel {
 
   /// Effective amount per cycle (custom or structure amount minus discounts).
   double get effectiveAmount =>
-      (customAmount ?? feeStructure?.amount ?? 0) - discountAmount - scholarshipAmount;
+      (customAmount ?? feeStructure?.amount ?? 0) -
+      discountAmount -
+      scholarshipAmount;
 }
 
 /// A single refund entry.

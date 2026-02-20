@@ -189,8 +189,10 @@ class PaymentReceiptScreen extends StatelessWidget {
                       ),
                     ],
                     // After-discount row: makes taxable base transparent for exclusive GST
-                    if (discountAmount != null && discountAmount! > 0 &&
-                        taxType == 'GST_EXCLUSIVE' && _hasTax) ...[
+                    if (discountAmount != null &&
+                        discountAmount! > 0 &&
+                        taxType == 'GST_EXCLUSIVE' &&
+                        _hasTax) ...[
                       _Divider(),
                       _DetailRow(
                         'After Discount',
@@ -234,7 +236,10 @@ class PaymentReceiptScreen extends StatelessWidget {
                       ],
                       if (cessAmount > 0) ...[
                         _Divider(),
-                        _DetailRow('  Cess', '₹${cessAmount.toStringAsFixed(2)}'),
+                        _DetailRow(
+                          '  Cess',
+                          '₹${cessAmount.toStringAsFixed(2)}',
+                        ),
                       ],
                     ],
                     if (sacCode != null && sacCode!.isNotEmpty) ...[
@@ -273,7 +278,10 @@ class PaymentReceiptScreen extends StatelessWidget {
                       ],
                       if (cessAmount > 0) ...[
                         _Divider(),
-                        _DetailRow('  incl. Cess', '₹${cessAmount.toStringAsFixed(2)}'),
+                        _DetailRow(
+                          '  incl. Cess',
+                          '₹${cessAmount.toStringAsFixed(2)}',
+                        ),
                       ],
                     ],
                   ],
