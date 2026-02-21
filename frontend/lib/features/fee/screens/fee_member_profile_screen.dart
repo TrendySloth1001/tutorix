@@ -677,7 +677,7 @@ class _LedgerBanner extends StatelessWidget {
               minHeight: 8,
               backgroundColor: Colors.white24,
               valueColor: AlwaysStoppedAnimation<Color>(
-                theme.colorScheme.primary.withValues(alpha: 0.5),
+                theme.colorScheme.onPrimary.withValues(alpha: 0.9),
               ),
             ),
           ),
@@ -688,7 +688,9 @@ class _LedgerBanner extends StatelessWidget {
                 child: _BannerStat(
                   label: 'Paid',
                   value: '₹${_fmt(totalPaid)}',
-                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                  color: totalPaid > 0
+                      ? theme.colorScheme.onPrimary
+                      : Colors.white54,
                 ),
               ),
               Expanded(
@@ -696,8 +698,8 @@ class _LedgerBanner extends StatelessWidget {
                   label: 'Balance',
                   value: '₹${_fmt(balance > 0 ? balance : 0)}',
                   color: balance > 0
-                      ? theme.colorScheme.secondary.withValues(alpha: 0.5)
-                      : theme.colorScheme.primary.withValues(alpha: 0.5),
+                      ? theme.colorScheme.onPrimary
+                      : Colors.white54,
                 ),
               ),
               Expanded(
@@ -705,7 +707,7 @@ class _LedgerBanner extends StatelessWidget {
                   label: 'Overdue',
                   value: '₹${_fmt(totalOverdue)}',
                   color: totalOverdue > 0
-                      ? theme.colorScheme.error.withValues(alpha: 0.5)
+                      ? theme.colorScheme.onPrimary
                       : Colors.white54,
                 ),
               ),
@@ -719,7 +721,7 @@ class _LedgerBanner extends StatelessWidget {
                 Text(
                   'Available Credits',
                   style: TextStyle(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                    color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -732,12 +734,10 @@ class _LedgerBanner extends StatelessWidget {
                   ),
                   label: Text('₹${_fmt(balance.abs())}'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: theme.colorScheme.primary.withValues(
-                      alpha: 0.08,
+                    backgroundColor: theme.colorScheme.onPrimary.withValues(
+                      alpha: 0.15,
                     ),
-                    foregroundColor: theme.colorScheme.primary.withValues(
-                      alpha: 0.5,
-                    ),
+                    foregroundColor: theme.colorScheme.onPrimary,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     minimumSize: const Size(0, 28),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
