@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/services/secure_storage_service.dart';
 
 /// Screen to view assignment/submission files (images or PDFs) with authentication.
@@ -43,7 +44,7 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
       appBar: AppBar(
         title: Text(
           widget.fileName,
-          style: const TextStyle(fontSize: 16),
+          style: const TextStyle(fontSize: FontSize.sub),
           overflow: TextOverflow.ellipsis,
         ),
         backgroundColor: theme.colorScheme.surface,
@@ -97,14 +98,14 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
                     size: 48,
                     color: theme.colorScheme.error,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: Spacing.sp16),
                   Text(
                     'Failed to load image',
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.error,
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: Spacing.sp8),
                   Text(
                     error.toString(),
                     style: theme.textTheme.bodySmall?.copyWith(

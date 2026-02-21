@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../models/coaching_model.dart';
 
 /// Simple, clean coaching tile for daily use - no heavy cards.
@@ -25,7 +26,10 @@ class CoachingCard extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.sp20,
+            vertical: Spacing.sp14,
+          ),
           child: Row(
             children: [
               // Avatar
@@ -38,11 +42,11 @@ class CoachingCard extends StatelessWidget {
                     color: isJoined
                         ? _getRoleColor(coaching.myRole).withValues(alpha: 0.08)
                         : theme.colorScheme.primary.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                   child: hasLogo
                       ? ClipRRect(
-                          borderRadius: BorderRadius.circular(14),
+                          borderRadius: BorderRadius.circular(Radii.md),
                           child: Image.network(
                             coaching.logo!,
                             fit: BoxFit.cover,
@@ -53,7 +57,7 @@ class CoachingCard extends StatelessWidget {
                       : _buildAvatarPlaceholder(theme, isJoined),
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: Spacing.sp14),
 
               // Content
               Expanded(
@@ -75,12 +79,12 @@ class CoachingCard extends StatelessWidget {
                           ),
                         ),
                         if (isJoined) ...[
-                          const SizedBox(width: 8),
+                          const SizedBox(width: Spacing.sp8),
                           _buildRoleBadge(theme, coaching.myRole!),
                         ],
                       ],
                     ),
-                    const SizedBox(height: 3),
+                    const SizedBox(height: Spacing.sp4),
 
                     // For joined coachings: show owner + members
                     // For my coachings: show members + description
@@ -94,7 +98,7 @@ class CoachingCard extends StatelessWidget {
                               alpha: 0.5,
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: Spacing.sp4),
                           Text(
                             'by ${coaching.ownerName ?? 'Unknown'}',
                             style: theme.textTheme.bodySmall?.copyWith(
@@ -119,7 +123,7 @@ class CoachingCard extends StatelessWidget {
                               alpha: 0.5,
                             ),
                           ),
-                          const SizedBox(width: 3),
+                          const SizedBox(width: Spacing.sp4),
                           Text(
                             '${coaching.memberCount}',
                             style: theme.textTheme.bodySmall?.copyWith(
@@ -140,7 +144,7 @@ class CoachingCard extends StatelessWidget {
                               alpha: 0.6,
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: Spacing.sp4),
                           Text(
                             '${coaching.memberCount} members',
                             style: theme.textTheme.bodySmall?.copyWith(
@@ -179,7 +183,7 @@ class CoachingCard extends StatelessWidget {
                 ),
               ),
 
-              const SizedBox(width: 8),
+              const SizedBox(width: Spacing.sp8),
 
               // Chevron
               Icon(
@@ -219,7 +223,7 @@ class CoachingCard extends StatelessWidget {
         style: TextStyle(
           color: color,
           fontWeight: FontWeight.w600,
-          fontSize: 18,
+          fontSize: FontSize.title,
         ),
       ),
     );
@@ -232,22 +236,25 @@ class CoachingCard extends StatelessWidget {
     final icon = isTeacher ? Icons.school_rounded : Icons.person_rounded;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp8,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 12, color: color.shade700),
-          const SizedBox(width: 4),
+          const SizedBox(width: Spacing.sp4),
           Text(
             label,
             style: theme.textTheme.labelSmall?.copyWith(
               color: color.shade700,
               fontWeight: FontWeight.w600,
-              fontSize: 10,
+              fontSize: FontSize.nano,
             ),
           ),
         ],

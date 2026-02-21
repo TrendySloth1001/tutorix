@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../coaching/services/member_service.dart';
 import '../services/fee_service.dart';
 import 'fee_record_detail_screen.dart';
+import '../../../core/theme/design_tokens.dart';
 
 /// Unified Student Profile — Fees, Academic, and Personal details.
 class FeeMemberProfileScreen extends StatefulWidget {
@@ -84,11 +85,11 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
               child: picture == null
                   ? Text(
                       displayName[0].toUpperCase(),
-                      style: TextStyle(fontSize: 12, color: cs.onSurface),
+                      style: TextStyle(fontSize: FontSize.caption, color: cs.onSurface),
                     )
                   : null,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: Spacing.sp10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -97,12 +98,12 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
                   style: TextStyle(
                     color: cs.onSurface,
                     fontWeight: FontWeight.w700,
-                    fontSize: 16,
+                    fontSize: FontSize.sub,
                   ),
                 ),
                 Text(
                   'Student Profile',
-                  style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
+                  style: TextStyle(color: cs.onSurfaceVariant, fontSize: FontSize.caption),
                 ),
               ],
             ),
@@ -249,13 +250,13 @@ class _FeeTab extends StatelessWidget {
     }).toList();
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.sp16),
       children: [
         _LedgerBanner(ledger: ledger),
-        const SizedBox(height: 20),
+        const SizedBox(height: Spacing.sp20),
         if (filteredAssignments.isEmpty)
           Padding(
-            padding: const EdgeInsets.symmetric(vertical: 40),
+            padding: const EdgeInsets.symmetric(vertical: Spacing.sp40),
             child: Center(
               child: Text(
                 'No active fee assignments',
@@ -360,7 +361,7 @@ class _AcademicTabState extends State<_AcademicTab>
               size: 48,
               color: theme.colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
             Text(
               'No academic records found',
               style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
@@ -371,7 +372,7 @@ class _AcademicTabState extends State<_AcademicTab>
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.sp16),
       itemCount: _results.length,
       itemBuilder: (context, index) {
         final attempt = _results[index];
@@ -386,13 +387,13 @@ class _AcademicTabState extends State<_AcademicTab>
 
         return Card(
           elevation: 0,
-          margin: const EdgeInsets.only(bottom: 12),
+          margin: const EdgeInsets.only(bottom: Spacing.sp12),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Radii.md),
             side: BorderSide(color: theme.colorScheme.outlineVariant),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Spacing.sp16),
             child: Row(
               children: [
                 Container(
@@ -408,11 +409,11 @@ class _AcademicTabState extends State<_AcademicTab>
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       color: _gradeColor(percent),
-                      fontSize: 14,
+                      fontSize: FontSize.body,
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: Spacing.sp16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -421,15 +422,15 @@ class _AcademicTabState extends State<_AcademicTab>
                         title,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: 15,
+                          fontSize: FontSize.body,
                           color: theme.colorScheme.onSurface,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: Spacing.sp4),
                       Text(
                         '${type.toUpperCase()} • ${date != null ? DateFormat('MMM d, y').format(date) : ''}',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: FontSize.caption,
                           color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
@@ -443,14 +444,14 @@ class _AcademicTabState extends State<_AcademicTab>
                       '${_fmt(score)}/${_fmt(totalMarks)}',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        fontSize: 14,
+                        fontSize: FontSize.body,
                         color: theme.colorScheme.onSurface,
                       ),
                     ),
                     Text(
                       'Score',
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: FontSize.micro,
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
@@ -490,7 +491,7 @@ class _ProfileDetailsTab extends StatelessWidget {
     final parent = ward?['parent'] as Map<String, dynamic>?;
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.sp16),
       children: [
         _InfoCard(
           title: 'Contact Info',
@@ -511,7 +512,7 @@ class _ProfileDetailsTab extends StatelessWidget {
           ],
         ),
         if (ward != null && parent != null) ...[
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           _InfoCard(
             title: 'Parent/Guardian',
             children: [
@@ -552,11 +553,11 @@ class _InfoCard extends StatelessWidget {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
         side: BorderSide(color: theme.colorScheme.outlineVariant),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Spacing.sp16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -564,7 +565,7 @@ class _InfoCard extends StatelessWidget {
               title,
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                fontSize: 14,
+                fontSize: FontSize.body,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
@@ -592,25 +593,25 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: Spacing.sp12),
       child: Row(
         children: [
           Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
-          const SizedBox(width: 12),
+          const SizedBox(width: Spacing.sp12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: FontSize.micro,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
               Text(
                 value,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: FontSize.body,
                   fontWeight: FontWeight.w500,
                   color: theme.colorScheme.onSurface,
                 ),
@@ -645,9 +646,9 @@ class _LedgerBanner extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.primary,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Radii.lg),
       ),
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.sp20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -655,23 +656,23 @@ class _LedgerBanner extends StatelessWidget {
             'Total Fees',
             style: TextStyle(
               color: Colors.white70,
-              fontSize: 12,
+              fontSize: FontSize.caption,
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: Spacing.sp4),
           Text(
             '₹${_fmt(totalFee)}',
             style: const TextStyle(
               color: Colors.white,
-              fontSize: 32,
+              fontSize: FontSize.hero,
               fontWeight: FontWeight.w800,
               height: 1.0,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           ClipRRect(
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(Radii.sm),
             child: LinearProgressIndicator(
               value: paidFraction,
               minHeight: 8,
@@ -681,7 +682,7 @@ class _LedgerBanner extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           Row(
             children: [
               Expanded(
@@ -714,7 +715,7 @@ class _LedgerBanner extends StatelessWidget {
             ],
           ),
           if (balance < 0) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -722,7 +723,7 @@ class _LedgerBanner extends StatelessWidget {
                   'Available Credits',
                   style: TextStyle(
                     color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
-                    fontSize: 12,
+                    fontSize: FontSize.caption,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -738,7 +739,7 @@ class _LedgerBanner extends StatelessWidget {
                       alpha: 0.15,
                     ),
                     foregroundColor: theme.colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: Spacing.sp10),
                     minimumSize: const Size(0, 28),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     elevation: 0,
@@ -748,7 +749,7 @@ class _LedgerBanner extends StatelessWidget {
             ),
           ],
           if (totalRefunded > 0) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Row(
               children: [
                 const Icon(
@@ -756,10 +757,10 @@ class _LedgerBanner extends StatelessWidget {
                   size: 14,
                   color: Colors.white54,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: Spacing.sp4),
                 Text(
                   'Refunded: ₹${_fmt(totalRefunded)}',
-                  style: const TextStyle(color: Colors.white54, fontSize: 12),
+                  style: const TextStyle(color: Colors.white54, fontSize: FontSize.caption),
                 ),
               ],
             ),
@@ -787,14 +788,14 @@ class _BannerStat extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(color: Colors.white54, fontSize: 11),
+          style: const TextStyle(color: Colors.white54, fontSize: FontSize.micro),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: Spacing.sp2),
         Text(
           value,
           style: TextStyle(
             color: color,
-            fontSize: 14,
+            fontSize: FontSize.body,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -845,7 +846,7 @@ class _AssignmentSection extends StatelessWidget {
     final total = records.length;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 20),
+      padding: const EdgeInsets.only(bottom: Spacing.sp20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -859,11 +860,11 @@ class _AssignmentSection extends StatelessWidget {
                       structureName,
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        fontSize: 15,
+                        fontSize: FontSize.body,
                         color: theme.colorScheme.onSurface,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: Spacing.sp2),
                     _SmallChip(
                       label: _cycleName(cycle),
                       color: theme.colorScheme.onSurfaceVariant,
@@ -875,12 +876,12 @@ class _AssignmentSection extends StatelessWidget {
                 '$paidCount/$total',
                 style: TextStyle(
                   color: theme.colorScheme.onSurfaceVariant,
-                  fontSize: 12,
+                  fontSize: FontSize.caption,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           if (total > 0)
             _StatusBar(
               paid: paidCount,
@@ -889,7 +890,7 @@ class _AssignmentSection extends StatelessWidget {
               pending: pendingCount,
               total: total,
             ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           ...records.map((r) {
             final rec = r as Map<String, dynamic>;
             final recordId = rec['id'] as String? ?? '';
@@ -919,7 +920,7 @@ class _StatusBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return ClipRRect(
-      borderRadius: BorderRadius.circular(6),
+      borderRadius: BorderRadius.circular(Radii.sm),
       child: Row(
         children: [
           if (paid > 0)
@@ -972,15 +973,15 @@ class _RecordRow extends StatelessWidget {
     final statusColor = _statusColor(status, theme.colorScheme);
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: Spacing.sp8),
       child: Material(
         color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: InkWell(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.sp12, vertical: Spacing.sp10),
             child: Row(
               children: [
                 Container(
@@ -991,7 +992,7 @@ class _RecordRow extends StatelessWidget {
                     shape: BoxShape.circle,
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: Spacing.sp10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1000,7 +1001,7 @@ class _RecordRow extends StatelessWidget {
                         title,
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          fontSize: 13,
+                          fontSize: FontSize.body,
                           color: theme.colorScheme.onSurface,
                         ),
                       ),
@@ -1011,7 +1012,7 @@ class _RecordRow extends StatelessWidget {
                             color: statusColor,
                           ),
                           if (dueDate != null) ...[
-                            const SizedBox(width: 4),
+                            const SizedBox(width: Spacing.sp4),
                             _SmallChip(
                               label: _fmtDate(dueDate),
                               color: theme.colorScheme.onSurfaceVariant,
@@ -1030,7 +1031,7 @@ class _RecordRow extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.w800,
                         color: theme.colorScheme.onSurface,
-                        fontSize: 14,
+                        fontSize: FontSize.body,
                       ),
                     ),
                     if (paidAmount > 0 && !isPaid)
@@ -1038,17 +1039,17 @@ class _RecordRow extends StatelessWidget {
                         'Paid ₹${_fmt(paidAmount)}',
                         style: TextStyle(
                           color: theme.colorScheme.primary,
-                          fontSize: 11,
+                          fontSize: FontSize.micro,
                         ),
                       ),
                   ],
                 ),
                 if (!isPaid && onRemind != null) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: Spacing.sp8),
                   GestureDetector(
                     onTap: onRemind,
                     child: Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(Spacing.sp6),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.onSurfaceVariant.withValues(
                           alpha: 0.1,
@@ -1079,16 +1080,16 @@ class _SmallChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp6, vertical: Spacing.sp2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: color,
-          fontSize: 10,
+          fontSize: FontSize.nano,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -1111,16 +1112,16 @@ class _ErrorRetry extends StatelessWidget {
             color: Theme.of(context).colorScheme.error,
             size: 40,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           Text(
             error,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontSize: 13,
+              fontSize: FontSize.body,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),

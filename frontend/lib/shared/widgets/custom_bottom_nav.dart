@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 
 /// Custom bottom navigation bar with animated pill-style selection.
 class CustomBottomNav extends StatelessWidget {
@@ -24,11 +25,16 @@ class CustomBottomNav extends StatelessWidget {
             offset: const Offset(0, -8),
           ),
         ],
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(Radii.xl),
+        ),
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.sp12,
+            vertical: Spacing.sp12,
+          ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
@@ -93,12 +99,15 @@ class _NavItem extends StatelessWidget {
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 300),
           curve: Curves.easeInOut,
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.sp12,
+            vertical: Spacing.sp10,
+          ),
           decoration: BoxDecoration(
             color: isSelected
                 ? theme.colorScheme.tertiary.withValues(alpha: 0.3)
                 : Colors.transparent,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.lg),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
@@ -112,7 +121,7 @@ class _NavItem extends StatelessWidget {
                     : theme.colorScheme.secondary.withValues(alpha: 0.5),
               ),
               if (isSelected) ...[
-                const SizedBox(width: 8),
+                const SizedBox(width: Spacing.sp8),
                 Flexible(
                   child: Text(
                     label,

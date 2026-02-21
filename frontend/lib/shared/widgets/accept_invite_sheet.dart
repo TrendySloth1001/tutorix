@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 
 /// Shows a confirmation bottom sheet before accepting an invitation.
 /// If the user has existing coaching memberships, warns them that those
@@ -40,9 +41,16 @@ class _AcceptInviteSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(Radii.xl),
+        ),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 12, 24, 32),
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.sp24,
+        Spacing.sp12,
+        Spacing.sp24,
+        Spacing.sp32,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -52,14 +60,14 @@ class _AcceptInviteSheet extends StatelessWidget {
             height: 4,
             decoration: BoxDecoration(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(2),
+              borderRadius: BorderRadius.circular(Radii.sm),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: Spacing.sp20),
 
           // Icon
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Spacing.sp16),
             decoration: BoxDecoration(
               color: theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
               shape: BoxShape.circle,
@@ -72,7 +80,7 @@ class _AcceptInviteSheet extends StatelessWidget {
               color: theme.colorScheme.primary,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
 
           // Title
           Text(
@@ -82,7 +90,7 @@ class _AcceptInviteSheet extends StatelessWidget {
             ),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: Spacing.sp6),
 
           // Subtitle
           Text(
@@ -94,13 +102,13 @@ class _AcceptInviteSheet extends StatelessWidget {
 
           // Existing memberships warning
           if (hasExisting) ...[
-            const SizedBox(height: 20),
+            const SizedBox(height: Spacing.sp20),
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(Spacing.sp14),
               decoration: BoxDecoration(
                 color: Colors.amber.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(14),
+                borderRadius: BorderRadius.circular(Radii.md),
                 border: Border.all(color: Colors.amber.withValues(alpha: 0.25)),
               ),
               child: Column(
@@ -113,21 +121,21 @@ class _AcceptInviteSheet extends StatelessWidget {
                         size: 16,
                         color: Colors.amber[800],
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: Spacing.sp8),
                       Text(
                         'You\'re already in ${existingMemberships.length == 1 ? 'a coaching' : '${existingMemberships.length} coachings'}',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: FontSize.caption,
                           fontWeight: FontWeight.w700,
                           color: Colors.amber[900],
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: Spacing.sp10),
                   ...existingMemberships.map(
                     (m) => Padding(
-                      padding: const EdgeInsets.only(bottom: 4),
+                      padding: const EdgeInsets.only(bottom: Spacing.sp4),
                       child: Row(
                         children: [
                           Icon(
@@ -135,7 +143,7 @@ class _AcceptInviteSheet extends StatelessWidget {
                             size: 14,
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: Spacing.sp8),
                           Expanded(
                             child: Text(
                               '${m['coachingName']}',
@@ -147,18 +155,18 @@ class _AcceptInviteSheet extends StatelessWidget {
                           ),
                           Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
+                              horizontal: Spacing.sp6,
+                              vertical: Spacing.sp2,
                             ),
                             decoration: BoxDecoration(
                               color: theme.colorScheme.secondaryContainer
                                   .withValues(alpha: 0.5),
-                              borderRadius: BorderRadius.circular(4),
+                              borderRadius: BorderRadius.circular(Radii.sm),
                             ),
                             child: Text(
                               (m['role'] as String? ?? '').toLowerCase(),
                               style: TextStyle(
-                                fontSize: 10,
+                                fontSize: FontSize.nano,
                                 fontWeight: FontWeight.w600,
                                 color: theme.colorScheme.secondary,
                               ),
@@ -168,11 +176,11 @@ class _AcceptInviteSheet extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: Spacing.sp8),
                   Text(
                     'These coachings will be notified and may take action, such as updating your role or removing your membership.',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: FontSize.micro,
                       height: 1.4,
                       color: Colors.amber[900]?.withValues(alpha: 0.8),
                     ),
@@ -182,7 +190,7 @@ class _AcceptInviteSheet extends StatelessWidget {
             ),
           ],
 
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
 
           // Accept button
           SizedBox(
@@ -195,7 +203,7 @@ class _AcceptInviteSheet extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
 
           // Cancel
           TextButton(

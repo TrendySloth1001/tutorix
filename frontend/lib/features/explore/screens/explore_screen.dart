@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:tutorix/core/theme/design_tokens.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/services/error_logger_service.dart';
@@ -182,7 +183,7 @@ class _ExploreScreenState extends State<ExploreScreen>
     _mapController.fitCamera(
       CameraFit.bounds(
         bounds: bounds,
-        padding: const EdgeInsets.all(48),
+        padding: const EdgeInsets.all(Spacing.sp48),
         maxZoom: 16,
       ),
     );
@@ -418,7 +419,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                       if (_nearbyLoading)
                         const SliverToBoxAdapter(
                           child: Padding(
-                            padding: EdgeInsets.all(48),
+                            padding: EdgeInsets.all(Spacing.sp48),
                             child: Center(child: CircularProgressIndicator()),
                           ),
                         )
@@ -430,7 +431,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                           sliver: SliverList.separated(
                             itemCount: _nearby.length,
                             separatorBuilder: (_, _) =>
-                                const SizedBox(height: 12),
+                                const SizedBox(height: Spacing.sp12),
                             itemBuilder: (_, i) => _NearbyCoachingCard(
                               nearby: _nearby[i],
                               theme: theme,
@@ -449,8 +450,8 @@ class _ExploreScreenState extends State<ExploreScreen>
           if (!_locationLoading)
             Positioned(
               top: topPadding + 12,
-              left: 16,
-              right: 16,
+              left: Spacing.sp16,
+              right: Spacing.sp16,
               child: _buildSearchBar(theme),
             ),
 
@@ -476,7 +477,7 @@ class _ExploreScreenState extends State<ExploreScreen>
               color: theme.colorScheme.primary,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: Spacing.sp20),
           Text(
             _locationStatus,
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -484,7 +485,7 @@ class _ExploreScreenState extends State<ExploreScreen>
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           Text(
             'We need your location to find\nnearby coachings',
             textAlign: TextAlign.center,
@@ -501,10 +502,10 @@ class _ExploreScreenState extends State<ExploreScreen>
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 10),
       child: Material(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
         color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.sp14, vertical: Spacing.sp10),
           child: Row(
             children: [
               Icon(
@@ -512,7 +513,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                 size: 18,
                 color: theme.colorScheme.tertiary,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: Spacing.sp10),
               Expanded(
                 child: Text(
                   'Showing results for New Delhi. Enable location for accurate results.',
@@ -521,9 +522,9 @@ class _ExploreScreenState extends State<ExploreScreen>
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: Spacing.sp8),
               InkWell(
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(Radii.sm),
                 onTap: () {
                   setState(() {
                     _locationLoading = true;
@@ -532,7 +533,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                   _determineLocation();
                 },
                 child: Padding(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.all(Spacing.sp4),
                   child: Text(
                     'Retry',
                     style: theme.textTheme.labelSmall?.copyWith(
@@ -573,12 +574,12 @@ class _ExploreScreenState extends State<ExploreScreen>
 
   Widget _buildMapCard(ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp16),
       child: Material(
         elevation: 4,
         shadowColor: Colors.black.withValues(alpha: 0.15),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(Radii.lg),
           side: BorderSide(
             color: theme.colorScheme.outline.withValues(alpha: 0.2),
             width: 1.5,
@@ -590,8 +591,8 @@ class _ExploreScreenState extends State<ExploreScreen>
             // Header row: title + count + radius chip + chevron
             InkWell(
               borderRadius: BorderRadius.vertical(
-                top: const Radius.circular(20),
-                bottom: _mapExpanded ? Radius.zero : const Radius.circular(20),
+                top: const Radius.circular(Radii.lg),
+                bottom: _mapExpanded ? Radius.zero : const Radius.circular(Radii.lg),
               ),
               onTap: () => setState(() => _mapExpanded = !_mapExpanded),
               child: Padding(
@@ -600,10 +601,10 @@ class _ExploreScreenState extends State<ExploreScreen>
                   children: [
                     // Map icon + title
                     Container(
-                      padding: const EdgeInsets.all(6),
+                      padding: const EdgeInsets.all(Spacing.sp6),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(Radii.sm),
                       ),
                       child: Icon(
                         Icons.map_rounded,
@@ -611,7 +612,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                         color: theme.colorScheme.primary,
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: Spacing.sp10),
                     Text(
                       'Explore Map',
                       style: theme.textTheme.titleSmall?.copyWith(
@@ -619,7 +620,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                       ),
                     ),
                     if (_nearby.isNotEmpty) ...[
-                      const SizedBox(width: 6),
+                      const SizedBox(width: Spacing.sp6),
                       Text(
                         '·',
                         style: TextStyle(
@@ -629,7 +630,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: Spacing.sp6),
                       Text(
                         '${_nearby.length} found',
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -643,14 +644,14 @@ class _ExploreScreenState extends State<ExploreScreen>
                     // Radius chip (always visible as a summary)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: Spacing.sp8,
+                        vertical: Spacing.sp4,
                       ),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primaryContainer.withValues(
                           alpha: 0.45,
                         ),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(Radii.lg),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -660,7 +661,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                             size: 13,
                             color: theme.colorScheme.primary,
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: Spacing.sp4),
                           Text(
                             '${_radiusKm.round()} km',
                             style: theme.textTheme.labelSmall?.copyWith(
@@ -671,7 +672,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                         ],
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: Spacing.sp4),
                     AnimatedRotation(
                       turns: _mapExpanded ? 0.5 : 0,
                       duration: const Duration(milliseconds: 250),
@@ -713,7 +714,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                         letterSpacing: 0.3,
                       ),
                     ),
-                    const SizedBox(width: 4),
+                    const SizedBox(width: Spacing.sp4),
                     Expanded(
                       child: SliderTheme(
                         data: SliderThemeData(
@@ -765,7 +766,7 @@ class _ExploreScreenState extends State<ExploreScreen>
             AnimatedCrossFade(
               firstChild: ClipRRect(
                 borderRadius: const BorderRadius.vertical(
-                  bottom: Radius.circular(20),
+                  bottom: Radius.circular(Radii.lg),
                 ),
                 child: SizedBox(
                   height: 280,
@@ -775,8 +776,8 @@ class _ExploreScreenState extends State<ExploreScreen>
 
                       // Map control buttons
                       Positioned(
-                        right: 10,
-                        bottom: 10,
+                        right: Spacing.sp10,
+                        bottom: Spacing.sp10,
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -786,14 +787,14 @@ class _ExploreScreenState extends State<ExploreScreen>
                               theme: theme,
                               onTap: _recenterMap,
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: Spacing.sp6),
                             _MapControlButton(
                               icon: Icons.add_rounded,
                               tooltip: 'Zoom in',
                               theme: theme,
                               onTap: _zoomIn,
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: Spacing.sp6),
                             _MapControlButton(
                               icon: Icons.remove_rounded,
                               tooltip: 'Zoom out',
@@ -801,7 +802,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                               onTap: _zoomOut,
                             ),
                             if (_nearby.length >= 2) ...[
-                              const SizedBox(height: 6),
+                              const SizedBox(height: Spacing.sp6),
                               _MapControlButton(
                                 icon: Icons.fit_screen_rounded,
                                 tooltip: 'Fit all',
@@ -954,7 +955,7 @@ class _ExploreScreenState extends State<ExploreScreen>
               Container(
                 width: 6,
                 height: 6,
-                margin: const EdgeInsets.only(top: 2),
+                margin: const EdgeInsets.only(top: Spacing.sp2),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary,
                   shape: BoxShape.circle,
@@ -971,7 +972,7 @@ class _ExploreScreenState extends State<ExploreScreen>
   Widget _buildSearchBar(ThemeData theme) {
     return Material(
       elevation: 4,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(Radii.lg),
       shadowColor: Colors.black.withValues(alpha: 0.15),
       child: TextField(
         controller: _searchController,
@@ -994,12 +995,12 @@ class _ExploreScreenState extends State<ExploreScreen>
           filled: true,
           fillColor: theme.colorScheme.surface,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.lg),
             borderSide: BorderSide.none,
           ),
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 14,
+            horizontal: Spacing.sp16,
+            vertical: Spacing.sp14,
           ),
         ),
       ),
@@ -1023,13 +1024,13 @@ class _ExploreScreenState extends State<ExploreScreen>
               child: Container(
                 margin: EdgeInsets.only(
                   top: topPad,
-                  left: 16,
-                  right: 16,
-                  bottom: 120,
+                  left: Spacing.sp16,
+                  right: Spacing.sp16,
+                  bottom: Spacing.sp120,
                 ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.surface,
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(Radii.lg),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.12),
@@ -1039,7 +1040,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                   ],
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(Radii.lg),
                   child: _buildSearchContent(theme),
                 ),
               ),
@@ -1054,7 +1055,7 @@ class _ExploreScreenState extends State<ExploreScreen>
     if (_isSearching) {
       return const Center(
         child: Padding(
-          padding: EdgeInsets.all(32),
+          padding: EdgeInsets.all(Spacing.sp32),
           child: CircularProgressIndicator(),
         ),
       );
@@ -1062,7 +1063,7 @@ class _ExploreScreenState extends State<ExploreScreen>
 
     if (_searchController.text.trim().isEmpty) {
       return Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(Spacing.sp32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1071,7 +1072,7 @@ class _ExploreScreenState extends State<ExploreScreen>
               size: 48,
               color: theme.colorScheme.onSurface.withValues(alpha: 0.25),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Text(
               'Search for coachings by name',
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -1085,7 +1086,7 @@ class _ExploreScreenState extends State<ExploreScreen>
 
     if (_searchResults.isEmpty) {
       return Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(Spacing.sp32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1094,7 +1095,7 @@ class _ExploreScreenState extends State<ExploreScreen>
               size: 48,
               color: theme.colorScheme.onSurface.withValues(alpha: 0.25),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Text(
               'No coachings found',
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -1107,7 +1108,7 @@ class _ExploreScreenState extends State<ExploreScreen>
     }
 
     return ListView.separated(
-      padding: const EdgeInsets.symmetric(vertical: 8),
+      padding: const EdgeInsets.symmetric(vertical: Spacing.sp8),
       shrinkWrap: true,
       itemCount: _searchResults.length,
       separatorBuilder: (_, _) => Divider(
@@ -1165,7 +1166,7 @@ class _ExploreScreenState extends State<ExploreScreen>
               color: theme.colorScheme.primary,
             )
           : null,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      contentPadding: const EdgeInsets.symmetric(horizontal: Spacing.sp16, vertical: Spacing.sp4),
     );
   }
 
@@ -1179,19 +1180,19 @@ class _ExploreScreenState extends State<ExploreScreen>
 
     return Material(
       elevation: 6,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(Radii.lg),
       shadowColor: theme.colorScheme.primary.withValues(alpha: 0.2),
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.lg),
         onTap: () {
           setState(() => _selectedCoaching = null);
           _navigateToCoaching(coaching.id);
         },
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(Spacing.sp14),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.lg),
             border: Border.all(
               color: theme.colorScheme.primary.withValues(alpha: 0.2),
             ),
@@ -1215,7 +1216,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                       )
                     : null,
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: Spacing.sp14),
               // Info
               Expanded(
                 child: Column(
@@ -1235,7 +1236,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                           ),
                         ),
                         if (coaching.isVerified) ...[
-                          const SizedBox(width: 4),
+                          const SizedBox(width: Spacing.sp4),
                           Icon(
                             Icons.verified_rounded,
                             size: 16,
@@ -1244,7 +1245,7 @@ class _ExploreScreenState extends State<ExploreScreen>
                         ],
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: Spacing.sp4),
                     if (coaching.category != null)
                       Text(
                         coaching.category!,
@@ -1304,15 +1305,15 @@ class _ExploreScreenState extends State<ExploreScreen>
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: Spacing.sp8),
           if (!_nearbyLoading && _nearby.isNotEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+              padding: const EdgeInsets.symmetric(horizontal: Spacing.sp8, vertical: Spacing.sp2),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primaryContainer.withValues(
                   alpha: 0.5,
                 ),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
               child: Text(
                 '${_nearby.length}',
@@ -1330,7 +1331,7 @@ class _ExploreScreenState extends State<ExploreScreen>
   Widget _buildEmptyState(ThemeData theme) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(32),
+        padding: const EdgeInsets.all(Spacing.sp32),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -1339,14 +1340,14 @@ class _ExploreScreenState extends State<ExploreScreen>
               size: 48,
               color: theme.colorScheme.onSurface.withValues(alpha: 0.25),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Text(
               'No coachings found nearby',
               style: theme.textTheme.bodyLarge?.copyWith(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: Spacing.sp4),
             Text(
               'Try searching or zooming out',
               style: theme.textTheme.bodySmall?.copyWith(
@@ -1397,17 +1398,17 @@ class _NearbyCoachingCard extends StatelessWidget {
       shadowColor: isHighlighted
           ? theme.colorScheme.primary.withValues(alpha: 0.35)
           : Colors.black.withValues(alpha: 0.25),
-      borderRadius: BorderRadius.circular(18),
+      borderRadius: BorderRadius.circular(Radii.lg),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
+        borderRadius: BorderRadius.circular(Radii.lg),
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 250),
           height: 150,
           width: double.infinity,
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerHighest,
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(Radii.lg),
             border: Border.all(
               color: isHighlighted
                   ? theme.colorScheme.primary
@@ -1416,7 +1417,7 @@ class _NearbyCoachingCard extends StatelessWidget {
             ),
           ),
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(18),
+            borderRadius: BorderRadius.circular(Radii.lg),
             child: Stack(
               fit: StackFit.expand,
               children: [
@@ -1450,16 +1451,16 @@ class _NearbyCoachingCard extends StatelessWidget {
 
                 // ─── Distance badge (top-right) ───
                 Positioned(
-                  top: 10,
-                  right: 10,
+                  top: Spacing.sp10,
+                  right: Spacing.sp10,
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
+                      horizontal: Spacing.sp10,
+                      vertical: Spacing.sp4,
                     ),
                     decoration: BoxDecoration(
                       color: Colors.black.withValues(alpha: 0.55),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(Radii.lg),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -1469,12 +1470,12 @@ class _NearbyCoachingCard extends StatelessWidget {
                           size: 13,
                           color: Colors.white,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: Spacing.sp4),
                         Text(
                           '${nearby.distanceKm.toStringAsFixed(1)} km',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 12,
+                            fontSize: FontSize.caption,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -1486,18 +1487,18 @@ class _NearbyCoachingCard extends StatelessWidget {
                 // ─── Locate-on-map / "tap again" hint (top-left) ───
                 if (isHighlighted)
                   Positioned(
-                    top: 10,
-                    left: 10,
+                    top: Spacing.sp10,
+                    left: Spacing.sp10,
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 5,
+                        horizontal: Spacing.sp10,
+                        vertical: Spacing.sp4,
                       ),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primary.withValues(
                           alpha: 0.85,
                         ),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(Radii.lg),
                       ),
                       child: const Row(
                         mainAxisSize: MainAxisSize.min,
@@ -1507,12 +1508,12 @@ class _NearbyCoachingCard extends StatelessWidget {
                             size: 13,
                             color: Colors.white,
                           ),
-                          SizedBox(width: 4),
+                          SizedBox(width: Spacing.sp4),
                           Text(
                             'Tap again to open',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: 11,
+                              fontSize: FontSize.micro,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1523,9 +1524,9 @@ class _NearbyCoachingCard extends StatelessWidget {
 
                 // ─── Bottom content: logo + info ───
                 Positioned(
-                  left: 14,
-                  right: 14,
-                  bottom: 14,
+                  left: Spacing.sp14,
+                  right: Spacing.sp14,
+                  bottom: Spacing.sp14,
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
@@ -1535,7 +1536,7 @@ class _NearbyCoachingCard extends StatelessWidget {
                         height: 52,
                         decoration: BoxDecoration(
                           color: Colors.white.withValues(alpha: 0.15),
-                          borderRadius: BorderRadius.circular(13),
+                          borderRadius: BorderRadius.circular(Radii.md),
                           border: Border.all(
                             color: Colors.white.withValues(alpha: 0.35),
                             width: 2,
@@ -1550,7 +1551,7 @@ class _NearbyCoachingCard extends StatelessWidget {
                         ),
                         child: hasLogo
                             ? ClipRRect(
-                                borderRadius: BorderRadius.circular(11),
+                                borderRadius: BorderRadius.circular(Radii.md),
                                 child: Image.network(
                                   logoUrl,
                                   fit: BoxFit.cover,
@@ -1560,7 +1561,7 @@ class _NearbyCoachingCard extends StatelessWidget {
                               )
                             : _buildLogoPlaceholder(theme),
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: Spacing.sp12),
 
                       // Name + category/location + members
                       Expanded(
@@ -1593,7 +1594,7 @@ class _NearbyCoachingCard extends StatelessWidget {
                                   ),
                                 ),
                                 if (coaching.isVerified) ...[
-                                  const SizedBox(width: 5),
+                                  const SizedBox(width: Spacing.sp4),
                                   Icon(
                                     Icons.verified_rounded,
                                     size: 16,
@@ -1603,7 +1604,7 @@ class _NearbyCoachingCard extends StatelessWidget {
                               ],
                             ),
 
-                            const SizedBox(height: 3),
+                            const SizedBox(height: Spacing.sp4),
 
                             // Category / location row
                             Row(
@@ -1616,7 +1617,7 @@ class _NearbyCoachingCard extends StatelessWidget {
                                       color: Colors.white.withValues(
                                         alpha: 0.8,
                                       ),
-                                      fontSize: 12,
+                                      fontSize: FontSize.caption,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),
@@ -1627,7 +1628,7 @@ class _NearbyCoachingCard extends StatelessWidget {
                                         color: Colors.white.withValues(
                                           alpha: 0.4,
                                         ),
-                                        fontSize: 12,
+                                        fontSize: FontSize.caption,
                                       ),
                                     ),
                                 ],
@@ -1643,7 +1644,7 @@ class _NearbyCoachingCard extends StatelessWidget {
                                             alpha: 0.7,
                                           ),
                                         ),
-                                        const SizedBox(width: 2),
+                                        const SizedBox(width: Spacing.sp2),
                                         Flexible(
                                           child: Text(
                                             location,
@@ -1651,7 +1652,7 @@ class _NearbyCoachingCard extends StatelessWidget {
                                               color: Colors.white.withValues(
                                                 alpha: 0.75,
                                               ),
-                                              fontSize: 12,
+                                              fontSize: FontSize.caption,
                                             ),
                                             maxLines: 1,
                                             overflow: TextOverflow.ellipsis,
@@ -1663,7 +1664,7 @@ class _NearbyCoachingCard extends StatelessWidget {
                               ],
                             ),
 
-                            const SizedBox(height: 4),
+                            const SizedBox(height: Spacing.sp4),
 
                             // Members stat
                             Row(
@@ -1673,30 +1674,30 @@ class _NearbyCoachingCard extends StatelessWidget {
                                   size: 13,
                                   color: Colors.white.withValues(alpha: 0.7),
                                 ),
-                                const SizedBox(width: 4),
+                                const SizedBox(width: Spacing.sp4),
                                 Text(
                                   '${coaching.memberCount} members',
                                   style: TextStyle(
                                     color: Colors.white.withValues(alpha: 0.75),
-                                    fontSize: 11,
+                                    fontSize: FontSize.micro,
                                     fontWeight: FontWeight.w500,
                                   ),
                                 ),
                                 if (coaching.branches.isNotEmpty) ...[
-                                  const SizedBox(width: 10),
+                                  const SizedBox(width: Spacing.sp10),
                                   Icon(
                                     Icons.account_tree_rounded,
                                     size: 13,
                                     color: Colors.white.withValues(alpha: 0.7),
                                   ),
-                                  const SizedBox(width: 4),
+                                  const SizedBox(width: Spacing.sp4),
                                   Text(
                                     '${coaching.branches.length} ${coaching.branches.length == 1 ? 'branch' : 'branches'}',
                                     style: TextStyle(
                                       color: Colors.white.withValues(
                                         alpha: 0.75,
                                       ),
-                                      fontSize: 11,
+                                      fontSize: FontSize.micro,
                                       fontWeight: FontWeight.w500,
                                     ),
                                   ),

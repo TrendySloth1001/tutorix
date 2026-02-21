@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_colors.dart';
+import 'design_tokens.dart';
 
 /// Application-wide Material 3 theme built from the four-role [AppColors].
 ///
@@ -49,7 +50,7 @@ class AppTheme {
         color: AppColors.muted.withValues(alpha: 0.08),
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.lg),
           side: BorderSide(color: AppColors.muted.withValues(alpha: 0.2)),
         ),
       ),
@@ -60,9 +61,12 @@ class AppTheme {
           backgroundColor: AppColors.brand,
           foregroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.sp24,
+            vertical: Spacing.sp16,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -70,9 +74,12 @@ class AppTheme {
           foregroundColor: AppColors.brand,
           side: const BorderSide(color: AppColors.brand, width: 1.5),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.sp24,
+            vertical: Spacing.sp16,
+          ),
         ),
       ),
 
@@ -81,36 +88,115 @@ class AppTheme {
         filled: true,
         fillColor: AppColors.muted.withValues(alpha: 0.06),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide: BorderSide(color: AppColors.muted.withValues(alpha: 0.5)),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide: BorderSide(color: AppColors.muted.withValues(alpha: 0.3)),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide: const BorderSide(color: AppColors.brand, width: 2),
         ),
         labelStyle: const TextStyle(color: AppColors.brand),
       ),
 
-      // Text
+      // Text — 7-role ramp mapped to 15 Material slots
       textTheme: const TextTheme(
         displayLarge: TextStyle(
+          fontSize: FontSize.hero,
+          fontWeight: FontWeight.w800,
+          height: 1.1,
+          letterSpacing: -1.0,
           color: AppColors.fore,
-          fontWeight: FontWeight.bold,
         ),
         displayMedium: TextStyle(
+          fontSize: FontSize.hero,
+          fontWeight: FontWeight.w800,
+          height: 1.1,
+          letterSpacing: -0.5,
           color: AppColors.fore,
-          fontWeight: FontWeight.bold,
+        ),
+        displaySmall: TextStyle(
+          fontSize: FontSize.hero,
+          fontWeight: FontWeight.w700,
+          height: 1.15,
+          color: AppColors.fore,
+        ),
+        headlineLarge: TextStyle(
+          fontSize: FontSize.title,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
+          color: AppColors.fore,
+        ),
+        headlineMedium: TextStyle(
+          fontSize: FontSize.title,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
+          color: AppColors.fore,
+        ),
+        headlineSmall: TextStyle(
+          fontSize: FontSize.title,
+          fontWeight: FontWeight.w600,
+          height: 1.25,
+          color: AppColors.fore,
         ),
         titleLarge: TextStyle(
-          color: AppColors.fore,
+          fontSize: FontSize.sub,
           fontWeight: FontWeight.w600,
+          height: 1.3,
+          color: AppColors.fore,
         ),
-        bodyLarge: TextStyle(color: AppColors.fore),
-        bodyMedium: TextStyle(color: AppColors.fore),
+        titleMedium: TextStyle(
+          fontSize: FontSize.sub,
+          fontWeight: FontWeight.w600,
+          height: 1.3,
+          color: AppColors.fore,
+        ),
+        titleSmall: TextStyle(
+          fontSize: FontSize.body,
+          fontWeight: FontWeight.w600,
+          height: 1.3,
+          color: AppColors.fore,
+        ),
+        bodyLarge: TextStyle(
+          fontSize: FontSize.body,
+          fontWeight: FontWeight.w400,
+          height: 1.5,
+          color: AppColors.fore,
+        ),
+        bodyMedium: TextStyle(
+          fontSize: FontSize.body,
+          fontWeight: FontWeight.w400,
+          height: 1.5,
+          color: AppColors.fore,
+        ),
+        bodySmall: TextStyle(
+          fontSize: FontSize.caption,
+          fontWeight: FontWeight.w400,
+          height: 1.5,
+          color: AppColors.fore,
+        ),
+        labelLarge: TextStyle(
+          fontSize: FontSize.body,
+          fontWeight: FontWeight.w500,
+          height: 1.4,
+          color: AppColors.fore,
+        ),
+        labelMedium: TextStyle(
+          fontSize: FontSize.caption,
+          fontWeight: FontWeight.w500,
+          height: 1.4,
+          color: AppColors.fore,
+        ),
+        labelSmall: TextStyle(
+          fontSize: FontSize.micro,
+          fontWeight: FontWeight.w500,
+          height: 1.4,
+          letterSpacing: 0.5,
+          color: AppColors.fore,
+        ),
       ),
 
       // AppBar
@@ -167,7 +253,7 @@ class AppTheme {
         color: AppColors.surfaceD,
         elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.lg),
           side: BorderSide(color: AppColors.mutedD.withValues(alpha: 0.2)),
         ),
       ),
@@ -178,9 +264,12 @@ class AppTheme {
           backgroundColor: AppColors.brandD,
           foregroundColor: AppColors.surfaceD,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.sp24,
+            vertical: Spacing.sp16,
+          ),
         ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
@@ -188,9 +277,12 @@ class AppTheme {
           foregroundColor: AppColors.foreD,
           side: BorderSide(color: AppColors.foreD.withValues(alpha: 0.4)),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.sp24,
+            vertical: Spacing.sp16,
+          ),
         ),
       ),
 
@@ -199,40 +291,119 @@ class AppTheme {
         filled: true,
         fillColor: AppColors.mutedD.withValues(alpha: 0.12),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide: BorderSide(
             color: AppColors.mutedD.withValues(alpha: 0.3),
           ),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide: BorderSide(
             color: AppColors.mutedD.withValues(alpha: 0.2),
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           borderSide: const BorderSide(color: AppColors.brandD, width: 2),
         ),
         labelStyle: const TextStyle(color: AppColors.foreD),
       ),
 
-      // Text
+      // Text — 7-role ramp mapped to 15 Material slots
       textTheme: const TextTheme(
         displayLarge: TextStyle(
+          fontSize: FontSize.hero,
+          fontWeight: FontWeight.w800,
+          height: 1.1,
+          letterSpacing: -1.0,
           color: AppColors.foreD,
-          fontWeight: FontWeight.bold,
         ),
         displayMedium: TextStyle(
+          fontSize: FontSize.hero,
+          fontWeight: FontWeight.w800,
+          height: 1.1,
+          letterSpacing: -0.5,
           color: AppColors.foreD,
-          fontWeight: FontWeight.bold,
+        ),
+        displaySmall: TextStyle(
+          fontSize: FontSize.hero,
+          fontWeight: FontWeight.w700,
+          height: 1.15,
+          color: AppColors.foreD,
+        ),
+        headlineLarge: TextStyle(
+          fontSize: FontSize.title,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
+          color: AppColors.foreD,
+        ),
+        headlineMedium: TextStyle(
+          fontSize: FontSize.title,
+          fontWeight: FontWeight.w700,
+          height: 1.2,
+          color: AppColors.foreD,
+        ),
+        headlineSmall: TextStyle(
+          fontSize: FontSize.title,
+          fontWeight: FontWeight.w600,
+          height: 1.25,
+          color: AppColors.foreD,
         ),
         titleLarge: TextStyle(
-          color: AppColors.foreD,
+          fontSize: FontSize.sub,
           fontWeight: FontWeight.w600,
+          height: 1.3,
+          color: AppColors.foreD,
         ),
-        bodyLarge: TextStyle(color: AppColors.foreD),
-        bodyMedium: TextStyle(color: AppColors.foreD),
+        titleMedium: TextStyle(
+          fontSize: FontSize.sub,
+          fontWeight: FontWeight.w600,
+          height: 1.3,
+          color: AppColors.foreD,
+        ),
+        titleSmall: TextStyle(
+          fontSize: FontSize.body,
+          fontWeight: FontWeight.w600,
+          height: 1.3,
+          color: AppColors.foreD,
+        ),
+        bodyLarge: TextStyle(
+          fontSize: FontSize.body,
+          fontWeight: FontWeight.w400,
+          height: 1.5,
+          color: AppColors.foreD,
+        ),
+        bodyMedium: TextStyle(
+          fontSize: FontSize.body,
+          fontWeight: FontWeight.w400,
+          height: 1.5,
+          color: AppColors.foreD,
+        ),
+        bodySmall: TextStyle(
+          fontSize: FontSize.caption,
+          fontWeight: FontWeight.w400,
+          height: 1.5,
+          color: AppColors.foreD,
+        ),
+        labelLarge: TextStyle(
+          fontSize: FontSize.body,
+          fontWeight: FontWeight.w500,
+          height: 1.4,
+          color: AppColors.foreD,
+        ),
+        labelMedium: TextStyle(
+          fontSize: FontSize.caption,
+          fontWeight: FontWeight.w500,
+          height: 1.4,
+          color: AppColors.foreD,
+        ),
+        labelSmall: TextStyle(
+          fontSize: FontSize.micro,
+          fontWeight: FontWeight.w500,
+          height: 1.4,
+          letterSpacing: 0.5,
+          color: AppColors.foreD,
+        ),
       ),
 
       // AppBar

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 
 /// Reusable settings / navigation tile shown on the profile screen.
 class SettingTile extends StatelessWidget {
@@ -20,21 +21,24 @@ class SettingTile extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: Spacing.sp16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Radii.lg),
         border: Border.all(
           color: theme.colorScheme.primary.withValues(alpha: 0.05),
         ),
       ),
       child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp20,
+          vertical: Spacing.sp8,
+        ),
         leading: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(Spacing.sp12),
           decoration: BoxDecoration(
             color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           child: Icon(icon, color: theme.colorScheme.primary),
         ),
@@ -56,7 +60,9 @@ class SettingTile extends StatelessWidget {
           color: theme.colorScheme.primary.withValues(alpha: 0.2),
         ),
         onTap: onTap,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.lg),
+        ),
       ),
     );
   }

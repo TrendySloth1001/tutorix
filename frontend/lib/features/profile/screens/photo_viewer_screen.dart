@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../services/upload_service.dart';
@@ -170,10 +171,12 @@ class _PhotoOptionsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.sp24),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(Radii.xl),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -185,10 +188,10 @@ class _PhotoOptionsSheet extends StatelessWidget {
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           ListTile(
             leading: Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(Spacing.sp12),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
@@ -202,10 +205,10 @@ class _PhotoOptionsSheet extends StatelessWidget {
             onTap: onChangeTap,
           ),
           if (hasPhoto) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             ListTile(
               leading: Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(Spacing.sp12),
                 decoration: BoxDecoration(
                   color: Colors.redAccent.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
@@ -222,7 +225,7 @@ class _PhotoOptionsSheet extends StatelessWidget {
               onTap: onRemoveTap,
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
         ],
       ),
     );

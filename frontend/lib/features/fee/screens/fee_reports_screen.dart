@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
 import 'fee_record_detail_screen.dart';
+import '../../../core/theme/design_tokens.dart';
 
 /// Admin reports screen —
 /// • Overdue student list with days overdue badge
@@ -120,7 +121,7 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
           style: TextStyle(
             color: cs.onSurface,
             fontWeight: FontWeight.w700,
-            fontSize: 20,
+            fontSize: FontSize.title,
           ),
         ),
         bottom: TabBar(
@@ -149,7 +150,7 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
                     children: [
-                      const SizedBox(height: 200),
+                      const SizedBox(height: Spacing.sp200),
                       Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
@@ -159,13 +160,13 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
                               size: 52,
                               color: cs.primary,
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: Spacing.sp12),
                             Text(
                               'No overdue fees!',
                               style: TextStyle(
                                 color: cs.onSurface,
                                 fontWeight: FontWeight.w700,
-                                fontSize: 16,
+                                fontSize: FontSize.sub,
                               ),
                             ),
                           ],
@@ -223,17 +224,17 @@ class _OverdueList extends StatelessWidget {
     final theme = Theme.of(context);
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp16, vertical: Spacing.sp12),
       itemCount: records.length,
       itemBuilder: (ctx, i) {
         final r = records[i];
         return Padding(
-          padding: const EdgeInsets.only(bottom: 10),
+          padding: const EdgeInsets.only(bottom: Spacing.sp10),
           child: Card(
             elevation: 0,
             color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(Radii.lg),
               side: BorderSide(
                 color: theme.colorScheme.onSurfaceVariant.withValues(
                   alpha: 0.2,
@@ -241,7 +242,7 @@ class _OverdueList extends StatelessWidget {
               ),
             ),
             child: InkWell(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(Radii.lg),
               onTap: () => Navigator.push(
                 ctx,
                 MaterialPageRoute(
@@ -253,7 +254,7 @@ class _OverdueList extends StatelessWidget {
                 ),
               ),
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(Spacing.sp16),
                 child: Row(
                   children: [
                     Container(
@@ -261,7 +262,7 @@ class _OverdueList extends StatelessWidget {
                       height: 44,
                       decoration: BoxDecoration(
                         color: theme.colorScheme.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(Radii.md),
                       ),
                       child: Center(
                         child: Text(
@@ -269,12 +270,12 @@ class _OverdueList extends StatelessWidget {
                           style: TextStyle(
                             color: theme.colorScheme.error,
                             fontWeight: FontWeight.w800,
-                            fontSize: 12,
+                            fontSize: FontSize.caption,
                           ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 14),
+                    const SizedBox(width: Spacing.sp14),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -284,30 +285,30 @@ class _OverdueList extends StatelessWidget {
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               color: theme.colorScheme.onSurface,
-                              fontSize: 15,
+                              fontSize: FontSize.body,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: Spacing.sp2),
                           Text(
                             r.title,
                             style: TextStyle(
                               color: theme.colorScheme.onSurfaceVariant,
-                              fontSize: 12,
+                              fontSize: FontSize.caption,
                             ),
                           ),
-                          const SizedBox(height: 2),
+                          const SizedBox(height: Spacing.sp2),
                           Text(
                             'Due since ${_fmtDate(r.dueDate)}',
                             style: TextStyle(
                               color: theme.colorScheme.error,
-                              fontSize: 11,
+                              fontSize: FontSize.micro,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: Spacing.sp12),
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -316,16 +317,16 @@ class _OverdueList extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             color: theme.colorScheme.error,
-                            fontSize: 16,
+                            fontSize: FontSize.sub,
                           ),
                         ),
                         if (r.fineAmount > 0) ...[
-                          const SizedBox(height: 2),
+                          const SizedBox(height: Spacing.sp2),
                           Text(
                             '+₹${r.fineAmount.toStringAsFixed(0)} fine',
                             style: TextStyle(
                               color: theme.colorScheme.onSurfaceVariant,
-                              fontSize: 10,
+                              fontSize: FontSize.nano,
                             ),
                           ),
                         ],
@@ -364,7 +365,7 @@ class _FYReport extends StatelessWidget {
     final theme = Theme.of(context);
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.sp16),
       child: Column(
         children: [
           // FY selector
@@ -373,14 +374,14 @@ class _FYReport extends StatelessWidget {
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 6,
+                  horizontal: Spacing.sp14,
+                  vertical: Spacing.sp6,
                 ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.outlineVariant.withValues(
                     alpha: 0.1,
                   ),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(Radii.lg),
                   border: Border.all(
                     color: theme.colorScheme.onSurfaceVariant.withValues(
                       alpha: 0.2,
@@ -399,7 +400,7 @@ class _FYReport extends StatelessWidget {
                   style: TextStyle(
                     color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w600,
-                    fontSize: 14,
+                    fontSize: FontSize.body,
                   ),
                   items: fyOptions
                       .map(
@@ -414,11 +415,11 @@ class _FYReport extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
 
           // Financial Overview (Same as Dashboard)
           _FinancialOverviewCard(summary: summary),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
 
           // Monthly Collection Section
           _SectionCard(
@@ -427,7 +428,7 @@ class _FYReport extends StatelessWidget {
               children: [
                 if (summary.monthlyCollection.isEmpty)
                   Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    padding: const EdgeInsets.symmetric(vertical: Spacing.sp24),
                     child: Text(
                       'No data for this financial year',
                       style: TextStyle(
@@ -440,22 +441,22 @@ class _FYReport extends StatelessWidget {
                     aspectRatio: 1.7,
                     child: _MonthlyBarChart(data: summary.monthlyCollection),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: Spacing.sp24),
                   const Divider(height: 1),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: Spacing.sp8),
                   ...summary.monthlyCollection.where((d) => d.total > 0).map((
                     d,
                   ) {
                     return Column(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(vertical: Spacing.sp12),
                           child: Row(
                             children: [
                               Text(
                                 d.month,
                                 style: TextStyle(
-                                  fontSize: 15,
+                                  fontSize: FontSize.body,
                                   color: theme.colorScheme.onSurface,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -463,31 +464,31 @@ class _FYReport extends StatelessWidget {
                               const Spacer(),
                               Container(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
+                                  horizontal: Spacing.sp10,
+                                  vertical: Spacing.sp4,
                                 ),
                                 decoration: BoxDecoration(
                                   color: theme.colorScheme.outlineVariant
                                       .withValues(alpha: 0.3),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(Radii.md),
                                 ),
                                 child: Text(
                                   '${d.count} txn',
                                   style: TextStyle(
-                                    fontSize: 12,
+                                    fontSize: FontSize.caption,
                                     color: theme.colorScheme.onSurfaceVariant,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: Spacing.sp12),
                               SizedBox(
                                 width: 70,
                                 child: Text(
                                   '₹${_formatAmount(d.total)}',
                                   textAlign: TextAlign.end,
                                   style: TextStyle(
-                                    fontSize: 15,
+                                    fontSize: FontSize.body,
                                     fontWeight: FontWeight.w700,
                                     color: theme.colorScheme.onSurface,
                                   ),
@@ -504,7 +505,7 @@ class _FYReport extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: Spacing.sp32),
         ],
       ),
     );
@@ -525,25 +526,25 @@ class _SectionCard extends StatelessWidget {
       elevation: 0,
       color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Radii.lg),
         side: BorderSide(
           color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.sp20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               title,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: FontSize.sub,
                 fontWeight: FontWeight.w700,
                 color: theme.colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
             child,
           ],
         ),
@@ -563,34 +564,34 @@ class _FinancialOverviewCard extends StatelessWidget {
       elevation: 0,
       color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Radii.lg),
         side: BorderSide(
           color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.sp20),
         child: Column(
           children: [
             Text(
               'Total Collected',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: FontSize.body,
                 fontWeight: FontWeight.w500,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             Text(
               '₹${_formatAmount(summary.totalCollected)}',
               style: TextStyle(
-                fontSize: 36,
+                fontSize: FontSize.hero,
                 fontWeight: FontWeight.w800,
                 color: theme.colorScheme.onSurface,
                 height: 1.0,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: Spacing.sp24),
             Row(
               children: [
                 Expanded(
@@ -665,16 +666,16 @@ class _MiniStat extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            fontSize: 16,
+            fontSize: FontSize.sub,
             fontWeight: FontWeight.w700,
             color: color,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: Spacing.sp4),
         Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: FontSize.caption,
             fontWeight: FontWeight.w500,
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -700,7 +701,7 @@ class _MonthlyBarChart extends StatelessWidget {
         final month = d.month.length >= 7 ? d.month.substring(5) : d.month;
         return Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 3),
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.sp4),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
@@ -708,12 +709,12 @@ class _MonthlyBarChart extends StatelessWidget {
                   Text(
                     _formatAmount(d.total),
                     style: TextStyle(
-                      fontSize: 9,
+                      fontSize: FontSize.nano,
                       color: theme.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
-                const SizedBox(height: 4),
+                const SizedBox(height: Spacing.sp4),
                 Flexible(
                   child: FractionallySizedBox(
                     heightFactor: ratio.clamp(0.04, 1.0),
@@ -726,18 +727,18 @@ class _MonthlyBarChart extends StatelessWidget {
                             alpha: 0.8,
                           ),
                           borderRadius: BorderRadius.vertical(
-                            top: Radius.circular(6),
+                            top: Radius.circular(Radii.sm),
                           ),
                         ),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: Spacing.sp6),
                 Text(
                   month,
                   style: TextStyle(
-                    fontSize: 10,
+                    fontSize: FontSize.nano,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
@@ -768,16 +769,16 @@ class _ErrorRetry extends StatelessWidget {
             color: theme.colorScheme.error,
             size: 40,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           Text(
             error,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: theme.colorScheme.onSurfaceVariant,
-              fontSize: 13,
+              fontSize: FontSize.body,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),

@@ -6,6 +6,7 @@ import 'fee_structures_screen.dart';
 import 'assign_fee_screen.dart';
 import 'fee_reports_screen.dart';
 import 'fee_calendar_screen.dart';
+import '../../../core/theme/design_tokens.dart';
 
 /// Admin-facing fee dashboard for a coaching.
 /// Shows summary KPIs + quick-access tabs.
@@ -106,7 +107,7 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
           style: TextStyle(
             color: cs.onSurface,
             fontWeight: FontWeight.w700,
-            fontSize: 20,
+            fontSize: FontSize.title,
           ),
         ),
         actions: [
@@ -158,7 +159,7 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.sp16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -168,26 +169,26 @@ class _Body extends StatelessWidget {
               onRemind: onBulkRemind,
               isLoading: isSendingReminder,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
           ],
 
           // Financial Overview Card
           _FinancialOverviewCard(summary: summary),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
 
           // Status Breakdown Card
           _SectionCard(
             title: 'Fee Status',
             child: _StatusCountRow(breakdown: summary.statusBreakdown),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
 
           // Payment Breakdown Card
           _SectionCard(
             title: 'Recent Collections',
             child: _PaymentModeList(modes: summary.paymentModes),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
 
           // Quick Actions Card
           _SectionCard(
@@ -197,7 +198,7 @@ class _Body extends StatelessWidget {
               overdueCount: summary.overdueCount,
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: Spacing.sp32),
         ],
       ),
     );
@@ -217,34 +218,34 @@ class _FinancialOverviewCard extends StatelessWidget {
       elevation: 0,
       color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Radii.lg),
         side: BorderSide(
           color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.sp20),
         child: Column(
           children: [
             Text(
               'Total Collected',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: FontSize.body,
                 fontWeight: FontWeight.w500,
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             Text(
               '₹${_formatAmount(summary.totalCollected)}',
               style: TextStyle(
-                fontSize: 36,
+                fontSize: FontSize.hero,
                 fontWeight: FontWeight.w800,
                 color: theme.colorScheme.onSurface,
                 height: 1.0,
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: Spacing.sp24),
             Row(
               children: [
                 Expanded(
@@ -305,16 +306,16 @@ class _MiniStat extends StatelessWidget {
         Text(
           value,
           style: TextStyle(
-            fontSize: 16,
+            fontSize: FontSize.sub,
             fontWeight: FontWeight.w700,
             color: color,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: Spacing.sp4),
         Text(
           label,
           style: TextStyle(
-            fontSize: 12,
+            fontSize: FontSize.caption,
             fontWeight: FontWeight.w500,
             color: theme.colorScheme.onSurfaceVariant,
           ),
@@ -336,25 +337,25 @@ class _SectionCard extends StatelessWidget {
       elevation: 0,
       color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Radii.lg),
         side: BorderSide(
           color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.sp20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               title,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: FontSize.sub,
                 fontWeight: FontWeight.w700,
                 color: theme.colorScheme.onSurface,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
             child,
           ],
         ),
@@ -378,12 +379,12 @@ class _StatusCountRow extends StatelessWidget {
       children: [
         _SimpleStatusRow('Paid', _count('PAID')),
         const Padding(
-          padding: EdgeInsets.symmetric(vertical: 12),
+          padding: EdgeInsets.symmetric(vertical: Spacing.sp12),
           child: Divider(height: 1),
         ),
         _SimpleStatusRow('Pending', _count('PENDING')),
         const Padding(
-          padding: EdgeInsets.symmetric(vertical: 12),
+          padding: EdgeInsets.symmetric(vertical: Spacing.sp12),
           child: Divider(height: 1),
         ),
         _SimpleStatusRow('Overdue', _count('OVERDUE'), isAlert: true),
@@ -405,21 +406,21 @@ class _SimpleStatusRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface),
+          style: TextStyle(fontSize: FontSize.body, color: theme.colorScheme.onSurface),
         ),
         const Spacer(),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.sp10, vertical: Spacing.sp4),
           decoration: BoxDecoration(
             color: isAlert
                 ? theme.colorScheme.error.withValues(alpha: 0.08)
                 : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           child: Text(
             '$count Students',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: FontSize.caption,
               fontWeight: FontWeight.w600,
               color: isAlert
                   ? theme.colorScheme.error
@@ -461,18 +462,18 @@ class _PaymentModeList extends StatelessWidget {
         'No payments recorded yet',
         style: TextStyle(
           color: theme.colorScheme.onSurfaceVariant,
-          fontSize: 13,
+          fontSize: FontSize.body,
         ),
       );
     }
     return Column(
       children: modes.take(5).map((m) {
         return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(bottom: Spacing.sp12),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(Spacing.sp8),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.outlineVariant.withValues(
                     alpha: 0.3,
@@ -485,14 +486,14 @@ class _PaymentModeList extends StatelessWidget {
                   color: theme.colorScheme.onSurface,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.sp12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     _modeLabel(m.mode),
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: FontSize.body,
                       fontWeight: FontWeight.w600,
                       color: theme.colorScheme.onSurface,
                     ),
@@ -500,7 +501,7 @@ class _PaymentModeList extends StatelessWidget {
                   Text(
                     '${m.count} txns',
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: FontSize.micro,
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
@@ -510,7 +511,7 @@ class _PaymentModeList extends StatelessWidget {
               Text(
                 '₹${_formatAmount(m.total)}',
                 style: TextStyle(
-                  fontSize: 15,
+                  fontSize: FontSize.body,
                   fontWeight: FontWeight.w700,
                   color: theme.colorScheme.onSurface,
                 ),
@@ -542,7 +543,7 @@ class _QuickActions extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Spacing.sp12),
         _ActionTile(
           icon: Icons.receipt_long_rounded,
           label: 'Fee Records',
@@ -553,7 +554,7 @@ class _QuickActions extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Spacing.sp12),
         _ActionTile(
           icon: Icons.bar_chart_rounded,
           label: 'Reports',
@@ -564,7 +565,7 @@ class _QuickActions extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Spacing.sp12),
         _ActionTile(
           icon: Icons.category_rounded,
           label: 'Fee Structures',
@@ -575,7 +576,7 @@ class _QuickActions extends StatelessWidget {
             ),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Spacing.sp12),
         _ActionTile(
           icon: Icons.person_add_rounded,
           label: 'Assign Fee',
@@ -606,24 +607,24 @@ class _ActionTile extends StatelessWidget {
     final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(Radii.md),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(Spacing.sp10),
             decoration: BoxDecoration(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
             child: Icon(icon, size: 20, color: theme.colorScheme.onSurface),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: Spacing.sp14),
           Text(
             label,
             style: TextStyle(
               fontWeight: FontWeight.w600,
               color: theme.colorScheme.onSurface,
-              fontSize: 15,
+              fontSize: FontSize.body,
             ),
           ),
           const Spacer(),
@@ -653,12 +654,12 @@ class _FYDropdown extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(right: 8),
+      padding: const EdgeInsets.only(right: Spacing.sp8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.sp12, vertical: Spacing.sp4),
         decoration: BoxDecoration(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(Radii.lg),
         ),
         child: DropdownButton<String>(
           value: selected,
@@ -671,7 +672,7 @@ class _FYDropdown extends StatelessWidget {
           style: TextStyle(
             color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w600,
-            fontSize: 13,
+            fontSize: FontSize.body,
           ),
           items: options
               .map((fy) => DropdownMenuItem(value: fy, child: Text('FY $fy')))
@@ -698,10 +699,10 @@ class _OverdueBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp16, vertical: Spacing.sp12),
       decoration: BoxDecoration(
         color: theme.colorScheme.error.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.lg),
       ),
       child: Row(
         children: [
@@ -710,14 +711,14 @@ class _OverdueBanner extends StatelessWidget {
             color: theme.colorScheme.error,
             size: 20,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: Spacing.sp12),
           Expanded(
             child: Text(
               '$count student${count == 1 ? '' : 's'} have overdue fees',
               style: TextStyle(
                 color: theme.colorScheme.error,
                 fontWeight: FontWeight.w600,
-                fontSize: 14,
+                fontSize: FontSize.body,
               ),
             ),
           ),
@@ -736,19 +737,19 @@ class _OverdueBanner extends StatelessWidget {
               style: TextButton.styleFrom(
                 foregroundColor: theme.colorScheme.error,
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+                  horizontal: Spacing.sp12,
+                  vertical: Spacing.sp6,
                 ),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 backgroundColor: Colors.white.withValues(alpha: 0.5),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(Radii.lg),
                 ),
               ),
               child: const Text(
                 'Remind',
-                style: TextStyle(fontSize: 12, fontWeight: FontWeight.w700),
+                style: TextStyle(fontSize: FontSize.caption, fontWeight: FontWeight.w700),
               ),
             ),
         ],
@@ -766,7 +767,7 @@ class _ErrorView extends StatelessWidget {
     final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(Spacing.sp24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -775,13 +776,13 @@ class _ErrorView extends StatelessWidget {
               color: theme.colorScheme.error,
               size: 40,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Text(
               error,
               textAlign: TextAlign.center,
               style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
             OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
           ],
         ),

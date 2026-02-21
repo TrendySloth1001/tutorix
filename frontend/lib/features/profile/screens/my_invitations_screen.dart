@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/services/invitation_service.dart';
 import '../../../shared/widgets/accept_invite_sheet.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -88,7 +89,7 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
           : RefreshIndicator(
               onRefresh: _loadInvitations,
               child: ListView.builder(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(Spacing.sp16),
                 itemCount: _invitations.length,
                 itemBuilder: (context, index) =>
                     _buildInvitationCard(theme, _invitations[index]),
@@ -107,7 +108,7 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
             size: 64,
             color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           Text(
             'No Pending Invitations',
             style: theme.textTheme.titleMedium?.copyWith(
@@ -115,7 +116,7 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           Text(
             'You\'re all caught up!',
             style: theme.textTheme.bodyMedium?.copyWith(
@@ -139,12 +140,14 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
     final id = invitation['id'] as String;
 
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      margin: const EdgeInsets.only(bottom: Spacing.sp12),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(Radii.lg),
+      ),
       elevation: 0,
       color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Spacing.sp16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -156,7 +159,7 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
                   height: 44,
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primaryContainer,
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                   child: Icon(
                     Icons.school_rounded,
@@ -164,7 +167,7 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
                     size: 24,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -190,17 +193,17 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
 
             // Ward info if applicable
             if (ward != null) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: Spacing.sp12),
               Container(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 8,
+                  horizontal: Spacing.sp12,
+                  vertical: Spacing.sp8,
                 ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.secondaryContainer.withValues(
                     alpha: 0.3,
                   ),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(Radii.sm),
                 ),
                 child: Row(
                   children: [
@@ -209,7 +212,7 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
                       size: 18,
                       color: theme.colorScheme.secondary,
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: Spacing.sp8),
                     Text(
                       'For: ${ward['name']}',
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -224,7 +227,7 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
 
             // Message
             if (message != null && message.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: Spacing.sp12),
               Text(
                 '"$message"',
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -234,7 +237,7 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
               ),
             ],
 
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
 
             // Action buttons
             Row(
@@ -249,7 +252,7 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
                     child: const Text('Decline'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: FilledButton(
                     onPressed: () =>
@@ -279,16 +282,19 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp10,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
         role,
         style: TextStyle(
           color: color,
-          fontSize: 11,
+          fontSize: FontSize.micro,
           fontWeight: FontWeight.w700,
         ),
       ),

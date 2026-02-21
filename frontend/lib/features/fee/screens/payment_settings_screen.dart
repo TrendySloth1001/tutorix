@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/payment_service.dart';
+import '../../../core/theme/design_tokens.dart';
 
 /// Admin screen for configuring coaching payment settings:
 /// bank account, GSTIN, PAN — required for Razorpay Route transfers.
@@ -133,7 +134,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
           style: TextStyle(
             color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w700,
-            fontSize: 17,
+            fontSize: FontSize.sub,
           ),
         ),
       ),
@@ -145,13 +146,13 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(_error!, style: const TextStyle(color: Colors.red)),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: Spacing.sp12),
                   OutlinedButton(onPressed: _load, child: const Text('Retry')),
                 ],
               ),
             )
           : SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(Spacing.sp20),
               child: Form(
                 key: _formKey,
                 child: Column(
@@ -160,14 +161,14 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                     // ── Razorpay Status ──
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(Spacing.sp16),
                       decoration: BoxDecoration(
                         color: _razorpayActivated
                             ? theme.colorScheme.primary.withValues(alpha: 0.08)
                             : theme.colorScheme.secondary.withValues(
                                 alpha: 0.08,
                               ),
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(Radii.md),
                       ),
                       child: Row(
                         children: [
@@ -179,7 +180,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                                 ? theme.colorScheme.primary
                                 : theme.colorScheme.secondary,
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: Spacing.sp12),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
@@ -193,7 +194,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                                     color: _razorpayActivated
                                         ? theme.colorScheme.primary
                                         : theme.colorScheme.secondary,
-                                    fontSize: 14,
+                                    fontSize: FontSize.body,
                                   ),
                                 ),
                                 Text(
@@ -204,7 +205,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                                     color: _razorpayActivated
                                         ? theme.colorScheme.primary
                                         : theme.colorScheme.secondary,
-                                    fontSize: 12,
+                                    fontSize: FontSize.caption,
                                   ),
                                 ),
                                 if (_razorpayAccountId != null)
@@ -212,7 +213,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                                     'Account: $_razorpayAccountId',
                                     style: TextStyle(
                                       color: theme.colorScheme.onSurfaceVariant,
-                                      fontSize: 11,
+                                      fontSize: FontSize.micro,
                                     ),
                                   ),
                               ],
@@ -223,16 +224,16 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                     ),
 
                     // ── Tax Details ──
-                    const SizedBox(height: 24),
+                    const SizedBox(height: Spacing.sp24),
                     Text(
                       'Tax Details',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: theme.colorScheme.onSurface,
-                        fontSize: 16,
+                        fontSize: FontSize.sub,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: Spacing.sp12),
                     TextFormField(
                       controller: _gstCtrl,
                       decoration: const InputDecoration(
@@ -251,7 +252,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: Spacing.sp12),
                     TextFormField(
                       controller: _panCtrl,
                       decoration: const InputDecoration(
@@ -269,31 +270,31 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                     ),
 
                     // ── Bank Details ──
-                    const SizedBox(height: 24),
+                    const SizedBox(height: Spacing.sp24),
                     Text(
                       'Bank Account Details',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: theme.colorScheme.onSurface,
-                        fontSize: 16,
+                        fontSize: FontSize.sub,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: Spacing.sp4),
                     Text(
                       'Required for receiving payments via Razorpay Route',
                       style: TextStyle(
                         color: theme.colorScheme.onSurfaceVariant,
-                        fontSize: 12,
+                        fontSize: FontSize.caption,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: Spacing.sp12),
                     TextFormField(
                       controller: _accNameCtrl,
                       decoration: const InputDecoration(
                         labelText: 'Account Holder Name',
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: Spacing.sp12),
                     TextFormField(
                       controller: _accNumCtrl,
                       decoration: const InputDecoration(
@@ -301,7 +302,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                       ),
                       keyboardType: TextInputType.number,
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: Spacing.sp12),
                     TextFormField(
                       controller: _ifscCtrl,
                       decoration: const InputDecoration(
@@ -318,7 +319,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: Spacing.sp12),
                     TextFormField(
                       controller: _bankNameCtrl,
                       decoration: const InputDecoration(
@@ -328,7 +329,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                     ),
 
                     // ── Save Button ──
-                    const SizedBox(height: 32),
+                    const SizedBox(height: Spacing.sp32),
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -337,7 +338,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                         style: FilledButton.styleFrom(
                           backgroundColor: theme.colorScheme.primary,
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(Radii.md),
                           ),
                         ),
                         child: _saving
@@ -353,12 +354,12 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                                 'Save Settings',
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 15,
+                                  fontSize: FontSize.body,
                                 ),
                               ),
                       ),
                     ),
-                    const SizedBox(height: 32),
+                    const SizedBox(height: Spacing.sp32),
                   ],
                 ),
               ),

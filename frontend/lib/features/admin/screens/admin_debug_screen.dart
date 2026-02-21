@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:tutorix/core/theme/design_tokens.dart';
 import '../services/admin_logs_service.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -114,10 +115,10 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
         title: const Row(
           children: [
             Icon(Icons.terminal_rounded, size: 22),
-            SizedBox(width: 10),
+            SizedBox(width: Spacing.sp10),
             Text(
               'Debug Console',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+              style: TextStyle(fontWeight: FontWeight.w600, fontSize: FontSize.title),
             ),
           ],
         ),
@@ -135,9 +136,9 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.cloud_outlined, size: 18),
-                  const SizedBox(width: 6),
-                  const Text('Server', style: TextStyle(fontSize: 13)),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: Spacing.sp6),
+                  const Text('Server', style: TextStyle(fontSize: FontSize.body)),
+                  const SizedBox(width: Spacing.sp6),
                   _buildBadge(_totalLogs.toString()),
                 ],
               ),
@@ -147,9 +148,9 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Icons.phone_android_outlined, size: 18),
-                  const SizedBox(width: 6),
-                  const Text('Device', style: TextStyle(fontSize: 13)),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: Spacing.sp6),
+                  const Text('Device', style: TextStyle(fontSize: FontSize.body)),
+                  const SizedBox(width: Spacing.sp6),
                   _buildBadge(_logger.localLogCount.toString()),
                 ],
               ),
@@ -159,8 +160,8 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.insights_rounded, size: 18),
-                  SizedBox(width: 6),
-                  Text('Stats', style: TextStyle(fontSize: 13)),
+                  SizedBox(width: Spacing.sp6),
+                  Text('Stats', style: TextStyle(fontSize: FontSize.body)),
                 ],
               ),
             ),
@@ -181,14 +182,14 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
   Widget _buildBadge(String text) {
     final cs = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp6, vertical: Spacing.sp2),
       decoration: BoxDecoration(
         color: cs.surface.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Text(
         text,
-        style: const TextStyle(fontSize: 10, fontWeight: FontWeight.bold),
+        style: const TextStyle(fontSize: FontSize.nano, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -213,7 +214,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     itemCount: _logs.length + (_hasMorePages ? 1 : 0),
-                    separatorBuilder: (_, __) => const SizedBox(height: 8),
+                    separatorBuilder: (_, __) => const SizedBox(height: Spacing.sp8),
                     itemBuilder: (context, index) {
                       if (index >= _logs.length) {
                         return _buildLoadMoreButton();
@@ -251,7 +252,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
   Widget _buildServerFilters() {
     final cs = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp16, vertical: Spacing.sp12),
       decoration: BoxDecoration(
         color: cs.outlineVariant.withValues(alpha: 0.25),
         border: Border(
@@ -274,7 +275,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
               },
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: Spacing.sp10),
           Expanded(
             child: _buildFilterChip(
               'Level',
@@ -287,7 +288,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
               },
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: Spacing.sp10),
           _buildIconAction(Icons.refresh_rounded, _loadLogs),
         ],
       ),
@@ -310,7 +311,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                   itemCount: logs.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 6),
+                  separatorBuilder: (_, __) => const SizedBox(height: Spacing.sp6),
                   itemBuilder: (context, index) {
                     return _LocalLogTile(entry: logs[index]);
                   },
@@ -323,7 +324,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
   Widget _buildLocalFilters() {
     final cs = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp16, vertical: Spacing.sp12),
       decoration: BoxDecoration(
         color: cs.outlineVariant.withValues(alpha: 0.25),
         border: Border(
@@ -347,7 +348,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: Spacing.sp10),
           Expanded(
             child: _buildFilterChip(
               'Category',
@@ -361,12 +362,12 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
               ),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: Spacing.sp10),
           _buildIconAction(Icons.delete_outline_rounded, () {
             _logger.clearLocalLogs();
             setState(() {});
           }),
-          const SizedBox(width: 6),
+          const SizedBox(width: Spacing.sp6),
           _buildIconAction(Icons.refresh_rounded, () => setState(() {})),
         ],
       ),
@@ -392,10 +393,10 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
       color: cs.primary,
       onRefresh: _loadStats,
       child: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Spacing.sp16),
         children: [
           _buildStatHeader('Overview'),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           Row(
             children: [
               Expanded(
@@ -406,7 +407,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   color: cs.onSurface,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.sp12),
               Expanded(
                 child: _StatTile(
                   label: 'Errors',
@@ -417,7 +418,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           Row(
             children: [
               Expanded(
@@ -428,7 +429,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   color: cs.secondary,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.sp12),
               Expanded(
                 child: _StatTile(
                   label: 'Frontend',
@@ -439,9 +440,9 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           _buildStatHeader('API Health'),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           Row(
             children: [
               Expanded(
@@ -452,7 +453,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   color: cs.primary,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.sp12),
               Expanded(
                 child: _StatTile(
                   label: 'API Errors',
@@ -463,13 +464,13 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           if (_stats!.apiRequestCount > 0) _buildApiHealthBar(),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           _buildStatHeader('Device Logs'),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           _buildDeviceLogsSummary(),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           _buildCleanupButton(),
         ],
       ),
@@ -484,10 +485,10 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
     final isHealthy = successRate >= 95;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.sp16),
       decoration: BoxDecoration(
         color: cs.outlineVariant.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(color: cs.onSurfaceVariant.withValues(alpha: 0.15)),
       ),
       child: Column(
@@ -502,20 +503,20 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                 size: 18,
                 color: isHealthy ? cs.primary : cs.secondary,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: Spacing.sp8),
               Text(
                 'Success Rate: ${successRate.toStringAsFixed(1)}%',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  fontSize: 14,
+                  fontSize: FontSize.body,
                   color: cs.onSurface,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(Radii.sm),
             child: LinearProgressIndicator(
               value: successRate / 100,
               backgroundColor: cs.error.withValues(alpha: 0.15),
@@ -538,20 +539,20 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
     final infoCount = local.where((l) => l.level == LogLevel.info).length;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.sp16),
       decoration: BoxDecoration(
         color: cs.outlineVariant.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(color: cs.onSurfaceVariant.withValues(alpha: 0.15)),
       ),
       child: Column(
         children: [
           _buildDeviceLogRow('Buffered', local.length, cs.onSurface),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           _buildDeviceLogRow('Errors', errorCount, cs.error),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           _buildDeviceLogRow('Warnings', warnCount, cs.secondary),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           _buildDeviceLogRow('Info', infoCount, cs.secondary),
         ],
       ),
@@ -566,12 +567,12 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
           height: 8,
           decoration: BoxDecoration(color: color, shape: BoxShape.circle),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: Spacing.sp10),
         Expanded(
           child: Text(
             label,
             style: TextStyle(
-              fontSize: 13,
+              fontSize: FontSize.body,
               color: Theme.of(context).colorScheme.onSurfaceVariant,
             ),
           ),
@@ -579,7 +580,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
         Text(
           count.toString(),
           style: TextStyle(
-            fontSize: 14,
+            fontSize: FontSize.body,
             fontWeight: FontWeight.w600,
             color: color,
           ),
@@ -628,7 +629,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
     return Text(
       title,
       style: TextStyle(
-        fontSize: 13,
+        fontSize: FontSize.body,
         fontWeight: FontWeight.w600,
         color: Theme.of(context).colorScheme.onSurfaceVariant,
         letterSpacing: 1.2,
@@ -647,11 +648,11 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
             size: 48,
             color: cs.onSurfaceVariant.withValues(alpha: 0.4),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           Text(
             message,
             style: TextStyle(
-              fontSize: 15,
+              fontSize: FontSize.body,
               color: cs.onSurfaceVariant.withValues(alpha: 0.7),
             ),
           ),
@@ -674,31 +675,31 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
           context: context,
           backgroundColor: cs.surface,
           shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.lg)),
           ),
           builder: (_) => SafeArea(
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const SizedBox(height: 8),
+                const SizedBox(height: Spacing.sp8),
                 Container(
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
                     color: cs.onSurfaceVariant.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: Spacing.sp16),
                 Text(
                   label,
                   style: TextStyle(
-                    fontSize: 16,
+                    fontSize: FontSize.sub,
                     fontWeight: FontWeight.w600,
                     color: cs.onSurface,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: Spacing.sp8),
                 ...List.generate(
                   values.length,
                   (i) => ListTile(
@@ -714,7 +715,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                     onTap: () => Navigator.pop(context, values[i]),
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: Spacing.sp8),
               ],
             ),
           ),
@@ -729,12 +730,12 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
         onChanged(result);
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.sp12, vertical: Spacing.sp8),
         decoration: BoxDecoration(
           color: currentLabel != null
               ? cs.primary.withValues(alpha: 0.08)
               : Colors.white,
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(Radii.md),
           border: Border.all(
             color: currentLabel != null
                 ? cs.primary.withValues(alpha: 0.3)
@@ -747,7 +748,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
               child: Text(
                 currentLabel ?? label,
                 style: TextStyle(
-                  fontSize: 13,
+                  fontSize: FontSize.body,
                   color: currentLabel != null
                       ? cs.onSurface
                       : cs.onSurfaceVariant,
@@ -775,11 +776,11 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(Radii.sm),
         child: Container(
-          padding: const EdgeInsets.all(8),
+          padding: const EdgeInsets.all(Spacing.sp8),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(Radii.sm),
             border: Border.all(
               color: cs.onSurfaceVariant.withValues(alpha: 0.2),
             ),
@@ -804,14 +805,14 @@ class _ServerLogTile extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(Radii.md),
       child: InkWell(
         onTap: () => _showDetails(context),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: Container(
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(Spacing.sp14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(Radii.md),
             border: Border.all(
               color: cs.onSurfaceVariant.withValues(alpha: 0.12),
             ),
@@ -822,34 +823,34 @@ class _ServerLogTile extends StatelessWidget {
               Row(
                 children: [
                   _LevelBadge(level: log.level),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: Spacing.sp6),
                   _TypeBadge(type: log.type),
                   if (log.statusCode != null) ...[
-                    const SizedBox(width: 6),
+                    const SizedBox(width: Spacing.sp6),
                     _StatusCodeBadge(statusCode: log.statusCode!),
                   ],
                   const Spacer(),
                   Text(
                     DateFormat('HH:mm:ss').format(log.createdAt),
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: FontSize.micro,
                       fontFamily: 'SF Mono',
                       color: cs.onSurfaceVariant.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: Spacing.sp10),
               if (log.method != null && log.path != null)
                 Row(
                   children: [
                     _HttpMethodChip(method: log.method!),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: Spacing.sp8),
                     Expanded(
                       child: Text(
                         log.path!,
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: FontSize.body,
                           fontFamily: 'SF Mono',
                           fontWeight: FontWeight.w500,
                           color: cs.onSurface,
@@ -865,7 +866,7 @@ class _ServerLogTile extends StatelessWidget {
                 Text(
                   log.message!,
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: FontSize.body,
                     fontWeight: FontWeight.w500,
                     color: cs.onSurface,
                   ),
@@ -873,21 +874,21 @@ class _ServerLogTile extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               if (log.error != null) ...[
-                const SizedBox(height: 6),
+                const SizedBox(height: Spacing.sp6),
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 6,
+                    horizontal: Spacing.sp10,
+                    vertical: Spacing.sp6,
                   ),
                   decoration: BoxDecoration(
                     color: cs.error.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                   ),
                   child: Text(
                     log.error!,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: FontSize.caption,
                       color: cs.error,
                       fontFamily: 'SF Mono',
                     ),
@@ -897,7 +898,7 @@ class _ServerLogTile extends StatelessWidget {
                 ),
               ],
               if (log.duration != null || log.userName != null) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: Spacing.sp8),
                 Row(
                   children: [
                     if (log.duration != null) ...[
@@ -906,28 +907,28 @@ class _ServerLogTile extends StatelessWidget {
                         size: 13,
                         color: cs.onSurfaceVariant.withValues(alpha: 0.5),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: Spacing.sp4),
                       Text(
                         '${log.duration!.toStringAsFixed(0)}ms',
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: FontSize.micro,
                           color: cs.onSurfaceVariant.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
                     if (log.duration != null && log.userName != null)
-                      const SizedBox(width: 12),
+                      const SizedBox(width: Spacing.sp12),
                     if (log.userName != null) ...[
                       Icon(
                         Icons.person_outline,
                         size: 13,
                         color: cs.onSurfaceVariant.withValues(alpha: 0.5),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: Spacing.sp4),
                       Text(
                         log.userName!,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: FontSize.micro,
                           color: cs.onSurfaceVariant.withValues(alpha: 0.6),
                         ),
                       ),
@@ -955,11 +956,11 @@ class _ServerLogTile extends StatelessWidget {
         builder: (_, controller) => Container(
           decoration: BoxDecoration(
             color: cs.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(Radii.lg)),
           ),
           child: ListView(
             controller: controller,
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(Spacing.sp24),
             children: [
               Center(
                 child: Container(
@@ -967,23 +968,23 @@ class _ServerLogTile extends StatelessWidget {
                   height: 4,
                   decoration: BoxDecoration(
                     color: cs.onSurfaceVariant.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: Spacing.sp20),
               Row(
                 children: [
                   _LevelBadge(level: log.level),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: Spacing.sp8),
                   _TypeBadge(type: log.type),
                   if (log.statusCode != null) ...[
-                    const SizedBox(width: 8),
+                    const SizedBox(width: Spacing.sp8),
                     _StatusCodeBadge(statusCode: log.statusCode!),
                   ],
                 ],
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.sp16),
               _detailField(
                 'Time',
                 DateFormat('yyyy-MM-dd HH:mm:ss').format(log.createdAt),
@@ -1006,27 +1007,27 @@ class _ServerLogTile extends StatelessWidget {
               if (log.message != null)
                 _detailField('Message', log.message!, cs),
               if (log.error != null) ...[
-                const SizedBox(height: 8),
+                const SizedBox(height: Spacing.sp8),
                 Text(
                   'Error',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: FontSize.caption,
                     fontWeight: FontWeight.w600,
                     color: cs.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: Spacing.sp4),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(Spacing.sp12),
                   decoration: BoxDecoration(
                     color: cs.error.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                   child: SelectableText(
                     log.error!,
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: FontSize.body,
                       fontFamily: 'SF Mono',
                       color: cs.error,
                     ),
@@ -1034,27 +1035,27 @@ class _ServerLogTile extends StatelessWidget {
                 ),
               ],
               if (log.stackTrace != null) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: Spacing.sp16),
                 Text(
                   'Stack Trace',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: FontSize.caption,
                     fontWeight: FontWeight.w600,
                     color: cs.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: Spacing.sp6),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(Spacing.sp12),
                   decoration: BoxDecoration(
                     color: cs.onSurface.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                   child: SelectableText(
                     log.stackTrace!,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: FontSize.micro,
                       fontFamily: 'SF Mono',
                       height: 1.5,
                       color: cs.onSurface,
@@ -1063,29 +1064,29 @@ class _ServerLogTile extends StatelessWidget {
                 ),
               ],
               if (log.metadata != null) ...[
-                const SizedBox(height: 16),
+                const SizedBox(height: Spacing.sp16),
                 Text(
                   'Metadata',
                   style: TextStyle(
-                    fontSize: 12,
+                    fontSize: FontSize.caption,
                     fontWeight: FontWeight.w600,
                     color: cs.onSurfaceVariant,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: Spacing.sp6),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(Spacing.sp12),
                   decoration: BoxDecoration(
                     color: cs.onSurface.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                   child: SelectableText(
                     log.metadata!.entries
                         .map((e) => '${e.key}: ${e.value}')
                         .join('\n'),
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: FontSize.caption,
                       fontFamily: 'SF Mono',
                       height: 1.5,
                       color: cs.onSurface,
@@ -1102,7 +1103,7 @@ class _ServerLogTile extends StatelessWidget {
 
   Widget _detailField(String label, String value, ColorScheme cs) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: Spacing.sp10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1111,7 +1112,7 @@ class _ServerLogTile extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 12,
+                fontSize: FontSize.caption,
                 fontWeight: FontWeight.w600,
                 color: cs.onSurfaceVariant,
               ),
@@ -1120,7 +1121,7 @@ class _ServerLogTile extends StatelessWidget {
           Expanded(
             child: SelectableText(
               value,
-              style: TextStyle(fontSize: 13, color: cs.onSurface),
+              style: TextStyle(fontSize: FontSize.body, color: cs.onSurface),
             ),
           ),
         ],
@@ -1147,14 +1148,14 @@ class _LocalLogTile extends StatelessWidget {
 
     return Material(
       color: Colors.white,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(Radii.md),
       child: InkWell(
         onTap: hasDetails ? () => _showDetails(context) : null,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.sp12, vertical: Spacing.sp10),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Radii.md),
             border: Border.all(
               color: cs.onSurfaceVariant.withValues(alpha: 0.1),
             ),
@@ -1167,10 +1168,10 @@ class _LocalLogTile extends StatelessWidget {
                 height: 40,
                 decoration: BoxDecoration(
                   color: _levelColor(entry.level, cs),
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(Radii.sm),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: Spacing.sp10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1179,20 +1180,20 @@ class _LocalLogTile extends StatelessWidget {
                       children: [
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
+                            horizontal: Spacing.sp6,
+                            vertical: Spacing.sp2,
                           ),
                           decoration: BoxDecoration(
                             color: _categoryColor(
                               entry.category,
                               cs,
                             ).withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(Radii.sm),
                           ),
                           child: Text(
                             entry.category.value,
                             style: TextStyle(
-                              fontSize: 10,
+                              fontSize: FontSize.nano,
                               fontWeight: FontWeight.w700,
                               color: _categoryColor(entry.category, cs),
                             ),
@@ -1202,26 +1203,26 @@ class _LocalLogTile extends StatelessWidget {
                         Text(
                           DateFormat('HH:mm:ss.SSS').format(entry.timestamp),
                           style: TextStyle(
-                            fontSize: 10,
+                            fontSize: FontSize.nano,
                             fontFamily: 'SF Mono',
                             color: cs.onSurfaceVariant.withValues(alpha: 0.5),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: Spacing.sp4),
                     Text(
                       entry.message,
-                      style: TextStyle(fontSize: 12, color: cs.onSurface),
+                      style: TextStyle(fontSize: FontSize.caption, color: cs.onSurface),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     if (entry.error != null) ...[
-                      const SizedBox(height: 4),
+                      const SizedBox(height: Spacing.sp4),
                       Text(
                         entry.error!,
                         style: TextStyle(
-                          fontSize: 11,
+                          fontSize: FontSize.micro,
                           fontFamily: 'SF Mono',
                           color: cs.error,
                         ),
@@ -1233,7 +1234,7 @@ class _LocalLogTile extends StatelessWidget {
                 ),
               ),
               if (hasDetails) ...[
-                const SizedBox(width: 4),
+                const SizedBox(width: Spacing.sp4),
                 Icon(
                   Icons.chevron_right_rounded,
                   size: 18,
@@ -1253,11 +1254,11 @@ class _LocalLogTile extends StatelessWidget {
       context: context,
       backgroundColor: cs.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.lg)),
       ),
       builder: (_) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(Spacing.sp24),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -1268,31 +1269,31 @@ class _LocalLogTile extends StatelessWidget {
                   height: 4,
                   decoration: BoxDecoration(
                     color: cs.onSurfaceVariant.withValues(alpha: 0.3),
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                   ),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.sp16),
               Row(
                 children: [
                   _LevelBadge(level: entry.level.value),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: Spacing.sp8),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 4,
+                      horizontal: Spacing.sp8,
+                      vertical: Spacing.sp4,
                     ),
                     decoration: BoxDecoration(
                       color: _categoryColor(
                         entry.category,
                         cs,
                       ).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(Radii.sm),
                     ),
                     child: Text(
                       entry.category.value,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: FontSize.micro,
                         fontWeight: FontWeight.w700,
                         color: _categoryColor(entry.category, cs),
                       ),
@@ -1300,28 +1301,28 @@ class _LocalLogTile extends StatelessWidget {
                   ),
                 ],
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Spacing.sp12),
               Text(
                 entry.message,
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: FontSize.body,
                   fontWeight: FontWeight.w500,
                   color: cs.onSurface,
                 ),
               ),
               if (entry.error != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: Spacing.sp12),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(Spacing.sp12),
                   decoration: BoxDecoration(
                     color: cs.error.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                   child: SelectableText(
                     entry.error!,
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: FontSize.caption,
                       fontFamily: 'SF Mono',
                       color: cs.error,
                     ),
@@ -1329,20 +1330,20 @@ class _LocalLogTile extends StatelessWidget {
                 ),
               ],
               if (entry.stackTrace != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: Spacing.sp12),
                 Container(
                   width: double.infinity,
                   constraints: const BoxConstraints(maxHeight: 200),
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(Spacing.sp12),
                   decoration: BoxDecoration(
                     color: cs.onSurface.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                   child: SingleChildScrollView(
                     child: SelectableText(
                       entry.stackTrace!,
                       style: TextStyle(
-                        fontSize: 11,
+                        fontSize: FontSize.micro,
                         fontFamily: 'SF Mono',
                         height: 1.5,
                         color: cs.onSurface,
@@ -1352,20 +1353,20 @@ class _LocalLogTile extends StatelessWidget {
                 ),
               ],
               if (entry.metadata != null) ...[
-                const SizedBox(height: 12),
+                const SizedBox(height: Spacing.sp12),
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.all(Spacing.sp12),
                   decoration: BoxDecoration(
                     color: cs.onSurface.withValues(alpha: 0.06),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                   child: SelectableText(
                     entry.metadata!.entries
                         .map((e) => '${e.key}: ${e.value}')
                         .join('\n'),
                     style: TextStyle(
-                      fontSize: 12,
+                      fontSize: FontSize.caption,
                       fontFamily: 'SF Mono',
                       height: 1.5,
                       color: cs.onSurface,
@@ -1444,16 +1445,16 @@ class _LevelBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _getColor(Theme.of(context).colorScheme);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp8, vertical: Spacing.sp4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(Radii.sm),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         level,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: FontSize.nano,
           fontWeight: FontWeight.w700,
           color: color,
           letterSpacing: 0.5,
@@ -1486,15 +1487,15 @@ class _TypeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp8, vertical: Spacing.sp4),
       decoration: BoxDecoration(
         color: cs.primary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
         _label,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: FontSize.nano,
           fontWeight: FontWeight.w700,
           color: cs.primary,
           letterSpacing: 0.5,
@@ -1519,15 +1520,15 @@ class _StatusCodeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _getColor(Theme.of(context).colorScheme);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp6, vertical: Spacing.sp4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
         statusCode.toString(),
         style: TextStyle(
-          fontSize: 10,
+          fontSize: FontSize.nano,
           fontWeight: FontWeight.w700,
           fontFamily: 'SF Mono',
           color: color,
@@ -1561,15 +1562,15 @@ class _HttpMethodChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _getColor(Theme.of(context).colorScheme);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp6, vertical: Spacing.sp2),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(4),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
         method,
         style: TextStyle(
-          fontSize: 10,
+          fontSize: FontSize.nano,
           fontWeight: FontWeight.w700,
           fontFamily: 'SF Mono',
           color: color,
@@ -1596,37 +1597,37 @@ class _StatTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.sp16),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(color: cs.onSurfaceVariant.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(8),
+            padding: const EdgeInsets.all(Spacing.sp8),
             decoration: BoxDecoration(
               color: color.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
             child: Icon(icon, color: color, size: 20),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           Text(
             value.toString(),
             style: TextStyle(
-              fontSize: 24,
+              fontSize: FontSize.hero,
               fontWeight: FontWeight.w700,
               color: cs.onSurface,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: Spacing.sp2),
           Text(
             label,
             style: TextStyle(
-              fontSize: 12,
+              fontSize: FontSize.caption,
               color: cs.onSurfaceVariant.withValues(alpha: 0.7),
             ),
           ),

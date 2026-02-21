@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../models/assessment_model.dart';
 import '../services/assessment_service.dart';
 
@@ -107,10 +108,10 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
         r.totalScore >= widget.assessment.passingMarks!;
 
     return ListView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.sp16),
       children: [
         // Simplified Score Section
-        const SizedBox(height: 24),
+        const SizedBox(height: Spacing.sp24),
         Center(
           child: Column(
             children: [
@@ -122,7 +123,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Spacing.sp12),
               Text(
                 '${r.percentage.toStringAsFixed(1)}%',
                 style: theme.textTheme.displayLarge?.copyWith(
@@ -134,13 +135,13 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                   letterSpacing: -1.0,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sp8),
               if (widget.assessment.passingMarks != null)
                 Container(
-                  margin: const EdgeInsets.only(bottom: 12),
+                  margin: const EdgeInsets.only(bottom: Spacing.sp12),
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
+                    horizontal: Spacing.sp16,
+                    vertical: Spacing.sp6,
                   ),
                   decoration: BoxDecoration(
                     color:
@@ -148,7 +149,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                                 ? theme.colorScheme.primary
                                 : theme.colorScheme.error)
                             .withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(100),
+                    borderRadius: BorderRadius.circular(Radii.full),
                   ),
                   child: Text(
                     passed ? 'PASSED' : 'FAILED',
@@ -172,14 +173,17 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
           ),
         ),
 
-        const SizedBox(height: 48),
+        const SizedBox(height: Spacing.sp48),
 
         // Simplified Stats Row
         Container(
-          padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+          padding: const EdgeInsets.symmetric(
+            vertical: Spacing.sp24,
+            horizontal: Spacing.sp16,
+          ),
           decoration: BoxDecoration(
             color: theme.colorScheme.surfaceContainerLowest,
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.lg),
             border: Border.all(
               color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
             ),
@@ -219,7 +223,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: Spacing.sp20),
 
         // Question breakdown
         if (r.assessment != null &&
@@ -230,7 +234,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           ...List.generate(r.assessment!.questions.length, (i) {
             final q = r.assessment!.questions[i];
             final ans = r.answers.where((a) => a.questionId == q.id);
@@ -245,7 +249,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
         ] else
           Center(
             child: Padding(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(Spacing.sp32),
               child: Text(
                 'Detailed results will be available after the teacher releases them.',
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -295,7 +299,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
       children: [
         // Assessment info header
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(Spacing.sp16),
           color: theme.colorScheme.surfaceContainerHighest.withValues(
             alpha: 0.3,
           ),
@@ -309,7 +313,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                       '${_detail?.questionCount ?? widget.assessment.questionCount} Questions • ${_detail?.totalMarks ?? widget.assessment.totalMarks} Marks',
                       style: theme.textTheme.bodySmall,
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: Spacing.sp2),
                     Text(
                       '${_attempts.length} submissions',
                       style: theme.textTheme.labelSmall?.copyWith(
@@ -348,7 +352,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                         size: 56,
                         color: theme.colorScheme.outlineVariant,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: Spacing.sp8),
                       Text(
                         'No submissions yet',
                         style: theme.textTheme.bodyMedium,
@@ -357,9 +361,10 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                   ),
                 )
               : ListView.separated(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(Spacing.sp16),
                   itemCount: _attempts.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 8),
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: Spacing.sp8),
                   itemBuilder: (_, i) => _LeaderboardTile(
                     rank: i + 1,
                     entry: _attempts[i],
@@ -390,7 +395,7 @@ Widget _buildStatItem(
           height: 1.0,
         ),
       ),
-      const SizedBox(height: 4),
+      const SizedBox(height: Spacing.sp4),
       Text(
         label,
         style: theme.textTheme.bodySmall?.copyWith(
@@ -418,10 +423,10 @@ class _StatBox extends StatelessWidget {
     final theme = Theme.of(context);
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 12),
+        padding: const EdgeInsets.symmetric(vertical: Spacing.sp12),
         decoration: BoxDecoration(
           color: color.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(Radii.md),
         ),
         child: Column(
           children: [
@@ -432,7 +437,7 @@ class _StatBox extends StatelessWidget {
                 color: color,
               ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: Spacing.sp2),
             Text(
               label,
               style: theme.textTheme.labelSmall?.copyWith(
@@ -464,11 +469,11 @@ class _QuestionResult extends StatelessWidget {
     final isSkipped = answer == null;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: Spacing.sp12),
+      padding: const EdgeInsets.all(Spacing.sp12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(
           color: isSkipped
               ? Colors.grey.withValues(alpha: 0.3)
@@ -483,7 +488,10 @@ class _QuestionResult extends StatelessWidget {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Spacing.sp8,
+                  vertical: Spacing.sp4,
+                ),
                 decoration: BoxDecoration(
                   color:
                       (isSkipped
@@ -492,7 +500,7 @@ class _QuestionResult extends StatelessWidget {
                               ? theme.colorScheme.primary
                               : theme.colorScheme.error)
                           .withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(6),
+                  borderRadius: BorderRadius.circular(Radii.sm),
                 ),
                 child: Text(
                   'Q${index + 1}',
@@ -506,7 +514,7 @@ class _QuestionResult extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: Spacing.sp8),
               Expanded(
                 child: Text(
                   question.question,
@@ -531,18 +539,18 @@ class _QuestionResult extends StatelessWidget {
 
           // Show NAT answer
           if (question.isNAT) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             _buildNATAnswer(theme),
           ],
 
           // Show correct answer for MCQ/MSQ
           if (question.isMCQ || question.isMSQ) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             ...question.options.map((opt) {
               final isCorrectOpt = _isCorrectOption(opt.id);
               final isStudentOpt = _isStudentOption(opt.id);
               return Padding(
-                padding: const EdgeInsets.only(bottom: 4),
+                padding: const EdgeInsets.only(bottom: Spacing.sp4),
                 child: Row(
                   children: [
                     Icon(
@@ -558,7 +566,7 @@ class _QuestionResult extends StatelessWidget {
                           ? theme.colorScheme.error
                           : theme.colorScheme.outlineVariant,
                     ),
-                    const SizedBox(width: 6),
+                    const SizedBox(width: Spacing.sp6),
                     Expanded(
                       child: Text(
                         opt.text,
@@ -580,12 +588,12 @@ class _QuestionResult extends StatelessWidget {
 
           if (question.explanation != null &&
               question.explanation!.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(Spacing.sp8),
               decoration: BoxDecoration(
                 color: theme.colorScheme.secondary.withValues(alpha: 0.05),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(Radii.sm),
               ),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -595,7 +603,7 @@ class _QuestionResult extends StatelessWidget {
                     size: 14,
                     color: theme.colorScheme.secondary,
                   ),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: Spacing.sp6),
                   Expanded(
                     child: Text(
                       question.explanation!,
@@ -662,7 +670,7 @@ class _QuestionResult extends StatelessWidget {
                   ? theme.colorScheme.primary
                   : theme.colorScheme.error,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: Spacing.sp6),
             Text(
               'Your answer: ',
               style: theme.textTheme.bodySmall?.copyWith(
@@ -682,7 +690,7 @@ class _QuestionResult extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: Spacing.sp4),
         // Correct answer
         Row(
           children: [
@@ -691,7 +699,7 @@ class _QuestionResult extends StatelessWidget {
               size: 16,
               color: theme.colorScheme.primary,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: Spacing.sp6),
             Text(
               'Correct answer: ',
               style: theme.textTheme.bodySmall?.copyWith(
@@ -746,12 +754,12 @@ class _LeaderboardTile extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(Radii.md),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(Spacing.sp12),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           border: Border.all(
             color: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
           ),
@@ -777,7 +785,7 @@ class _LeaderboardTile extends StatelessWidget {
                 ),
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: Spacing.sp10),
 
             // Avatar
             CircleAvatar(
@@ -792,7 +800,7 @@ class _LeaderboardTile extends StatelessWidget {
                     )
                   : null,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: Spacing.sp10),
 
             // Name
             Expanded(
@@ -825,7 +833,7 @@ class _LeaderboardTile extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(width: 4),
+            const SizedBox(width: Spacing.sp4),
             Icon(
               Icons.chevron_right_rounded,
               size: 20,
@@ -861,14 +869,17 @@ class _StudentResponseSheet extends StatelessWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(studentName, style: const TextStyle(fontSize: 16)),
+        title: Text(
+          studentName,
+          style: const TextStyle(fontSize: FontSize.sub),
+        ),
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Spacing.sp16),
         children: [
           // Score summary card
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Spacing.sp16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: passed
@@ -883,7 +894,7 @@ class _StudentResponseSheet extends StatelessWidget {
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
             child: Row(
               children: [
@@ -914,8 +925,8 @@ class _StudentResponseSheet extends StatelessWidget {
                 if (assessment.passingMarks != null)
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
+                      horizontal: Spacing.sp10,
+                      vertical: Spacing.sp4,
                     ),
                     decoration: BoxDecoration(
                       color:
@@ -923,7 +934,7 @@ class _StudentResponseSheet extends StatelessWidget {
                                   ? theme.colorScheme.primary
                                   : theme.colorScheme.error)
                               .withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(Radii.sm),
                     ),
                     child: Text(
                       passed ? 'PASSED' : 'FAILED',
@@ -939,7 +950,7 @@ class _StudentResponseSheet extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
 
           // Stats row
           Row(
@@ -949,13 +960,13 @@ class _StudentResponseSheet extends StatelessWidget {
                 value: '${r.correctCount}',
                 color: theme.colorScheme.primary,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: Spacing.sp8),
               _StatBox(
                 label: 'Wrong',
                 value: '${r.wrongCount}',
                 color: theme.colorScheme.error,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: Spacing.sp8),
               _StatBox(
                 label: 'Skipped',
                 value: '${r.skippedCount}',
@@ -964,7 +975,7 @@ class _StudentResponseSheet extends StatelessWidget {
             ],
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: Spacing.sp20),
 
           // Question-by-question breakdown
           Text(
@@ -973,7 +984,7 @@ class _StudentResponseSheet extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           if (r.assessment != null)
             ...List.generate(r.assessment!.questions.length, (i) {
               final q = r.assessment!.questions[i];

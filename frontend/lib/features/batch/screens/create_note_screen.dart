@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
@@ -227,7 +228,12 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
       body: FadeTransition(
         opacity: _fadeAnim,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+          padding: const EdgeInsets.fromLTRB(
+            Spacing.sp20,
+            Spacing.sp8,
+            Spacing.sp20,
+            Spacing.sp40,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
@@ -236,12 +242,12 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                 // ── Storage indicator
                 if (_storageLoaded) ...[
                   _buildStorageBar(theme),
-                  const SizedBox(height: 22),
+                  const SizedBox(height: Spacing.sp24),
                 ],
 
                 // ── Title
                 _FieldLabel('Title', isRequired: true),
-                const SizedBox(height: 8),
+                const SizedBox(height: Spacing.sp8),
                 TextFormField(
                   controller: _titleCtrl,
                   decoration: _inputDeco(
@@ -253,11 +259,11 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                       : null,
                   textCapitalization: TextCapitalization.sentences,
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: Spacing.sp24),
 
                 // ── Description
                 _FieldLabel('Description'),
-                const SizedBox(height: 8),
+                const SizedBox(height: Spacing.sp8),
                 TextFormField(
                   controller: _descCtrl,
                   decoration: _inputDeco(
@@ -267,13 +273,13 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                   maxLines: 2,
                   textCapitalization: TextCapitalization.sentences,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: Spacing.sp24),
 
                 // ── Attachments area
                 _FieldLabel('Attachments'),
-                const SizedBox(height: 10),
+                const SizedBox(height: Spacing.sp10),
                 _buildAttachmentsArea(theme),
-                const SizedBox(height: 36),
+                const SizedBox(height: Spacing.sp40),
 
                 // ── Save button
                 SizedBox(
@@ -283,7 +289,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                     onPressed: _isSaving ? null : _save,
                     style: FilledButton.styleFrom(
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(Radii.lg),
                       ),
                       elevation: 0,
                     ),
@@ -300,14 +306,14 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               const Icon(Icons.send_rounded, size: 18),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: Spacing.sp8),
                               Text(
                                 _pickedFiles.isEmpty
                                     ? 'Share Note'
                                     : 'Share with ${_pickedFiles.length} file${_pickedFiles.length == 1 ? '' : 's'}',
                                 style: const TextStyle(
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 15,
+                                  fontSize: FontSize.body,
                                 ),
                               ),
                             ],
@@ -338,10 +344,10 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
         : theme.colorScheme.primary;
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(Spacing.sp14),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(
           color: exceeds
               ? theme.colorScheme.error.withValues(alpha: 0.2)
@@ -354,7 +360,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
           Row(
             children: [
               Icon(Icons.cloud_outlined, size: 16, color: barColor),
-              const SizedBox(width: 6),
+              const SizedBox(width: Spacing.sp6),
               Text(
                 'Storage',
                 style: theme.textTheme.labelMedium?.copyWith(
@@ -368,14 +374,14 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                 style: theme.textTheme.labelSmall?.copyWith(
                   fontWeight: FontWeight.w600,
                   color: barColor,
-                  fontSize: 11,
+                  fontSize: FontSize.micro,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           ClipRRect(
-            borderRadius: BorderRadius.circular(4),
+            borderRadius: BorderRadius.circular(Radii.sm),
             child: LinearProgressIndicator(
               value: ratio,
               minHeight: 6,
@@ -386,11 +392,11 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
             ),
           ),
           if (_totalPickedSize > 0) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: Spacing.sp6),
             Text(
               '${_formatBytes(_totalPickedSize)} will be used by new files',
               style: theme.textTheme.bodySmall?.copyWith(
-                fontSize: 11,
+                fontSize: FontSize.micro,
                 color: exceeds
                     ? theme.colorScheme.error
                     : theme.colorScheme.onSurface.withValues(alpha: 0.4),
@@ -399,11 +405,11 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
           ],
           if (exceeds)
             Padding(
-              padding: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.only(top: Spacing.sp4),
               child: Text(
                 'Not enough space — remove some files',
                 style: theme.textTheme.bodySmall?.copyWith(
-                  fontSize: 11,
+                  fontSize: FontSize.micro,
                   color: theme.colorScheme.error,
                   fontWeight: FontWeight.w600,
                 ),
@@ -430,7 +436,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
               onRemove: () => _removeFile(i),
             );
           }),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
         ],
 
         GestureDetector(
@@ -439,11 +445,11 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
             width: double.infinity,
             padding: EdgeInsets.symmetric(
               vertical: _pickedFiles.isEmpty ? 36 : 16,
-              horizontal: 24,
+              horizontal: Spacing.sp24,
             ),
             decoration: BoxDecoration(
               color: theme.colorScheme.surfaceContainerLowest,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(Radii.lg),
               border: Border.all(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
                 width: 1.5,
@@ -454,7 +460,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                 ? Column(
                     children: [
                       Container(
-                        padding: const EdgeInsets.all(14),
+                        padding: const EdgeInsets.all(Spacing.sp14),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.primary.withValues(
                             alpha: 0.08,
@@ -469,7 +475,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: Spacing.sp14),
                       Text(
                         'Tap to add files',
                         style: theme.textTheme.bodyMedium?.copyWith(
@@ -479,14 +485,14 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                           ),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: Spacing.sp4),
                       Text(
                         'PDF, DOC, XLS, PPT, Images — up to 15 MB each',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: theme.colorScheme.onSurface.withValues(
                             alpha: 0.35,
                           ),
-                          fontSize: 11,
+                          fontSize: FontSize.micro,
                         ),
                       ),
                     ],
@@ -499,7 +505,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                         size: 18,
                         color: theme.colorScheme.primary,
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: Spacing.sp6),
                       Text(
                         'Add more files',
                         style: theme.textTheme.bodyMedium?.copyWith(
@@ -527,23 +533,26 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
       filled: true,
       fillColor: theme.colorScheme.surfaceContainerLowest,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         borderSide: BorderSide(
           color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
         ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         borderSide: BorderSide(
           color: theme.colorScheme.primary.withValues(alpha: 0.4),
           width: 1.5,
         ),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp16,
+        vertical: Spacing.sp14,
+      ),
     );
   }
 }
@@ -596,10 +605,10 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
     final color = config.$2;
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: Spacing.sp12),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.lg),
         border: Border.all(color: color.withValues(alpha: 0.15), width: 1.5),
       ),
       child: Column(
@@ -607,20 +616,20 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
           // File header
           InkWell(
             onTap: () => setState(() => _isExpanded = !_isExpanded),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(Radii.lg),
             child: Padding(
-              padding: const EdgeInsets.all(14),
+              padding: const EdgeInsets.all(Spacing.sp14),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(10),
+                    padding: const EdgeInsets.all(Spacing.sp10),
                     decoration: BoxDecoration(
                       color: color.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(Radii.md),
                     ),
                     child: Icon(config.$1, size: 22, color: color),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: Spacing.sp12),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -633,11 +642,11 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
                             fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: Spacing.sp2),
                         Text(
                           _formattedSize,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            fontSize: 12,
+                            fontSize: FontSize.caption,
                             color: theme.colorScheme.onSurface.withValues(
                               alpha: 0.5,
                             ),
@@ -665,10 +674,10 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
                   GestureDetector(
                     onTap: widget.onRemove,
                     child: Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(Spacing.sp8),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.error.withValues(alpha: 0.08),
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(Radii.sm),
                       ),
                       child: Icon(
                         Icons.close_rounded,
@@ -684,12 +693,17 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
           // Description field (expandable)
           if (_isExpanded)
             Padding(
-              padding: const EdgeInsets.fromLTRB(14, 0, 14, 14),
+              padding: const EdgeInsets.fromLTRB(
+                Spacing.sp14,
+                0,
+                Spacing.sp14,
+                Spacing.sp14,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Divider(color: color.withValues(alpha: 0.15), height: 1),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: Spacing.sp12),
                   Text(
                     'Description (optional)',
                     style: theme.textTheme.labelSmall?.copyWith(
@@ -697,13 +711,13 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
                       color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: Spacing.sp8),
                   TextField(
                     controller: widget.descriptionController,
                     decoration: InputDecoration(
                       hintText: 'e.g., Solutions for exercises 1-10',
                       hintStyle: TextStyle(
-                        fontSize: 13,
+                        fontSize: FontSize.body,
                         color: theme.colorScheme.onSurface.withValues(
                           alpha: 0.3,
                         ),
@@ -711,31 +725,33 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
                       filled: true,
                       fillColor: theme.colorScheme.surface,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(Radii.md),
                         borderSide: BorderSide(
                           color: color.withValues(alpha: 0.2),
                         ),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(Radii.md),
                         borderSide: BorderSide(
                           color: color.withValues(alpha: 0.2),
                         ),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(Radii.md),
                         borderSide: BorderSide(
                           color: color.withValues(alpha: 0.5),
                           width: 1.5,
                         ),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 12,
+                        horizontal: Spacing.sp14,
+                        vertical: Spacing.sp12,
                       ),
                     ),
                     maxLines: 2,
-                    style: theme.textTheme.bodySmall?.copyWith(fontSize: 13),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: FontSize.body,
+                    ),
                     textCapitalization: TextCapitalization.sentences,
                   ),
                 ],

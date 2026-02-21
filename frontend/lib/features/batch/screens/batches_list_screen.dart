@@ -8,6 +8,7 @@ import '../models/batch_model.dart';
 import '../services/batch_service.dart';
 import 'create_batch_screen.dart';
 import 'batch_detail_screen.dart';
+import '../../../core/theme/design_tokens.dart';
 
 /// Batches list — the 4th tab in the coaching shell.
 /// Admins see all batches; teachers/students see only their assigned batches.
@@ -113,7 +114,7 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
           SizedBox(height: MediaQuery.of(context).padding.top + 16),
           // ── Header
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.sp20),
             child: Row(
               children: [
                 Expanded(
@@ -127,7 +128,7 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                           letterSpacing: -0.5,
                         ),
                       ),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: Spacing.sp2),
                       Text(
                         '${_batches.length} batch${_batches.length == 1 ? '' : 'es'} · ${widget.coaching.name}',
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -148,7 +149,7 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                           theme.colorScheme.primary.withValues(alpha: 0.8),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(Radii.md),
                       boxShadow: [
                         BoxShadow(
                           color: theme.colorScheme.primary.withValues(
@@ -163,11 +164,11 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                       color: Colors.transparent,
                       child: InkWell(
                         onTap: _openCreateBatch,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(Radii.md),
                         child: Padding(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 10,
+                            horizontal: Spacing.sp16,
+                            vertical: Spacing.sp10,
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
@@ -177,13 +178,13 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                                 size: 18,
                                 color: theme.colorScheme.onPrimary,
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: Spacing.sp6),
                               Text(
                                 'New',
                                 style: TextStyle(
                                   color: theme.colorScheme.onPrimary,
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 14,
+                                  fontSize: FontSize.body,
                                 ),
                               ),
                             ],
@@ -197,17 +198,17 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
           ),
           // ── Filter pills (admin only)
           if (_isAdmin) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
             SizedBox(
               height: 38,
               child: ListView(
                 scrollDirection: Axis.horizontal,
-                padding: const EdgeInsets.symmetric(horizontal: 20),
+                padding: const EdgeInsets.symmetric(horizontal: Spacing.sp20),
                 children: ['all', 'active', 'archived'].map((f) {
                   final selected = _filter == f;
                   final label = f[0].toUpperCase() + f.substring(1);
                   return Padding(
-                    padding: const EdgeInsets.only(right: 8),
+                    padding: const EdgeInsets.only(right: Spacing.sp8),
                     child: GestureDetector(
                       onTap: () {
                         setState(() => _filter = f);
@@ -216,14 +217,14 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 18,
-                          vertical: 8,
+                          horizontal: Spacing.sp20,
+                          vertical: Spacing.sp8,
                         ),
                         decoration: BoxDecoration(
                           color: selected
                               ? theme.colorScheme.primary
                               : theme.colorScheme.surfaceContainerLowest,
-                          borderRadius: BorderRadius.circular(20),
+                          borderRadius: BorderRadius.circular(Radii.lg),
                           border: selected
                               ? null
                               : Border.all(
@@ -254,7 +255,7 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                             fontWeight: selected
                                 ? FontWeight.w600
                                 : FontWeight.w500,
-                            fontSize: 13,
+                            fontSize: FontSize.body,
                           ),
                         ),
                       ),
@@ -264,7 +265,7 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
               ),
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           // ── Content
           Expanded(
             child: _isLoading
@@ -277,9 +278,15 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                       await Future.delayed(const Duration(milliseconds: 500));
                     },
                     child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                      padding: const EdgeInsets.fromLTRB(
+                        Spacing.sp20,
+                        0,
+                        Spacing.sp20,
+                        Spacing.sp100,
+                      ),
                       itemCount: _batches.length,
-                      separatorBuilder: (_, _) => const SizedBox(height: 14),
+                      separatorBuilder: (_, _) =>
+                          const SizedBox(height: Spacing.sp14),
                       itemBuilder: (context, i) => _BatchCard(
                         batch: _batches[i],
                         onTap: () => _openBatchDetail(_batches[i]),
@@ -306,12 +313,12 @@ class _EmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(40),
+        padding: const EdgeInsets.all(Spacing.sp40),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(Spacing.sp24),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary.withValues(alpha: 0.06),
                 shape: BoxShape.circle,
@@ -322,7 +329,7 @@ class _EmptyState extends StatelessWidget {
                 color: theme.colorScheme.primary.withValues(alpha: 0.35),
               ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: Spacing.sp24),
             Text(
               isAdmin ? 'No batches yet' : 'No batches assigned',
               style: theme.textTheme.titleMedium?.copyWith(
@@ -330,7 +337,7 @@ class _EmptyState extends StatelessWidget {
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             Text(
               isAdmin
                   ? 'Create your first batch to organise\nstudents and start teaching'
@@ -342,18 +349,18 @@ class _EmptyState extends StatelessWidget {
               ),
             ),
             if (isAdmin) ...[
-              const SizedBox(height: 28),
+              const SizedBox(height: Spacing.sp28),
               FilledButton.icon(
                 onPressed: onTap,
                 icon: const Icon(Icons.add_rounded, size: 18),
                 label: const Text('Create Batch'),
                 style: FilledButton.styleFrom(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 14,
+                    horizontal: Spacing.sp24,
+                    vertical: Spacing.sp14,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                 ),
               ),
@@ -384,19 +391,19 @@ class _BatchCard extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerLowest,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.lg),
         border: Border.all(
           color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
         ),
       ),
       child: Material(
         color: Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.lg),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.lg),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Spacing.sp16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -413,14 +420,14 @@ class _BatchCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: Spacing.sp8),
                     _StatusBadge(status: batch.status),
                   ],
                 ),
 
                 // ── Subject
                 if (batch.subject != null) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: Spacing.sp4),
                   Text(
                     batch.subject!,
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -432,7 +439,7 @@ class _BatchCard extends StatelessWidget {
 
                 // ── Schedule
                 if (batch.days.isNotEmpty || batch.startTime != null) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: Spacing.sp12),
                   Row(
                     children: [
                       Icon(
@@ -442,7 +449,7 @@ class _BatchCard extends StatelessWidget {
                           alpha: 0.35,
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: Spacing.sp6),
                       Text(
                         batch.scheduleText,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -457,7 +464,7 @@ class _BatchCard extends StatelessWidget {
 
                 // ── Teacher
                 if (batch.teacher != null) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: Spacing.sp12),
                   Row(
                     children: [
                       CircleAvatar(
@@ -472,14 +479,14 @@ class _BatchCard extends StatelessWidget {
                             ? Text(
                                 (batch.teacher!.name ?? 'T')[0].toUpperCase(),
                                 style: TextStyle(
-                                  fontSize: 9,
+                                  fontSize: FontSize.nano,
                                   fontWeight: FontWeight.w600,
                                   color: theme.colorScheme.primary,
                                 ),
                               )
                             : null,
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: Spacing.sp6),
                       Text(
                         batch.teacher!.name ?? 'Teacher',
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -515,10 +522,13 @@ class _StatusBadge extends StatelessWidget {
         : theme.colorScheme.secondary;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp10,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Radii.lg),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -528,11 +538,11 @@ class _StatusBadge extends StatelessWidget {
             height: 5,
             decoration: BoxDecoration(color: color, shape: BoxShape.circle),
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: Spacing.sp6),
           Text(
             isActive ? 'Active' : 'Archived',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: FontSize.micro,
               fontWeight: FontWeight.w600,
               color: color,
             ),

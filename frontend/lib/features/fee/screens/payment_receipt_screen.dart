@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/theme/design_tokens.dart';
 
 /// A clean, minimal payment receipt shown after successful payment.
 /// Works for all payment modes: Razorpay (online), Cash, UPI, Bank Transfer,
@@ -112,15 +113,15 @@ class PaymentReceiptScreen extends StatelessWidget {
           style: TextStyle(
             color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w700,
-            fontSize: 17,
+            fontSize: FontSize.sub,
           ),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.sp24, vertical: Spacing.sp16),
         child: Column(
           children: [
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             // ─── Success Icon ───
             Container(
               width: 72,
@@ -135,44 +136,44 @@ class PaymentReceiptScreen extends StatelessWidget {
                 size: 40,
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
             Text(
               _successLabel,
               style: TextStyle(
                 color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w700,
-                fontSize: 20,
+                fontSize: FontSize.title,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: Spacing.sp4),
             Text(
               _formatDateTime(paidAt),
               style: TextStyle(
                 color: theme.colorScheme.onSurfaceVariant,
-                fontSize: 13,
+                fontSize: FontSize.body,
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: Spacing.sp32),
 
             // ─── Amount ───
             Text(
               '₹${amount.toStringAsFixed(2)}',
               style: TextStyle(
                 fontWeight: FontWeight.w900,
-                fontSize: 36,
+                fontSize: FontSize.hero,
                 color: theme.colorScheme.onSurface,
                 letterSpacing: -1,
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: Spacing.sp32),
 
             // ─── Receipt Details ───
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(Spacing.sp20),
               decoration: BoxDecoration(
                 color: Colors.white,
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(Radii.lg),
               ),
               child: Column(
                 children: [
@@ -213,13 +214,13 @@ class PaymentReceiptScreen extends StatelessWidget {
 
             // ─── Amount Breakdown ───
             if (baseAmount != null || _hasTax) ...[
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.sp16),
               Container(
                 width: double.infinity,
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(Spacing.sp20),
                 decoration: BoxDecoration(
                   color: Colors.white,
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(Radii.lg),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -229,10 +230,10 @@ class PaymentReceiptScreen extends StatelessWidget {
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: theme.colorScheme.onSurface,
-                        fontSize: 14,
+                        fontSize: FontSize.body,
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: Spacing.sp12),
                     if (baseAmount != null)
                       _DetailRow(
                         'Base Amount',
@@ -345,7 +346,7 @@ class PaymentReceiptScreen extends StatelessWidget {
                 ),
               ),
             ],
-            const SizedBox(height: 24),
+            const SizedBox(height: Spacing.sp24),
 
             // ─── Actions ───
             Row(
@@ -357,9 +358,9 @@ class PaymentReceiptScreen extends StatelessWidget {
                       foregroundColor: theme.colorScheme.primary,
                       side: BorderSide(color: theme.colorScheme.outlineVariant),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(Radii.md),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: Spacing.sp14),
                     ),
                     icon: const Icon(Icons.copy_rounded, size: 18),
                     label: const Text(
@@ -368,16 +369,16 @@ class PaymentReceiptScreen extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: FilledButton.icon(
                     onPressed: () => Navigator.pop(context),
                     style: FilledButton.styleFrom(
                       backgroundColor: theme.colorScheme.primary,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(Radii.md),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      padding: const EdgeInsets.symmetric(vertical: Spacing.sp14),
                     ),
                     icon: const Icon(Icons.check_rounded, size: 18),
                     label: const Text(
@@ -388,7 +389,7 @@ class PaymentReceiptScreen extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: Spacing.sp32),
           ],
         ),
       ),
@@ -482,7 +483,7 @@ class _DetailRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 10),
+      padding: const EdgeInsets.symmetric(vertical: Spacing.sp10),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -492,7 +493,7 @@ class _DetailRow extends StatelessWidget {
               label,
               style: TextStyle(
                 color: theme.colorScheme.onSurfaceVariant,
-                fontSize: 13,
+                fontSize: FontSize.body,
               ),
             ),
           ),
@@ -503,7 +504,7 @@ class _DetailRow extends StatelessWidget {
               style: TextStyle(
                 color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
-                fontSize: 13,
+                fontSize: FontSize.body,
               ),
             ),
           ),

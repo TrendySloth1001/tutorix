@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../shared/models/user_model.dart';
@@ -183,7 +184,10 @@ class _HomeScreenState extends State<HomeScreen> {
             else
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.only(top: 8, bottom: 100),
+                  padding: const EdgeInsets.only(
+                    top: Spacing.sp8,
+                    bottom: Spacing.sp100,
+                  ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -194,11 +198,13 @@ class _HomeScreenState extends State<HomeScreen> {
                           count: _myCoachings.length,
                           icon: Icons.school_rounded,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: Spacing.sp4),
                         for (int i = 0; i < _myCoachings.length; i++) ...[
                           Padding(
                             padding: EdgeInsets.only(
-                              bottom: i < _myCoachings.length - 1 ? 12 : 0,
+                              bottom: i < _myCoachings.length - 1
+                                  ? Spacing.sp12
+                                  : 0,
                             ),
                             child: CoachingCoverCard(
                               coaching: _myCoachings[i],
@@ -210,7 +216,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                       // Joined section
                       if (_joinedCoachings.isNotEmpty) ...[
-                        if (_myCoachings.isNotEmpty) const SizedBox(height: 24),
+                        const SizedBox(height: Spacing.sp24),
                         _SectionHeader(
                           title: 'Joined',
                           count: _joinedCoachings.length,
@@ -274,7 +280,7 @@ class _HomeHeader extends StatelessWidget {
       elevation: 0,
       flexibleSpace: FlexibleSpaceBar(
         background: Container(
-          padding: const EdgeInsets.fromLTRB(24, 60, 24, 0),
+          padding: const EdgeInsets.fromLTRB(Spacing.sp24, 60, Spacing.sp24, 0),
           child: Row(
             children: [
               CircleAvatar(
@@ -292,7 +298,7 @@ class _HomeHeader extends StatelessWidget {
                       )
                     : null,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: Spacing.sp16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -324,7 +330,7 @@ class _HomeHeader extends StatelessWidget {
                   onPressed: onCreateCoaching,
                   tooltip: 'Create Coaching',
                 ),
-              const SizedBox(width: 4),
+              const SizedBox(width: Spacing.sp4),
               Stack(
                 children: [
                   IconButton(
@@ -334,10 +340,10 @@ class _HomeHeader extends StatelessWidget {
                   ),
                   if (unreadCount > 0)
                     Positioned(
-                      right: 8,
-                      top: 8,
+                      right: Spacing.sp8,
+                      top: Spacing.sp8,
                       child: Container(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(Spacing.sp4),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.error,
                           shape: BoxShape.circle,
@@ -350,7 +356,7 @@ class _HomeHeader extends StatelessWidget {
                           unreadCount > 99 ? '99+' : '$unreadCount',
                           style: const TextStyle(
                             color: Colors.white,
-                            fontSize: 10,
+                            fontSize: FontSize.nano,
                             fontWeight: FontWeight.bold,
                           ),
                           textAlign: TextAlign.center,
@@ -373,12 +379,12 @@ class _EmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(40),
+        padding: const EdgeInsets.all(Spacing.sp40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(Spacing.sp32),
               decoration: BoxDecoration(
                 color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
@@ -389,14 +395,14 @@ class _EmptyState extends StatelessWidget {
                 color: theme.colorScheme.primary.withValues(alpha: 0.4),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: Spacing.sp32),
             Text(
               'No Coachings Yet',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Text(
               'Launch your first coaching institute and start managing your classes today.',
               textAlign: TextAlign.center,
@@ -428,7 +434,12 @@ class _SectionHeader extends StatelessWidget {
     final theme = Theme.of(context);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.sp20,
+        Spacing.sp16,
+        Spacing.sp20,
+        Spacing.sp8,
+      ),
       child: Row(
         children: [
           Icon(
@@ -436,7 +447,7 @@ class _SectionHeader extends StatelessWidget {
             size: 18,
             color: theme.colorScheme.primary.withValues(alpha: 0.6),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: Spacing.sp8),
           Text(
             title,
             style: theme.textTheme.titleSmall?.copyWith(
@@ -445,12 +456,15 @@ class _SectionHeader extends StatelessWidget {
               letterSpacing: 0.3,
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: Spacing.sp8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.sp8,
+              vertical: Spacing.sp2,
+            ),
             decoration: BoxDecoration(
               color: theme.colorScheme.primary.withValues(alpha: 0.08),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
             child: Text(
               '$count',

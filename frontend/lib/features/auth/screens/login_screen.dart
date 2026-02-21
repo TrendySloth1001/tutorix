@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/design_tokens.dart';
 
 class LoginScreen extends StatelessWidget {
   final VoidCallback onLogin;
@@ -30,7 +31,7 @@ class LoginScreen extends StatelessWidget {
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.sp32),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -38,7 +39,7 @@ class LoginScreen extends StatelessWidget {
 
                 // Brand area
                 Container(
-                  padding: const EdgeInsets.all(28),
+                  padding: const EdgeInsets.all(Spacing.sp28),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.surface,
                     shape: BoxShape.circle,
@@ -58,7 +59,7 @@ class LoginScreen extends StatelessWidget {
                     color: theme.colorScheme.primary,
                   ),
                 ),
-                const SizedBox(height: 48),
+                const SizedBox(height: Spacing.sp48),
 
                 Text(
                   'Tutorix',
@@ -68,7 +69,7 @@ class LoginScreen extends StatelessWidget {
                     letterSpacing: -2,
                   ),
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: Spacing.sp12),
                 Text(
                   'Your academic world, unified.',
                   textAlign: TextAlign.center,
@@ -92,20 +93,20 @@ class LoginScreen extends StatelessWidget {
                       foregroundColor: theme.colorScheme.onPrimary,
                       minimumSize: const Size(double.infinity, 64),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(Radii.xl),
                       ),
                       elevation: 0,
                     ),
                   ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: Spacing.sp24),
                 Text(
                   'By continuing, you agree to our Terms of Service.',
                   style: theme.textTheme.labelSmall?.copyWith(
                     color: theme.colorScheme.secondary.withValues(alpha: 0.4),
                   ),
                 ),
-                const SizedBox(height: 32),
+                const SizedBox(height: Spacing.sp32),
               ],
             ),
           ),

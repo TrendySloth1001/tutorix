@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../services/assessment_service.dart';
 
 /// Screen for teachers to create an assignment.
@@ -123,7 +124,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(Spacing.sp16),
           children: [
             TextFormField(
               controller: _titleCtrl,
@@ -134,7 +135,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
               validator: (v) =>
                   v == null || v.trim().isEmpty ? 'Required' : null,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
             TextFormField(
               controller: _descCtrl,
               decoration: const InputDecoration(
@@ -144,7 +145,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
               maxLines: 4,
               minLines: 2,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
             TextFormField(
               controller: _marksCtrl,
               decoration: const InputDecoration(
@@ -153,7 +154,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
               ),
               keyboardType: TextInputType.number,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
 
             // Due date
             GestureDetector(
@@ -172,7 +173,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
 
             SwitchListTile(
               value: _allowLate,

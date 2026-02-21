@@ -9,6 +9,7 @@ import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/widgets/app_alert.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../models/batch_note_model.dart';
 
 /// Enhanced file viewer for documents and images.
@@ -118,12 +119,12 @@ class _ImageViewerState extends State<_ImageViewer>
                             strokeWidth: 2.5,
                           ),
                           if (pct != null) ...[
-                            const SizedBox(height: 12),
+                            const SizedBox(height: Spacing.sp12),
                             Text(
                               '${(pct * 100).toInt()}%',
                               style: const TextStyle(
                                 color: Colors.white54,
-                                fontSize: 13,
+                                fontSize: FontSize.body,
                               ),
                             ),
                           ],
@@ -139,7 +140,7 @@ class _ImageViewerState extends State<_ImageViewer>
                         size: 48,
                         color: Colors.white.withValues(alpha: 0.3),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: Spacing.sp12),
                       Text(
                         'Failed to load image',
                         style: TextStyle(
@@ -173,7 +174,12 @@ class _ImageViewerState extends State<_ImageViewer>
                 child: SafeArea(
                   bottom: false,
                   child: Padding(
-                    padding: const EdgeInsets.fromLTRB(8, 4, 8, 16),
+                    padding: const EdgeInsets.fromLTRB(
+                      Spacing.sp8,
+                      Spacing.sp4,
+                      Spacing.sp8,
+                      Spacing.sp16,
+                    ),
                     child: Row(
                       children: [
                         IconButton(
@@ -183,7 +189,7 @@ class _ImageViewerState extends State<_ImageViewer>
                             color: Colors.white,
                           ),
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: Spacing.sp4),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -195,14 +201,14 @@ class _ImageViewerState extends State<_ImageViewer>
                                 style: const TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w600,
-                                  fontSize: 15,
+                                  fontSize: FontSize.body,
                                 ),
                               ),
                               Text(
                                 widget.attachment.formattedSize,
                                 style: TextStyle(
                                   color: Colors.white.withValues(alpha: 0.6),
-                                  fontSize: 12,
+                                  fontSize: FontSize.caption,
                                 ),
                               ),
                             ],
@@ -370,7 +376,7 @@ class _EnhancedPdfViewerState extends State<_EnhancedPdfViewer> {
                 child: Row(
                   children: [
                     Icon(Icons.share_rounded, size: 20),
-                    SizedBox(width: 12),
+                    SizedBox(width: Spacing.sp12),
                     Text('Share'),
                   ],
                 ),
@@ -380,7 +386,7 @@ class _EnhancedPdfViewerState extends State<_EnhancedPdfViewer> {
                 child: Row(
                   children: [
                     Icon(Icons.open_in_new_rounded, size: 20),
-                    SizedBox(width: 12),
+                    SizedBox(width: Spacing.sp12),
                     Text('Open externally'),
                   ],
                 ),
@@ -452,7 +458,7 @@ class _EnhancedPdfViewerState extends State<_EnhancedPdfViewer> {
                   size: 16,
                   color: colors.onSurface.withValues(alpha: 0.6),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: Spacing.sp8),
                 Text(
                   'Page $_currentPage${_totalPages > 0 ? ' of $_totalPages' : ''}',
                   style: theme.textTheme.labelMedium?.copyWith(
@@ -582,13 +588,13 @@ class _DocumentViewerState extends State<_DocumentViewer> {
       ),
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(Spacing.sp32),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               // ── Large icon
               Container(
-                padding: const EdgeInsets.all(32),
+                padding: const EdgeInsets.all(Spacing.sp32),
                 decoration: BoxDecoration(
                   color: color.withValues(alpha: 0.08),
                   shape: BoxShape.circle,
@@ -599,7 +605,7 @@ class _DocumentViewerState extends State<_DocumentViewer> {
                 ),
                 child: Icon(icon, size: 56, color: color),
               ),
-              const SizedBox(height: 28),
+              const SizedBox(height: Spacing.sp28),
 
               // ── File name
               Text(
@@ -609,7 +615,7 @@ class _DocumentViewerState extends State<_DocumentViewer> {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sp8),
 
               // ── Meta chips
               Row(
@@ -617,36 +623,36 @@ class _DocumentViewerState extends State<_DocumentViewer> {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
+                      horizontal: Spacing.sp10,
+                      vertical: Spacing.sp4,
                     ),
                     decoration: BoxDecoration(
                       color: color.withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(Radii.sm),
                     ),
                     child: Text(
                       typeLabel,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: FontSize.caption,
                         fontWeight: FontWeight.w700,
                         color: color,
                       ),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: Spacing.sp10),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 4,
+                      horizontal: Spacing.sp10,
+                      vertical: Spacing.sp4,
                     ),
                     decoration: BoxDecoration(
                       color: colors.onSurface.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(Radii.sm),
                     ),
                     child: Text(
                       widget.attachment.formattedSize,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: FontSize.caption,
                         fontWeight: FontWeight.w600,
                         color: colors.onSurface.withValues(alpha: 0.5),
                       ),
@@ -654,7 +660,7 @@ class _DocumentViewerState extends State<_DocumentViewer> {
                   ),
                 ],
               ),
-              const SizedBox(height: 36),
+              const SizedBox(height: Spacing.sp40),
 
               // ── Open button
               SizedBox(
@@ -676,25 +682,25 @@ class _DocumentViewerState extends State<_DocumentViewer> {
                     _isOpening ? 'Opening…' : 'Open File',
                     style: const TextStyle(
                       fontWeight: FontWeight.w600,
-                      fontSize: 15,
+                      fontSize: FontSize.body,
                     ),
                   ),
                   style: FilledButton.styleFrom(
                     backgroundColor: color,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(Radii.lg),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Spacing.sp12),
 
               // ── Hint
               Text(
                 'Downloads and opens in a compatible app',
                 style: theme.textTheme.bodySmall?.copyWith(
                   color: colors.onSurface.withValues(alpha: 0.35),
-                  fontSize: 12,
+                  fontSize: FontSize.caption,
                 ),
               ),
             ],
@@ -733,7 +739,7 @@ class _SearchBar extends StatelessWidget {
     final hasResults = searchResult?.hasResult ?? false;
 
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(Spacing.sp12),
       decoration: BoxDecoration(
         color: colors.surface,
         boxShadow: [
@@ -767,19 +773,19 @@ class _SearchBar extends StatelessWidget {
                   filled: true,
                   fillColor: colors.surfaceContainerLowest,
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(Radii.md),
                     borderSide: BorderSide.none,
                   ),
                   contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                    horizontal: Spacing.sp16,
+                    vertical: Spacing.sp12,
                   ),
                 ),
                 onChanged: onSearch,
               ),
             ),
             if (hasResults) ...[
-              const SizedBox(width: 8),
+              const SizedBox(width: Spacing.sp8),
               Text(
                 '${searchResult!.currentInstanceIndex}/${searchResult!.totalInstanceCount}',
                 style: theme.textTheme.labelSmall?.copyWith(
@@ -835,7 +841,9 @@ class _PageJumpDialog extends StatelessWidget {
         decoration: InputDecoration(
           hintText: 'Page number (1-$totalPages)',
           filled: true,
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(Radii.md),
+          ),
         ),
         autofocus: true,
       ),

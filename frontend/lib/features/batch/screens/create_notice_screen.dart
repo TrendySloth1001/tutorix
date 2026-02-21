@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../services/batch_service.dart';
@@ -172,7 +173,12 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
       body: FadeTransition(
         opacity: _fadeAnim,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+          padding: const EdgeInsets.fromLTRB(
+            Spacing.sp20,
+            Spacing.sp8,
+            Spacing.sp20,
+            Spacing.sp40,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
@@ -180,7 +186,7 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
               children: [
                 // ── Notice type selector
                 _FieldLabel('Type', required: true),
-                const SizedBox(height: 10),
+                const SizedBox(height: Spacing.sp10),
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
@@ -191,14 +197,14 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
+                          horizontal: Spacing.sp14,
+                          vertical: Spacing.sp10,
                         ),
                         decoration: BoxDecoration(
                           color: selected
                               ? t.$3.withValues(alpha: 0.12)
                               : theme.colorScheme.surfaceContainerLowest,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(Radii.md),
                           border: Border.all(
                             color: selected
                                 ? t.$3.withValues(alpha: 0.5)
@@ -229,11 +235,11 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                                       alpha: 0.3,
                                     ),
                             ),
-                            const SizedBox(width: 6),
+                            const SizedBox(width: Spacing.sp6),
                             Text(
                               t.$2,
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: FontSize.caption,
                                 fontWeight: selected
                                     ? FontWeight.w700
                                     : FontWeight.w500,
@@ -250,27 +256,31 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: Spacing.sp24),
 
                 // ── Priority selector
                 _FieldLabel('Priority', required: true),
-                const SizedBox(height: 10),
+                const SizedBox(height: Spacing.sp10),
                 Row(
                   children: _priorities(theme.colorScheme).map((p) {
                     final selected = _priority == p.$1;
                     return Expanded(
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 3),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: Spacing.sp4,
+                        ),
                         child: GestureDetector(
                           onTap: () => setState(() => _priority = p.$1),
                           child: AnimatedContainer(
                             duration: const Duration(milliseconds: 200),
-                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: Spacing.sp14,
+                            ),
                             decoration: BoxDecoration(
                               color: selected
                                   ? p.$3.withValues(alpha: 0.12)
                                   : theme.colorScheme.surfaceContainerLowest,
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(Radii.md),
                               border: Border.all(
                                 color: selected
                                     ? p.$3.withValues(alpha: 0.5)
@@ -292,7 +302,7 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                             child: Column(
                               children: [
                                 Container(
-                                  padding: const EdgeInsets.all(6),
+                                  padding: const EdgeInsets.all(Spacing.sp6),
                                   decoration: BoxDecoration(
                                     color: selected
                                         ? p.$3.withValues(alpha: 0.15)
@@ -309,11 +319,11 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                                               .withValues(alpha: 0.25),
                                   ),
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: Spacing.sp6),
                                 Text(
                                   p.$2,
                                   style: TextStyle(
-                                    fontSize: 11,
+                                    fontSize: FontSize.micro,
                                     fontWeight: selected
                                         ? FontWeight.w700
                                         : FontWeight.w400,
@@ -332,11 +342,11 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: Spacing.sp28),
 
                 // ── Title
                 _FieldLabel('Title', required: true),
-                const SizedBox(height: 8),
+                const SizedBox(height: Spacing.sp8),
                 TextFormField(
                   controller: _titleCtrl,
                   decoration: _input(
@@ -348,11 +358,11 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                       : null,
                   textCapitalization: TextCapitalization.sentences,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: Spacing.sp24),
 
                 // ── Message
                 _FieldLabel('Message', required: true),
-                const SizedBox(height: 8),
+                const SizedBox(height: Spacing.sp8),
                 TextFormField(
                   controller: _messageCtrl,
                   decoration: _input(
@@ -368,12 +378,12 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
 
                 // ── Conditional schedule fields
                 if (_needsSchedule) ...[
-                  const SizedBox(height: 28),
+                  const SizedBox(height: Spacing.sp28),
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(Spacing.sp16),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainerLowest,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(Radii.lg),
                       border: Border.all(
                         color: theme.colorScheme.onSurface.withValues(
                           alpha: 0.06,
@@ -392,7 +402,7 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                                 alpha: 0.5,
                               ),
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: Spacing.sp8),
                             Text(
                               'Schedule Details',
                               style: theme.textTheme.titleSmall?.copyWith(
@@ -401,22 +411,22 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: Spacing.sp16),
 
                         // Date picker
                         _FieldLabel('Date'),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: Spacing.sp8),
                         GestureDetector(
                           onTap: _pickDate,
                           child: Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 14,
+                              horizontal: Spacing.sp16,
+                              vertical: Spacing.sp14,
                             ),
                             decoration: BoxDecoration(
                               color: theme.colorScheme.surface,
-                              borderRadius: BorderRadius.circular(14),
+                              borderRadius: BorderRadius.circular(Radii.md),
                               border: Border.all(
                                 color: theme.colorScheme.onSurface.withValues(
                                   alpha: 0.06,
@@ -432,7 +442,7 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                                     alpha: 0.4,
                                   ),
                                 ),
-                                const SizedBox(width: 12),
+                                const SizedBox(width: Spacing.sp12),
                                 Text(
                                   _selectedDate != null
                                       ? DateFormat(
@@ -444,14 +454,14 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                                         ? theme.colorScheme.onSurface
                                         : theme.colorScheme.onSurface
                                               .withValues(alpha: 0.4),
-                                    fontSize: 14,
+                                    fontSize: FontSize.body,
                                   ),
                                 ),
                               ],
                             ),
                           ),
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: Spacing.sp16),
 
                         // Time pickers
                         Row(
@@ -461,7 +471,7 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   _FieldLabel('Start Time'),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: Spacing.sp8),
                                   GestureDetector(
                                     onTap: () => _pickTime(isStart: true),
                                     child: _TimeBox(
@@ -474,13 +484,13 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                                 ],
                               ),
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: Spacing.sp12),
                             Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   _FieldLabel('End Time'),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: Spacing.sp8),
                                   GestureDetector(
                                     onTap: () => _pickTime(isStart: false),
                                     child: _TimeBox(
@@ -495,16 +505,16 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
+                        const SizedBox(height: Spacing.sp16),
 
                         // Day selector — only show if no date selected (day auto-derived from date)
                         if (_type == 'timetable_update' &&
                             _selectedDate == null) ...[
                           _FieldLabel('Day'),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: Spacing.sp8),
                           Wrap(
-                            spacing: 6,
-                            runSpacing: 6,
+                            spacing: Spacing.sp6,
+                            runSpacing: Spacing.sp6,
                             children: _dayOptions.map((d) {
                               final sel = _selectedDay == d;
                               final short = _shortDay(d);
@@ -515,8 +525,8 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                                 child: AnimatedContainer(
                                   duration: const Duration(milliseconds: 150),
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                    vertical: 8,
+                                    horizontal: Spacing.sp12,
+                                    vertical: Spacing.sp8,
                                   ),
                                   decoration: BoxDecoration(
                                     color: sel
@@ -524,7 +534,9 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                                             alpha: 0.15,
                                           )
                                         : theme.colorScheme.surface,
-                                    borderRadius: BorderRadius.circular(10),
+                                    borderRadius: BorderRadius.circular(
+                                      Radii.md,
+                                    ),
                                     border: Border.all(
                                       color: sel
                                           ? theme.colorScheme.primary
@@ -536,7 +548,7 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                                   child: Text(
                                     short,
                                     style: TextStyle(
-                                      fontSize: 12,
+                                      fontSize: FontSize.caption,
                                       fontWeight: sel
                                           ? FontWeight.w700
                                           : FontWeight.w500,
@@ -550,12 +562,12 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                               );
                             }).toList(),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: Spacing.sp16),
                         ],
 
                         // Location
                         _FieldLabel('Location'),
-                        const SizedBox(height: 8),
+                        const SizedBox(height: Spacing.sp8),
                         TextFormField(
                           controller: _locationCtrl,
                           decoration: _input(
@@ -569,7 +581,7 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                   ),
                 ],
 
-                const SizedBox(height: 40),
+                const SizedBox(height: Spacing.sp40),
 
                 // ── Send button
                 Container(
@@ -582,7 +594,7 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                         theme.colorScheme.primary.withValues(alpha: 0.85),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                     boxShadow: [
                       BoxShadow(
                         color: theme.colorScheme.primary.withValues(
@@ -597,7 +609,7 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: _isSaving ? null : _save,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(Radii.lg),
                       child: Center(
                         child: _isSaving
                             ? const SizedBox(
@@ -616,13 +628,13 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                                     size: 18,
                                     color: theme.colorScheme.onPrimary,
                                   ),
-                                  const SizedBox(width: 8),
+                                  const SizedBox(width: Spacing.sp8),
                                   Text(
                                     'Send Notice',
                                     style: TextStyle(
                                       color: theme.colorScheme.onPrimary,
                                       fontWeight: FontWeight.w700,
-                                      fontSize: 15,
+                                      fontSize: FontSize.body,
                                     ),
                                   ),
                                 ],
@@ -645,16 +657,19 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
     filled: true,
     fillColor: Theme.of(context).colorScheme.surfaceContainerLowest,
     border: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(Radii.md),
       borderSide: BorderSide.none,
     ),
     focusedBorder: OutlineInputBorder(
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(Radii.md),
       borderSide: BorderSide(
         color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
       ),
     ),
-    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    contentPadding: const EdgeInsets.symmetric(
+      horizontal: Spacing.sp16,
+      vertical: Spacing.sp14,
+    ),
   );
 
   static String _shortDay(String d) {
@@ -681,10 +696,13 @@ class _TimeBox extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp16,
+        vertical: Spacing.sp14,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(
           color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
         ),
@@ -696,14 +714,14 @@ class _TimeBox extends StatelessWidget {
             size: 18,
             color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: Spacing.sp12),
           Text(
             label,
             style: TextStyle(
               color: hasValue
                   ? theme.colorScheme.onSurface
                   : theme.colorScheme.onSurface.withValues(alpha: 0.4),
-              fontSize: 14,
+              fontSize: FontSize.body,
             ),
           ),
         ],
@@ -728,10 +746,13 @@ class _FieldLabel extends StatelessWidget {
           ),
         ),
         if (required) ...[
-          const SizedBox(width: 4),
+          const SizedBox(width: Spacing.sp4),
           Text(
             '*',
-            style: TextStyle(color: theme.colorScheme.error, fontSize: 14),
+            style: TextStyle(
+              color: theme.colorScheme.error,
+              fontSize: FontSize.body,
+            ),
           ),
         ],
       ],

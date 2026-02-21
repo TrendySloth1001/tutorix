@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../services/fee_service.dart';
+import '../../../core/theme/design_tokens.dart';
 
 class FeeCalendarScreen extends StatefulWidget {
   final String coachingId;
@@ -68,7 +69,7 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
         elevation: 0,
         titleTextStyle: TextStyle(
           color: theme.colorScheme.onSurface,
-          fontSize: 20,
+          fontSize: FontSize.title,
           fontWeight: FontWeight.bold,
         ),
         iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
@@ -121,7 +122,7 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
           if (collected == 0 && due == 0) return null;
 
           return Positioned(
-            bottom: 1,
+            bottom: Spacing.sp2,
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
@@ -129,7 +130,7 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
                   Container(
                     width: 6,
                     height: 6,
-                    margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                    margin: const EdgeInsets.symmetric(horizontal: Spacing.sp2),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.error,
                       shape: BoxShape.circle,
@@ -139,7 +140,7 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
                   Container(
                     width: 6,
                     height: 6,
-                    margin: const EdgeInsets.symmetric(horizontal: 1.5),
+                    margin: const EdgeInsets.symmetric(horizontal: Spacing.sp2),
                     decoration: BoxDecoration(
                       color: Theme.of(context).colorScheme.primary,
                       shape: BoxShape.circle,
@@ -173,25 +174,25 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
     final due = (data['due'] as num?)?.toDouble() ?? 0;
 
     return Padding(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.all(Spacing.sp16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             DateFormat.yMMMMEEEEd().format(_selectedDay!),
             style: TextStyle(
-              fontSize: 18,
+              fontSize: FontSize.title,
               fontWeight: FontWeight.bold,
               color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: Spacing.sp20),
           _buildStatCard(
             'Collected',
             collected,
             Theme.of(context).colorScheme.primary,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           _buildStatCard('Due', due, Theme.of(context).colorScheme.error),
         ],
       ),
@@ -200,10 +201,10 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
 
   Widget _buildStatCard(String title, double amount, Color color) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.sp16),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
@@ -212,7 +213,7 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
           Text(
             title,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: FontSize.sub,
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -220,7 +221,7 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
           Text(
             '₹${amount.toStringAsFixed(0)}',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: FontSize.title,
               fontWeight: FontWeight.bold,
               color: color,
             ),

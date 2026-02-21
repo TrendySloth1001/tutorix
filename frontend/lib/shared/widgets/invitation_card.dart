@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 import '../../core/constants/api_constants.dart';
 
 class InvitationCard extends StatelessWidget {
@@ -37,10 +38,10 @@ class InvitationCard extends StatelessWidget {
     final inviterName = invitedBy?['name'] ?? 'Someone';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: Spacing.sp16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(Radii.xl),
         boxShadow: [
           BoxShadow(
             color: theme.colorScheme.shadow.withValues(alpha: 0.08),
@@ -66,7 +67,7 @@ class InvitationCard extends StatelessWidget {
                   height: 120,
                   child: ClipRRect(
                     borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(24),
+                      top: Radius.circular(Radii.xl),
                     ),
                     child: Stack(
                       fit: StackFit.expand,
@@ -99,17 +100,17 @@ class InvitationCard extends StatelessWidget {
 
                 // Role Chip (Moved to Top Right)
                 Positioned(
-                  top: 12,
-                  right: 12,
+                  top: Spacing.sp12,
+                  right: Spacing.sp12,
                   child: _buildRoleChip(role, theme, isOverlay: true),
                 ),
 
                 // Logo Positioned to overlap bottom-left
                 Positioned(
-                  left: 20,
+                  left: Spacing.sp20,
                   bottom: 0,
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(Spacing.sp4),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surface,
                       shape: BoxShape.circle,
@@ -141,7 +142,12 @@ class InvitationCard extends StatelessWidget {
 
           // 2. Content Body
           Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 20),
+            padding: const EdgeInsets.fromLTRB(
+              Spacing.sp20,
+              0,
+              Spacing.sp20,
+              Spacing.sp20,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -149,7 +155,7 @@ class InvitationCard extends StatelessWidget {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const SizedBox(width: 80), // Space for logo
+                    const SizedBox(width: Spacing.sp80), // Space for logo
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -158,12 +164,12 @@ class InvitationCard extends StatelessWidget {
                             coachingName,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
-                              fontSize: 18,
+                              fontSize: FontSize.title,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: Spacing.sp4),
                           Text(
                             'Invited by $inviterName',
                             style: theme.textTheme.bodySmall?.copyWith(
@@ -176,16 +182,16 @@ class InvitationCard extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: Spacing.sp16),
 
                 // Message (if any)
                 if (message != null && message.isNotEmpty) ...[
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(Spacing.sp12),
                     decoration: BoxDecoration(
                       color: theme.colorScheme.surfaceContainerLow,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(Radii.md),
                       border: Border.all(
                         color: theme.colorScheme.outlineVariant.withValues(
                           alpha: 0.5,
@@ -200,7 +206,7 @@ class InvitationCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: Spacing.sp16),
                 ],
 
                 // Ward Info (if any)
@@ -212,7 +218,7 @@ class InvitationCard extends StatelessWidget {
                         size: 16,
                         color: theme.colorScheme.secondary,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: Spacing.sp8),
                       Text(
                         'For your child: ',
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -228,7 +234,7 @@ class InvitationCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: Spacing.sp20),
                 ],
 
                 // Action Buttons
@@ -240,23 +246,27 @@ class InvitationCard extends StatelessWidget {
                         style: OutlinedButton.styleFrom(
                           foregroundColor: theme.colorScheme.error,
                           side: BorderSide(color: theme.colorScheme.error),
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: Spacing.sp12,
+                          ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(Radii.md),
                           ),
                         ),
                         child: const Text('Decline'),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: Spacing.sp12),
                     Expanded(
                       child: FilledButton(
                         onPressed: isResponding ? null : onAccept,
                         style: FilledButton.styleFrom(
                           backgroundColor: theme.colorScheme.primary,
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: Spacing.sp12,
+                          ),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(Radii.md),
                           ),
                         ),
                         child: isResponding
@@ -332,10 +342,13 @@ class InvitationCard extends StatelessWidget {
     final textColor = isOverlay ? color : color;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp12,
+        vertical: Spacing.sp6,
+      ),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Radii.lg),
         boxShadow: isOverlay
             ? [
                 BoxShadow(
@@ -350,7 +363,7 @@ class InvitationCard extends StatelessWidget {
         role,
         style: TextStyle(
           color: textColor,
-          fontSize: 10,
+          fontSize: FontSize.nano,
           fontWeight: FontWeight.bold,
           letterSpacing: 0.5,
         ),

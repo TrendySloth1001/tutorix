@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../models/coaching_model.dart';
 
 /// Premium full-width coaching card with cover image background.
@@ -27,28 +28,28 @@ class CoachingCoverCard extends StatelessWidget {
     final hasTagline = coaching.tagline != null && coaching.tagline!.isNotEmpty;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp16),
       child: Material(
         color: Colors.transparent,
         elevation: 8,
         shadowColor: Colors.black.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Radii.lg),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(Radii.lg),
           child: Container(
             height: 160,
             width: double.infinity,
             decoration: BoxDecoration(
               color: colors.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(Radii.lg),
               border: Border.all(
                 color: colors.outline.withValues(alpha: 0.1),
                 width: 1,
               ),
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(Radii.lg),
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -82,7 +83,7 @@ class CoachingCoverCard extends StatelessWidget {
 
                   // ─── CONTENT ───
                   Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(Spacing.sp16),
                     child: Row(
                       crossAxisAlignment: CrossAxisAlignment.end,
                       children: [
@@ -92,7 +93,7 @@ class CoachingCoverCard extends StatelessWidget {
                           height: 60,
                           decoration: BoxDecoration(
                             color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(Radii.md),
                             border: Border.all(
                               color: Colors.white.withValues(alpha: 0.35),
                               width: 2,
@@ -107,7 +108,7 @@ class CoachingCoverCard extends StatelessWidget {
                           ),
                           child: hasLogo
                               ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(Radii.md),
                                   child: Image.network(
                                     coaching.logo!,
                                     fit: BoxFit.cover,
@@ -117,7 +118,7 @@ class CoachingCoverCard extends StatelessWidget {
                                 )
                               : _buildLogoPlaceholder(theme),
                         ),
-                        const SizedBox(width: 14),
+                        const SizedBox(width: Spacing.sp14),
 
                         // Name + Tagline + Stats
                         Expanded(
@@ -147,12 +148,12 @@ class CoachingCoverCard extends StatelessWidget {
 
                               // Tagline
                               if (hasTagline) ...[
-                                const SizedBox(height: 2),
+                                const SizedBox(height: Spacing.sp2),
                                 Text(
                                   coaching.tagline!,
                                   style: TextStyle(
                                     color: Colors.white.withValues(alpha: 0.85),
-                                    fontSize: 12,
+                                    fontSize: FontSize.caption,
                                     fontWeight: FontWeight.w400,
                                   ),
                                   maxLines: 1,
@@ -160,7 +161,7 @@ class CoachingCoverCard extends StatelessWidget {
                                 ),
                               ],
 
-                              const SizedBox(height: 6),
+                              const SizedBox(height: Spacing.sp6),
 
                               // Stats row
                               Row(
@@ -169,7 +170,7 @@ class CoachingCoverCard extends StatelessWidget {
                                     icon: Icons.people_rounded,
                                     value: '${coaching.memberCount}',
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: Spacing.sp12),
                                   if (coaching.branches.isNotEmpty)
                                     _buildStat(
                                       icon: Icons.location_on_rounded,
@@ -181,7 +182,7 @@ class CoachingCoverCard extends StatelessWidget {
                           ),
                         ),
 
-                        const SizedBox(width: 8),
+                        const SizedBox(width: Spacing.sp8),
 
                         // Right side: Role badge + Arrow
                         Column(
@@ -255,10 +256,13 @@ class CoachingCoverCard extends StatelessWidget {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp8,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(Radii.md),
         boxShadow: [
           BoxShadow(
             color: bgColor.withValues(alpha: 0.4),
@@ -271,12 +275,12 @@ class CoachingCoverCard extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 12, color: textColor),
-          const SizedBox(width: 4),
+          const SizedBox(width: Spacing.sp4),
           Text(
             label,
             style: TextStyle(
               color: textColor,
-              fontSize: 10,
+              fontSize: FontSize.nano,
               fontWeight: FontWeight.w700,
             ),
           ),
@@ -321,7 +325,7 @@ class CoachingCoverCard extends StatelessWidget {
         style: const TextStyle(
           color: Colors.white,
           fontWeight: FontWeight.w700,
-          fontSize: 22,
+          fontSize: FontSize.title,
         ),
       ),
     );
@@ -332,12 +336,12 @@ class CoachingCoverCard extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 13, color: Colors.white.withValues(alpha: 0.75)),
-        const SizedBox(width: 3),
+        const SizedBox(width: Spacing.sp4),
         Text(
           value,
           style: TextStyle(
             color: Colors.white.withValues(alpha: 0.85),
-            fontSize: 11,
+            fontSize: FontSize.micro,
             fontWeight: FontWeight.w500,
           ),
         ),

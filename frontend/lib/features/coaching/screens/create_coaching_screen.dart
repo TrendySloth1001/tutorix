@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../profile/services/user_service.dart';
@@ -79,14 +80,17 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp24,
+          vertical: Spacing.sp8,
+        ),
         child: Form(
           key: _formKey,
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _HeaderIllustration(),
-              const SizedBox(height: 40),
+              const SizedBox(height: Spacing.sp40),
 
               // Name
               _buildField(
@@ -103,7 +107,7 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
                   return null;
                 },
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: Spacing.sp20),
 
               // Description
               _buildField(
@@ -114,19 +118,19 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
                 capitalization: TextCapitalization.sentences,
                 maxLines: 4,
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: Spacing.sp32),
 
               // Info note
               _InfoNote(),
-              const SizedBox(height: 48),
+              const SizedBox(height: Spacing.sp48),
 
               // Submit
               FilledButton(
                 onPressed: _isLoading ? null : _createCoaching,
                 style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  padding: const EdgeInsets.symmetric(vertical: Spacing.sp20),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                   ),
                   elevation: 0,
                 ),
@@ -142,12 +146,12 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
                     : const Text(
                         'Launch Institute',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: FontSize.sub,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: Spacing.sp24),
             ],
           ),
         ),
@@ -177,15 +181,15 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
         filled: true,
         fillColor: theme.colorScheme.tertiary.withValues(alpha: 0.05),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(Radii.lg),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(Radii.lg),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(18),
+          borderRadius: BorderRadius.circular(Radii.lg),
           borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
         ),
         alignLabelWithHint: maxLines > 1,
@@ -205,13 +209,13 @@ class _HeaderIllustration extends StatelessWidget {
       height: 180,
       decoration: BoxDecoration(
         color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(28),
+        borderRadius: BorderRadius.circular(Radii.xl),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(Spacing.sp20),
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
               shape: BoxShape.circle,
@@ -228,7 +232,7 @@ class _HeaderIllustration extends StatelessWidget {
               color: theme.colorScheme.primary,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           Text(
             'Tutorix Institute',
             style: theme.textTheme.titleMedium?.copyWith(
@@ -248,10 +252,10 @@ class _InfoNote extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.sp16),
       decoration: BoxDecoration(
         color: theme.colorScheme.primary.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Radii.lg),
         border: Border.all(
           color: theme.colorScheme.primary.withValues(alpha: 0.05),
         ),
@@ -263,7 +267,7 @@ class _InfoNote extends StatelessWidget {
             size: 20,
             color: theme.colorScheme.primary.withValues(alpha: 0.6),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: Spacing.sp12),
           Expanded(
             child: Text(
               'As the founder, you have full administrative control over curriculum and admissions.',

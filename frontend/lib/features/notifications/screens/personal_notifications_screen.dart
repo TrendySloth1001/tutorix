@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/theme/design_tokens.dart';
+
 import '../../auth/controllers/auth_controller.dart';
 import '../../../shared/models/notification_model.dart';
 import '../../../shared/services/invitation_service.dart';
@@ -248,14 +250,14 @@ class _PersonalNotificationsScreenState
           if (_unreadCount > 0)
             Center(
               child: Container(
-                margin: const EdgeInsets.only(right: 16),
+                margin: const EdgeInsets.only(right: Spacing.sp16),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
+                  horizontal: Spacing.sp12,
+                  vertical: Spacing.sp6,
                 ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(Radii.lg),
                 ),
                 child: Text(
                   '$_unreadCount unread',
@@ -282,12 +284,12 @@ class _PersonalNotificationsScreenState
                   SliverFillRemaining(
                     child: Center(
                       child: Padding(
-                        padding: const EdgeInsets.all(40),
+                        padding: const EdgeInsets.all(Spacing.sp40),
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Container(
-                              padding: const EdgeInsets.all(32),
+                              padding: const EdgeInsets.all(Spacing.sp32),
                               decoration: BoxDecoration(
                                 color: theme.colorScheme.tertiary.withValues(
                                   alpha: 0.1,
@@ -302,14 +304,14 @@ class _PersonalNotificationsScreenState
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(height: Spacing.sp24),
                             Text(
                               'No Notifications',
                               style: theme.textTheme.titleLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 8),
+                            const SizedBox(height: Spacing.sp8),
                             Text(
                               'You\'re all caught up!',
                               textAlign: TextAlign.center,
@@ -331,7 +333,7 @@ class _PersonalNotificationsScreenState
                 await Future.delayed(const Duration(milliseconds: 500));
               },
               child: ListView.separated(
-                padding: const EdgeInsets.symmetric(vertical: 8),
+                padding: const EdgeInsets.symmetric(vertical: Spacing.sp8),
                 itemCount: _items.length,
                 separatorBuilder: (_, _) => const Divider(height: 1),
                 itemBuilder: (context, index) {
@@ -345,8 +347,8 @@ class _PersonalNotificationsScreenState
 
                     return Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                        horizontal: Spacing.sp16,
+                        vertical: Spacing.sp8,
                       ),
                       child: InvitationCard(
                         invitation: item,
@@ -368,7 +370,7 @@ class _PersonalNotificationsScreenState
                     background: Container(
                       color: theme.colorScheme.surfaceContainerHighest,
                       alignment: Alignment.centerRight,
-                      padding: const EdgeInsets.only(right: 24),
+                      padding: const EdgeInsets.only(right: Spacing.sp24),
                       child: Icon(
                         Icons.archive_rounded,
                         color: theme.colorScheme.onSurfaceVariant,
@@ -382,7 +384,7 @@ class _PersonalNotificationsScreenState
                       child: InkWell(
                         onTap: () => _markAsRead(n),
                         child: Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(Spacing.sp16),
                           child: Row(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
@@ -391,7 +393,7 @@ class _PersonalNotificationsScreenState
                                 height: 48,
                                 decoration: BoxDecoration(
                                   color: iconColor.withValues(alpha: 0.1),
-                                  borderRadius: BorderRadius.circular(12),
+                                  borderRadius: BorderRadius.circular(Radii.md),
                                 ),
                                 child: Icon(
                                   iconData,
@@ -399,7 +401,7 @@ class _PersonalNotificationsScreenState
                                   size: 24,
                                 ),
                               ),
-                              const SizedBox(width: 16),
+                              const SizedBox(width: Spacing.sp16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -424,14 +426,14 @@ class _PersonalNotificationsScreenState
                                             width: 8,
                                             height: 8,
                                             margin: const EdgeInsets.only(
-                                              left: 8,
+                                              left: Spacing.sp8,
                                             ),
                                             decoration: BoxDecoration(
                                               color: theme.colorScheme.primary,
                                               shape: BoxShape.circle,
                                             ),
                                           ),
-                                        const SizedBox(width: 8),
+                                        const SizedBox(width: Spacing.sp8),
                                         GestureDetector(
                                           onTap: () => _archive(n.id),
                                           child: Icon(
@@ -445,14 +447,14 @@ class _PersonalNotificationsScreenState
                                         ),
                                       ],
                                     ),
-                                    const SizedBox(height: 4),
+                                    const SizedBox(height: Spacing.sp4),
                                     Text(
                                       n.message,
                                       style: theme.textTheme.bodyMedium,
                                       maxLines: 3,
                                       overflow: TextOverflow.ellipsis,
                                     ),
-                                    const SizedBox(height: 8),
+                                    const SizedBox(height: Spacing.sp8),
                                     Text(
                                       _formatTime(n.createdAt),
                                       style: theme.textTheme.labelSmall

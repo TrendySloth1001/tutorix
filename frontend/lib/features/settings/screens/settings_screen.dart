@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/services/cache_manager.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../core/theme/theme_provider.dart';
@@ -147,25 +148,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
         elevation: 0,
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp24,
+          vertical: Spacing.sp8,
+        ),
         children: [
           // ─── Appearance ───────────────────────────────────────
           _SectionHeader(title: 'Appearance', icon: Icons.palette_outlined),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           _ThemeSelector(),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: Spacing.sp32),
 
           // ─── Search Privacy ───────────────────────────────────
           _SectionHeader(title: 'Search Privacy', icon: Icons.shield_outlined),
-          const SizedBox(height: 4),
+          const SizedBox(height: Spacing.sp4),
           Text(
             'Control what others see when they search for you to send an invite',
             style: theme.textTheme.bodySmall?.copyWith(
               color: theme.colorScheme.secondary.withValues(alpha: 0.6),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           _PrivacyToggle(
             icon: Icons.email_outlined,
             title: 'Show email',
@@ -185,14 +189,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onChanged: (v) => _updatePrivacy(showWardsInSearch: v),
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: Spacing.sp32),
 
           // ─── Offline Storage ──────────────────────────────────
           _SectionHeader(
             title: 'Offline Storage',
             icon: Icons.download_for_offline_outlined,
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: Spacing.sp4),
           Text(
             'Cache data locally so screens load instantly. '
             'Only new or updated data is fetched from the server.',
@@ -200,7 +204,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: theme.colorScheme.secondary.withValues(alpha: 0.6),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           _ToggleTile(
             icon: Icons.cached_rounded,
             title: 'Enable offline cache',
@@ -213,21 +217,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onChanged: _toggleOfflineCache,
           ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: Spacing.sp32),
 
           // ─── Data Management ──────────────────────────────────
           _SectionHeader(
             title: 'Data Management',
             icon: Icons.storage_outlined,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           _ActionTile(
             icon: Icons.cleaning_services_outlined,
             title: 'Clear cache',
             subtitle: '$_cacheEntries cached entries · $_cacheSize',
             onTap: _clearCache,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           _ActionTile(
             icon: Icons.delete_forever_outlined,
             title: 'Delete all local data',
@@ -236,7 +240,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             onTap: _deleteAllData,
           ),
 
-          const SizedBox(height: 40),
+          const SizedBox(height: Spacing.sp40),
         ],
       ),
     );
@@ -255,11 +259,11 @@ class _SectionHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 4),
+      padding: const EdgeInsets.only(bottom: Spacing.sp4),
       child: Row(
         children: [
           Icon(icon, size: 18, color: theme.colorScheme.primary),
-          const SizedBox(width: 8),
+          const SizedBox(width: Spacing.sp8),
           Text(
             title,
             style: theme.textTheme.titleSmall?.copyWith(
@@ -290,7 +294,7 @@ class _PrivacyToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
+      padding: const EdgeInsets.symmetric(vertical: Spacing.sp2),
       child: Row(
         children: [
           Icon(
@@ -298,7 +302,7 @@ class _PrivacyToggle extends StatelessWidget {
             size: 20,
             color: theme.colorScheme.secondary.withValues(alpha: 0.6),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: Spacing.sp12),
           Expanded(
             child: Text(
               title,
@@ -337,10 +341,13 @@ class _ToggleTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp16,
+        vertical: Spacing.sp12,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.lg),
         border: Border.all(
           color: theme.colorScheme.primary.withValues(alpha: 0.08),
         ),
@@ -348,14 +355,14 @@ class _ToggleTile extends StatelessWidget {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(Spacing.sp10),
             decoration: BoxDecoration(
               color: theme.colorScheme.tertiary.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
             child: Icon(icon, color: theme.colorScheme.primary, size: 22),
           ),
-          const SizedBox(width: 14),
+          const SizedBox(width: Spacing.sp14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -366,7 +373,7 @@ class _ToggleTile extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: Spacing.sp2),
                 Text(
                   subtitle,
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -411,12 +418,15 @@ class _ActionTile extends StatelessWidget {
 
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(Radii.lg),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp16,
+          vertical: Spacing.sp14,
+        ),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.lg),
           border: Border.all(
             color: isDestructive
                 ? theme.colorScheme.error.withValues(alpha: 0.15)
@@ -426,14 +436,14 @@ class _ActionTile extends StatelessWidget {
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(10),
+              padding: const EdgeInsets.all(Spacing.sp10),
               decoration: BoxDecoration(
                 color: accent.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
               child: Icon(icon, color: accent, size: 22),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: Spacing.sp14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -445,7 +455,7 @@ class _ActionTile extends StatelessWidget {
                       color: isDestructive ? theme.colorScheme.error : null,
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: Spacing.sp2),
                   Text(
                     subtitle,
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -489,20 +499,20 @@ class _ThemeSelector extends StatelessWidget {
         final selected = current == mode;
         return Expanded(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            padding: const EdgeInsets.symmetric(horizontal: Spacing.sp4),
             child: GestureDetector(
               onTap: () => context.read<ThemeProvider>().setMode(mode),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(
-                  vertical: 14,
-                  horizontal: 8,
+                  vertical: Spacing.sp14,
+                  horizontal: Spacing.sp8,
                 ),
                 decoration: BoxDecoration(
                   color: selected
                       ? theme.colorScheme.primary.withValues(alpha: 0.1)
                       : theme.colorScheme.secondary.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(Radii.md),
                   border: Border.all(
                     color: selected
                         ? theme.colorScheme.primary
@@ -520,7 +530,7 @@ class _ThemeSelector extends StatelessWidget {
                           : theme.colorScheme.secondary,
                       size: 24,
                     ),
-                    const SizedBox(height: 6),
+                    const SizedBox(height: Spacing.sp6),
                     Text(
                       label,
                       style: theme.textTheme.bodySmall?.copyWith(

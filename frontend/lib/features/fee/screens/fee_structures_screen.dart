@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
 import 'fee_audit_log_screen.dart';
+import '../../../core/theme/design_tokens.dart';
 
 /// Manages fee structures (templates) for a coaching.
 /// Multiple independent structures can coexist — each can be assigned to any number of students.
@@ -252,26 +253,26 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
                                 size: 56,
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
-                              const SizedBox(height: 16),
+                              const SizedBox(height: Spacing.sp16),
                               Text(
                                 'No fee structures yet',
                                 style: TextStyle(
                                   color: theme.colorScheme.onSurface,
                                   fontWeight: FontWeight.w700,
-                                  fontSize: 16,
+                                  fontSize: FontSize.sub,
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: Spacing.sp8),
                               Padding(
                                 padding: const EdgeInsets.symmetric(
-                                  horizontal: 40,
+                                  horizontal: Spacing.sp40,
                                 ),
                                 child: Text(
                                   'Tap + to create structures like "Monthly Tuition" or "Annual Fee". Each can be assigned to multiple students.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
                                     color: theme.colorScheme.onSurfaceVariant,
-                                    fontSize: 13,
+                                    fontSize: FontSize.body,
                                   ),
                                 ),
                               ),
@@ -281,7 +282,7 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
                       ],
                     )
                   : ListView(
-                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
+                      padding: const EdgeInsets.fromLTRB(Spacing.sp16, Spacing.sp16, Spacing.sp16, 96),
                       children: _structures
                           .map(
                             (s) => _StructureCard(
@@ -314,10 +315,10 @@ class _StructureCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(bottom: Spacing.sp12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.lg),
         border: Border.all(
           color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
         ),
@@ -334,15 +335,15 @@ class _StructureCard extends StatelessWidget {
         children: [
           // Header row
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 14, 8, 0),
+            padding: const EdgeInsets.fromLTRB(Spacing.sp16, Spacing.sp14, Spacing.sp8, 0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(Spacing.sp8),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                   child: Icon(
                     Icons.receipt_rounded,
@@ -350,7 +351,7 @@ class _StructureCard extends StatelessWidget {
                     size: 18,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -360,18 +361,18 @@ class _StructureCard extends StatelessWidget {
                         style: TextStyle(
                           color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w700,
-                          fontSize: 15,
+                          fontSize: FontSize.body,
                         ),
                       ),
                       if (structure.description != null &&
                           structure.description!.isNotEmpty)
                         Padding(
-                          padding: const EdgeInsets.only(top: 2),
+                          padding: const EdgeInsets.only(top: Spacing.sp2),
                           child: Text(
                             structure.description!,
                             style: TextStyle(
                               color: theme.colorScheme.onSurfaceVariant,
-                              fontSize: 12,
+                              fontSize: FontSize.caption,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -406,7 +407,7 @@ class _StructureCard extends StatelessWidget {
                             size: 18,
                             color: theme.colorScheme.error,
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: Spacing.sp10),
                           Text(
                             'Remove',
                             style: TextStyle(color: theme.colorScheme.error),
@@ -421,7 +422,7 @@ class _StructureCard extends StatelessWidget {
           ),
           // Amount + cycle
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 0),
+            padding: const EdgeInsets.fromLTRB(Spacing.sp16, Spacing.sp10, Spacing.sp16, 0),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -430,17 +431,17 @@ class _StructureCard extends StatelessWidget {
                   style: TextStyle(
                     color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w900,
-                    fontSize: 26,
+                    fontSize: FontSize.hero,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: Spacing.sp6),
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 3),
+                  padding: const EdgeInsets.only(bottom: Spacing.sp4),
                   child: Text(
                     '/ ${structure.cycleLabel}',
                     style: TextStyle(
                       color: theme.colorScheme.onSurfaceVariant,
-                      fontSize: 13,
+                      fontSize: FontSize.body,
                     ),
                   ),
                 ),
@@ -449,7 +450,7 @@ class _StructureCard extends StatelessWidget {
           ),
           // Chips
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 10, 16, 14),
+            padding: const EdgeInsets.fromLTRB(Spacing.sp16, Spacing.sp10, Spacing.sp16, Spacing.sp14),
             child: Wrap(
               spacing: 8,
               runSpacing: 6,
@@ -501,21 +502,21 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp8, vertical: Spacing.sp4),
       decoration: BoxDecoration(
         color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 11, color: theme.colorScheme.onSurfaceVariant),
-          const SizedBox(width: 4),
+          const SizedBox(width: Spacing.sp4),
           Text(
             label,
             style: TextStyle(
               color: theme.colorScheme.onSurfaceVariant,
-              fontSize: 11,
+              fontSize: FontSize.micro,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -665,12 +666,12 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(Radii.lg)),
       ),
       padding: EdgeInsets.only(
-        left: 20,
-        right: 20,
-        top: 20,
+        left: Spacing.sp20,
+        right: Spacing.sp20,
+        top: Spacing.sp20,
         bottom: MediaQuery.of(context).viewInsets.bottom + 24,
       ),
       child: SingleChildScrollView(
@@ -684,16 +685,16 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                 height: 4,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.outlineVariant,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(Radii.sm),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
             Text(
               widget.existing != null ? 'Edit Structure' : 'New Fee Structure',
               style: theme.textTheme.titleLarge,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
             TextField(
               controller: _nameCtrl,
               decoration: const InputDecoration(
@@ -701,7 +702,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                 hintText: 'e.g. Monthly Tuition',
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             TextField(
               controller: _descCtrl,
               decoration: const InputDecoration(
@@ -709,7 +710,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
               ),
               maxLines: 2,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             TextField(
               controller: _amountCtrl,
               keyboardType: const TextInputType.numberWithOptions(
@@ -720,16 +721,16 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                 prefixText: '₹ ',
               ),
             ),
-            const SizedBox(height: 14),
+            const SizedBox(height: Spacing.sp14),
             Text(
               'Billing Cycle',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: theme.colorScheme.onSurface,
-                fontSize: 13,
+                fontSize: FontSize.body,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -739,8 +740,8 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                   onTap: () => setState(() => _cycle = c),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: Spacing.sp12,
+                      vertical: Spacing.sp6,
                     ),
                     decoration: BoxDecoration(
                       color: sel
@@ -748,7 +749,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                           : theme.colorScheme.outlineVariant.withValues(
                               alpha: 0.3,
                             ),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(Radii.lg),
                     ),
                     child: Text(
                       _cycleLabels[c] ?? c,
@@ -756,7 +757,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                         color: sel
                             ? theme.colorScheme.onPrimary
                             : theme.colorScheme.onSurface,
-                        fontSize: 12,
+                        fontSize: FontSize.caption,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -764,7 +765,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                 );
               }).toList(),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             TextField(
               controller: _fineCtrl,
               keyboardType: const TextInputType.numberWithOptions(
@@ -777,27 +778,27 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
             ),
 
             // ── Tax ──────────────────────────────────────────────
-            const SizedBox(height: 20),
+            const SizedBox(height: Spacing.sp20),
             const Divider(),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Text(
               'Tax Configuration',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 color: theme.colorScheme.onSurface,
-                fontSize: 14,
+                fontSize: FontSize.body,
               ),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: Spacing.sp10),
             Text(
               'Tax Type',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
                 color: theme.colorScheme.onSurface,
-                fontSize: 13,
+                fontSize: FontSize.body,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             Wrap(
               spacing: 8,
               runSpacing: 8,
@@ -807,8 +808,8 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                   onTap: () => setState(() => _taxType = t),
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
+                      horizontal: Spacing.sp12,
+                      vertical: Spacing.sp6,
                     ),
                     decoration: BoxDecoration(
                       color: sel
@@ -816,7 +817,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                           : theme.colorScheme.outlineVariant.withValues(
                               alpha: 0.3,
                             ),
-                      borderRadius: BorderRadius.circular(20),
+                      borderRadius: BorderRadius.circular(Radii.lg),
                     ),
                     child: Text(
                       _taxLabels[t] ?? t,
@@ -824,7 +825,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                         color: sel
                             ? theme.colorScheme.onPrimary
                             : theme.colorScheme.onSurface,
-                        fontSize: 12,
+                        fontSize: FontSize.caption,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -833,16 +834,16 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
               }).toList(),
             ),
             if (_taxType != 'NONE') ...[
-              const SizedBox(height: 14),
+              const SizedBox(height: Spacing.sp14),
               Text(
                 'GST Rate',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurface,
-                  fontSize: 13,
+                  fontSize: FontSize.body,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sp8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -852,8 +853,8 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                     onTap: () => setState(() => _gstRate = r),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+                        horizontal: Spacing.sp12,
+                        vertical: Spacing.sp6,
                       ),
                       decoration: BoxDecoration(
                         color: sel
@@ -861,7 +862,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                             : theme.colorScheme.outlineVariant.withValues(
                                 alpha: 0.3,
                               ),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(Radii.lg),
                       ),
                       child: Text(
                         '${r.toStringAsFixed(0)}%',
@@ -869,7 +870,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                           color: sel
                               ? theme.colorScheme.onPrimary
                               : theme.colorScheme.onSurface,
-                          fontSize: 12,
+                          fontSize: FontSize.caption,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -877,16 +878,16 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                   );
                 }).toList(),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: Spacing.sp14),
               Text(
                 'Supply Type',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
                   color: theme.colorScheme.onSurface,
-                  fontSize: 13,
+                  fontSize: FontSize.body,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sp8),
               Wrap(
                 spacing: 8,
                 runSpacing: 8,
@@ -900,8 +901,8 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                         onTap: () => setState(() => _supplyType = e.$1),
                         child: Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 6,
+                            horizontal: Spacing.sp12,
+                            vertical: Spacing.sp6,
                           ),
                           decoration: BoxDecoration(
                             color: sel
@@ -909,7 +910,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                                 : theme.colorScheme.outlineVariant.withValues(
                                     alpha: 0.3,
                                   ),
-                            borderRadius: BorderRadius.circular(20),
+                            borderRadius: BorderRadius.circular(Radii.lg),
                           ),
                           child: Text(
                             e.$2,
@@ -917,7 +918,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                               color: sel
                                   ? theme.colorScheme.onPrimary
                                   : theme.colorScheme.onSurface,
-                              fontSize: 12,
+                              fontSize: FontSize.caption,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -925,7 +926,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                       );
                     }).toList(),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Spacing.sp12),
               TextField(
                 controller: _sacCtrl,
                 decoration: const InputDecoration(
@@ -933,7 +934,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                   hintText: 'e.g. 999293',
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: Spacing.sp12),
               TextField(
                 controller: _hsnCtrl,
                 decoration: const InputDecoration(
@@ -944,9 +945,9 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
             ],
 
             // ── Line Items ───────────────────────────────────────
-            const SizedBox(height: 20),
+            const SizedBox(height: Spacing.sp20),
             const Divider(),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -955,7 +956,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: theme.colorScheme.onSurface,
-                    fontSize: 14,
+                    fontSize: FontSize.body,
                   ),
                 ),
                 IconButton(
@@ -978,12 +979,12 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
             ),
             if (_lineItems.isEmpty)
               Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: Spacing.sp8),
                 child: Text(
                   'Add breakdowns like "Books", "Lab Fee"',
                   style: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: 12,
+                    fontSize: FontSize.caption,
                   ),
                 ),
               ),
@@ -991,7 +992,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
               final i = entry.key;
               final item = entry.value;
               return Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: Spacing.sp8),
                 child: Row(
                   children: [
                     Expanded(
@@ -1004,7 +1005,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: Spacing.sp8),
                     Expanded(
                       flex: 2,
                       child: TextField(
@@ -1039,26 +1040,26 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
             }),
 
             // ── Installment Controls ─────────────────────────────
-            const SizedBox(height: 20),
+            const SizedBox(height: Spacing.sp20),
             const Divider(),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Text(
               'Installment Settings',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
                 color: theme.colorScheme.onSurface,
-                fontSize: 14,
+                fontSize: FontSize.body,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: Spacing.sp4),
             Text(
               'Control whether parents can pay in installments and define the allowed amounts.',
               style: TextStyle(
                 color: theme.colorScheme.onSurfaceVariant,
-                fontSize: 12,
+                fontSize: FontSize.caption,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
               activeColor: theme.colorScheme.primary,
@@ -1066,7 +1067,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                 'Allow installment payments',
                 style: TextStyle(
                   color: theme.colorScheme.onSurface,
-                  fontSize: 13,
+                  fontSize: FontSize.body,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -1074,7 +1075,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
               onChanged: (v) => setState(() => _allowInstallments = v),
             ),
             if (_allowInstallments) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sp8),
               TextField(
                 controller: _installmentCountCtrl,
                 keyboardType: TextInputType.number,
@@ -1083,7 +1084,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                   hintText: '0 = unlimited',
                 ),
               ),
-              const SizedBox(height: 14),
+              const SizedBox(height: Spacing.sp14),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -1092,7 +1093,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
                       color: theme.colorScheme.onSurface,
-                      fontSize: 13,
+                      fontSize: FontSize.body,
                     ),
                   ),
                   TextButton.icon(
@@ -1119,12 +1120,12 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
               ),
               if (_installmentAmounts.isEmpty)
                 Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: Spacing.sp8),
                   child: Text(
                     'Leave empty to allow any amount. Add specific amounts to restrict payment options.',
                     style: TextStyle(
                       color: theme.colorScheme.onSurfaceVariant,
-                      fontSize: 12,
+                      fontSize: FontSize.caption,
                     ),
                   ),
                 ),
@@ -1132,7 +1133,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                 final i = entry.key;
                 final item = entry.value;
                 return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
+                  padding: const EdgeInsets.only(bottom: Spacing.sp8),
                   child: Row(
                     children: [
                       Expanded(
@@ -1146,7 +1147,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: Spacing.sp8),
                       Expanded(
                         flex: 2,
                         child: TextField(
@@ -1181,7 +1182,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
               }),
             ],
 
-            const SizedBox(height: 24),
+            const SizedBox(height: Spacing.sp24),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
@@ -1303,13 +1304,13 @@ class _ErrorRetry extends StatelessWidget {
             color: theme.colorScheme.error,
             size: 40,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           Text(
             error,
             textAlign: TextAlign.center,
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),

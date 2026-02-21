@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../core/services/error_logger_service.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../models/assignment_model.dart';
 import '../services/assessment_service.dart';
 import 'file_viewer_screen.dart';
@@ -131,12 +132,12 @@ class _SubmitAssignmentScreenState extends State<SubmitAssignmentScreen> {
     return Scaffold(
       appBar: AppBar(title: Text(a.title)),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Spacing.sp16),
         children: [
           // Assignment details
           if (a.description != null && a.description!.isNotEmpty) ...[
             Text(a.description!, style: theme.textTheme.bodyMedium),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
           ],
 
           // Info row
@@ -166,14 +167,14 @@ class _SubmitAssignmentScreenState extends State<SubmitAssignmentScreen> {
 
           // Teacher attachments
           if (a.attachments.isNotEmpty) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
             Text(
               'Reference Files',
               style: theme.textTheme.titleSmall?.copyWith(
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             ...a.attachments.map(
               (att) => ListTile(
                 leading: Icon(
@@ -207,7 +208,7 @@ class _SubmitAssignmentScreenState extends State<SubmitAssignmentScreen> {
             const Center(child: CircularProgressIndicator())
           else if (_mySubmission != null) ...[
             _SubmissionStatus(submission: _mySubmission!),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
           ],
 
           // Submit section
@@ -218,14 +219,14 @@ class _SubmitAssignmentScreenState extends State<SubmitAssignmentScreen> {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             Text(
               'Upload images or PDFs (max 10 files, 15MB each)',
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
 
             // File picker buttons
             Row(
@@ -237,7 +238,7 @@ class _SubmitAssignmentScreenState extends State<SubmitAssignmentScreen> {
                     label: const Text('Images'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: OutlinedButton.icon(
                     onPressed: _pickPDFs,
@@ -250,7 +251,7 @@ class _SubmitAssignmentScreenState extends State<SubmitAssignmentScreen> {
 
             // Selected files
             if (_selectedFiles.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const SizedBox(height: Spacing.sp12),
               ...List.generate(_selectedFiles.length, (i) {
                 final name = _selectedFiles[i].split('/').last;
                 final isPDF = name.toLowerCase().endsWith('.pdf');
@@ -282,7 +283,7 @@ class _SubmitAssignmentScreenState extends State<SubmitAssignmentScreen> {
               }),
             ],
 
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
 
             // Submit button
             FilledButton.icon(
@@ -301,10 +302,10 @@ class _SubmitAssignmentScreenState extends State<SubmitAssignmentScreen> {
             ),
           ] else if (!a.canSubmit && !a.isClosed) ...[
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(Spacing.sp16),
               decoration: BoxDecoration(
                 color: theme.colorScheme.error.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
               child: Row(
                 children: [
@@ -313,7 +314,7 @@ class _SubmitAssignmentScreenState extends State<SubmitAssignmentScreen> {
                     size: 20,
                     color: theme.colorScheme.error,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: Spacing.sp8),
                   Expanded(
                     child: Text(
                       'Submission deadline has passed',
@@ -347,7 +348,7 @@ class _DetailChip extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: c),
-        const SizedBox(width: 4),
+        const SizedBox(width: Spacing.sp4),
         Text(label, style: theme.textTheme.bodySmall?.copyWith(color: c)),
       ],
     );
@@ -369,10 +370,10 @@ class _SubmissionStatus extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(Spacing.sp14),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
@@ -389,7 +390,7 @@ class _SubmissionStatus extends StatelessWidget {
                 size: 18,
                 color: color,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: Spacing.sp8),
               Text(
                 switch (s.status) {
                   'GRADED' => 'Graded',
@@ -402,15 +403,15 @@ class _SubmissionStatus extends StatelessWidget {
                 ),
               ),
               if (s.isLate) ...[
-                const SizedBox(width: 6),
+                const SizedBox(width: Spacing.sp6),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
+                    horizontal: Spacing.sp6,
+                    vertical: Spacing.sp2,
                   ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.secondary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(4),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                   ),
                   child: Text(
                     'Late',
@@ -423,7 +424,7 @@ class _SubmissionStatus extends StatelessWidget {
             ],
           ),
           if (s.marks != null) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: Spacing.sp6),
             Text(
               'Marks: ${s.marks}',
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -432,11 +433,11 @@ class _SubmissionStatus extends StatelessWidget {
             ),
           ],
           if (s.feedback != null && s.feedback!.isNotEmpty) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: Spacing.sp6),
             Text('Feedback: ${s.feedback}', style: theme.textTheme.bodySmall),
           ],
           if (s.files.isNotEmpty) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             Text(
               'Submitted Files',
               style: theme.textTheme.labelSmall?.copyWith(
@@ -444,7 +445,7 @@ class _SubmissionStatus extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: Spacing.sp6),
             Wrap(
               spacing: 6,
               runSpacing: 4,

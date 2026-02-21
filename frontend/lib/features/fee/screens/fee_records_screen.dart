@@ -4,6 +4,7 @@ import '../models/fee_model.dart';
 import '../services/fee_service.dart';
 
 import 'fee_record_detail_screen.dart';
+import '../../../core/theme/design_tokens.dart';
 
 /// Lists all fee records for a coaching (admin view).
 /// Supports filtering by status and member search.
@@ -153,15 +154,15 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
                     child: ListView.builder(
                       controller: _scrollCtrl,
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                        horizontal: Spacing.sp16,
+                        vertical: Spacing.sp8,
                       ),
                       itemCount: _records.length + (_loadingMore ? 1 : 0),
                       itemBuilder: (ctx, i) {
                         if (i == _records.length) {
                           return const Center(
                             child: Padding(
-                              padding: EdgeInsets.all(16),
+                              padding: EdgeInsets.all(Spacing.sp16),
                               child: CircularProgressIndicator(strokeWidth: 2),
                             ),
                           );
@@ -202,16 +203,16 @@ class _SearchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
+      padding: const EdgeInsets.fromLTRB(Spacing.sp12, Spacing.sp10, Spacing.sp12, Spacing.sp4),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
+        style: TextStyle(color: theme.colorScheme.onSurface, fontSize: FontSize.body),
         decoration: InputDecoration(
           hintText: 'Search by student name...',
           hintStyle: TextStyle(
             color: theme.colorScheme.onSurfaceVariant,
-            fontSize: 13,
+            fontSize: FontSize.body,
           ),
           prefixIcon: Icon(
             Icons.search_rounded,
@@ -234,11 +235,11 @@ class _SearchBar extends StatelessWidget {
           filled: true,
           fillColor: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
           contentPadding: const EdgeInsets.symmetric(
-            horizontal: 12,
-            vertical: 10,
+            horizontal: Spacing.sp12,
+            vertical: Spacing.sp10,
           ),
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Radii.md),
             borderSide: BorderSide.none,
           ),
         ),
@@ -268,24 +269,24 @@ class _FilterBar extends StatelessWidget {
       color: theme.colorScheme.surface,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.sp12, vertical: Spacing.sp6),
         children: _labels.entries.map((e) {
           final isSelected = e.key == selected;
           return Padding(
-            padding: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.only(right: Spacing.sp8),
             child: GestureDetector(
               onTap: () => onChanged(e.key),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 14,
-                  vertical: 4,
+                  horizontal: Spacing.sp14,
+                  vertical: Spacing.sp4,
                 ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? theme.colorScheme.primary
                       : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(20),
+                  borderRadius: BorderRadius.circular(Radii.lg),
                   border: Border.all(
                     color: isSelected
                         ? theme.colorScheme.primary
@@ -298,7 +299,7 @@ class _FilterBar extends StatelessWidget {
                     color: isSelected
                         ? theme.colorScheme.onPrimary
                         : theme.colorScheme.onSurface,
-                    fontSize: 12,
+                    fontSize: FontSize.caption,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -329,19 +330,19 @@ class _RecordTile extends StatelessWidget {
     final memberPic = record.member?.picture;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(bottom: Spacing.sp10),
       child: Card(
         elevation: 0,
         color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.lg),
           side: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(Radii.lg),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(Spacing.sp12),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -370,7 +371,7 @@ class _RecordTile extends StatelessWidget {
                         : null,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
 
                 // Details
                 Expanded(
@@ -389,17 +390,17 @@ class _RecordTile extends StatelessWidget {
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     color: theme.colorScheme.onSurface,
-                                    fontSize: 15,
+                                    fontSize: FontSize.body,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 2),
+                                const SizedBox(height: Spacing.sp2),
                                 Text(
                                   record.title,
                                   style: TextStyle(
                                     color: theme.colorScheme.onSurfaceVariant,
-                                    fontSize: 12,
+                                    fontSize: FontSize.caption,
                                   ),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -407,7 +408,7 @@ class _RecordTile extends StatelessWidget {
                               ],
                             ),
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: Spacing.sp8),
                           Column(
                             crossAxisAlignment: CrossAxisAlignment.end,
                             children: [
@@ -416,17 +417,17 @@ class _RecordTile extends StatelessWidget {
                                 style: TextStyle(
                                   fontWeight: FontWeight.w800,
                                   color: theme.colorScheme.onSurface,
-                                  fontSize: 15,
+                                  fontSize: FontSize.body,
                                 ),
                               ),
                               if (record.isPartial || record.isPaid)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: 2),
+                                  padding: const EdgeInsets.only(top: Spacing.sp2),
                                   child: Text(
                                     'Paid ₹${record.paidAmount.toStringAsFixed(0)}',
                                     style: TextStyle(
                                       color: theme.colorScheme.primary,
-                                      fontSize: 10,
+                                      fontSize: FontSize.nano,
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
@@ -435,7 +436,7 @@ class _RecordTile extends StatelessWidget {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: Spacing.sp10),
                       Row(
                         children: [
                           _Chip(
@@ -443,7 +444,7 @@ class _RecordTile extends StatelessWidget {
                             color: statusColor,
                             isFilled: true,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: Spacing.sp8),
                           _Chip(
                             label: 'Due ${_fmtDate(record.dueDate)}',
                             color: record.isOverdue
@@ -451,12 +452,12 @@ class _RecordTile extends StatelessWidget {
                                 : theme.colorScheme.onSurfaceVariant,
                           ),
                           if (record.daysOverdue > 0) ...[
-                            const SizedBox(width: 6),
+                            const SizedBox(width: Spacing.sp6),
                             Text(
                               '${record.daysOverdue}d late',
                               style: TextStyle(
                                 color: theme.colorScheme.error,
-                                fontSize: 11,
+                                fontSize: FontSize.micro,
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
@@ -488,12 +489,12 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp8, vertical: Spacing.sp4),
       decoration: BoxDecoration(
         color: isFilled
             ? color.withValues(alpha: 0.1)
             : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(Radii.sm),
         border: Border.all(
           color: isFilled ? Colors.transparent : color.withValues(alpha: 0.3),
         ),
@@ -502,7 +503,7 @@ class _Chip extends StatelessWidget {
         label,
         style: TextStyle(
           color: color,
-          fontSize: 10,
+          fontSize: FontSize.nano,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -524,7 +525,7 @@ class _EmptyState extends StatelessWidget {
             size: 48,
             color: theme.colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           Text(
             'No fee records found',
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
@@ -550,16 +551,16 @@ class _ErrorRetry extends StatelessWidget {
             color: Theme.of(context).colorScheme.error,
             size: 40,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           Text(
             error,
             textAlign: TextAlign.center,
             style: TextStyle(
               color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontSize: 13,
+              fontSize: FontSize.body,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),

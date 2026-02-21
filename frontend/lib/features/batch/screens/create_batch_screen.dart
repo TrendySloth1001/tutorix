@@ -3,6 +3,7 @@ import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../models/batch_model.dart';
 import '../services/batch_service.dart';
+import '../../../core/theme/design_tokens.dart';
 
 /// Create or edit a batch — premium form with schedule picker + day selector.
 class CreateBatchScreen extends StatefulWidget {
@@ -183,7 +184,12 @@ class _CreateBatchScreenState extends State<CreateBatchScreen>
       body: FadeTransition(
         opacity: _fadeAnim,
         child: SingleChildScrollView(
-          padding: const EdgeInsets.fromLTRB(20, 8, 20, 40),
+          padding: const EdgeInsets.fromLTRB(
+            Spacing.sp20,
+            Spacing.sp8,
+            Spacing.sp20,
+            Spacing.sp40,
+          ),
           child: Form(
             key: _formKey,
             child: Column(
@@ -191,7 +197,7 @@ class _CreateBatchScreenState extends State<CreateBatchScreen>
               children: [
                 // ── Name
                 _FieldLabel('Batch Name', isRequired: true),
-                const SizedBox(height: 8),
+                const SizedBox(height: Spacing.sp8),
                 TextFormField(
                   controller: _nameCtrl,
                   decoration: _inputDeco(
@@ -202,11 +208,11 @@ class _CreateBatchScreenState extends State<CreateBatchScreen>
                       v == null || v.trim().isEmpty ? 'Name is required' : null,
                   textCapitalization: TextCapitalization.words,
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: Spacing.sp24),
 
                 // ── Subject
                 _FieldLabel('Subject'),
-                const SizedBox(height: 8),
+                const SizedBox(height: Spacing.sp8),
                 TextFormField(
                   controller: _subjectCtrl,
                   decoration: _inputDeco(
@@ -215,11 +221,11 @@ class _CreateBatchScreenState extends State<CreateBatchScreen>
                   ),
                   textCapitalization: TextCapitalization.words,
                 ),
-                const SizedBox(height: 22),
+                const SizedBox(height: Spacing.sp24),
 
                 // ── Description
                 _FieldLabel('Description'),
-                const SizedBox(height: 8),
+                const SizedBox(height: Spacing.sp8),
                 TextFormField(
                   controller: _descCtrl,
                   decoration: _inputDeco(
@@ -229,11 +235,11 @@ class _CreateBatchScreenState extends State<CreateBatchScreen>
                   maxLines: 3,
                   textCapitalization: TextCapitalization.sentences,
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: Spacing.sp28),
 
                 // ── Schedule
                 _FieldLabel('Schedule'),
-                const SizedBox(height: 12),
+                const SizedBox(height: Spacing.sp12),
 
                 // Day circle selectors
                 Row(
@@ -286,7 +292,7 @@ class _CreateBatchScreenState extends State<CreateBatchScreen>
                                 fontWeight: selected
                                     ? FontWeight.w700
                                     : FontWeight.w500,
-                                fontSize: 14,
+                                fontSize: FontSize.body,
                                 color: selected
                                     ? theme.colorScheme.onPrimary
                                     : theme.colorScheme.onSurface.withValues(
@@ -300,7 +306,7 @@ class _CreateBatchScreenState extends State<CreateBatchScreen>
                     );
                   }).toList(),
                 ),
-                const SizedBox(height: 18),
+                const SizedBox(height: Spacing.sp20),
 
                 // Time pickers row
                 Row(
@@ -314,7 +320,9 @@ class _CreateBatchScreenState extends State<CreateBatchScreen>
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 8),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: Spacing.sp8,
+                      ),
                       child: Icon(
                         Icons.arrow_forward_rounded,
                         size: 18,
@@ -333,11 +341,11 @@ class _CreateBatchScreenState extends State<CreateBatchScreen>
                     ),
                   ],
                 ),
-                const SizedBox(height: 28),
+                const SizedBox(height: Spacing.sp28),
 
                 // ── Max students
                 _FieldLabel('Max Students'),
-                const SizedBox(height: 8),
+                const SizedBox(height: Spacing.sp8),
                 TextFormField(
                   controller: _maxStudentsCtrl,
                   decoration: _inputDeco(
@@ -346,7 +354,7 @@ class _CreateBatchScreenState extends State<CreateBatchScreen>
                   ),
                   keyboardType: TextInputType.number,
                 ),
-                const SizedBox(height: 40),
+                const SizedBox(height: Spacing.sp40),
 
                 // ── Save button
                 SizedBox(
@@ -356,7 +364,7 @@ class _CreateBatchScreenState extends State<CreateBatchScreen>
                     onPressed: _isSaving ? null : _save,
                     style: FilledButton.styleFrom(
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(Radii.lg),
                       ),
                       elevation: 0,
                     ),
@@ -373,7 +381,7 @@ class _CreateBatchScreenState extends State<CreateBatchScreen>
                             _isEdit ? 'Save Changes' : 'Create Batch',
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
-                              fontSize: 15,
+                              fontSize: FontSize.body,
                             ),
                           ),
                   ),
@@ -398,23 +406,26 @@ class _CreateBatchScreenState extends State<CreateBatchScreen>
       filled: true,
       fillColor: theme.colorScheme.surfaceContainerLowest,
       border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         borderSide: BorderSide.none,
       ),
       enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         borderSide: BorderSide(
           color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
         ),
       ),
       focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         borderSide: BorderSide(
           color: theme.colorScheme.primary.withValues(alpha: 0.4),
           width: 1.5,
         ),
       ),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp16,
+        vertical: Spacing.sp14,
+      ),
     );
   }
 }
@@ -472,14 +483,17 @@ class _TimeTile extends StatelessWidget {
     final hasTime = time != null;
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(Radii.md),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp14,
+          vertical: Spacing.sp14,
+        ),
         decoration: BoxDecoration(
           color: hasTime
               ? theme.colorScheme.primary.withValues(alpha: 0.06)
               : theme.colorScheme.surfaceContainerLowest,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(Radii.md),
           border: Border.all(
             color: hasTime
                 ? theme.colorScheme.primary.withValues(alpha: 0.15)
@@ -495,7 +509,7 @@ class _TimeTile extends StatelessWidget {
                   ? theme.colorScheme.primary
                   : theme.colorScheme.onSurface.withValues(alpha: 0.3),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: Spacing.sp10),
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -503,11 +517,11 @@ class _TimeTile extends StatelessWidget {
                   label,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
-                    fontSize: 10,
+                    fontSize: FontSize.nano,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
-                const SizedBox(height: 1),
+                const SizedBox(height: Spacing.sp2),
                 Text(
                   hasTime ? time!.format(context) : '—',
                   style: theme.textTheme.bodyMedium?.copyWith(

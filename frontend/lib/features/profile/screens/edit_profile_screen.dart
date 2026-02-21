@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../services/user_service.dart';
@@ -83,7 +84,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         centerTitle: true,
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(Spacing.sp24),
         child: Form(
           key: _formKey,
           child: Column(
@@ -94,7 +95,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 child: Hero(
                   tag: 'user_avatar',
                   child: Container(
-                    padding: const EdgeInsets.all(4),
+                    padding: const EdgeInsets.all(Spacing.sp4),
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(
@@ -124,7 +125,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 40),
+              const SizedBox(height: Spacing.sp40),
 
               // Name
               _buildTextField(
@@ -135,7 +136,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     ? 'Please enter your name'
                     : null,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: Spacing.sp20),
 
               // Phone
               _buildTextField(
@@ -144,7 +145,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 icon: Icons.phone_rounded,
                 keyboardType: TextInputType.phone,
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: Spacing.sp20),
 
               // Email (read-only)
               TextFormField(
@@ -162,20 +163,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   filled: true,
                   fillColor: theme.colorScheme.tertiary.withValues(alpha: 0.02),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(20),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                     borderSide: BorderSide.none,
                   ),
                 ),
               ),
-              const SizedBox(height: 48),
+              const SizedBox(height: Spacing.sp48),
 
               // Save
               FilledButton(
                 onPressed: _isLoading ? null : _saveProfile,
                 style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
+                  padding: const EdgeInsets.symmetric(vertical: Spacing.sp20),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
+                    borderRadius: BorderRadius.circular(Radii.xl),
                   ),
                   elevation: 0,
                 ),
@@ -191,12 +192,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     : const Text(
                         'Update Profile',
                         style: TextStyle(
-                          fontSize: 16,
+                          fontSize: FontSize.sub,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: Spacing.sp24),
             ],
           ),
         ),
@@ -222,11 +223,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         filled: true,
         fillColor: theme.colorScheme.tertiary.withValues(alpha: 0.05),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(Radii.lg),
           borderSide: BorderSide.none,
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(Radii.lg),
           borderSide: BorderSide(color: theme.colorScheme.primary, width: 1.5),
         ),
       ),

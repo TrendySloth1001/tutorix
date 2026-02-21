@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../services/assessment_service.dart';
 
 /// Screen for teachers to create an assessment with questions.
@@ -214,11 +215,11 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
       body: Form(
         key: _formKey,
         child: ListView(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(Spacing.sp16),
           children: [
             // ── Details Section ──
             _SectionLabel('Details'),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             TextFormField(
               controller: _titleCtrl,
               decoration: const InputDecoration(
@@ -228,7 +229,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
               validator: (v) =>
                   v == null || v.trim().isEmpty ? 'Required' : null,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             TextFormField(
               controller: _descCtrl,
               decoration: const InputDecoration(
@@ -237,7 +238,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
               ),
               maxLines: 2,
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Row(
               children: [
                 Expanded(
@@ -258,7 +259,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                     onChanged: (v) => setState(() => _type = v ?? 'QUIZ'),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: TextFormField(
                     controller: _durationCtrl,
@@ -271,7 +272,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Row(
               children: [
                 Expanded(
@@ -284,7 +285,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                     keyboardType: TextInputType.number,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: TextFormField(
                     controller: _attemptsCtrl,
@@ -297,7 +298,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Row(
               children: [
                 Expanded(
@@ -311,7 +312,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                     keyboardType: TextInputType.number,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     initialValue: _showResultAfter,
@@ -335,7 +336,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             Row(
               children: [
                 Expanded(
@@ -383,7 +384,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
 
             ...List.generate(_questions.length, (i) {
               return _QuestionEditor(
@@ -397,7 +398,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
 
             if (_questions.isEmpty)
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 32),
+                padding: const EdgeInsets.symmetric(vertical: Spacing.sp32),
                 child: Center(
                   child: Column(
                     children: [
@@ -406,7 +407,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                         size: 48,
                         color: theme.colorScheme.outlineVariant,
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: Spacing.sp8),
                       Text(
                         'No questions added yet',
                         style: theme.textTheme.bodyMedium?.copyWith(
@@ -418,7 +419,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
                 ),
               ),
 
-            const SizedBox(height: 80),
+            const SizedBox(height: Spacing.sp80),
           ],
         ),
       ),
@@ -507,11 +508,11 @@ class _QuestionEditorState extends State<_QuestionEditor> {
     final theme = Theme.of(context);
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(bottom: Spacing.sp16),
+      padding: const EdgeInsets.all(Spacing.sp12),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
         ),
@@ -523,10 +524,13 @@ class _QuestionEditorState extends State<_QuestionEditor> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: Spacing.sp8,
+                  vertical: Spacing.sp4,
+                ),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(Radii.sm),
                 ),
                 child: Text(
                   'Q${widget.index + 1}',
@@ -536,7 +540,7 @@ class _QuestionEditorState extends State<_QuestionEditor> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: Spacing.sp8),
               Expanded(
                 child: DropdownButton<String>(
                   value: q.type,
@@ -562,15 +566,15 @@ class _QuestionEditorState extends State<_QuestionEditor> {
                     border: OutlineInputBorder(),
                     isDense: true,
                     contentPadding: EdgeInsets.symmetric(
-                      horizontal: 8,
-                      vertical: 8,
+                      horizontal: Spacing.sp8,
+                      vertical: Spacing.sp8,
                     ),
                   ),
                   keyboardType: TextInputType.number,
                   style: theme.textTheme.bodySmall,
                 ),
               ),
-              const SizedBox(width: 4),
+              const SizedBox(width: Spacing.sp4),
               IconButton(
                 onPressed: widget.onRemove,
                 icon: Icon(
@@ -584,7 +588,7 @@ class _QuestionEditorState extends State<_QuestionEditor> {
             ],
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
 
           // Question text
           TextFormField(
@@ -597,7 +601,7 @@ class _QuestionEditorState extends State<_QuestionEditor> {
             minLines: 1,
           ),
 
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
 
           // Options (MCQ/MSQ) or NAT input
           if (q.type == 'MCQ' || q.type == 'MSQ')
@@ -605,7 +609,7 @@ class _QuestionEditorState extends State<_QuestionEditor> {
           else
             _buildNATInput(theme),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
 
           // Explanation
           TextFormField(
@@ -636,12 +640,12 @@ class _QuestionEditorState extends State<_QuestionEditor> {
             color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: Spacing.sp6),
         ...List.generate(q.options.length, (i) {
           final optId = 'opt_$i';
           final isSelected = q.selectedOptions.contains(optId);
           return Padding(
-            padding: const EdgeInsets.only(bottom: 6),
+            padding: const EdgeInsets.only(bottom: Spacing.sp6),
             child: Row(
               children: [
                 if (q.type == 'MCQ')
@@ -676,7 +680,7 @@ class _QuestionEditorState extends State<_QuestionEditor> {
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     visualDensity: VisualDensity.compact,
                   ),
-                const SizedBox(width: 4),
+                const SizedBox(width: Spacing.sp4),
                 Expanded(
                   child: TextFormField(
                     controller: q.options[i].ctrl,
@@ -685,15 +689,15 @@ class _QuestionEditorState extends State<_QuestionEditor> {
                       border: const OutlineInputBorder(),
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 8,
+                        horizontal: Spacing.sp10,
+                        vertical: Spacing.sp8,
                       ),
                     ),
                     style: theme.textTheme.bodySmall,
                   ),
                 ),
                 if (q.options.length > 2) ...[
-                  const SizedBox(width: 4),
+                  const SizedBox(width: Spacing.sp4),
                   GestureDetector(
                     onTap: () => _removeOption(i),
                     child: Icon(
@@ -714,7 +718,10 @@ class _QuestionEditorState extends State<_QuestionEditor> {
             icon: const Icon(Icons.add_rounded, size: 16),
             label: const Text('Add option'),
             style: TextButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.sp8,
+                vertical: Spacing.sp4,
+              ),
               textStyle: theme.textTheme.labelSmall,
             ),
           ),
@@ -737,7 +744,7 @@ class _QuestionEditorState extends State<_QuestionEditor> {
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: Spacing.sp12),
         Expanded(
           child: TextFormField(
             controller: q.natToleranceCtrl,

@@ -6,6 +6,7 @@ import '../../../../shared/services/notification_service.dart';
 import '../../../../shared/widgets/app_alert.dart';
 import '../../../../shared/widgets/app_shimmer.dart';
 import '../services/member_service.dart';
+import '../../../core/theme/design_tokens.dart';
 
 class CoachingNotificationsScreen extends StatefulWidget {
   final String coachingId;
@@ -108,10 +109,12 @@ class _CoachingNotificationsScreenState
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(Spacing.sp24),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+          borderRadius: const BorderRadius.vertical(
+            top: Radius.circular(Radii.xl),
+          ),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -119,12 +122,12 @@ class _CoachingNotificationsScreenState
             Container(
               width: 40,
               height: 4,
-              margin: const EdgeInsets.only(bottom: 20),
+              margin: const EdgeInsets.only(bottom: Spacing.sp20),
               decoration: BoxDecoration(
                 color: theme.colorScheme.onSurfaceVariant.withValues(
                   alpha: 0.3,
                 ),
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(Radii.sm),
               ),
             ),
             Icon(
@@ -132,14 +135,14 @@ class _CoachingNotificationsScreenState
               size: 48,
               color: theme.colorScheme.secondary,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
             Text(
               'Member in Another Coaching',
               style: theme.textTheme.titleLarge?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             Text(
               'This member has joined another coaching. What would you like to do?',
               textAlign: TextAlign.center,
@@ -147,21 +150,21 @@ class _CoachingNotificationsScreenState
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: Spacing.sp32),
             SizedBox(
               width: double.infinity,
               child: FilledButton(
                 onPressed: () => Navigator.pop(ctx, 'ok'),
                 style: FilledButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: Spacing.sp16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                   ),
                 ),
                 child: const Text('It\'s OK'),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -171,14 +174,14 @@ class _CoachingNotificationsScreenState
                 style: OutlinedButton.styleFrom(
                   foregroundColor: theme.colorScheme.error,
                   side: BorderSide(color: theme.colorScheme.error, width: 1.5),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  padding: const EdgeInsets.symmetric(vertical: Spacing.sp16),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
           ],
         ),
       ),
@@ -224,9 +227,9 @@ class _CoachingNotificationsScreenState
           : _notifications.isEmpty
           ? const Center(child: Text('No notifications'))
           : ListView.separated(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(Spacing.sp16),
               itemCount: _notifications.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 12),
+              separatorBuilder: (_, _) => const SizedBox(height: Spacing.sp12),
               itemBuilder: (context, index) {
                 final n = _notifications[index];
                 return _buildNotificationItem(n);
@@ -244,7 +247,7 @@ class _CoachingNotificationsScreenState
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
+        padding: const EdgeInsets.only(right: Spacing.sp20),
         color: theme.colorScheme.surfaceContainerHighest,
         child: Icon(
           Icons.archive_rounded,
@@ -258,16 +261,16 @@ class _CoachingNotificationsScreenState
             ? theme.colorScheme.surface
             : theme.colorScheme.primaryContainer.withValues(alpha: 0.1),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           side: n.read
               ? BorderSide(color: theme.colorScheme.outlineVariant)
               : BorderSide.none,
         ),
         child: InkWell(
           onTap: () => _markAsRead(n),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Spacing.sp16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -275,7 +278,7 @@ class _CoachingNotificationsScreenState
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Container(
-                      padding: const EdgeInsets.all(8),
+                      padding: const EdgeInsets.all(Spacing.sp8),
                       decoration: BoxDecoration(
                         color: isJoinAlert
                             ? Colors.amber.shade100
@@ -292,7 +295,7 @@ class _CoachingNotificationsScreenState
                             : theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: Spacing.sp12),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -312,15 +315,15 @@ class _CoachingNotificationsScreenState
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: Spacing.sp8),
                               Text(
                                 _formatDate(n.createdAt),
                                 style: theme.textTheme.bodySmall?.copyWith(
                                   color: theme.colorScheme.onSurfaceVariant,
-                                  fontSize: 10,
+                                  fontSize: FontSize.nano,
                                 ),
                               ),
-                              const SizedBox(width: 8),
+                              const SizedBox(width: Spacing.sp8),
                               GestureDetector(
                                 onTap: () => _archive(n.id),
                                 child: Icon(
@@ -332,7 +335,7 @@ class _CoachingNotificationsScreenState
                               ),
                             ],
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: Spacing.sp4),
                           Text(
                             n.message,
                             style: theme.textTheme.bodyMedium?.copyWith(
@@ -347,9 +350,9 @@ class _CoachingNotificationsScreenState
                 if (isJoinAlert &&
                     n.data != null &&
                     n.data!['memberId'] != null) ...[
-                  const SizedBox(height: 12),
+                  const SizedBox(height: Spacing.sp12),
                   Padding(
-                    padding: const EdgeInsets.only(left: 44),
+                    padding: const EdgeInsets.only(left: Spacing.sp48),
                     child: Row(
                       children: [
                         OutlinedButton.icon(

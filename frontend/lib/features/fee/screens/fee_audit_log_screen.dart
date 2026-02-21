@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
+import '../../../core/theme/design_tokens.dart';
 
 /// Paginated audit trail for fee-related events in a coaching.
 class FeeAuditLogScreen extends StatefulWidget {
@@ -177,12 +178,12 @@ class _FeeAuditLogScreenState extends State<FeeAuditLogScreen> {
                     onRefresh: _load,
                     child: ListView.builder(
                       controller: _scrollCtrl,
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(Spacing.sp16),
                       itemCount: _logs.length + (_loadingMore ? 1 : 0),
                       itemBuilder: (ctx, i) {
                         if (i == _logs.length) {
                           return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: 16),
+                            padding: EdgeInsets.symmetric(vertical: Spacing.sp16),
                             child: Center(child: CircularProgressIndicator()),
                           );
                         }
@@ -203,14 +204,14 @@ class _FeeAuditLogScreenState extends State<FeeAuditLogScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 6,
+                    horizontal: Spacing.sp16,
+                    vertical: Spacing.sp6,
                   ),
                   child: Text(
                     'Showing ${_logs.length} of $_total events',
                     style: TextStyle(
                       color: theme.colorScheme.onSurfaceVariant,
-                      fontSize: 11,
+                      fontSize: FontSize.micro,
                     ),
                   ),
                 ),
@@ -253,7 +254,7 @@ class _DateDivider extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(top: 16, bottom: 8),
+      padding: const EdgeInsets.only(top: Spacing.sp16, bottom: Spacing.sp8),
       child: Row(
         children: [
           Expanded(
@@ -261,17 +262,17 @@ class _DateDivider extends StatelessWidget {
               color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: Spacing.sp10),
           Text(
             _fmtDate(date),
             style: TextStyle(
               color: theme.colorScheme.onSurfaceVariant,
-              fontSize: 11,
+              fontSize: FontSize.micro,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: Spacing.sp10),
           Expanded(
             child: Divider(
               color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
@@ -383,16 +384,16 @@ class _AuditLogTile extends StatelessWidget {
         : log.actorName ?? log.actorId ?? 'Admin';
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 8),
+      margin: const EdgeInsets.only(bottom: Spacing.sp8),
       decoration: BoxDecoration(
         color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(
           color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.15),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(Spacing.sp14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -402,39 +403,39 @@ class _AuditLogTile extends StatelessWidget {
               children: [
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
+                    horizontal: Spacing.sp8,
+                    vertical: Spacing.sp4,
                   ),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                   ),
                   child: Text(
                     log.eventLabel,
                     style: TextStyle(
                       color: color,
-                      fontSize: 11,
+                      fontSize: FontSize.micro,
                       fontWeight: FontWeight.w700,
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: Spacing.sp8),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 3,
+                    horizontal: Spacing.sp6,
+                    vertical: Spacing.sp4,
                   ),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.outlineVariant.withValues(
                       alpha: 0.5,
                     ),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                   ),
                   child: Text(
                     log.entityType,
                     style: TextStyle(
                       color: theme.colorScheme.onSurfaceVariant,
-                      fontSize: 10,
+                      fontSize: FontSize.nano,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -444,12 +445,12 @@ class _AuditLogTile extends StatelessWidget {
                   _fmtTime(log.createdAt),
                   style: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: 11,
+                    fontSize: FontSize.micro,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
 
             // ── Structure / entity name ──
             if (log.feeStructureName != null) ...[
@@ -458,10 +459,10 @@ class _AuditLogTile extends StatelessWidget {
                 style: TextStyle(
                   color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.w600,
-                  fontSize: 13,
+                  fontSize: FontSize.body,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: Spacing.sp4),
             ],
 
             // ── Free-text note ──
@@ -470,18 +471,18 @@ class _AuditLogTile extends StatelessWidget {
                 log.note!,
                 style: TextStyle(
                   color: theme.colorScheme.onSurface,
-                  fontSize: 12,
+                  fontSize: FontSize.caption,
                   height: 1.4,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: Spacing.sp4),
             ],
 
             // ── Changes section ──
             ..._buildChanges(theme),
 
             // ── Actor ──
-            const SizedBox(height: 4),
+            const SizedBox(height: Spacing.sp4),
             Row(
               children: [
                 Icon(
@@ -489,12 +490,12 @@ class _AuditLogTile extends StatelessWidget {
                   size: 13,
                   color: theme.colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: Spacing.sp4),
                 Text(
                   actorLabel,
                   style: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: 11,
+                    fontSize: FontSize.micro,
                   ),
                 ),
               ],
@@ -549,12 +550,12 @@ class _AuditLogTile extends StatelessWidget {
         'DETAILS',
         style: TextStyle(
           color: theme.colorScheme.onSurfaceVariant,
-          fontSize: 10,
+          fontSize: FontSize.nano,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
         ),
       ),
-      const SizedBox(height: 6),
+      const SizedBox(height: Spacing.sp6),
       ...rows,
     ];
   }
@@ -621,7 +622,7 @@ class _DiffRow extends StatelessWidget {
     // Meta rows: just label + value (no arrow)
     if (isMeta) {
       return Padding(
-        padding: const EdgeInsets.only(bottom: 4),
+        padding: const EdgeInsets.only(bottom: Spacing.sp4),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -631,7 +632,7 @@ class _DiffRow extends StatelessWidget {
                 label,
                 style: TextStyle(
                   color: theme.colorScheme.onSurfaceVariant,
-                  fontSize: 11,
+                  fontSize: FontSize.micro,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -641,7 +642,7 @@ class _DiffRow extends StatelessWidget {
                 newVal ?? '—',
                 style: TextStyle(
                   color: theme.colorScheme.onSurface,
-                  fontSize: 11,
+                  fontSize: FontSize.micro,
                 ),
               ),
             ),
@@ -655,7 +656,7 @@ class _DiffRow extends StatelessWidget {
     final isRemoved = oldVal != null && newVal == null;
 
     return Padding(
-      padding: const EdgeInsets.only(bottom: 5),
+      padding: const EdgeInsets.only(bottom: Spacing.sp6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -665,7 +666,7 @@ class _DiffRow extends StatelessWidget {
               label,
               style: TextStyle(
                 color: theme.colorScheme.onSurfaceVariant,
-                fontSize: 11,
+                fontSize: FontSize.micro,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -676,7 +677,7 @@ class _DiffRow extends StatelessWidget {
                     newVal!,
                     style: TextStyle(
                       color: theme.colorScheme.primary,
-                      fontSize: 11,
+                      fontSize: FontSize.micro,
                       fontWeight: FontWeight.w600,
                     ),
                   )
@@ -685,7 +686,7 @@ class _DiffRow extends StatelessWidget {
                     oldVal!,
                     style: TextStyle(
                       color: theme.colorScheme.error,
-                      fontSize: 11,
+                      fontSize: FontSize.micro,
                       decoration: TextDecoration.lineThrough,
                     ),
                   )
@@ -697,7 +698,7 @@ class _DiffRow extends StatelessWidget {
                         oldVal!,
                         style: TextStyle(
                           color: theme.colorScheme.error,
-                          fontSize: 11,
+                          fontSize: FontSize.micro,
                           decoration: TextDecoration.lineThrough,
                         ),
                       ),
@@ -710,7 +711,7 @@ class _DiffRow extends StatelessWidget {
                         newVal!,
                         style: TextStyle(
                           color: theme.colorScheme.primary,
-                          fontSize: 11,
+                          fontSize: FontSize.micro,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -762,9 +763,9 @@ class _FilterSheetState extends State<_FilterSheet> {
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(Radii.lg)),
       ),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      padding: const EdgeInsets.fromLTRB(Spacing.sp20, Spacing.sp20, Spacing.sp20, Spacing.sp32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -775,29 +776,29 @@ class _FilterSheetState extends State<_FilterSheet> {
               height: 4,
               decoration: BoxDecoration(
                 color: theme.colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(Radii.sm),
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           Text(
             'Filter Audit Log',
             style: TextStyle(
               color: theme.colorScheme.onSurface,
               fontWeight: FontWeight.w800,
-              fontSize: 16,
+              fontSize: FontSize.sub,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           Text(
             'Entity Type',
             style: TextStyle(
               fontWeight: FontWeight.w600,
               color: theme.colorScheme.onSurface,
-              fontSize: 13,
+              fontSize: FontSize.body,
             ),
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -818,7 +819,7 @@ class _FilterSheetState extends State<_FilterSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: Spacing.sp20),
           Row(
             children: [
               Expanded(
@@ -830,7 +831,7 @@ class _FilterSheetState extends State<_FilterSheet> {
                   child: const Text('Clear Filters'),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.sp12),
               Expanded(
                 child: FilledButton(
                   style: FilledButton.styleFrom(
@@ -868,12 +869,12 @@ class _FilterChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        padding: const EdgeInsets.symmetric(horizontal: Spacing.sp12, vertical: Spacing.sp6),
         decoration: BoxDecoration(
           color: selected
               ? theme.colorScheme.primary
               : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(Radii.lg),
         ),
         child: Text(
           label,
@@ -881,7 +882,7 @@ class _FilterChip extends StatelessWidget {
             color: selected
                 ? theme.colorScheme.onPrimary
                 : theme.colorScheme.onSurface,
-            fontSize: 12,
+            fontSize: FontSize.caption,
             fontWeight: FontWeight.w600,
           ),
         ),
@@ -907,7 +908,7 @@ class _ActiveFilterChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp16, vertical: Spacing.sp8),
       color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
       child: Row(
         children: [
@@ -916,10 +917,10 @@ class _ActiveFilterChips extends StatelessWidget {
             size: 14,
             color: theme.colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: Spacing.sp6),
           if (entityType != null) _Chip(label: entityType!),
           if (event != null) ...[
-            const SizedBox(width: 6),
+            const SizedBox(width: Spacing.sp6),
             _Chip(label: event!),
           ],
           const Spacer(),
@@ -929,7 +930,7 @@ class _ActiveFilterChips extends StatelessWidget {
               'Clear',
               style: TextStyle(
                 color: theme.colorScheme.onSurface,
-                fontSize: 12,
+                fontSize: FontSize.caption,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -947,16 +948,16 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp8, vertical: Spacing.sp4),
       decoration: BoxDecoration(
         color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: theme.colorScheme.onSurface,
-          fontSize: 11,
+          fontSize: FontSize.micro,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -980,7 +981,7 @@ class _EmptyState extends StatelessWidget {
             size: 48,
             color: theme.colorScheme.onSurfaceVariant,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           Text(
             'No audit events yet',
             style: TextStyle(
@@ -988,13 +989,13 @@ class _EmptyState extends StatelessWidget {
               fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: Spacing.sp6),
           Text(
             'Events like creating structures, assigning fees,\nand recording payments will appear here.',
             textAlign: TextAlign.center,
             style: TextStyle(
               color: theme.colorScheme.onSurfaceVariant,
-              fontSize: 12,
+              fontSize: FontSize.caption,
             ),
           ),
         ],
@@ -1019,13 +1020,13 @@ class _ErrorRetry extends StatelessWidget {
             color: theme.colorScheme.error,
             size: 40,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           Text(
             error,
             textAlign: TextAlign.center,
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),

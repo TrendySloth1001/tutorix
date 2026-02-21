@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:tutorix/core/theme/design_tokens.dart';
 import '../../../shared/services/invitation_service.dart';
 import '../../../shared/widgets/app_alert.dart';
 
@@ -140,22 +141,22 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                   const Spacer(),
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
+                      horizontal: Spacing.sp10,
+                      vertical: Spacing.sp4,
                     ),
                     decoration: BoxDecoration(
                       color: onSurface.withValues(alpha: 0.07),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(Radii.sm),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Icon(Icons.school_rounded, size: 13, color: muted),
-                        const SizedBox(width: 5),
+                        const SizedBox(width: Spacing.sp4),
                         Text(
                           widget.coachingName,
                           style: TextStyle(
-                            fontSize: 12,
+                            fontSize: FontSize.caption,
                             fontWeight: FontWeight.w600,
                             color: muted,
                           ),
@@ -173,7 +174,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 8, 20, 32),
               children: [
-                const SizedBox(height: 8),
+                const SizedBox(height: Spacing.sp8),
                 Text(
                   'Invite\nMember',
                   style: theme.textTheme.headlineMedium?.copyWith(
@@ -182,7 +183,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                     letterSpacing: -1,
                   ),
                 ),
-                const SizedBox(height: 6),
+                const SizedBox(height: Spacing.sp6),
                 Text(
                   'Search for an existing user or send a pending invite',
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -191,16 +192,16 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: Spacing.sp24),
 
                 // ═══════════════════════════════════════════════
                 // CARD 1 — Search
                 // ═══════════════════════════════════════════════
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(Spacing.sp16),
                   decoration: BoxDecoration(
                     color: cardBg,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                     border: Border.all(color: cardBorder),
                   ),
                   child: Column(
@@ -212,16 +213,16 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                         color: onSurface,
                         muted: muted,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: Spacing.sp12),
                       Container(
                         decoration: BoxDecoration(
                           color: surface,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(Radii.md),
                           border: Border.all(color: faint),
                         ),
                         child: Row(
                           children: [
-                            const SizedBox(width: 12),
+                            const SizedBox(width: Spacing.sp12),
                             Icon(Icons.search_rounded, size: 20, color: hint),
                             Expanded(
                               child: TextField(
@@ -231,8 +232,8 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                                 decoration: InputDecoration(
                                   isDense: true,
                                   contentPadding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 13,
+                                    horizontal: Spacing.sp8,
+                                    vertical: Spacing.sp12,
                                   ),
                                   hintText: 'name@email.com or +91...',
                                   hintStyle: theme.textTheme.bodyMedium
@@ -245,7 +246,9 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.only(right: 6),
+                              padding: const EdgeInsets.only(
+                                right: Spacing.sp6,
+                              ),
                               child: GestureDetector(
                                 onTap:
                                     _contactController.text.trim().isNotEmpty &&
@@ -256,7 +259,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                                   duration: const Duration(milliseconds: 200),
                                   height: 34,
                                   padding: const EdgeInsets.symmetric(
-                                    horizontal: 14,
+                                    horizontal: Spacing.sp14,
                                   ),
                                   decoration: BoxDecoration(
                                     color:
@@ -265,7 +268,9 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                                             .isNotEmpty
                                         ? onSurface
                                         : onSurface.withValues(alpha: 0.06),
-                                    borderRadius: BorderRadius.circular(9),
+                                    borderRadius: BorderRadius.circular(
+                                      Radii.sm,
+                                    ),
                                   ),
                                   alignment: Alignment.center,
                                   child: _isSearching
@@ -295,30 +300,30 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                       ),
 
                       if (_errorMessage != null) ...[
-                        const SizedBox(height: 10),
+                        const SizedBox(height: Spacing.sp10),
                         _ErrorBanner(message: _errorMessage!),
                       ],
 
                       if (_lookupResult != null) ...[
-                        const SizedBox(height: 14),
+                        const SizedBox(height: Spacing.sp14),
                         Container(height: 1, color: faint),
-                        const SizedBox(height: 14),
+                        const SizedBox(height: Spacing.sp14),
                         _buildLookupResult(theme, onSurface, muted, faint),
                       ],
                     ],
                   ),
                 ),
 
-                const SizedBox(height: 14),
+                const SizedBox(height: Spacing.sp14),
 
                 // ═══════════════════════════════════════════════
                 // CARD 2 — Role
                 // ═══════════════════════════════════════════════
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(Spacing.sp16),
                   decoration: BoxDecoration(
                     color: cardBg,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                     border: Border.all(color: cardBorder),
                   ),
                   child: Column(
@@ -330,7 +335,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                         color: onSurface,
                         muted: muted,
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: Spacing.sp12),
                       Row(
                         children: [
                           _RoleCard(
@@ -343,7 +348,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                             onTap: () =>
                                 setState(() => _selectedRole = 'STUDENT'),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: Spacing.sp10),
                           _RoleCard(
                             label: 'Teacher',
                             icon: Icons.school_outlined,
@@ -354,7 +359,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                             onTap: () =>
                                 setState(() => _selectedRole = 'TEACHER'),
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: Spacing.sp10),
                           _RoleCard(
                             label: 'Parent',
                             icon: Icons.family_restroom_rounded,
@@ -371,16 +376,16 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 14),
+                const SizedBox(height: Spacing.sp14),
 
                 // ═══════════════════════════════════════════════
                 // CARD 3 — Message
                 // ═══════════════════════════════════════════════
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(Spacing.sp16),
                   decoration: BoxDecoration(
                     color: cardBg,
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                     border: Border.all(color: cardBorder),
                   ),
                   child: Column(
@@ -393,11 +398,11 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                             size: 15,
                             color: muted,
                           ),
-                          const SizedBox(width: 6),
+                          const SizedBox(width: Spacing.sp6),
                           Text(
                             'Personal note',
                             style: TextStyle(
-                              fontSize: 13,
+                              fontSize: FontSize.body,
                               fontWeight: FontWeight.w600,
                               color: muted,
                             ),
@@ -406,18 +411,18 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                           Text(
                             'Optional',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: FontSize.micro,
                               color: hint,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: Spacing.sp10),
                       Container(
                         decoration: BoxDecoration(
                           color: surface,
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(Radii.md),
                           border: Border.all(color: faint),
                         ),
                         child: TextField(
@@ -426,7 +431,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                           style: theme.textTheme.bodyMedium,
                           decoration: InputDecoration(
                             isDense: true,
-                            contentPadding: const EdgeInsets.all(14),
+                            contentPadding: const EdgeInsets.all(Spacing.sp14),
                             hintText: 'Welcome to ${widget.coachingName}!',
                             hintStyle: theme.textTheme.bodySmall?.copyWith(
                               color: hint,
@@ -442,7 +447,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 24),
+                const SizedBox(height: Spacing.sp24),
 
                 // ═══════════════════════════════════════════════
                 // Send CTA
@@ -453,7 +458,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 250),
                     decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(14),
+                      borderRadius: BorderRadius.circular(Radii.md),
                       color: _canSend()
                           ? onSurface
                           : onSurface.withValues(alpha: 0.08),
@@ -473,7 +478,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                         onTap: _canSend() && !_isSending
                             ? _sendInvitation
                             : null,
-                        borderRadius: BorderRadius.circular(14),
+                        borderRadius: BorderRadius.circular(Radii.md),
                         child: Center(
                           child: _isSending
                               ? SizedBox(
@@ -492,11 +497,11 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                                       size: 18,
                                       color: _canSend() ? surface : faint,
                                     ),
-                                    const SizedBox(width: 8),
+                                    const SizedBox(width: Spacing.sp8),
                                     Text(
                                       'Send Invitation',
                                       style: TextStyle(
-                                        fontSize: 15,
+                                        fontSize: FontSize.body,
                                         fontWeight: FontWeight.w700,
                                         letterSpacing: -0.2,
                                         color: _canSend() ? surface : faint,
@@ -510,7 +515,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                   ),
                 ),
 
-                const SizedBox(height: 12),
+                const SizedBox(height: Spacing.sp12),
                 if (!_canSend())
                   Center(
                     child: Text(
@@ -521,7 +526,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                           : _lookupResult!['found'] == true
                           ? 'Select a profile above to continue'
                           : '',
-                      style: TextStyle(fontSize: 11, color: muted),
+                      style: TextStyle(fontSize: FontSize.micro, color: muted),
                     ),
                   ),
               ],
@@ -546,10 +551,10 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
       final amber =
           theme.colorScheme.secondary; // burnt orange — high contrast on cream
       return Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(Spacing.sp14),
         decoration: BoxDecoration(
           color: amber.withValues(alpha: 0.06),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           border: Border.all(color: amber.withValues(alpha: 0.15)),
         ),
         child: Row(
@@ -560,7 +565,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
               height: 36,
               decoration: BoxDecoration(
                 color: amber.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
               child: Icon(
                 Icons.person_add_alt_1_rounded,
@@ -568,7 +573,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                 size: 18,
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: Spacing.sp12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -578,13 +583,17 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                     style: TextStyle(
                       fontWeight: FontWeight.w600,
                       color: amber,
-                      fontSize: 13,
+                      fontSize: FontSize.body,
                     ),
                   ),
-                  const SizedBox(height: 3),
+                  const SizedBox(height: Spacing.sp4),
                   Text(
                     'A pending invite will be sent and auto-linked when they join.',
-                    style: TextStyle(color: muted, height: 1.35, fontSize: 11),
+                    style: TextStyle(
+                      color: muted,
+                      height: 1.35,
+                      fontSize: FontSize.micro,
+                    ),
                   ),
                 ],
               ),
@@ -621,18 +630,18 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                 shape: BoxShape.circle,
               ),
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: Spacing.sp6),
             Text(
               'User found',
               style: TextStyle(
-                fontSize: 12,
+                fontSize: FontSize.caption,
                 fontWeight: FontWeight.w600,
                 color: theme.colorScheme.primary,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: Spacing.sp10),
         _PersonCard(
           name: user['name'] ?? 'Unknown',
           subtitle: subtitle,
@@ -651,15 +660,15 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
           }),
         ),
         if (privacy['wardsHidden'] == true) ...[
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           Row(
             children: [
               Icon(Icons.visibility_off_rounded, size: 14, color: faint),
-              const SizedBox(width: 6),
+              const SizedBox(width: Spacing.sp6),
               Text(
                 'Student profiles hidden by user',
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: FontSize.micro,
                   color: faint,
                   fontStyle: FontStyle.italic,
                 ),
@@ -667,21 +676,21 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
             ],
           ),
         ] else if (wards.isNotEmpty) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           Text(
             'STUDENT PROFILES',
             style: TextStyle(
-              fontSize: 10,
+              fontSize: FontSize.nano,
               fontWeight: FontWeight.w700,
               letterSpacing: 0.8,
               color: faint,
             ),
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: Spacing.sp6),
           ...wards.map((w) {
             final ward = w as Map<String, dynamic>;
             return Padding(
-              padding: const EdgeInsets.only(bottom: 6),
+              padding: const EdgeInsets.only(bottom: Spacing.sp6),
               child: _PersonCard(
                 name: ward['name'] ?? 'Unknown',
                 subtitle: ward['isEnrolled'] == true
@@ -739,15 +748,22 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
   }
 
   Widget _badge(String label, Color c) => Container(
-    margin: const EdgeInsets.only(right: 4),
-    padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+    margin: const EdgeInsets.only(right: Spacing.sp4),
+    padding: const EdgeInsets.symmetric(
+      horizontal: Spacing.sp8,
+      vertical: Spacing.sp2,
+    ),
     decoration: BoxDecoration(
       color: c.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(5),
+      borderRadius: BorderRadius.circular(Radii.sm),
     ),
     child: Text(
       label,
-      style: TextStyle(color: c, fontSize: 10, fontWeight: FontWeight.w700),
+      style: TextStyle(
+        color: c,
+        fontSize: FontSize.nano,
+        fontWeight: FontWeight.w700,
+      ),
     ),
   );
 }
@@ -773,11 +789,11 @@ class _SectionHeader extends StatelessWidget {
     return Row(
       children: [
         Icon(icon, size: 15, color: muted),
-        const SizedBox(width: 6),
+        const SizedBox(width: Spacing.sp6),
         Text(
           label,
           style: TextStyle(
-            fontSize: 13,
+            fontSize: FontSize.body,
             fontWeight: FontWeight.w600,
             color: muted,
           ),
@@ -813,10 +829,10 @@ class _RoleCard extends StatelessWidget {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 14),
+          padding: const EdgeInsets.symmetric(vertical: Spacing.sp14),
           decoration: BoxDecoration(
             color: selected ? accent.withValues(alpha: 0.08) : surface,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Radii.md),
             border: Border.all(
               color: selected ? accent.withValues(alpha: 0.5) : faint,
               width: selected ? 1.5 : 1,
@@ -837,23 +853,23 @@ class _RoleCard extends StatelessWidget {
                 ),
                 child: Icon(icon, size: 18, color: selected ? accent : faint),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: Spacing.sp6),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: FontSize.caption,
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w500,
                   color: selected ? accent : faint,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(height: Spacing.sp4),
               AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
                 width: 16,
                 height: 3,
                 decoration: BoxDecoration(
                   color: selected ? accent : Colors.transparent,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(Radii.sm),
                 ),
               ),
             ],
@@ -894,12 +910,15 @@ class _PersonCard extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp12,
+          vertical: Spacing.sp10,
+        ),
         decoration: BoxDecoration(
           color: selected
               ? onSurface.withValues(alpha: 0.06)
               : theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           border: Border.all(
             color: selected ? onSurface.withValues(alpha: 0.35) : faint,
             width: selected ? 1.5 : 1,
@@ -919,7 +938,7 @@ class _PersonCard extends StatelessWidget {
                     )
                   : null,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: Spacing.sp10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -935,7 +954,7 @@ class _PersonCard extends StatelessWidget {
                   if (subtitle.isNotEmpty)
                     Text(
                       subtitle,
-                      style: TextStyle(fontSize: 11, color: faint),
+                      style: TextStyle(fontSize: FontSize.micro, color: faint),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -944,9 +963,9 @@ class _PersonCard extends StatelessWidget {
             ),
             if (badges != null) ...badges!,
             if (selected) ...[
-              const SizedBox(width: 4),
+              const SizedBox(width: Spacing.sp4),
               Container(
-                padding: const EdgeInsets.all(2),
+                padding: const EdgeInsets.all(Spacing.sp2),
                 decoration: BoxDecoration(
                   color: onSurface,
                   shape: BoxShape.circle,
@@ -973,22 +992,25 @@ class _ErrorBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final red = Theme.of(context).colorScheme.error;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp12,
+        vertical: Spacing.sp10,
+      ),
       decoration: BoxDecoration(
         color: red.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(color: red.withValues(alpha: 0.15)),
       ),
       child: Row(
         children: [
           Icon(Icons.error_outline_rounded, color: red, size: 16),
-          const SizedBox(width: 8),
+          const SizedBox(width: Spacing.sp8),
           Expanded(
             child: Text(
               message,
               style: TextStyle(
                 color: red,
-                fontSize: 12,
+                fontSize: FontSize.caption,
                 fontWeight: FontWeight.w500,
               ),
             ),

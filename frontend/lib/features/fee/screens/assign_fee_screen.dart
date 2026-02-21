@@ -3,6 +3,7 @@ import '../../coaching/models/member_model.dart';
 import '../../coaching/services/member_service.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
+import '../../../core/theme/design_tokens.dart';
 
 /// Screen to assign a fee structure to one or more students.
 class AssignFeeScreen extends StatefulWidget {
@@ -390,19 +391,19 @@ class _Body extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(Spacing.sp20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Step 1: Choose fee structure
           _StepHeader(step: '1', title: 'Fee Structure'),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           if (structures.isEmpty)
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(Spacing.sp16),
               decoration: BoxDecoration(
                 color: theme.colorScheme.secondary.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
                 border: Border.all(
                   color: theme.colorScheme.secondary.withValues(alpha: 0.3),
                 ),
@@ -414,13 +415,13 @@ class _Body extends StatelessWidget {
                     color: theme.colorScheme.secondary,
                     size: 20,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: Spacing.sp10),
                   Expanded(
                     child: Text(
                       'No fee structures found. Create one in Fee Structures first.',
                       style: TextStyle(
                         color: theme.colorScheme.onSurface,
-                        fontSize: 13,
+                        fontSize: FontSize.body,
                       ),
                     ),
                   ),
@@ -435,10 +436,10 @@ class _Body extends StatelessWidget {
                   onTap: () => onStructureSelected(s),
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 150),
-                    margin: const EdgeInsets.only(bottom: 8),
+                    margin: const EdgeInsets.only(bottom: Spacing.sp8),
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
+                      horizontal: Spacing.sp16,
+                      vertical: Spacing.sp12,
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
@@ -446,7 +447,7 @@ class _Body extends StatelessWidget {
                           : theme.colorScheme.outlineVariant.withValues(
                               alpha: 0.2,
                             ),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(Radii.md),
                       border: Border.all(
                         color: isSelected
                             ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
@@ -481,7 +482,7 @@ class _Body extends StatelessWidget {
                                 )
                               : null,
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: Spacing.sp12),
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -491,16 +492,16 @@ class _Body extends StatelessWidget {
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
                                   color: theme.colorScheme.onSurface,
-                                  fontSize: 14,
+                                  fontSize: FontSize.body,
                                 ),
                               ),
-                              const SizedBox(height: 2),
+                              const SizedBox(height: Spacing.sp2),
                               Text(
                                 '₹${s.amount.toStringAsFixed(0)} · ${s.cycleLabel}'
                                 '${s.allowInstallments ? ' · Installments' : ''}',
                                 style: TextStyle(
                                   color: theme.colorScheme.onSurfaceVariant,
-                                  fontSize: 12,
+                                  fontSize: FontSize.caption,
                                 ),
                               ),
                             ],
@@ -510,7 +511,7 @@ class _Body extends StatelessWidget {
                           '${s.assignmentCount} student${s.assignmentCount == 1 ? '' : 's'}',
                           style: TextStyle(
                             color: theme.colorScheme.onSurfaceVariant,
-                            fontSize: 11,
+                            fontSize: FontSize.micro,
                           ),
                         ),
                       ],
@@ -520,13 +521,13 @@ class _Body extends StatelessWidget {
               }).toList(),
             ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: Spacing.sp20),
           const Divider(),
-          const SizedBox(height: 20),
+          const SizedBox(height: Spacing.sp20),
 
           // Step 2: Override amount / discount
           _StepHeader(step: '2', title: 'Pricing (Optional)'),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           Row(
             children: [
               Switch(
@@ -534,18 +535,18 @@ class _Body extends StatelessWidget {
                 onChanged: onCustomAmountToggled,
                 activeThumbColor: theme.colorScheme.primary,
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: Spacing.sp8),
               Text(
                 'Custom amount for this assignment',
                 style: TextStyle(
                   color: theme.colorScheme.onSurface,
-                  fontSize: 13,
+                  fontSize: FontSize.body,
                 ),
               ),
             ],
           ),
           if (customAmountEnabled) ...[
-            const SizedBox(height: 10),
+            const SizedBox(height: Spacing.sp10),
             TextField(
               controller: customAmountCtrl,
               keyboardType: const TextInputType.numberWithOptions(
@@ -557,7 +558,7 @@ class _Body extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           TextField(
             controller: discountAmountCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -567,7 +568,7 @@ class _Body extends StatelessWidget {
               hintText: '0',
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           TextField(
             controller: discountReasonCtrl,
             decoration: const InputDecoration(
@@ -575,7 +576,7 @@ class _Body extends StatelessWidget {
               hintText: 'e.g. Sibling discount',
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           // Scholarship fields (M18)
           TextField(
             controller: scholarshipTagCtrl,
@@ -584,7 +585,7 @@ class _Body extends StatelessWidget {
               hintText: 'e.g. Merit, Sports, Need-based',
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           TextField(
             controller: scholarshipAmountCtrl,
             keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -594,7 +595,7 @@ class _Body extends StatelessWidget {
               hintText: '0',
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           GestureDetector(
             onTap: () async {
               final d = await showDatePicker(
@@ -608,14 +609,17 @@ class _Body extends StatelessWidget {
               }
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.sp14,
+                vertical: Spacing.sp12,
+              ),
               decoration: BoxDecoration(
                 border: Border.all(
                   color: theme.colorScheme.onSurfaceVariant.withValues(
                     alpha: 0.4,
                   ),
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
               child: Row(
                 children: [
@@ -624,21 +628,21 @@ class _Body extends StatelessWidget {
                     size: 16,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: Spacing.sp8),
                   Text(
                     startDate != null
                         ? 'Starts ${_fmtDate(startDate!)}'
                         : 'Start date: Today',
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
-                      fontSize: 13,
+                      fontSize: FontSize.body,
                     ),
                   ),
                 ],
               ),
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           GestureDetector(
             onTap: () async {
               final d = await showDatePicker(
@@ -653,14 +657,17 @@ class _Body extends StatelessWidget {
               }
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.sp14,
+                vertical: Spacing.sp12,
+              ),
               decoration: BoxDecoration(
                 border: Border.all(
                   color: theme.colorScheme.onSurfaceVariant.withValues(
                     alpha: 0.4,
                   ),
                 ),
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
               child: Row(
                 children: [
@@ -669,14 +676,14 @@ class _Body extends StatelessWidget {
                     size: 16,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: Spacing.sp8),
                   Text(
                     endDate != null
                         ? 'Ends ${_fmtDate(endDate!)}'
                         : 'End date: None (ongoing)',
                     style: TextStyle(
                       color: theme.colorScheme.onSurface,
-                      fontSize: 13,
+                      fontSize: FontSize.body,
                     ),
                   ),
                 ],
@@ -684,9 +691,9 @@ class _Body extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 20),
+          const SizedBox(height: Spacing.sp20),
           const Divider(),
-          const SizedBox(height: 20),
+          const SizedBox(height: Spacing.sp20),
 
           // Step 3: Select Students
           Row(
@@ -699,7 +706,7 @@ class _Body extends StatelessWidget {
                   'All',
                   style: TextStyle(
                     color: theme.colorScheme.onSurface,
-                    fontSize: 12,
+                    fontSize: FontSize.caption,
                   ),
                 ),
               ),
@@ -709,21 +716,21 @@ class _Body extends StatelessWidget {
                   'Clear',
                   style: TextStyle(
                     color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: 12,
+                    fontSize: FontSize.caption,
                   ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           Text(
             '${selectedMemberIds.length} of ${members.length} selected',
             style: TextStyle(
               color: theme.colorScheme.onSurfaceVariant,
-              fontSize: 12,
+              fontSize: FontSize.caption,
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           if (members.isEmpty)
             const _Hint('No active students in this coaching.')
           else
@@ -736,7 +743,7 @@ class _Body extends StatelessWidget {
             ),
 
           _buildSettlementBanner(context),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
@@ -755,7 +762,7 @@ class _Body extends StatelessWidget {
                     ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: Spacing.sp32),
         ],
       ),
     );
@@ -792,11 +799,11 @@ class _Body extends StatelessWidget {
           : 'Student';
 
       return Container(
-        margin: const EdgeInsets.only(bottom: 4),
-        padding: const EdgeInsets.all(14),
+        margin: const EdgeInsets.only(bottom: Spacing.sp4),
+        padding: const EdgeInsets.all(Spacing.sp14),
         decoration: BoxDecoration(
           color: cardColor,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           border: Border.all(color: borderColor.withValues(alpha: 0.5)),
         ),
         child: Column(
@@ -805,34 +812,34 @@ class _Body extends StatelessWidget {
             Row(
               children: [
                 Icon(Icons.info_outline_rounded, color: waivedColor, size: 15),
-                const SizedBox(width: 6),
+                const SizedBox(width: Spacing.sp6),
                 Text(
                   'Settlement Preview',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     color: titleColor,
-                    fontSize: 13,
+                    fontSize: FontSize.body,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: Spacing.sp6),
             Text(
               '$memberName is currently assigned to “${preview.currentStructureName}”.',
-              style: TextStyle(color: bodyColor, fontSize: 12),
+              style: TextStyle(color: bodyColor, fontSize: FontSize.caption),
             ),
-            const SizedBox(height: 10),
+            const SizedBox(height: Spacing.sp10),
             ...preview.partialRecords.map(
               (r) => Padding(
-                padding: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.only(bottom: Spacing.sp8),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 10,
-                    vertical: 8,
+                    horizontal: Spacing.sp10,
+                    vertical: Spacing.sp8,
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.6),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -841,28 +848,34 @@ class _Body extends StatelessWidget {
                         r.title,
                         style: TextStyle(
                           color: bodyColor,
-                          fontSize: 12,
+                          fontSize: FontSize.caption,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: Spacing.sp4),
                       Row(
                         children: [
                           Text(
                             '₹${r.paidAmount.toStringAsFixed(0)} paid',
                             style: TextStyle(
                               color: paidColor,
-                              fontSize: 11,
+                              fontSize: FontSize.micro,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                           Text(
                             '  ·  ',
-                            style: TextStyle(color: bodyColor, fontSize: 11),
+                            style: TextStyle(
+                              color: bodyColor,
+                              fontSize: FontSize.micro,
+                            ),
                           ),
                           Text(
                             '₹${r.balance.toStringAsFixed(0)} remaining → auto-waived',
-                            style: TextStyle(color: waivedColor, fontSize: 11),
+                            style: TextStyle(
+                              color: waivedColor,
+                              fontSize: FontSize.micro,
+                            ),
                           ),
                         ],
                       ),
@@ -877,12 +890,12 @@ class _Body extends StatelessWidget {
                 onTap: () => onApplyCredit(preview.totalPaid),
                 child: Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 9,
+                    horizontal: Spacing.sp12,
+                    vertical: Spacing.sp8,
                   ),
                   decoration: BoxDecoration(
                     color: paidColor.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                     border: Border.all(
                       color: paidColor.withValues(alpha: 0.35),
                     ),
@@ -894,13 +907,13 @@ class _Body extends StatelessWidget {
                         color: paidColor,
                         size: 14,
                       ),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: Spacing.sp8),
                       Expanded(
                         child: Text(
                           'Apply ₹${preview.totalPaid.toStringAsFixed(0)} already paid as discount on new structure',
                           style: TextStyle(
                             color: theme.colorScheme.primary,
-                            fontSize: 12,
+                            fontSize: FontSize.caption,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -923,24 +936,27 @@ class _Body extends StatelessWidget {
     // Multiple students with partial payments
     final totalPaid = withPartial.fold(0.0, (s, e) => s + e.value.totalPaid);
     return Container(
-      margin: const EdgeInsets.only(bottom: 4),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      margin: const EdgeInsets.only(bottom: Spacing.sp4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp14,
+        vertical: Spacing.sp12,
+      ),
       decoration: BoxDecoration(
         color: cardColor,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(color: borderColor.withValues(alpha: 0.5)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(Icons.info_outline_rounded, color: waivedColor, size: 15),
-          const SizedBox(width: 8),
+          const SizedBox(width: Spacing.sp8),
           Expanded(
             child: Text(
               '${withPartial.length} student${withPartial.length == 1 ? '' : 's'} have partial payments '
               '(₹${totalPaid.toStringAsFixed(0)} total paid). '
               'Remaining balances will be auto-waived — no manual action needed.',
-              style: TextStyle(color: titleColor, fontSize: 12),
+              style: TextStyle(color: titleColor, fontSize: FontSize.caption),
             ),
           ),
         ],
@@ -971,18 +987,18 @@ class _StepHeader extends StatelessWidget {
               style: TextStyle(
                 color: theme.colorScheme.onPrimary,
                 fontWeight: FontWeight.w700,
-                fontSize: 12,
+                fontSize: FontSize.caption,
               ),
             ),
           ),
         ),
-        const SizedBox(width: 10),
+        const SizedBox(width: Spacing.sp10),
         Text(
           title,
           style: TextStyle(
             fontWeight: FontWeight.w700,
             color: theme.colorScheme.onSurface,
-            fontSize: 15,
+            fontSize: FontSize.body,
           ),
         ),
       ],
@@ -1006,13 +1022,16 @@ class _MemberOption extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        margin: const EdgeInsets.only(bottom: Spacing.sp6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp12,
+          vertical: Spacing.sp10,
+        ),
         decoration: BoxDecoration(
           color: isSelected
               ? theme.colorScheme.onSurface.withValues(alpha: 0.07)
               : theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(Radii.md),
           border: Border.all(
             color: isSelected
                 ? theme.colorScheme.primary
@@ -1037,14 +1056,14 @@ class _MemberOption extends StatelessWidget {
                     )
                   : null,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: Spacing.sp10),
             Expanded(
               child: Text(
                 member.displayName,
                 style: TextStyle(
                   fontWeight: FontWeight.w500,
                   color: theme.colorScheme.onSurface,
-                  fontSize: 13,
+                  fontSize: FontSize.body,
                 ),
               ),
             ),
@@ -1068,12 +1087,12 @@ class _Hint extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 12),
+      padding: const EdgeInsets.symmetric(vertical: Spacing.sp12),
       child: Text(
         text,
         style: TextStyle(
           color: theme.colorScheme.onSurfaceVariant,
-          fontSize: 13,
+          fontSize: FontSize.body,
         ),
       ),
     );
@@ -1096,13 +1115,13 @@ class _ErrorRetry extends StatelessWidget {
             color: theme.colorScheme.error,
             size: 40,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           Text(
             error,
             textAlign: TextAlign.center,
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
@@ -1270,9 +1289,16 @@ class _PullSettingsSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(Radii.lg),
+        ),
       ),
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.sp20,
+        Spacing.sp20,
+        Spacing.sp20,
+        Spacing.sp32,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1283,18 +1309,18 @@ class _PullSettingsSheet extends StatelessWidget {
               height: 4,
               decoration: BoxDecoration(
                 color: theme.colorScheme.outlineVariant,
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(Radii.sm),
               ),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(Spacing.sp8),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(Radii.md),
                 ),
                 child: Icon(
                   Icons.history_rounded,
@@ -1302,7 +1328,7 @@ class _PullSettingsSheet extends StatelessWidget {
                   size: 18,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.sp12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1312,14 +1338,14 @@ class _PullSettingsSheet extends StatelessWidget {
                       style: TextStyle(
                         color: theme.colorScheme.onSurface,
                         fontWeight: FontWeight.w700,
-                        fontSize: 15,
+                        fontSize: FontSize.body,
                       ),
                     ),
                     Text(
                       'This student had custom settings last time. Want to reuse them?',
                       style: TextStyle(
                         color: theme.colorScheme.onSurfaceVariant,
-                        fontSize: 12,
+                        fontSize: FontSize.caption,
                       ),
                     ),
                   ],
@@ -1328,7 +1354,7 @@ class _PullSettingsSheet extends StatelessWidget {
             ],
           ),
           if (log.assignedBy != null || log.assignedAt != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             Text(
               [
                 if (log.assignedBy != null) 'by ${log.assignedBy}',
@@ -1336,25 +1362,25 @@ class _PullSettingsSheet extends StatelessWidget {
               ].join(' · '),
               style: TextStyle(
                 color: theme.colorScheme.onSurfaceVariant,
-                fontSize: 11,
+                fontSize: FontSize.micro,
                 fontStyle: FontStyle.italic,
               ),
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           // Settings rows
           Container(
             decoration: BoxDecoration(
               color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
             child: Column(
               children: rows
                   .map(
                     (r) => Padding(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 14,
-                        vertical: 10,
+                        horizontal: Spacing.sp14,
+                        vertical: Spacing.sp10,
                       ),
                       child: Row(
                         children: [
@@ -1363,12 +1389,12 @@ class _PullSettingsSheet extends StatelessWidget {
                             size: 15,
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
-                          const SizedBox(width: 10),
+                          const SizedBox(width: Spacing.sp10),
                           Text(
                             r.label,
                             style: TextStyle(
                               color: theme.colorScheme.onSurfaceVariant,
-                              fontSize: 12,
+                              fontSize: FontSize.caption,
                               fontWeight: FontWeight.w500,
                             ),
                           ),
@@ -1377,7 +1403,7 @@ class _PullSettingsSheet extends StatelessWidget {
                             r.value,
                             style: TextStyle(
                               color: theme.colorScheme.onSurface,
-                              fontSize: 13,
+                              fontSize: FontSize.body,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -1388,7 +1414,7 @@ class _PullSettingsSheet extends StatelessWidget {
                   .toList(),
             ),
           ),
-          const SizedBox(height: 20),
+          const SizedBox(height: Spacing.sp20),
           Row(
             children: [
               Expanded(
@@ -1396,24 +1422,24 @@ class _PullSettingsSheet extends StatelessWidget {
                   style: OutlinedButton.styleFrom(
                     foregroundColor: theme.colorScheme.onSurfaceVariant,
                     side: BorderSide(color: theme.colorScheme.outlineVariant),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: Spacing.sp14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(Radii.md),
                     ),
                   ),
                   onPressed: () => Navigator.pop(context),
                   child: const Text('Skip'),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.sp12),
               Expanded(
                 flex: 2,
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    padding: const EdgeInsets.symmetric(vertical: Spacing.sp14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(Radii.md),
                     ),
                   ),
                   onPressed: () {

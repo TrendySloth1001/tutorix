@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/services/error_logger_service.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_shimmer.dart';
 import '../../batch/models/batch_model.dart';
@@ -101,14 +102,14 @@ class _CoachingAssessmentScreenState extends State<CoachingAssessmentScreen> {
                     size: 56,
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: Spacing.sp12),
                   Text(
                     'No batches yet',
                     style: theme.textTheme.titleMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: Spacing.sp4),
                   Text(
                     'Join a batch to see assessments',
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -119,9 +120,9 @@ class _CoachingAssessmentScreenState extends State<CoachingAssessmentScreen> {
               ),
             )
           : ListView.separated(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(Spacing.sp16),
               itemCount: _batches.length,
-              separatorBuilder: (_, _) => const SizedBox(height: 10),
+              separatorBuilder: (_, _) => const SizedBox(height: Spacing.sp10),
               itemBuilder: (_, i) {
                 final batch = _batches[i];
                 return _BatchAssessmentCard(
@@ -147,16 +148,16 @@ class _BatchAssessmentCard extends StatelessWidget {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         side: BorderSide(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
         ),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(Spacing.sp16),
           child: Row(
             children: [
               Container(
@@ -164,7 +165,7 @@ class _BatchAssessmentCard extends StatelessWidget {
                 height: 44,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(Radii.md),
                 ),
                 child: Icon(
                   Icons.quiz_rounded,
@@ -172,7 +173,7 @@ class _BatchAssessmentCard extends StatelessWidget {
                   color: theme.colorScheme.onPrimaryContainer,
                 ),
               ),
-              const SizedBox(width: 14),
+              const SizedBox(width: Spacing.sp14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -184,7 +185,7 @@ class _BatchAssessmentCard extends StatelessWidget {
                       ),
                     ),
                     if (batch.subject != null) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: Spacing.sp2),
                       Text(
                         batch.subject!,
                         style: theme.textTheme.bodySmall?.copyWith(
@@ -213,15 +214,15 @@ class _BatchListShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.sp16),
       itemCount: 4,
-      separatorBuilder: (_, _) => const SizedBox(height: 10),
+      separatorBuilder: (_, _) => const SizedBox(height: Spacing.sp10),
       itemBuilder: (_, _) => ShimmerWrap(
         child: Container(
           height: 76,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
         ),
       ),

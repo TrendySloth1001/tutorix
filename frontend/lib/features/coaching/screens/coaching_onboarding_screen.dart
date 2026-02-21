@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
 import '../models/coaching_address.dart';
@@ -479,14 +480,14 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
     ];
 
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.sp24),
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(Spacing.sp12),
             decoration: BoxDecoration(
               color: theme.colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
             child: Icon(
               _currentStep == 0
@@ -500,7 +501,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
               size: 28,
             ),
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: Spacing.sp16),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -511,7 +512,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 4),
+                const SizedBox(height: Spacing.sp4),
                 Text(
                   subtitles[_currentStep],
                   style: theme.textTheme.bodyMedium?.copyWith(
@@ -528,19 +529,21 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
 
   Widget _buildProgressIndicator(ColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp24),
       child: Row(
         children: List.generate(_totalSteps, (index) {
           final isActive = index <= _currentStep;
           return Expanded(
             child: Container(
               height: 4,
-              margin: EdgeInsets.only(right: index < _totalSteps - 1 ? 4 : 0),
+              margin: EdgeInsets.only(
+                right: index < _totalSteps - 1 ? Spacing.sp4 : 0,
+              ),
               decoration: BoxDecoration(
                 color: isActive
                     ? colorScheme.primary
                     : colorScheme.primary.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(Radii.sm),
               ),
             ),
           );
@@ -551,24 +554,24 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
 
   Widget _buildBasicInfoStep() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.sp24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('Coaching Name', Icons.school_outlined),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           TextField(
             controller: _nameController,
             decoration: InputDecoration(
               hintText: 'e.g., Excel Coaching Classes',
               prefixIcon: const Icon(Icons.business_outlined),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
             ),
             textCapitalization: TextCapitalization.words,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           Text(
             'Choose a name that represents your institution',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -577,16 +580,16 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
               ).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: Spacing.sp32),
           _buildSectionTitle(
             'What type of institution?',
             Icons.category_outlined,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           _buildCategorySelector(),
-          const SizedBox(height: 32),
+          const SizedBox(height: Spacing.sp32),
           _buildSectionTitle('Subjects You Teach', Icons.book_outlined),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           Text(
             'Select all that apply',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -595,7 +598,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
               ).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           _buildSubjectsSelector(),
         ],
       ),
@@ -632,7 +635,10 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 8),
+              padding: const EdgeInsets.only(
+                top: Spacing.sp8,
+                bottom: Spacing.sp8,
+              ),
               child: Text(
                 entry.key,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -673,45 +679,45 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
     final currentYear = DateTime.now().year;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.sp24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('Tagline', Icons.format_quote_outlined),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           TextField(
             controller: _taglineController,
             decoration: InputDecoration(
               hintText: 'e.g., Where Dreams Meet Success',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
             ),
             maxLength: 100,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           _buildSectionTitle('About Your Coaching', Icons.info_outline),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           TextField(
             controller: _aboutController,
             decoration: InputDecoration(
               hintText: 'Tell students what makes your coaching special...',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
             ),
             maxLines: 4,
             maxLength: 500,
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           _buildSectionTitle('Founded Year', Icons.calendar_today_outlined),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           DropdownButtonFormField<int>(
             initialValue: _foundedYear,
             decoration: InputDecoration(
               hintText: 'Select year',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
             ),
             items: List.generate(50, (i) => currentYear - i)
@@ -724,54 +730,54 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
                 .toList(),
             onChanged: (value) => setState(() => _foundedYear = value),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           _buildSectionTitle('Contact Details', Icons.contact_phone_outlined),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           TextField(
             controller: _emailController,
             decoration: InputDecoration(
               hintText: 'Contact email',
               prefixIcon: const Icon(Icons.email_outlined),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
             ),
             keyboardType: TextInputType.emailAddress,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           TextField(
             controller: _phoneController,
             decoration: InputDecoration(
               hintText: 'Phone number',
               prefixIcon: const Icon(Icons.phone_outlined),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
             ),
             keyboardType: TextInputType.phone,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           TextField(
             controller: _whatsappController,
             decoration: InputDecoration(
               hintText: 'WhatsApp number',
               prefixIcon: const Icon(Icons.chat_outlined),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
             ),
             keyboardType: TextInputType.phone,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           TextField(
             controller: _websiteController,
             decoration: InputDecoration(
               hintText: 'Website (optional)',
               prefixIcon: const Icon(Icons.language_outlined),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
             ),
             keyboardType: TextInputType.url,
@@ -783,20 +789,20 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
 
   Widget _buildAddressStep() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.sp24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Location button
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Spacing.sp16),
             decoration: BoxDecoration(
               color: _latitude != null
                   ? Colors.green.withValues(alpha: 0.1)
                   : Theme.of(
                       context,
                     ).colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.md),
               border: Border.all(
                 color: _latitude != null
                     ? Colors.green.withValues(alpha: 0.3)
@@ -815,7 +821,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
                       ? Colors.green
                       : Theme.of(context).colorScheme.primary,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -856,40 +862,40 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           _buildSectionTitle('Address', Icons.location_on_outlined),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           TextField(
             controller: _addressLine1Controller,
             decoration: InputDecoration(
               hintText: 'Building/Street address',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           TextField(
             controller: _addressLine2Controller,
             decoration: InputDecoration(
               hintText: 'Area/Locality (optional)',
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           TextField(
             controller: _landmarkController,
             decoration: InputDecoration(
               hintText: 'Landmark (optional)',
               prefixIcon: const Icon(Icons.place_outlined),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           Row(
             children: [
               Expanded(
@@ -898,19 +904,19 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
                   decoration: InputDecoration(
                     hintText: 'City',
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(Radii.md),
                     ),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.sp12),
               Expanded(
                 child: TextField(
                   controller: _pincodeController,
                   decoration: InputDecoration(
                     hintText: 'Pincode',
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(Radii.md),
                     ),
                   ),
                   keyboardType: TextInputType.number,
@@ -922,17 +928,17 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           _buildStateSelector(),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           _buildSectionTitle('Working Days', Icons.calendar_month_outlined),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           _buildWorkingDaysSelector(),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           _buildSectionTitle('Timings', Icons.access_time_outlined),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           _buildTimingsPicker(),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           // Add branch section
           _buildAddBranchSection(),
         ],
@@ -947,7 +953,9 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
       initialValue: _selectedState,
       decoration: InputDecoration(
         hintText: 'Select State',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(Radii.md),
+        ),
       ),
       items: _masters!.states
           .map(
@@ -1019,7 +1027,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
             onChanged: (time) => setState(() => _openingTime = time),
           ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: Spacing.sp12),
         Expanded(
           child: _TimePickerField(
             label: 'Closing',
@@ -1048,12 +1056,12 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
         ),
         if (_branches.isEmpty)
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Spacing.sp16),
             decoration: BoxDecoration(
               color: Theme.of(
                 context,
               ).colorScheme.tertiary.withValues(alpha: 0.3),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
             child: Row(
               children: [
@@ -1062,7 +1070,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
                   color: Theme.of(context).colorScheme.primary,
                   size: 20,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: Text(
                     'Have multiple locations? Add branches to let students find you everywhere.',
@@ -1131,17 +1139,17 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
         ?.name;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.sp24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(Spacing.sp20),
             decoration: BoxDecoration(
               color: Theme.of(
                 context,
               ).colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(Radii.lg),
             ),
             child: Column(
               children: [
@@ -1150,7 +1158,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
                   size: 48,
                   color: Theme.of(context).colorScheme.primary,
                 ),
-                const SizedBox(height: 12),
+                const SizedBox(height: Spacing.sp12),
                 Text(
                   _nameController.text,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
@@ -1159,7 +1167,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
                   textAlign: TextAlign.center,
                 ),
                 if (_taglineController.text.isNotEmpty) ...[
-                  const SizedBox(height: 4),
+                  const SizedBox(height: Spacing.sp4),
                   Text(
                     _taglineController.text,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -1174,7 +1182,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           _ReviewItem(
             icon: Icons.category_outlined,
             label: 'Type',
@@ -1219,17 +1227,17 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
               label: 'Branches',
               value: '${_branches.length} additional location(s)',
             ),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Spacing.sp16),
             decoration: BoxDecoration(
               color: Colors.green.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
             child: Row(
               children: [
                 const Icon(Icons.verified_outlined, color: Colors.green),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: Text(
                     "You're all set! Click 'Launch' to make your coaching live.",
@@ -1248,7 +1256,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
     return Row(
       children: [
         Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(width: 8),
+        const SizedBox(width: Spacing.sp8),
         Text(
           title,
           style: Theme.of(
@@ -1263,7 +1271,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
     final isLastStep = _currentStep == _totalSteps - 1;
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.sp24),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         boxShadow: [
@@ -1304,10 +1312,10 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
                     children: [
                       Text(isLastStep ? 'Launch Coaching' : 'Continue'),
                       if (!isLastStep) ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(width: Spacing.sp8),
                         const Icon(Icons.arrow_forward, size: 18),
                       ] else ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(width: Spacing.sp8),
                         const Icon(Icons.rocket_launch, size: 18),
                       ],
                     ],
@@ -1342,10 +1350,13 @@ class _SelectableChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp14,
+          vertical: Spacing.sp8,
+        ),
         decoration: BoxDecoration(
           color: isSelected ? colorScheme.primary : colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(Radii.lg),
           border: Border.all(
             color: isSelected
                 ? colorScheme.primary
@@ -1357,7 +1368,7 @@ class _SelectableChip extends StatelessWidget {
           style: TextStyle(
             color: isSelected ? colorScheme.onPrimary : colorScheme.onSurface,
             fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-            fontSize: 13,
+            fontSize: FontSize.body,
           ),
         ),
       ),
@@ -1386,12 +1397,15 @@ class _CategoryChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp16,
+          vertical: Spacing.sp12,
+        ),
         decoration: BoxDecoration(
           color: isSelected
               ? colorScheme.primary.withValues(alpha: 0.1)
               : colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           border: Border.all(
             color: isSelected
                 ? colorScheme.primary
@@ -1404,7 +1418,7 @@ class _CategoryChip extends StatelessWidget {
           children: [
             if (isSelected)
               Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.only(right: Spacing.sp8),
                 child: Icon(
                   Icons.check_circle,
                   color: colorScheme.primary,
@@ -1451,14 +1465,17 @@ class _TimePickerField extends StatelessWidget {
         }
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp16,
+          vertical: Spacing.sp16,
+        ),
         decoration: BoxDecoration(
           border: Border.all(
             color: Theme.of(
               context,
             ).colorScheme.onSurface.withValues(alpha: 0.3),
           ),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
         ),
         child: Row(
           children: [
@@ -1469,7 +1486,7 @@ class _TimePickerField extends StatelessWidget {
                 context,
               ).colorScheme.onSurface.withValues(alpha: 0.6),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: Spacing.sp12),
             Text(
               value ?? label,
               style: TextStyle(
@@ -1496,11 +1513,11 @@ class _BranchCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(top: 8),
-      padding: const EdgeInsets.all(12),
+      margin: const EdgeInsets.only(top: Spacing.sp8),
+      padding: const EdgeInsets.all(Spacing.sp12),
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.tertiary.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Row(
         children: [
@@ -1508,7 +1525,7 @@ class _BranchCard extends StatelessWidget {
             Icons.location_on_outlined,
             color: Theme.of(context).colorScheme.primary,
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: Spacing.sp12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1551,12 +1568,12 @@ class _ReviewItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: Spacing.sp16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 12),
+          const SizedBox(width: Spacing.sp12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1569,7 +1586,7 @@ class _ReviewItem extends StatelessWidget {
                     ).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: Spacing.sp2),
                 Text(
                   value,
                   style: Theme.of(
@@ -1618,13 +1635,15 @@ class _AddBranchSheetState extends State<_AddBranchSheet> {
     return Container(
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(Radii.lg),
+        ),
       ),
       padding: EdgeInsets.only(
         bottom: MediaQuery.of(context).viewInsets.bottom,
       ),
       child: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(Spacing.sp24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1637,39 +1656,39 @@ class _AddBranchSheetState extends State<_AddBranchSheet> {
                   color: Theme.of(
                     context,
                   ).colorScheme.onSurface.withValues(alpha: 0.3),
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(Radii.sm),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: Spacing.sp20),
             Text(
               'Add Branch',
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: Spacing.sp20),
             TextField(
               controller: _nameController,
               decoration: InputDecoration(
                 labelText: 'Branch Name',
                 hintText: 'e.g., South Campus',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(Radii.md),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             TextField(
               controller: _addressController,
               decoration: InputDecoration(
                 labelText: 'Address',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(Radii.md),
                 ),
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Row(
               children: [
                 Expanded(
@@ -1678,19 +1697,19 @@ class _AddBranchSheetState extends State<_AddBranchSheet> {
                     decoration: InputDecoration(
                       labelText: 'City',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(Radii.md),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: TextField(
                     controller: _pincodeController,
                     decoration: InputDecoration(
                       labelText: 'Pincode',
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(Radii.md),
                       ),
                     ),
                     keyboardType: TextInputType.number,
@@ -1698,13 +1717,13 @@ class _AddBranchSheetState extends State<_AddBranchSheet> {
                 ),
               ],
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             DropdownButtonFormField<String>(
               initialValue: _selectedState,
               decoration: InputDecoration(
                 labelText: 'State',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(Radii.md),
                 ),
               ),
               items: widget.masters.states
@@ -1717,18 +1736,18 @@ class _AddBranchSheetState extends State<_AddBranchSheet> {
                   .toList(),
               onChanged: (value) => setState(() => _selectedState = value),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             TextField(
               controller: _phoneController,
               decoration: InputDecoration(
                 labelText: 'Branch Phone (optional)',
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(Radii.md),
                 ),
               ),
               keyboardType: TextInputType.phone,
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: Spacing.sp24),
             SizedBox(
               width: double.infinity,
               child: FilledButton(

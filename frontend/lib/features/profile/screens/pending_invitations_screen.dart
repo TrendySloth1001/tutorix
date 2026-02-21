@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../auth/controllers/auth_controller.dart';
 
 import '../../../shared/services/invitation_service.dart';
@@ -69,11 +70,11 @@ class _PendingInvitationsScreenState extends State<PendingInvitationsScreen> {
     return Scaffold(
       body: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.sp24),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: Spacing.sp40),
 
               // Header
               Icon(
@@ -81,14 +82,14 @@ class _PendingInvitationsScreenState extends State<PendingInvitationsScreen> {
                 size: 48,
                 color: theme.colorScheme.primary,
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.sp16),
               Text(
                 'You have invitations!',
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: Spacing.sp6),
               Text(
                 'Someone invited you to join their coaching. Review below.',
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -96,20 +97,21 @@ class _PendingInvitationsScreenState extends State<PendingInvitationsScreen> {
                 ),
               ),
 
-              const SizedBox(height: 28),
+              const SizedBox(height: Spacing.sp28),
 
               // Invitation list
               Expanded(
                 child: ListView.separated(
                   itemCount: invitations.length,
-                  separatorBuilder: (_, _) => const SizedBox(height: 12),
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: Spacing.sp12),
                   itemBuilder: (_, i) => _buildCard(theme, invitations[i]),
                 ),
               ),
 
               // Skip button
               Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: Spacing.sp16),
                 child: SizedBox(
                   width: double.infinity,
                   child: TextButton(

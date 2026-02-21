@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
@@ -128,13 +129,13 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
             icon: const Icon(Icons.add_rounded),
             tooltip: 'Create Coaching',
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: Spacing.sp8),
           IconButton(
             onPressed: _navigateToProfile,
             icon: Hero(
               tag: 'user_avatar',
               child: Container(
-                padding: const EdgeInsets.all(2),
+                padding: const EdgeInsets.all(Spacing.sp2),
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
@@ -157,7 +158,7 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
                           style: theme.textTheme.labelLarge?.copyWith(
                             color: theme.colorScheme.primary,
                             fontWeight: FontWeight.bold,
-                            fontSize: 12,
+                            fontSize: FontSize.caption,
                           ),
                         )
                       : null,
@@ -165,7 +166,7 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: Spacing.sp8),
         ],
       ),
       body: _isLoading
@@ -178,7 +179,7 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
                 await Future.delayed(const Duration(milliseconds: 500));
               },
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: Spacing.sp16),
                 itemCount: _coachings.length,
                 itemBuilder: (_, i) => CoachingCard(
                   coaching: _coachings[i],
@@ -199,12 +200,12 @@ class _EmptyState extends StatelessWidget {
     final theme = Theme.of(context);
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(40),
+        padding: const EdgeInsets.all(Spacing.sp40),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Container(
-              padding: const EdgeInsets.all(32),
+              padding: const EdgeInsets.all(Spacing.sp32),
               decoration: BoxDecoration(
                 color: theme.colorScheme.tertiary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
@@ -215,14 +216,14 @@ class _EmptyState extends StatelessWidget {
                 color: theme.colorScheme.primary.withValues(alpha: 0.3),
               ),
             ),
-            const SizedBox(height: 32),
+            const SizedBox(height: Spacing.sp32),
             Text(
               'No Institutes Yet',
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Text(
               'Create your first coaching institute to start managing your academic programs.',
               textAlign: TextAlign.center,
@@ -231,18 +232,18 @@ class _EmptyState extends StatelessWidget {
                 height: 1.5,
               ),
             ),
-            const SizedBox(height: 48),
+            const SizedBox(height: Spacing.sp48),
             FilledButton.icon(
               onPressed: onGetStarted,
               icon: const Icon(Icons.rocket_launch_rounded),
               label: const Text('Get Started Now'),
               style: FilledButton.styleFrom(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 32,
-                  vertical: 16,
+                  horizontal: Spacing.sp32,
+                  vertical: Spacing.sp16,
                 ),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(Radii.lg),
                 ),
               ),
             ),

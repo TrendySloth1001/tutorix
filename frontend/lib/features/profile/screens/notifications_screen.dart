@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../shared/services/invitation_service.dart';
@@ -93,9 +94,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           : RefreshIndicator(
               onRefresh: _load,
               child: ListView.separated(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(Spacing.sp16),
                 itemCount: _invitations.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 10),
+                separatorBuilder: (_, _) =>
+                    const SizedBox(height: Spacing.sp10),
                 itemBuilder: (_, i) => _buildCard(theme, _invitations[i]),
               ),
             ),
@@ -112,7 +114,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             size: 56,
             color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           Text(
             "You're all caught up!",
             style: theme.textTheme.titleSmall?.copyWith(
@@ -135,10 +137,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     final busy = _responding.contains(id);
 
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(Spacing.sp14),
       decoration: BoxDecoration(
         color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -151,7 +153,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 height: 40,
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primaryContainer,
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(Radii.md),
                 ),
                 child: Icon(
                   Icons.mail_rounded,
@@ -159,7 +161,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   size: 20,
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: Spacing.sp10),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -183,7 +185,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ),
 
           if (ward != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             Row(
               children: [
                 Icon(
@@ -191,7 +193,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   size: 14,
                   color: theme.colorScheme.secondary,
                 ),
-                const SizedBox(width: 4),
+                const SizedBox(width: Spacing.sp4),
                 Text(
                   'For: ${ward['name']}',
                   style: theme.textTheme.labelSmall?.copyWith(
@@ -204,7 +206,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           ],
 
           if (message != null && message.isNotEmpty) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: Spacing.sp6),
             Text(
               '"$message"',
               style: theme.textTheme.bodySmall?.copyWith(
@@ -214,7 +216,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
             ),
           ],
 
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
 
           Row(
             children: [
@@ -229,7 +231,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   child: const Text('Decline'),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: Spacing.sp10),
               Expanded(
                 child: FilledButton(
                   onPressed: busy

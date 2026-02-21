@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../models/assignment_model.dart';
 import '../services/assessment_service.dart';
 import 'file_viewer_screen.dart';
@@ -94,7 +95,11 @@ class _AssignmentSubmissionsScreenState
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(36),
           child: Padding(
-            padding: const EdgeInsets.only(left: 16, right: 16, bottom: 8),
+            padding: const EdgeInsets.only(
+              left: Spacing.sp16,
+              right: Spacing.sp16,
+              bottom: Spacing.sp8,
+            ),
             child: Row(
               children: [
                 Text(
@@ -130,7 +135,7 @@ class _AssignmentSubmissionsScreenState
           mainAxisSize: MainAxisSize.min,
           children: [
             Text('Failed to load', style: theme.textTheme.bodyMedium),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             TextButton(onPressed: _load, child: const Text('Retry')),
           ],
         ),
@@ -146,7 +151,7 @@ class _AssignmentSubmissionsScreenState
               size: 48,
               color: theme.colorScheme.onSurfaceVariant,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             Text(
               'No submissions yet',
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -161,9 +166,9 @@ class _AssignmentSubmissionsScreenState
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView.separated(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Spacing.sp16),
         itemCount: _submissions!.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 10),
+        separatorBuilder: (_, _) => const SizedBox(height: Spacing.sp10),
         itemBuilder: (_, i) => _SubmissionCard(
           submission: _submissions![i],
           onGrade: () => _gradeSubmission(_submissions![i]),
@@ -192,13 +197,13 @@ class _SubmissionCard extends StatelessWidget {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
         side: BorderSide(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(Spacing.sp14),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -216,7 +221,7 @@ class _SubmissionCard extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: Spacing.sp10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -239,12 +244,12 @@ class _SubmissionCard extends StatelessWidget {
                 ),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 8,
-                    vertical: 3,
+                    horizontal: Spacing.sp8,
+                    vertical: Spacing.sp4,
                   ),
                   decoration: BoxDecoration(
                     color: statusColor.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(6),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                   ),
                   child: Text(
                     s.status,
@@ -259,7 +264,7 @@ class _SubmissionCard extends StatelessWidget {
 
             // Late badge
             if (s.isLate) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: Spacing.sp6),
               Row(
                 children: [
                   Icon(
@@ -267,7 +272,7 @@ class _SubmissionCard extends StatelessWidget {
                     size: 14,
                     color: theme.colorScheme.secondary,
                   ),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: Spacing.sp4),
                   Text(
                     'Submitted late',
                     style: theme.textTheme.labelSmall?.copyWith(
@@ -280,7 +285,7 @@ class _SubmissionCard extends StatelessWidget {
 
             // Files
             if (s.files.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sp8),
               Wrap(
                 spacing: 6,
                 runSpacing: 4,
@@ -319,7 +324,7 @@ class _SubmissionCard extends StatelessWidget {
 
             // Marks & feedback
             if (s.marks != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sp8),
               Text(
                 'Marks: ${s.marks}',
                 style: theme.textTheme.bodyMedium?.copyWith(
@@ -329,12 +334,12 @@ class _SubmissionCard extends StatelessWidget {
               ),
             ],
             if (s.feedback != null && s.feedback!.isNotEmpty) ...[
-              const SizedBox(height: 4),
+              const SizedBox(height: Spacing.sp4),
               Text('Feedback: ${s.feedback}', style: theme.textTheme.bodySmall),
             ],
 
             // Grade button
-            const SizedBox(height: 10),
+            const SizedBox(height: Spacing.sp10),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
@@ -404,7 +409,7 @@ class _GradeDialogState extends State<_GradeDialog> {
                   : null,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           TextField(
             controller: _feedbackCtl,
             maxLines: 3,

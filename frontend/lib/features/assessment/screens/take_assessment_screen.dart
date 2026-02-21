@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/services/error_logger_service.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../models/assessment_model.dart';
 import '../services/assessment_service.dart';
 import 'assessment_result_screen.dart';
@@ -315,18 +316,18 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
           actions: [
             if (widget.assessment.hasTimeLimit)
               Padding(
-                padding: const EdgeInsets.only(right: 8),
+                padding: const EdgeInsets.only(right: Spacing.sp8),
                 child: Center(
                   child: Container(
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
+                      horizontal: Spacing.sp10,
+                      vertical: Spacing.sp6,
                     ),
                     decoration: BoxDecoration(
                       color: _remainingSeconds < 300
                           ? theme.colorScheme.error.withValues(alpha: 0.15)
                           : theme.colorScheme.primary.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(Radii.sm),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -338,7 +339,7 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
                               ? theme.colorScheme.error
                               : theme.colorScheme.primary,
                         ),
-                        const SizedBox(width: 4),
+                        const SizedBox(width: Spacing.sp4),
                         Text(
                           _timerText,
                           style: theme.textTheme.labelMedium?.copyWith(
@@ -381,7 +382,7 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
             // Question content
             Expanded(
               child: SingleChildScrollView(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(Spacing.sp16),
                 child: _QuestionWidget(
                   question: question,
                   index: _currentIndex,
@@ -444,7 +445,10 @@ class _QuestionNavigator extends StatelessWidget {
       ),
       child: ListView.builder(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp8,
+          vertical: Spacing.sp6,
+        ),
         itemCount: total,
         itemBuilder: (_, i) {
           final q = questions[i];
@@ -468,10 +472,10 @@ class _QuestionNavigator extends StatelessWidget {
             child: Container(
               width: 32,
               height: 32,
-              margin: const EdgeInsets.only(right: 6),
+              margin: const EdgeInsets.only(right: Spacing.sp6),
               decoration: BoxDecoration(
                 color: bgColor,
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(Radii.sm),
               ),
               alignment: Alignment.center,
               child: Text(
@@ -534,12 +538,15 @@ class _QuestionWidget extends StatelessWidget {
                 color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: Spacing.sp8),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.sp6,
+                vertical: Spacing.sp2,
+              ),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(Radii.sm),
               ),
               child: Text(
                 question.type,
@@ -558,7 +565,7 @@ class _QuestionWidget extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Spacing.sp12),
 
         // Question text
         Text(
@@ -569,9 +576,9 @@ class _QuestionWidget extends StatelessWidget {
         ),
 
         if (question.imageUrl != null) ...[
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           ClipRRect(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(Radii.sm),
             child: Image.network(
               question.imageUrl!,
               fit: BoxFit.contain,
@@ -582,7 +589,7 @@ class _QuestionWidget extends StatelessWidget {
           ),
         ],
 
-        const SizedBox(height: 16),
+        const SizedBox(height: Spacing.sp16),
 
         // Answer area
         if (question.isMCQ)
@@ -592,7 +599,7 @@ class _QuestionWidget extends StatelessWidget {
         else
           _buildNATInput(theme),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: Spacing.sp16),
 
         // Action row
         Row(
@@ -605,7 +612,7 @@ class _QuestionWidget extends StatelessWidget {
                 foregroundColor: theme.colorScheme.onSurfaceVariant,
               ),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: Spacing.sp8),
             TextButton.icon(
               onPressed: onToggleReview,
               icon: Icon(
@@ -634,13 +641,16 @@ class _QuestionWidget extends StatelessWidget {
         return GestureDetector(
           onTap: () => onSelectAnswer(opt.id),
           child: Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            margin: const EdgeInsets.only(bottom: Spacing.sp8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.sp14,
+              vertical: Spacing.sp12,
+            ),
             decoration: BoxDecoration(
               color: selected
                   ? theme.colorScheme.primary.withValues(alpha: 0.08)
                   : theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(Radii.md),
               border: Border.all(
                 color: selected
                     ? theme.colorScheme.primary
@@ -659,7 +669,7 @@ class _QuestionWidget extends StatelessWidget {
                       ? theme.colorScheme.primary
                       : theme.colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: Spacing.sp10),
                 Expanded(
                   child: Text(
                     opt.text,
@@ -686,13 +696,16 @@ class _QuestionWidget extends StatelessWidget {
         return GestureDetector(
           onTap: () => onToggleMSQ(opt.id),
           child: Container(
-            margin: const EdgeInsets.only(bottom: 8),
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+            margin: const EdgeInsets.only(bottom: Spacing.sp8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.sp14,
+              vertical: Spacing.sp12,
+            ),
             decoration: BoxDecoration(
               color: selected
                   ? theme.colorScheme.primary.withValues(alpha: 0.08)
                   : theme.colorScheme.surface,
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(Radii.md),
               border: Border.all(
                 color: selected
                     ? theme.colorScheme.primary
@@ -711,7 +724,7 @@ class _QuestionWidget extends StatelessWidget {
                       ? theme.colorScheme.primary
                       : theme.colorScheme.onSurfaceVariant,
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: Spacing.sp10),
                 Expanded(
                   child: Text(
                     opt.text,
@@ -764,7 +777,10 @@ class _BottomNav extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp16,
+        vertical: Spacing.sp10,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         border: Border(
@@ -783,7 +799,7 @@ class _BottomNav extends StatelessWidget {
                 label: const Text('Previous'),
               ),
             ),
-            const SizedBox(width: 12),
+            const SizedBox(width: Spacing.sp12),
             Expanded(
               child: FilledButton.icon(
                 onPressed: onNext,

@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/design_tokens.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../models/coaching_model.dart';
@@ -341,7 +342,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
               children: [
                 SizedBox(height: MediaQuery.of(context).padding.top + 16),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: Spacing.sp20),
                   child: _Header(
                     coaching: c,
                     memberCount: _members.length,
@@ -350,7 +351,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                     onBack: widget.onBack,
                   ),
                 ),
-                const SizedBox(height: 20),
+                const SizedBox(height: Spacing.sp20),
               ],
             ),
           ),
@@ -363,20 +364,25 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                 await Future.delayed(const Duration(milliseconds: 500));
               },
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 100),
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.sp20,
+                  0,
+                  Spacing.sp20,
+                  Spacing.sp100,
+                ),
                 children: [
                   // ── Role badge (for students/teachers) ──
                   if (!_canManageMembers && _myRole != null) ...[
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                        horizontal: Spacing.sp12,
+                        vertical: Spacing.sp8,
                       ),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primaryContainer.withValues(
                           alpha: 0.5,
                         ),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(Radii.md),
                         border: Border.all(
                           color: theme.colorScheme.primary.withValues(
                             alpha: 0.3,
@@ -393,7 +399,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                             size: 16,
                             color: theme.colorScheme.primary,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: Spacing.sp8),
                           Text(
                             _myRole!,
                             style: theme.textTheme.labelMedium?.copyWith(
@@ -404,7 +410,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                         ],
                       ),
                     ),
-                    const SizedBox(height: 20),
+                    const SizedBox(height: Spacing.sp20),
                   ],
 
                   // ── Stat chips (only for admins/owners) ──
@@ -415,7 +421,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                       admins: _countRole('ADMIN'),
                       pending: _pending.length,
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: Spacing.sp24),
                   ],
 
                   // ── Quick action (only for admins/owners) ──
@@ -425,7 +431,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                       label: 'Invite Members',
                       onTap: widget.onMembersTap,
                     ),
-                    const SizedBox(height: 10),
+                    const SizedBox(height: Spacing.sp10),
                     _QuickAction(
                       icon: Icons.account_balance_wallet_rounded,
                       label: 'Fee Management',
@@ -442,7 +448,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
 
                   // ── My Fees shortcut (for students/parents) ──
                   if (!_canManageMembers) ...[
-                    const SizedBox(height: 16),
+                    const SizedBox(height: Spacing.sp16),
                     _QuickAction(
                       icon: Icons.receipt_rounded,
                       label: 'My Fees',
@@ -460,25 +466,25 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
 
                   // ── Swipeable Notices (for students/teachers) ──
                   if (!_canManageMembers && _feedNotices.isNotEmpty) ...[
-                    const SizedBox(height: 24),
+                    const SizedBox(height: Spacing.sp24),
                     _SectionHeader(
                       title: 'Notices',
                       icon: Icons.campaign_rounded,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: Spacing.sp8),
                     _SwipeableNoticesSection(notices: _feedNotices),
                   ],
 
                   // ── Clear dismissed button (only if items are dismissed) ──
                   if (!_canManageMembers && _dismissedItems.isNotEmpty) ...[
-                    const SizedBox(height: 20),
+                    const SizedBox(height: Spacing.sp20),
                     Center(
                       child: TextButton.icon(
                         onPressed: _clearDismissed,
                         icon: const Icon(Icons.refresh_rounded, size: 18),
                         label: Text(
                           'Show ${_dismissedItems.length} dismissed item${_dismissedItems.length > 1 ? 's' : ''}',
-                          style: const TextStyle(fontSize: 13),
+                          style: const TextStyle(fontSize: FontSize.body),
                         ),
                       ),
                     ),
@@ -490,12 +496,12 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                         _feedAssessments,
                         'assessment',
                       ).isNotEmpty) ...[
-                    const SizedBox(height: 24),
+                    const SizedBox(height: Spacing.sp24),
                     _SectionHeader(
                       title: 'New Quizzes',
                       icon: Icons.quiz_rounded,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: Spacing.sp8),
                     _DateGroupedFeedSection(
                       items: _filterDismissed(_feedAssessments, 'assessment'),
                       itemBuilder: (a) => _FeedAssessmentCard(
@@ -517,12 +523,12 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                         _feedAssignments,
                         'assignment',
                       ).isNotEmpty) ...[
-                    const SizedBox(height: 24),
+                    const SizedBox(height: Spacing.sp24),
                     _SectionHeader(
                       title: 'New Assignments',
                       icon: Icons.assignment_rounded,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: Spacing.sp8),
                     _DateGroupedFeedSection(
                       items: _filterDismissed(_feedAssignments, 'assignment'),
                       itemBuilder: (a) => _FeedAssignmentCard(
@@ -540,12 +546,12 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
 
                   // ── Recent Notes (priority for students) ──
                   if (_recentNotes.isNotEmpty) ...[
-                    const SizedBox(height: 24),
+                    const SizedBox(height: Spacing.sp24),
                     _SectionHeader(
                       title: _isStudent ? 'Latest Notes' : 'Recent Notes',
                       icon: Icons.sticky_note_2_outlined,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: Spacing.sp8),
                     _RecentNotesSection(
                       notes: _recentNotes,
                       onNoteTap: _navigateToNote,
@@ -554,13 +560,13 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
 
                   // ── Recent Members (only for admins/owners) ──
                   if (_canManageMembers && _members.isNotEmpty) ...[
-                    const SizedBox(height: 24),
+                    const SizedBox(height: Spacing.sp24),
                     _SectionHeader(
                       title: 'Recent Members',
                       trailing: _members.length > 5 ? 'See all' : null,
                       onTrailingTap: widget.onMembersTap,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: Spacing.sp8),
                     ..._members
                         .take(5)
                         .map((m) => _CompactMemberTile(member: m)),
@@ -568,9 +574,9 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
 
                   // ── Pending Invitations (only for admins/owners) ──
                   if (_canManageMembers && _pending.isNotEmpty) ...[
-                    const SizedBox(height: 24),
+                    const SizedBox(height: Spacing.sp24),
                     _SectionHeader(title: 'Pending Invitations'),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: Spacing.sp8),
                     ..._pending
                         .take(5)
                         .map((i) => _CompactInviteTile(invite: i)),
@@ -582,7 +588,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                       _feedAssessments.isEmpty &&
                       _feedAssignments.isEmpty &&
                       _feedNotices.isEmpty) ...[
-                    const SizedBox(height: 60),
+                    const SizedBox(height: Spacing.sp60),
                     Center(
                       child: Column(
                         children: [
@@ -595,7 +601,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                               alpha: 0.2,
                             ),
                           ),
-                          const SizedBox(height: 16),
+                          const SizedBox(height: Spacing.sp16),
                           Text(
                             _isStudent
                                 ? 'All Caught Up!'
@@ -607,7 +613,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: Spacing.sp8),
                           Text(
                             _isStudent
                                 ? 'Today is free - nothing new from your teachers in the last 7 days.\nEnjoy your time!'
@@ -629,7 +635,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                   if (_canManageMembers &&
                       _members.isEmpty &&
                       _pending.isEmpty) ...[
-                    const SizedBox(height: 60),
+                    const SizedBox(height: Spacing.sp60),
                     Center(
                       child: Column(
                         children: [
@@ -640,7 +646,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                               alpha: 0.2,
                             ),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: Spacing.sp12),
                           Text(
                             'No members yet',
                             style: theme.textTheme.bodyLarge?.copyWith(
@@ -649,7 +655,7 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                               ),
                             ),
                           ),
-                          const SizedBox(height: 4),
+                          const SizedBox(height: Spacing.sp4),
                           Text(
                             'Invite teachers and students to get started',
                             style: theme.textTheme.bodySmall?.copyWith(
@@ -703,12 +709,12 @@ class _Header extends StatelessWidget {
             color: theme.colorScheme.surface,
             elevation: 2,
             shadowColor: Colors.black26,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Radii.md),
             child: InkWell(
               onTap: onBack,
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.md),
               child: Container(
-                padding: const EdgeInsets.all(10),
+                padding: const EdgeInsets.all(Spacing.sp10),
                 child: Icon(
                   Icons.arrow_back_rounded,
                   size: 22,
@@ -717,18 +723,18 @@ class _Header extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: Spacing.sp12),
         ],
         Container(
           width: 48,
           height: 48,
           decoration: BoxDecoration(
             color: theme.colorScheme.primary.withValues(alpha: 0.08),
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
           child: coaching.logo != null
               ? ClipRRect(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(Radii.md),
                   child: Image.network(coaching.logo!, fit: BoxFit.cover),
                 )
               : Icon(
@@ -737,7 +743,7 @@ class _Header extends StatelessWidget {
                   size: 24,
                 ),
         ),
-        const SizedBox(width: 12),
+        const SizedBox(width: Spacing.sp12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -747,7 +753,7 @@ class _Header extends StatelessWidget {
                 style: theme.textTheme.titleLarge?.copyWith(
                   fontWeight: FontWeight.bold,
                   letterSpacing: -0.3,
-                  fontSize: 18,
+                  fontSize: FontSize.title,
                 ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
@@ -772,10 +778,10 @@ class _Header extends StatelessWidget {
             ),
             if (unreadNotifications > 0)
               Positioned(
-                right: 8,
-                top: 8,
+                right: Spacing.sp8,
+                top: Spacing.sp8,
                 child: Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.all(Spacing.sp4),
                   decoration: const BoxDecoration(
                     color: Colors.red,
                     shape: BoxShape.circle,
@@ -835,16 +841,19 @@ class _Chip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp12,
+        vertical: Spacing.sp6,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: color,
-          fontSize: 12,
+          fontSize: FontSize.caption,
           fontWeight: FontWeight.w600,
           letterSpacing: 0.2,
         ),
@@ -865,16 +874,19 @@ class _QuickAction extends StatelessWidget {
     final theme = Theme.of(context);
     return Material(
       color: theme.colorScheme.primary.withValues(alpha: 0.06),
-      borderRadius: BorderRadius.circular(14),
+      borderRadius: BorderRadius.circular(Radii.md),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.sp16,
+            vertical: Spacing.sp14,
+          ),
           child: Row(
             children: [
               Icon(icon, size: 20, color: theme.colorScheme.primary),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.sp12),
               Expanded(
                 child: Text(
                   label,
@@ -923,7 +935,7 @@ class _SectionHeader extends StatelessWidget {
                 size: 18,
                 color: theme.colorScheme.primary.withValues(alpha: 0.7),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: Spacing.sp8),
             ],
             Text(
               title,
@@ -959,11 +971,14 @@ class _CompactMemberTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: Spacing.sp6),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp12,
+          vertical: Spacing.sp10,
+        ),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           color: theme.colorScheme.primary.withValues(alpha: 0.03),
         ),
         child: Row(
@@ -982,12 +997,12 @@ class _CompactMemberTile extends StatelessWidget {
                       style: TextStyle(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
-                        fontSize: 14,
+                        fontSize: FontSize.body,
                       ),
                     )
                   : null,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: Spacing.sp10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1007,7 +1022,7 @@ class _CompactMemberTile extends StatelessWidget {
                         color: theme.colorScheme.secondary.withValues(
                           alpha: 0.5,
                         ),
-                        fontSize: 11,
+                        fontSize: FontSize.micro,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -1029,16 +1044,19 @@ class _CompactMemberTile extends StatelessWidget {
       _ => (colorScheme.onSurfaceVariant, 'Student'),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp8,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
         label,
         style: TextStyle(
           color: color,
-          fontSize: 10,
+          fontSize: FontSize.nano,
           fontWeight: FontWeight.w700,
         ),
       ),
@@ -1056,20 +1074,23 @@ class _CompactInviteTile extends StatelessWidget {
     final theme = Theme.of(context);
     final pendingColor = theme.colorScheme.secondary;
     return Padding(
-      padding: const EdgeInsets.only(bottom: 6),
+      padding: const EdgeInsets.only(bottom: Spacing.sp6),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp12,
+          vertical: Spacing.sp10,
+        ),
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           color: pendingColor.withValues(alpha: 0.05),
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(6),
+              padding: const EdgeInsets.all(Spacing.sp6),
               decoration: BoxDecoration(
                 color: pendingColor.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+                borderRadius: BorderRadius.circular(Radii.sm),
               ),
               child: Icon(
                 Icons.mail_outline_rounded,
@@ -1077,7 +1098,7 @@ class _CompactInviteTile extends StatelessWidget {
                 size: 16,
               ),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: Spacing.sp10),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1094,7 +1115,7 @@ class _CompactInviteTile extends StatelessWidget {
                     invite.role,
                     style: TextStyle(
                       color: pendingColor,
-                      fontSize: 11,
+                      fontSize: FontSize.micro,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -1165,7 +1186,10 @@ class _RecentNotesSection extends StatelessWidget {
           children: [
             // Date divider
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.sp8,
+                vertical: Spacing.sp12,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -1175,7 +1199,9 @@ class _RecentNotesSection extends StatelessWidget {
                     ),
                   ),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.sp12,
+                    ),
                     child: Text(
                       entry.key,
                       style: theme.textTheme.labelMedium?.copyWith(
@@ -1242,12 +1268,12 @@ class _NoteCard extends StatelessWidget {
       color: Colors.transparent,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Radii.lg),
         child: Container(
-          margin: const EdgeInsets.only(bottom: 14),
+          margin: const EdgeInsets.only(bottom: Spacing.sp14),
           decoration: BoxDecoration(
             color: theme.colorScheme.surface,
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(Radii.lg),
             border: Border.all(
               color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
               width: 1,
@@ -1267,7 +1293,7 @@ class _NoteCard extends StatelessWidget {
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Spacing.sp16),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -1277,7 +1303,7 @@ class _NoteCard extends StatelessWidget {
                   children: [
                     // Enhanced icon with gradient
                     Container(
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(Spacing.sp14),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
@@ -1287,7 +1313,7 @@ class _NoteCard extends StatelessWidget {
                             color.withValues(alpha: 0.08),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(Radii.lg),
                         border: Border.all(
                           color: color.withValues(alpha: 0.12),
                           width: 1,
@@ -1302,7 +1328,7 @@ class _NoteCard extends StatelessWidget {
                       ),
                       child: Icon(icon, color: color, size: 26),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: Spacing.sp16),
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1318,14 +1344,14 @@ class _NoteCard extends StatelessWidget {
                                     alpha: 0.6,
                                   ),
                                 ),
-                                const SizedBox(width: 6),
+                                const SizedBox(width: Spacing.sp6),
                                 Expanded(
                                   child: Text(
                                     note.batch!.name,
                                     style: theme.textTheme.labelSmall?.copyWith(
                                       color: theme.colorScheme.primary,
                                       fontWeight: FontWeight.w600,
-                                      fontSize: 11,
+                                      fontSize: FontSize.micro,
                                     ),
                                     maxLines: 1,
                                     overflow: TextOverflow.ellipsis,
@@ -1333,7 +1359,7 @@ class _NoteCard extends StatelessWidget {
                                 ),
                               ],
                             ),
-                            const SizedBox(height: 6),
+                            const SizedBox(height: Spacing.sp6),
                           ],
                           // Title with better typography
                           Text(
@@ -1348,7 +1374,7 @@ class _NoteCard extends StatelessWidget {
                           ),
                           if (note.description != null &&
                               note.description!.isNotEmpty) ...[
-                            const SizedBox(height: 6),
+                            const SizedBox(height: Spacing.sp6),
                             Text(
                               note.description!,
                               maxLines: 2,
@@ -1358,31 +1384,31 @@ class _NoteCard extends StatelessWidget {
                                   alpha: 0.55,
                                 ),
                                 height: 1.4,
-                                fontSize: 13,
+                                fontSize: FontSize.body,
                               ),
                             ),
                           ],
                         ],
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: Spacing.sp12),
                     // Timestamp in top-right
                     if (note.createdAt != null)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 4,
+                          horizontal: Spacing.sp8,
+                          vertical: Spacing.sp4,
                         ),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.onSurface.withValues(
                             alpha: 0.04,
                           ),
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(Radii.sm),
                         ),
                         child: Text(
                           _timeAgo(note.createdAt!),
                           style: theme.textTheme.bodySmall?.copyWith(
-                            fontSize: 11,
+                            fontSize: FontSize.micro,
                             fontWeight: FontWeight.w500,
                             color: theme.colorScheme.onSurface.withValues(
                               alpha: 0.45,
@@ -1394,19 +1420,19 @@ class _NoteCard extends StatelessWidget {
                 ),
 
                 // ── Metadata row (attachment count & uploader with more space)
-                const SizedBox(height: 12),
+                const SizedBox(height: Spacing.sp12),
                 Row(
                   children: [
                     // Attachment count badge
                     if (hasFiles) ...[
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
+                          horizontal: Spacing.sp10,
+                          vertical: Spacing.sp4,
                         ),
                         decoration: BoxDecoration(
                           color: color.withValues(alpha: 0.1),
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(Radii.sm),
                           border: Border.all(
                             color: color.withValues(alpha: 0.15),
                             width: 1,
@@ -1420,11 +1446,11 @@ class _NoteCard extends StatelessWidget {
                               size: 14,
                               color: color,
                             ),
-                            const SizedBox(width: 4),
+                            const SizedBox(width: Spacing.sp4),
                             Text(
                               '${note.attachments.length}',
                               style: TextStyle(
-                                fontSize: 12,
+                                fontSize: FontSize.caption,
                                 fontWeight: FontWeight.w700,
                                 color: color,
                               ),
@@ -1432,7 +1458,7 @@ class _NoteCard extends StatelessWidget {
                           ],
                         ),
                       ),
-                      const SizedBox(width: 10),
+                      const SizedBox(width: Spacing.sp10),
                     ],
                     // Uploader with avatar (no background container)
                     if (note.uploadedBy != null)
@@ -1457,7 +1483,7 @@ class _NoteCard extends StatelessWidget {
                                     )
                                   : null,
                             ),
-                            const SizedBox(width: 8),
+                            const SizedBox(width: Spacing.sp8),
                             Flexible(
                               child: Text(
                                 note.uploadedBy!.name ?? '',
@@ -1468,7 +1494,7 @@ class _NoteCard extends StatelessWidget {
                                     alpha: 0.7,
                                   ),
                                   fontWeight: FontWeight.w500,
-                                  fontSize: 13,
+                                  fontSize: FontSize.body,
                                 ),
                               ),
                             ),
@@ -1480,7 +1506,7 @@ class _NoteCard extends StatelessWidget {
 
                 // ── Attachment chips (show max 2, then "...more")
                 if (hasFiles) ...[
-                  const SizedBox(height: 14),
+                  const SizedBox(height: Spacing.sp14),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -1495,15 +1521,15 @@ class _NoteCard extends StatelessWidget {
                         return [
                           // Attachment chip
                           Padding(
-                            padding: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.only(bottom: Spacing.sp8),
                             child: Container(
                               padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 7,
+                                horizontal: Spacing.sp12,
+                                vertical: Spacing.sp8,
                               ),
                               decoration: BoxDecoration(
                                 color: ac.$2.withValues(alpha: 0.08),
-                                borderRadius: BorderRadius.circular(10),
+                                borderRadius: BorderRadius.circular(Radii.md),
                                 border: Border.all(
                                   color: ac.$2.withValues(alpha: 0.15),
                                   width: 1,
@@ -1513,24 +1539,24 @@ class _NoteCard extends StatelessWidget {
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(ac.$1, size: 16, color: ac.$2),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: Spacing.sp6),
                                   Flexible(
                                     child: Text(
                                       a.fileName ?? a.fileType.toUpperCase(),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                       style: TextStyle(
-                                        fontSize: 12,
+                                        fontSize: FontSize.caption,
                                         fontWeight: FontWeight.w600,
                                         color: ac.$2.withValues(alpha: 0.9),
                                       ),
                                     ),
                                   ),
-                                  const SizedBox(width: 6),
+                                  const SizedBox(width: Spacing.sp6),
                                   Text(
                                     a.formattedSize,
                                     style: TextStyle(
-                                      fontSize: 11,
+                                      fontSize: FontSize.micro,
                                       fontWeight: FontWeight.w500,
                                       color: ac.$2.withValues(alpha: 0.6),
                                     ),
@@ -1543,7 +1569,9 @@ class _NoteCard extends StatelessWidget {
                           if (a.description != null &&
                               a.description!.isNotEmpty)
                             Padding(
-                              padding: const EdgeInsets.only(bottom: 8),
+                              padding: const EdgeInsets.only(
+                                bottom: Spacing.sp8,
+                              ),
                               child: _DescriptionCard(
                                 description: a.description!,
                                 fileName:
@@ -1557,14 +1585,14 @@ class _NoteCard extends StatelessWidget {
                       if (note.attachments.length > 2)
                         Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 12,
-                            vertical: 7,
+                            horizontal: Spacing.sp12,
+                            vertical: Spacing.sp8,
                           ),
                           decoration: BoxDecoration(
                             color: theme.colorScheme.onSurface.withValues(
                               alpha: 0.06,
                             ),
-                            borderRadius: BorderRadius.circular(10),
+                            borderRadius: BorderRadius.circular(Radii.md),
                             border: Border.all(
                               color: theme.colorScheme.onSurface.withValues(
                                 alpha: 0.1,
@@ -1582,11 +1610,11 @@ class _NoteCard extends StatelessWidget {
                                   alpha: 0.5,
                                 ),
                               ),
-                              const SizedBox(width: 4),
+                              const SizedBox(width: Spacing.sp4),
                               Text(
                                 '+${note.attachments.length - 2} more',
                                 style: TextStyle(
-                                  fontSize: 12,
+                                  fontSize: FontSize.caption,
                                   fontWeight: FontWeight.w600,
                                   color: theme.colorScheme.onSurface.withValues(
                                     alpha: 0.5,
@@ -1637,12 +1665,12 @@ class _DescriptionCardState extends State<_DescriptionCard> {
           ? () => setState(() => _isExpanded = !_isExpanded)
           : null,
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.all(Spacing.sp10),
         decoration: BoxDecoration(
           color: widget.theme.colorScheme.surfaceContainerHighest.withValues(
             alpha: 0.4,
           ),
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(Radii.md),
           border: Border.all(
             color: widget.theme.colorScheme.outline.withValues(alpha: 0.2),
           ),
@@ -1660,10 +1688,10 @@ class _DescriptionCardState extends State<_DescriptionCard> {
                     color: widget.theme.colorScheme.primary.withValues(
                       alpha: 0.4,
                     ),
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                   ),
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: Spacing.sp8),
                 Icon(
                   Icons.description_outlined,
                   size: 13,
@@ -1671,12 +1699,12 @@ class _DescriptionCardState extends State<_DescriptionCard> {
                     alpha: 0.7,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: Spacing.sp6),
                 Expanded(
                   child: Text(
                     widget.fileName,
                     style: widget.theme.textTheme.bodySmall?.copyWith(
-                      fontSize: 10,
+                      fontSize: FontSize.nano,
                       fontWeight: FontWeight.w600,
                       color: widget.theme.colorScheme.onSurface.withValues(
                         alpha: 0.6,
@@ -1696,12 +1724,12 @@ class _DescriptionCardState extends State<_DescriptionCard> {
                   ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: Spacing.sp6),
             // Description text
             Text(
               widget.description,
               style: widget.theme.textTheme.bodySmall?.copyWith(
-                fontSize: 12,
+                fontSize: FontSize.caption,
                 color: widget.theme.colorScheme.onSurface.withValues(
                   alpha: 0.75,
                 ),
@@ -1796,7 +1824,10 @@ class _DateGroupedFeedSection extends StatelessWidget {
       children: sortedGroups.expand((entry) {
         return [
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.sp8,
+              vertical: Spacing.sp10,
+            ),
             child: Row(
               children: [
                 Expanded(
@@ -1806,7 +1837,7 @@ class _DateGroupedFeedSection extends StatelessWidget {
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  padding: const EdgeInsets.symmetric(horizontal: Spacing.sp12),
                   child: Text(
                     entry.key,
                     style: theme.textTheme.labelMedium?.copyWith(
@@ -1882,8 +1913,8 @@ class _SwipeableNoticesSectionState extends State<_SwipeableNoticesSection> {
                   : null;
 
               return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 4),
-                padding: const EdgeInsets.all(16),
+                margin: const EdgeInsets.symmetric(horizontal: Spacing.sp4),
+                padding: const EdgeInsets.all(Spacing.sp16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
@@ -1893,7 +1924,7 @@ class _SwipeableNoticesSectionState extends State<_SwipeableNoticesSection> {
                       theme.colorScheme.primaryContainer.withValues(alpha: 0.2),
                     ],
                   ),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(Radii.lg),
                   border: Border.all(
                     color: theme.colorScheme.primary.withValues(alpha: 0.15),
                   ),
@@ -1908,7 +1939,7 @@ class _SwipeableNoticesSectionState extends State<_SwipeableNoticesSection> {
                           size: 18,
                           color: theme.colorScheme.primary,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: Spacing.sp8),
                         Expanded(
                           child: Text(
                             title,
@@ -1923,7 +1954,7 @@ class _SwipeableNoticesSectionState extends State<_SwipeableNoticesSection> {
                           Text(
                             _timeAgo(createdAt),
                             style: theme.textTheme.bodySmall?.copyWith(
-                              fontSize: 11,
+                              fontSize: FontSize.micro,
                               color: theme.colorScheme.onSurface.withValues(
                                 alpha: 0.5,
                               ),
@@ -1931,7 +1962,7 @@ class _SwipeableNoticesSectionState extends State<_SwipeableNoticesSection> {
                           ),
                       ],
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: Spacing.sp8),
                     Expanded(
                       child: Text(
                         message,
@@ -1945,7 +1976,7 @@ class _SwipeableNoticesSectionState extends State<_SwipeableNoticesSection> {
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: Spacing.sp4),
                     Row(
                       children: [
                         if (batchName.isNotEmpty) ...[
@@ -1956,13 +1987,13 @@ class _SwipeableNoticesSectionState extends State<_SwipeableNoticesSection> {
                               alpha: 0.6,
                             ),
                           ),
-                          const SizedBox(width: 4),
+                          const SizedBox(width: Spacing.sp4),
                           Text(
                             batchName,
                             style: theme.textTheme.labelSmall?.copyWith(
                               color: theme.colorScheme.primary,
                               fontWeight: FontWeight.w600,
-                              fontSize: 11,
+                              fontSize: FontSize.micro,
                             ),
                           ),
                         ],
@@ -1974,7 +2005,7 @@ class _SwipeableNoticesSectionState extends State<_SwipeableNoticesSection> {
                               color: theme.colorScheme.onSurface.withValues(
                                 alpha: 0.4,
                               ),
-                              fontSize: 11,
+                              fontSize: FontSize.micro,
                               fontStyle: FontStyle.italic,
                             ),
                           ),
@@ -1987,20 +2018,20 @@ class _SwipeableNoticesSectionState extends State<_SwipeableNoticesSection> {
           ),
         ),
         if (widget.notices.length > 1) ...[
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: List.generate(widget.notices.length, (i) {
               return AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                margin: const EdgeInsets.symmetric(horizontal: 3),
+                margin: const EdgeInsets.symmetric(horizontal: Spacing.sp4),
                 width: _currentPage == i ? 18 : 6,
                 height: 6,
                 decoration: BoxDecoration(
                   color: _currentPage == i
                       ? theme.colorScheme.primary
                       : theme.colorScheme.primary.withValues(alpha: 0.2),
-                  borderRadius: BorderRadius.circular(3),
+                  borderRadius: BorderRadius.circular(Radii.sm),
                 ),
               );
             }),
@@ -2044,30 +2075,30 @@ class _FeedAssessmentCard extends StatelessWidget {
         : Icons.assignment_turned_in_rounded;
 
     final card = Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: Spacing.sp8),
       child: Material(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(Radii.md),
           child: Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(Spacing.sp14),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(Radii.md),
               border: Border.all(color: color.withValues(alpha: 0.15)),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(Spacing.sp10),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                   child: Icon(icon, color: color, size: 22),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -2078,12 +2109,12 @@ class _FeedAssessmentCard extends StatelessWidget {
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: color,
                             fontWeight: FontWeight.w600,
-                            fontSize: 11,
+                            fontSize: FontSize.micro,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: Spacing.sp2),
                       ],
                       Text(
                         title,
@@ -2093,7 +2124,7 @@ class _FeedAssessmentCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: Spacing.sp4),
                       Row(
                         children: [
                           _FeedMeta(
@@ -2102,14 +2133,14 @@ class _FeedAssessmentCard extends StatelessWidget {
                                 '$questionCount Q${questionCount != 1 ? 's' : ''}',
                           ),
                           if (duration > 0) ...[
-                            const SizedBox(width: 12),
+                            const SizedBox(width: Spacing.sp12),
                             _FeedMeta(
                               icon: Icons.timer_outlined,
                               text: '${duration}m',
                             ),
                           ],
                           if (totalMarks != null) ...[
-                            const SizedBox(width: 12),
+                            const SizedBox(width: Spacing.sp12),
                             _FeedMeta(
                               icon: Icons.star_outline_rounded,
                               text: '$totalMarks marks',
@@ -2139,11 +2170,11 @@ class _FeedAssessmentCard extends StatelessWidget {
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(right: Spacing.sp20),
+        margin: const EdgeInsets.only(bottom: Spacing.sp8),
         decoration: BoxDecoration(
           color: Colors.red.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(Radii.md),
         ),
         child: const Icon(Icons.remove_circle_outline, color: Colors.red),
       ),
@@ -2182,26 +2213,26 @@ class _FeedAssignmentCard extends StatelessWidget {
     final color = theme.colorScheme.onSurfaceVariant;
 
     final card = Padding(
-      padding: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.only(bottom: Spacing.sp8),
       child: Material(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: InkWell(
           onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(Radii.md),
           child: Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(Spacing.sp14),
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
+              borderRadius: BorderRadius.circular(Radii.md),
               border: Border.all(color: color.withValues(alpha: 0.15)),
             ),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(Spacing.sp10),
                   decoration: BoxDecoration(
                     color: color.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                   child: Icon(
                     Icons.assignment_outlined,
@@ -2209,7 +2240,7 @@ class _FeedAssignmentCard extends StatelessWidget {
                     size: 22,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -2220,12 +2251,12 @@ class _FeedAssignmentCard extends StatelessWidget {
                           style: theme.textTheme.labelSmall?.copyWith(
                             color: color,
                             fontWeight: FontWeight.w600,
-                            fontSize: 11,
+                            fontSize: FontSize.micro,
                           ),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        const SizedBox(height: 2),
+                        const SizedBox(height: Spacing.sp2),
                       ],
                       Text(
                         title,
@@ -2235,7 +2266,7 @@ class _FeedAssignmentCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: Spacing.sp4),
                       Row(
                         children: [
                           if (dueDate != null) ...[
@@ -2244,7 +2275,7 @@ class _FeedAssignmentCard extends StatelessWidget {
                               text:
                                   'Due ${DateFormat('MMM dd').format(dueDate)}',
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: Spacing.sp12),
                           ],
                           if (totalMarks != null)
                             _FeedMeta(
@@ -2275,11 +2306,11 @@ class _FeedAssignmentCard extends StatelessWidget {
       direction: DismissDirection.endToStart,
       background: Container(
         alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.only(right: Spacing.sp20),
+        margin: const EdgeInsets.only(bottom: Spacing.sp8),
         decoration: BoxDecoration(
           color: Colors.red.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(Radii.md),
         ),
         child: const Icon(Icons.remove_circle_outline, color: Colors.red),
       ),
@@ -2309,11 +2340,11 @@ class _FeedMeta extends StatelessWidget {
           size: 13,
           color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
         ),
-        const SizedBox(width: 3),
+        const SizedBox(width: Spacing.sp4),
         Text(
           text,
           style: theme.textTheme.bodySmall?.copyWith(
-            fontSize: 11,
+            fontSize: FontSize.micro,
             color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             fontWeight: FontWeight.w500,
           ),

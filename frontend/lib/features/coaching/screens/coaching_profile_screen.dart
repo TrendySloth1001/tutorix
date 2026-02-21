@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../core/services/error_logger_service.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:image_picker/image_picker.dart';
@@ -99,16 +100,16 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       isScrollControlled: true,
       backgroundColor: Theme.of(context).colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.lg)),
       ),
       builder: (ctx) {
         final theme = Theme.of(ctx);
         return Padding(
           padding: EdgeInsets.fromLTRB(
-            20,
-            12,
-            20,
-            MediaQuery.of(ctx).viewInsets.bottom + 24,
+            Spacing.sp20,
+            Spacing.sp12,
+            Spacing.sp20,
+            MediaQuery.of(ctx).viewInsets.bottom + Spacing.sp24,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -120,18 +121,18 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                   height: 4,
                   decoration: BoxDecoration(
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(2),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                   ),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: Spacing.sp24),
               Text(
                 title,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.sp16),
               TextField(
                 controller: controller,
                 autofocus: true,
@@ -145,11 +146,11 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                     alpha: 0.04,
                   ),
                   border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(Radii.md),
                     borderSide: BorderSide.none,
                   ),
                   focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(Radii.md),
                     borderSide: BorderSide(
                       color: theme.colorScheme.primary,
                       width: 1.5,
@@ -157,7 +158,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                   ),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: Spacing.sp20),
               Row(
                 children: [
                   Expanded(
@@ -166,7 +167,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                       child: const Text('Cancel'),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: Spacing.sp12),
                   Expanded(
                     flex: 2,
                     child: FilledButton(
@@ -276,11 +277,16 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.lg)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+          padding: const EdgeInsets.fromLTRB(
+            Spacing.sp16,
+            Spacing.sp12,
+            Spacing.sp16,
+            Spacing.sp16,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -289,17 +295,17 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                 height: 4,
                 decoration: BoxDecoration(
                   color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(Radii.sm),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: Spacing.sp20),
               Text(
                 'Update Logo',
                 style: Theme.of(
                   ctx,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.sp16),
               Row(
                 children: [
                   Expanded(
@@ -309,7 +315,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                       onTap: () => Navigator.pop(ctx, ImageSource.camera),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: Spacing.sp12),
                   Expanded(
                     child: _OptionTile(
                       icon: Icons.photo_library_rounded,
@@ -351,7 +357,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     final source = await showModalBottomSheet<ImageSource>(
       context: context,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.lg)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
@@ -364,17 +370,17 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                 height: 4,
                 decoration: BoxDecoration(
                   color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
+                  borderRadius: BorderRadius.circular(Radii.sm),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: Spacing.sp20),
               Text(
                 'Update Cover Image',
                 style: Theme.of(
                   ctx,
                 ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.sp16),
               Row(
                 children: [
                   Expanded(
@@ -384,7 +390,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                       onTap: () => Navigator.pop(ctx, ImageSource.camera),
                     ),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: Spacing.sp12),
                   Expanded(
                     child: _OptionTile(
                       icon: Icons.photo_library_rounded,
@@ -536,7 +542,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
 
                   // ─── CONTENT SECTIONS (About starts here) ───
                   SliverPadding(
-                    padding: const EdgeInsets.only(bottom: 100),
+                    padding: const EdgeInsets.only(bottom: Spacing.sp100),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         if (_isOwner && !_coaching.onboardingComplete)
@@ -591,11 +597,11 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
             if (_isOwner)
               Positioned(
                 top: topPadding + 8,
-                right: 16,
+                right: Spacing.sp16,
                 child: Container(
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.35),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(Radii.md),
                     border: Border.all(
                       color: Colors.white.withValues(alpha: 0.25),
                       width: 1,
@@ -612,9 +618,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: _changeCover,
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(Radii.md),
                       child: const Padding(
-                        padding: EdgeInsets.all(10),
+                        padding: EdgeInsets.all(Spacing.sp10),
                         child: Icon(
                           Icons.camera_alt_rounded,
                           color: Colors.white,
@@ -653,7 +659,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
               height: 96,
               decoration: BoxDecoration(
                 color: colors.surface,
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(Radii.lg),
                 border: Border.all(color: colors.surface, width: 4),
                 boxShadow: [
                   BoxShadow(
@@ -666,7 +672,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
               child: Stack(
                 children: [
                   ClipRRect(
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                     child: _coaching.logo != null
                         ? Image.network(
                             _coaching.logo!,
@@ -683,7 +689,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                       child: Container(
                         decoration: BoxDecoration(
                           color: Colors.black45,
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(Radii.lg),
                         ),
                         child: const Center(
                           child: SizedBox(
@@ -702,7 +708,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                       bottom: 0,
                       right: 0,
                       child: Container(
-                        padding: const EdgeInsets.all(4),
+                        padding: const EdgeInsets.all(Spacing.sp4),
                         decoration: BoxDecoration(
                           color: colors.primary,
                           shape: BoxShape.circle,
@@ -720,14 +726,17 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
 
           // Name with Edit Button - on frosted glass container
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.sp16,
+              vertical: Spacing.sp8,
+            ),
             decoration: BoxDecoration(
               color: colors.surface.withValues(alpha: 0.85),
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(Radii.lg),
               border: Border.all(
                 color: colors.onSurface.withValues(alpha: 0.08),
               ),
@@ -749,15 +758,15 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                   ),
                 ),
                 if (_isOwner) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: Spacing.sp8),
                   Material(
                     color: colors.primary.withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                     child: InkWell(
                       onTap: () => _openUpdateScreen(step: 0),
-                      borderRadius: BorderRadius.circular(8),
+                      borderRadius: BorderRadius.circular(Radii.sm),
                       child: Padding(
-                        padding: const EdgeInsets.all(5),
+                        padding: const EdgeInsets.all(Spacing.sp4),
                         child: Icon(
                           Icons.edit_rounded,
                           size: 16,
@@ -773,7 +782,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
 
           // Tagline
           if (_coaching.tagline != null && _coaching.tagline!.isNotEmpty) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: Spacing.sp6),
             GestureDetector(
               onTap: _isOwner ? _editTagline : null,
               child: Text(
@@ -786,19 +795,19 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
               ),
             ),
           ] else if (_isOwner) ...[
-            const SizedBox(height: 6),
+            const SizedBox(height: Spacing.sp6),
             GestureDetector(
               onTap: _editTagline,
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(Icons.add, size: 14, color: colors.primary),
-                  const SizedBox(width: 4),
+                  const SizedBox(width: Spacing.sp4),
                   Text(
                     'Add tagline',
                     style: TextStyle(
                       color: colors.primary,
-                      fontSize: 12,
+                      fontSize: FontSize.caption,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -808,7 +817,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
           ],
 
           // Category & Status Badges
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           Wrap(
             alignment: WrapAlignment.center,
             spacing: 6,
@@ -835,16 +844,19 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
 
   Widget _buildBadge(String text, Color bgColor, Color textColor) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp10,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.lg),
       ),
       child: Text(
         text,
         style: TextStyle(
           color: textColor,
-          fontSize: 11,
+          fontSize: FontSize.micro,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -854,12 +866,15 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
   Widget _buildStatusBadge(ThemeData theme) {
     final isActive = _coaching.status == 'active';
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp10,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: isActive
             ? theme.colorScheme.primary.withValues(alpha: 0.12)
             : theme.colorScheme.error.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(Radii.lg),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -874,14 +889,14 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
               shape: BoxShape.circle,
             ),
           ),
-          const SizedBox(width: 5),
+          const SizedBox(width: Spacing.sp4),
           Text(
             isActive ? 'Active' : 'Inactive',
             style: TextStyle(
               color: isActive
                   ? theme.colorScheme.primary
                   : theme.colorScheme.error,
-              fontSize: 11,
+              fontSize: FontSize.micro,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -913,12 +928,12 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
             ),
             if (_isOwner)
               Padding(
-                padding: const EdgeInsets.only(top: 8),
+                padding: const EdgeInsets.only(top: Spacing.sp8),
                 child: Text(
                   'Add Cover Image',
                   style: TextStyle(
                     color: colors.primary.withValues(alpha: 0.6),
-                    fontSize: 13,
+                    fontSize: FontSize.body,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -948,19 +963,19 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Material(
         color: theme.colorScheme.secondary.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: InkWell(
           onTap: () => _openUpdateScreen(step: step),
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(Spacing.sp14),
             child: Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(8),
+                  padding: const EdgeInsets.all(Spacing.sp8),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.secondary.withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                   child: Icon(
                     Icons.rocket_launch_rounded,
@@ -968,7 +983,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                     size: 20,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -978,14 +993,14 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
                           color: theme.colorScheme.secondary,
-                          fontSize: 14,
+                          fontSize: FontSize.body,
                         ),
                       ),
                       Text(
                         'Continue from ${stepNames[step]}',
                         style: TextStyle(
                           color: theme.colorScheme.secondary,
-                          fontSize: 12,
+                          fontSize: FontSize.caption,
                         ),
                       ),
                     ],
@@ -1020,7 +1035,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
               Text(
                 title.toUpperCase(),
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: FontSize.micro,
                   fontWeight: FontWeight.w700,
                   letterSpacing: 1,
                   color: theme.colorScheme.onSurface.withValues(alpha: 0.4),
@@ -1033,7 +1048,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                   child: Text(
                     'Edit',
                     style: TextStyle(
-                      fontSize: 13,
+                      fontSize: FontSize.body,
                       fontWeight: FontWeight.w600,
                       color: theme.colorScheme.primary,
                     ),
@@ -1043,10 +1058,10 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
           ),
         ),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.sp20),
           child: child,
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: Spacing.sp8),
         Divider(
           height: 1,
           color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
@@ -1128,12 +1143,12 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
           ),
         ),
         if (addr.latitude != null && addr.longitude != null) ...[
-          const SizedBox(height: 14),
+          const SizedBox(height: Spacing.sp14),
           // ── Map card ─────────────────────────────────────────────
           Container(
             height: 180,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(Radii.lg),
               border: Border.all(
                 color: theme.colorScheme.primary.withValues(alpha: 0.1),
               ),
@@ -1212,19 +1227,19 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                 ),
                 // Directions button overlay
                 Positioned(
-                  bottom: 10,
-                  right: 10,
+                  bottom: Spacing.sp10,
+                  right: Spacing.sp10,
                   child: GestureDetector(
                     onTap: () =>
                         _openDirections(addr.latitude!, addr.longitude!),
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
+                        horizontal: Spacing.sp12,
+                        vertical: Spacing.sp8,
                       ),
                       decoration: BoxDecoration(
                         color: theme.colorScheme.primary,
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(Radii.md),
                         boxShadow: [
                           BoxShadow(
                             color: theme.colorScheme.primary.withValues(
@@ -1243,13 +1258,13 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                             size: 16,
                             color: Colors.white,
                           ),
-                          const SizedBox(width: 5),
+                          const SizedBox(width: Spacing.sp4),
                           Text(
                             'Directions',
                             style: theme.textTheme.labelSmall?.copyWith(
                               fontWeight: FontWeight.w700,
                               color: Colors.white,
-                              fontSize: 12,
+                              fontSize: FontSize.caption,
                             ),
                           ),
                         ],
@@ -1260,7 +1275,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
               ],
             ),
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           Row(
             children: [
               Icon(
@@ -1268,12 +1283,12 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                 size: 16,
                 color: theme.colorScheme.primary,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: Spacing.sp6),
               Text(
                 'GPS location saved',
                 style: TextStyle(
                   color: theme.colorScheme.primary,
-                  fontSize: 13,
+                  fontSize: FontSize.body,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -1324,7 +1339,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                 size: 18,
                 color: theme.colorScheme.primary,
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: Spacing.sp10),
               Text(
                 '${addr.openingTime ?? '--:--'} - ${addr.closingTime ?? '--:--'}',
                 style: theme.textTheme.bodyLarge?.copyWith(
@@ -1334,7 +1349,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
             ],
           ),
         if (addr.workingDays.isNotEmpty) ...[
-          const SizedBox(height: 14),
+          const SizedBox(height: Spacing.sp14),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -1349,7 +1364,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                   color: isActive
                       ? theme.colorScheme.primary
                       : theme.colorScheme.onSurface.withValues(alpha: 0.05),
-                  borderRadius: BorderRadius.circular(10),
+                  borderRadius: BorderRadius.circular(Radii.md),
                 ),
                 alignment: Alignment.center,
                 child: Text(
@@ -1359,7 +1374,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                         ? theme.colorScheme.onPrimary
                         : theme.colorScheme.onSurface.withValues(alpha: 0.3),
                     fontWeight: FontWeight.w600,
-                    fontSize: 12,
+                    fontSize: FontSize.caption,
                   ),
                 ),
               );
@@ -1374,15 +1389,15 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     return Column(
       children: _coaching.branches.map((branch) {
         return Padding(
-          padding: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.only(bottom: Spacing.sp12),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                padding: const EdgeInsets.all(Spacing.sp8),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(8),
+                  borderRadius: BorderRadius.circular(Radii.sm),
                 ),
                 child: Icon(
                   Icons.location_on_outlined,
@@ -1390,7 +1405,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                   color: theme.colorScheme.primary,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.sp12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1401,7 +1416,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: Spacing.sp2),
                     Text(
                       branch.fullAddress,
                       style: theme.textTheme.bodySmall?.copyWith(
@@ -1479,16 +1494,16 @@ class _OptionTile extends StatelessWidget {
     final theme = Theme.of(context);
     return Material(
       color: theme.colorScheme.onSurface.withValues(alpha: 0.04),
-      borderRadius: BorderRadius.circular(12),
+      borderRadius: BorderRadius.circular(Radii.md),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 20),
+          padding: const EdgeInsets.symmetric(vertical: Spacing.sp20),
           child: Column(
             children: [
               Icon(icon, size: 28, color: theme.colorScheme.primary),
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sp8),
               Text(
                 label,
                 style: TextStyle(
@@ -1525,7 +1540,7 @@ class _ContactItem extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 10),
+        padding: const EdgeInsets.symmetric(vertical: Spacing.sp10),
         child: Row(
           children: [
             Icon(
@@ -1533,7 +1548,7 @@ class _ContactItem extends StatelessWidget {
               size: 20,
               color: theme.colorScheme.primary.withValues(alpha: 0.7),
             ),
-            const SizedBox(width: 14),
+            const SizedBox(width: Spacing.sp14),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -1541,17 +1556,17 @@ class _ContactItem extends StatelessWidget {
                   Text(
                     label,
                     style: TextStyle(
-                      fontSize: 11,
+                      fontSize: FontSize.micro,
                       color: theme.colorScheme.onSurface.withValues(
                         alpha: 0.45,
                       ),
                     ),
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: Spacing.sp2),
                   Text(
                     hasValue ? value! : 'Not added',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: FontSize.body,
                       fontWeight: hasValue
                           ? FontWeight.w500
                           : FontWeight.normal,
@@ -1587,7 +1602,7 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
+      padding: const EdgeInsets.symmetric(vertical: Spacing.sp6),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -1596,7 +1611,7 @@ class _InfoRow extends StatelessWidget {
             child: Text(
               label,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: FontSize.body,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.45),
               ),
             ),
@@ -1605,7 +1620,7 @@ class _InfoRow extends StatelessWidget {
             child: Text(
               value,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: FontSize.body,
                 fontWeight: FontWeight.w500,
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.85),
               ),

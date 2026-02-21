@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
@@ -167,10 +168,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24),
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.sp24),
           child: Column(
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: Spacing.sp40),
 
               // Avatar with edit/camera buttons
               _AvatarSection(
@@ -191,7 +192,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 onCameraTap: _showPhotoOptions,
               ),
 
-              const SizedBox(height: 32),
+              const SizedBox(height: Spacing.sp32),
 
               // Name & email
               Text(
@@ -201,7 +202,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   letterSpacing: -0.5,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sp8),
               Text(
                 user.email,
                 style: theme.textTheme.bodyLarge?.copyWith(
@@ -209,7 +210,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
 
-              const SizedBox(height: 80),
+              const SizedBox(height: Spacing.sp80),
 
               // Settings
               SettingTile(
@@ -254,11 +255,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               // ── Academic Information (only for students) ───────────────
               if (_isStudentSomewhere) ...[
-                const SizedBox(height: 28),
+                const SizedBox(height: Spacing.sp28),
                 _buildAcademicSection(theme),
               ],
 
-              const SizedBox(height: 40),
+              const SizedBox(height: Spacing.sp40),
             ],
           ),
         ),
@@ -273,9 +274,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             ShimmerBox(width: 160, height: 14),
-            SizedBox(height: 12),
+            SizedBox(height: Spacing.sp12),
             ShimmerBox(height: 48),
-            SizedBox(height: 8),
+            SizedBox(height: Spacing.sp8),
             ShimmerBox(height: 48),
           ],
         ),
@@ -303,14 +304,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               ),
           ],
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: Spacing.sp4),
         Text(
           'Help your teachers understand your learning needs',
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.secondary.withValues(alpha: 0.6),
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: Spacing.sp12),
 
         if (_academicProfile == null)
           _buildSetupAcademicCard(theme)
@@ -322,10 +323,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Widget _buildSetupAcademicCard(ThemeData theme) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.sp16),
       decoration: BoxDecoration(
         color: theme.colorScheme.primary.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(
           color: theme.colorScheme.primary.withValues(alpha: 0.3),
         ),
@@ -333,17 +334,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       child: Row(
         children: [
           Container(
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.all(Spacing.sp10),
             decoration: BoxDecoration(
               color: theme.colorScheme.primary.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
             child: Icon(
               Icons.school_outlined,
               color: theme.colorScheme.primary,
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: Spacing.sp12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -392,10 +393,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
         ?.name;
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(Spacing.sp16),
       decoration: BoxDecoration(
         color: theme.colorScheme.tertiary.withValues(alpha: 0.3),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -505,7 +506,7 @@ class _AvatarSection extends StatelessWidget {
           GestureDetector(
             onTap: isUploading ? null : onPhotoTap,
             child: Container(
-              padding: const EdgeInsets.all(4),
+              padding: const EdgeInsets.all(Spacing.sp4),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
@@ -585,7 +586,7 @@ class _OverlayButton extends StatelessWidget {
       child: GestureDetector(
         onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(Spacing.sp12),
           decoration: BoxDecoration(
             color: theme.colorScheme.primary,
             shape: BoxShape.circle,
@@ -613,10 +614,12 @@ class _PhotoOptionsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.sp24),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(Radii.xl),
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -624,7 +627,7 @@ class _PhotoOptionsSheet extends StatelessWidget {
         children: [
           Center(
             child: Container(
-              padding: const EdgeInsets.all(4),
+              padding: const EdgeInsets.all(Spacing.sp4),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
@@ -650,17 +653,17 @@ class _PhotoOptionsSheet extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: Spacing.sp32),
           Text(
             'Profile Photo',
             style: theme.textTheme.titleLarge?.copyWith(
               fontWeight: FontWeight.bold,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           ListTile(
             leading: Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(Spacing.sp12),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
@@ -674,10 +677,10 @@ class _PhotoOptionsSheet extends StatelessWidget {
             onTap: onChangeTap,
           ),
           if (user.picture != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             ListTile(
               leading: Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(Spacing.sp12),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
@@ -694,7 +697,7 @@ class _PhotoOptionsSheet extends StatelessWidget {
               onTap: onRemoveTap,
             ),
           ],
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
         ],
       ),
     );
@@ -716,12 +719,12 @@ class _AcademicDetailRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.only(bottom: Spacing.sp12),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 18, color: theme.colorScheme.primary),
-          const SizedBox(width: 10),
+          const SizedBox(width: Spacing.sp10),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -732,7 +735,7 @@ class _AcademicDetailRow extends StatelessWidget {
                     color: theme.colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: Spacing.sp2),
                 Text(
                   value,
                   style: theme.textTheme.bodyMedium?.copyWith(

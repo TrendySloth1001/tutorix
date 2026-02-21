@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
+import '../../../core/theme/design_tokens.dart';
 
 /// Student financial ledger — shows a chronological timeline of all
 /// fee records, payments, and refunds with a running balance.
@@ -90,12 +91,12 @@ class _FeeLedgerScreenState extends State<FeeLedgerScreen> {
               style: TextStyle(
                 color: cs.onSurface,
                 fontWeight: FontWeight.w700,
-                fontSize: 17,
+                fontSize: FontSize.sub,
               ),
             ),
             Text(
               name,
-              style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
+              style: TextStyle(color: cs.onSurfaceVariant, fontSize: FontSize.caption),
             ),
           ],
         ),
@@ -131,7 +132,7 @@ class _FeeLedgerScreenState extends State<FeeLedgerScreen> {
                     )
                   else
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 32),
+                      padding: const EdgeInsets.fromLTRB(Spacing.sp16, Spacing.sp8, Spacing.sp16, Spacing.sp32),
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate((ctx, i) {
                           return _TimelineEntry(
@@ -158,11 +159,11 @@ class _LedgerSummaryCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      margin: const EdgeInsets.all(16),
-      padding: const EdgeInsets.all(20),
+      margin: const EdgeInsets.all(Spacing.sp16),
+      padding: const EdgeInsets.all(Spacing.sp20),
       decoration: BoxDecoration(
         color: theme.colorScheme.primary,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(Radii.lg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -172,10 +173,10 @@ class _LedgerSummaryCard extends StatelessWidget {
             style: TextStyle(
               color: theme.colorScheme.onPrimary,
               fontWeight: FontWeight.w700,
-              fontSize: 16,
+              fontSize: FontSize.sub,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           Row(
             children: [
               Expanded(
@@ -202,9 +203,9 @@ class _LedgerSummaryCard extends StatelessWidget {
                 ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           const Divider(color: Colors.white24, height: 1),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -212,7 +213,7 @@ class _LedgerSummaryCard extends StatelessWidget {
                 'Outstanding Balance',
                 style: TextStyle(
                   color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
-                  fontSize: 13,
+                  fontSize: FontSize.body,
                 ),
               ),
               Text(
@@ -222,13 +223,13 @@ class _LedgerSummaryCard extends StatelessWidget {
                       ? theme.colorScheme.error.withValues(alpha: 0.5)
                       : theme.colorScheme.primary.withValues(alpha: 0.5),
                   fontWeight: FontWeight.w800,
-                  fontSize: 18,
+                  fontSize: FontSize.title,
                 ),
               ),
             ],
           ),
           if (summary.balance < 0) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: Spacing.sp12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -236,7 +237,7 @@ class _LedgerSummaryCard extends StatelessWidget {
                   'Available Credits',
                   style: TextStyle(
                     color: theme.colorScheme.primary.withValues(alpha: 0.5),
-                    fontSize: 13,
+                    fontSize: FontSize.body,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -254,7 +255,7 @@ class _LedgerSummaryCard extends StatelessWidget {
                     foregroundColor: theme.colorScheme.primary.withValues(
                       alpha: 0.5,
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: Spacing.sp12),
                     minimumSize: const Size(0, 32),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     elevation: 0,
@@ -264,7 +265,7 @@ class _LedgerSummaryCard extends StatelessWidget {
             ),
           ],
           if (summary.nextDueDate != null) ...[
-            const SizedBox(height: 8),
+            const SizedBox(height: Spacing.sp8),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -272,14 +273,14 @@ class _LedgerSummaryCard extends StatelessWidget {
                   'Next Due',
                   style: TextStyle(
                     color: theme.colorScheme.onPrimary.withValues(alpha: 0.7),
-                    fontSize: 12,
+                    fontSize: FontSize.caption,
                   ),
                 ),
                 Text(
                   '₹${summary.nextDueAmount.toStringAsFixed(0)} · ${_fmtDateShort(summary.nextDueDate!)}',
                   style: TextStyle(
                     color: theme.colorScheme.onPrimary,
-                    fontSize: 12,
+                    fontSize: FontSize.caption,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -311,12 +312,12 @@ class _LedgerStat extends StatelessWidget {
           style: TextStyle(
             color: color,
             fontWeight: FontWeight.w800,
-            fontSize: 18,
+            fontSize: FontSize.title,
           ),
         ),
         Text(
           label,
-          style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: 11),
+          style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: FontSize.micro),
         ),
       ],
     );
@@ -358,23 +359,23 @@ class _TimelineEntry extends StatelessWidget {
                   Expanded(
                     child: Container(
                       width: 2,
-                      margin: const EdgeInsets.symmetric(vertical: 2),
+                      margin: const EdgeInsets.symmetric(vertical: Spacing.sp2),
                       color: theme.colorScheme.outlineVariant,
                     ),
                   ),
               ],
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: Spacing.sp12),
           // Content
           Expanded(
             child: Padding(
               padding: EdgeInsets.only(bottom: isLast ? 0 : 16),
               child: Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(Spacing.sp12),
                 decoration: BoxDecoration(
                   color: config.bgColor,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(Radii.md),
                   border: Border.all(
                     color: config.color.withValues(alpha: 0.3),
                   ),
@@ -390,7 +391,7 @@ class _TimelineEntry extends StatelessWidget {
                             style: TextStyle(
                               fontWeight: FontWeight.w600,
                               color: theme.colorScheme.onSurface,
-                              fontSize: 13,
+                              fontSize: FontSize.body,
                             ),
                           ),
                         ),
@@ -399,12 +400,12 @@ class _TimelineEntry extends StatelessWidget {
                           style: TextStyle(
                             fontWeight: FontWeight.w700,
                             color: config.color,
-                            fontSize: 14,
+                            fontSize: FontSize.body,
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: Spacing.sp4),
                     Row(
                       children: [
                         Expanded(
@@ -414,7 +415,7 @@ class _TimelineEntry extends StatelessWidget {
                                 _fmtDateShort(entry.date),
                                 style: TextStyle(
                                   color: theme.colorScheme.onSurfaceVariant,
-                                  fontSize: 11,
+                                  fontSize: FontSize.micro,
                                 ),
                               ),
                               if (entry.mode != null) ...[
@@ -429,7 +430,7 @@ class _TimelineEntry extends StatelessWidget {
                                     entry.mode!,
                                     style: TextStyle(
                                       color: theme.colorScheme.onSurfaceVariant,
-                                      fontSize: 11,
+                                      fontSize: FontSize.micro,
                                     ),
                                     overflow: TextOverflow.ellipsis,
                                   ),
@@ -438,26 +439,26 @@ class _TimelineEntry extends StatelessWidget {
                             ],
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: Spacing.sp8),
                         Text(
                           'Balance: ₹${entry.runningBalance.toStringAsFixed(0)}',
                           style: TextStyle(
                             color: entry.runningBalance > 0
                                 ? theme.colorScheme.error
                                 : theme.colorScheme.primary,
-                            fontSize: 11,
+                            fontSize: FontSize.micro,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ],
                     ),
                     if (entry.ref != null) ...[
-                      const SizedBox(height: 2),
+                      const SizedBox(height: Spacing.sp2),
                       Text(
                         'Ref: ${entry.ref}',
                         style: TextStyle(
                           color: theme.colorScheme.onSurfaceVariant,
-                          fontSize: 10,
+                          fontSize: FontSize.nano,
                         ),
                       ),
                     ],
@@ -529,13 +530,13 @@ class _ErrorRetry extends StatelessWidget {
             color: theme.colorScheme.error,
             size: 40,
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: Spacing.sp10),
           Text(
             error,
             textAlign: TextAlign.center,
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),

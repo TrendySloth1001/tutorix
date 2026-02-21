@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
 import '../models/academic_masters.dart';
@@ -169,7 +170,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text('Failed to load data'),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.sp16),
               FilledButton(
                 onPressed: () {
                   setState(() => _isLoading = true);
@@ -206,16 +207,16 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
 
   Widget _buildHeader(ThemeData theme) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.sp24),
       child: Column(
         children: [
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(Spacing.sp12),
                 decoration: BoxDecoration(
                   color: theme.colorScheme.primary.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(Radii.md),
                 ),
                 child: Icon(
                   Icons.school_outlined,
@@ -223,7 +224,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
                   size: 28,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: Spacing.sp16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -234,7 +235,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: Spacing.sp4),
                     Text(
                       'Help your teachers create the perfect learning path for you',
                       style: theme.textTheme.bodyMedium?.copyWith(
@@ -255,7 +256,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
 
   Widget _buildProgressIndicator(ColorScheme colorScheme) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24),
+      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp24),
       child: Row(
         children: List.generate(_totalSteps, (index) {
           final isActive = index <= _currentStep;
@@ -263,12 +264,14 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
           return Expanded(
             child: Container(
               height: 4,
-              margin: EdgeInsets.only(right: index < _totalSteps - 1 ? 4 : 0),
+              margin: EdgeInsets.only(
+                right: index < _totalSteps - 1 ? Spacing.sp4 : 0,
+              ),
               decoration: BoxDecoration(
                 color: isActive
                     ? colorScheme.primary
                     : colorScheme.primary.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(2),
+                borderRadius: BorderRadius.circular(Radii.sm),
               ),
               child: isCurrent
                   ? TweenAnimationBuilder<double>(
@@ -280,7 +283,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
                         child: Container(
                           decoration: BoxDecoration(
                             color: colorScheme.primary,
-                            borderRadius: BorderRadius.circular(2),
+                            borderRadius: BorderRadius.circular(Radii.sm),
                           ),
                         ),
                       ),
@@ -313,29 +316,29 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
 
   Widget _buildSchoolBoardClassStep() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.sp24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('Your School', Icons.apartment_outlined),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           TextField(
             controller: _schoolController,
             decoration: InputDecoration(
               hintText: 'Enter your school name (optional)',
               prefixIcon: const Icon(Icons.school_outlined),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(Radii.md),
               ),
             ),
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: Spacing.sp32),
           _buildSectionTitle('Your Board', Icons.menu_book_outlined),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           _buildBoardSelector(),
-          const SizedBox(height: 32),
+          const SizedBox(height: Spacing.sp32),
           _buildSectionTitle('Current Class', Icons.class_outlined),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           _buildClassSelector(),
         ],
       ),
@@ -346,7 +349,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
     return Row(
       children: [
         Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-        const SizedBox(width: 8),
+        const SizedBox(width: Spacing.sp8),
         Text(
           title,
           style: Theme.of(
@@ -381,7 +384,10 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Padding(
-              padding: const EdgeInsets.only(top: 8, bottom: 8),
+              padding: const EdgeInsets.only(
+                top: Spacing.sp8,
+                bottom: Spacing.sp8,
+              ),
               child: Text(
                 entry.key,
                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -422,12 +428,12 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
     final streams = _masters!.getStreamsFor(_selectedClass!);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.sp24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('Choose Your Stream', Icons.category_outlined),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           Text(
             'Select the stream you are studying in',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -436,11 +442,11 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
               ).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           ...streams.map((stream) {
             final isSelected = _selectedStream == stream.id;
             return Padding(
-              padding: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.only(bottom: Spacing.sp12),
               child: _StreamCard(
                 title: stream.name,
                 description: stream.description,
@@ -466,12 +472,12 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
     );
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.sp24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('Select Your Subjects', Icons.book_outlined),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           Text(
             'Choose the subjects you are currently studying',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -480,7 +486,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
               ).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
           Wrap(
             spacing: 8,
             runSpacing: 8,
@@ -512,7 +518,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
     final yearOptions = List.generate(5, (i) => currentYear + i);
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.sp24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -520,7 +526,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
             'Competitive Exam Preparation',
             Icons.emoji_events_outlined,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           Text(
             'Are you preparing for any competitive exams?',
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -529,13 +535,13 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
               ).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
 
           // Target year
           Row(
             children: [
               const Text('Target Year: '),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.sp12),
               DropdownButton<int>(
                 value: _targetYear,
                 hint: const Text('Select year'),
@@ -552,7 +558,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
             ],
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
 
           // Exams by category
           ...examsByCategory.entries
@@ -564,7 +570,10 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(top: 8, bottom: 12),
+                      padding: const EdgeInsets.only(
+                        top: Spacing.sp8,
+                        bottom: Spacing.sp12,
+                      ),
                       child: Text(
                         entry.key,
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
@@ -596,7 +605,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
                 );
               }),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           TextButton(
             onPressed: () => setState(() => _selectedExams.clear()),
             child: const Text('Skip - Not preparing for any exam'),
@@ -618,12 +627,12 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
         .firstOrNull;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.sp24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSectionTitle('Review Your Profile', Icons.check_circle_outline),
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
           Text(
             "Make sure everything looks right before we save",
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -632,7 +641,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
               ).colorScheme.onSurface.withValues(alpha: 0.7),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: Spacing.sp24),
 
           _ReviewItem(
             icon: Icons.apartment_outlined,
@@ -694,15 +703,15 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
               value: _targetYear.toString(),
             ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: Spacing.sp32),
 
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(Spacing.sp16),
             decoration: BoxDecoration(
               color: Theme.of(
                 context,
               ).colorScheme.primary.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
             child: Row(
               children: [
@@ -710,7 +719,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
                   Icons.info_outline,
                   color: Theme.of(context).colorScheme.primary,
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: Text(
                     'You can always update this information from your profile settings.',
@@ -740,7 +749,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
     }
 
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(Spacing.sp24),
       decoration: BoxDecoration(
         color: colorScheme.surface,
         boxShadow: [
@@ -781,7 +790,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
                     children: [
                       Text(isLastStep ? 'Save Profile' : 'Continue'),
                       if (!isLastStep) ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(width: Spacing.sp8),
                         const Icon(Icons.arrow_forward, size: 18),
                       ],
                     ],
@@ -816,10 +825,13 @@ class _SelectableChip extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp16,
+          vertical: Spacing.sp10,
+        ),
         decoration: BoxDecoration(
           color: isSelected ? colorScheme.primary : colorScheme.surface,
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(Radii.lg),
           border: Border.all(
             color: isSelected
                 ? colorScheme.primary
@@ -859,12 +871,12 @@ class _StreamCard extends StatelessWidget {
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(Spacing.sp16),
         decoration: BoxDecoration(
           color: isSelected
               ? colorScheme.primary.withValues(alpha: 0.1)
               : colorScheme.surface,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(Radii.md),
           border: Border.all(
             color: isSelected
                 ? colorScheme.primary
@@ -887,7 +899,7 @@ class _StreamCard extends StatelessWidget {
                           : colorScheme.onSurface,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: Spacing.sp4),
                   Text(
                     description,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
@@ -920,12 +932,12 @@ class _ReviewItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.only(bottom: Spacing.sp16),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 20, color: Theme.of(context).colorScheme.primary),
-          const SizedBox(width: 12),
+          const SizedBox(width: Spacing.sp12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -938,7 +950,7 @@ class _ReviewItem extends StatelessWidget {
                     ).colorScheme.onSurface.withValues(alpha: 0.6),
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: Spacing.sp2),
                 Text(
                   value,
                   style: Theme.of(

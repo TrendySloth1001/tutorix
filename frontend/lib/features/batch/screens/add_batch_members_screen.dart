@@ -3,6 +3,7 @@ import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../services/batch_service.dart';
+import '../../../core/theme/design_tokens.dart';
 
 /// Screen to add coaching members to a batch (teachers or students).
 /// Premium design with polished selection and tab experience.
@@ -126,11 +127,11 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
           dividerColor: theme.colorScheme.onSurface.withValues(alpha: 0.06),
           labelStyle: const TextStyle(
             fontWeight: FontWeight.w700,
-            fontSize: 13,
+            fontSize: FontSize.body,
           ),
           unselectedLabelStyle: const TextStyle(
             fontWeight: FontWeight.w500,
-            fontSize: 13,
+            fontSize: FontSize.body,
           ),
           tabs: [
             Tab(text: 'Students (${_availableStudents.length})'),
@@ -147,8 +148,8 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.symmetric(
-                      horizontal: 20,
-                      vertical: 10,
+                      horizontal: Spacing.sp20,
+                      vertical: Spacing.sp10,
                     ),
                     color: theme.colorScheme.primary.withValues(alpha: 0.06),
                     child: Row(
@@ -158,7 +159,7 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
                           size: 18,
                           color: theme.colorScheme.primary,
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: Spacing.sp8),
                         Text(
                           '${_selectedIds.length} selected',
                           style: theme.textTheme.bodySmall?.copyWith(
@@ -204,7 +205,12 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
       bottomNavigationBar: _selectedIds.isNotEmpty
           ? SafeArea(
               child: Padding(
-                padding: const EdgeInsets.fromLTRB(20, 8, 20, 16),
+                padding: const EdgeInsets.fromLTRB(
+                  Spacing.sp20,
+                  Spacing.sp8,
+                  Spacing.sp20,
+                  Spacing.sp16,
+                ),
                 child: Container(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
@@ -213,7 +219,7 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
                         theme.colorScheme.primary.withValues(alpha: 0.85),
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(Radii.lg),
                     boxShadow: [
                       BoxShadow(
                         color: theme.colorScheme.primary.withValues(
@@ -228,14 +234,16 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
                     color: Colors.transparent,
                     child: InkWell(
                       onTap: _isSaving ? null : _save,
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(Radii.lg),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        padding: const EdgeInsets.symmetric(
+                          vertical: Spacing.sp16,
+                        ),
                         child: Center(
                           child: _isSaving
                               ? const SizedBox(
-                                  width: 22,
-                                  height: 22,
+                                  width: Spacing.sp24,
+                                  height: Spacing.sp24,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2.5,
                                     color: Colors.white,
@@ -246,7 +254,7 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
                                   style: TextStyle(
                                     color: theme.colorScheme.onPrimary,
                                     fontWeight: FontWeight.w700,
-                                    fontSize: 15,
+                                    fontSize: FontSize.body,
                                   ),
                                 ),
                         ),
@@ -280,7 +288,7 @@ class _MemberList extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(Spacing.sp20),
               decoration: BoxDecoration(
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.04),
                 shape: BoxShape.circle,
@@ -291,7 +299,7 @@ class _MemberList extends StatelessWidget {
                 color: theme.colorScheme.onSurface.withValues(alpha: 0.2),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
             Text(
               'No available members',
               style: theme.textTheme.bodyMedium?.copyWith(
@@ -299,7 +307,7 @@ class _MemberList extends StatelessWidget {
                 fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 4),
+            const SizedBox(height: Spacing.sp4),
             Text(
               'All members have been added to this batch',
               style: theme.textTheme.bodySmall?.copyWith(
@@ -312,7 +320,12 @@ class _MemberList extends StatelessWidget {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 80),
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.sp20,
+        Spacing.sp12,
+        Spacing.sp20,
+        Spacing.sp80,
+      ),
       itemCount: members.length,
       itemBuilder: (context, i) {
         final m = members[i] as Map<String, dynamic>;
@@ -327,14 +340,14 @@ class _MemberList extends StatelessWidget {
         final selected = selectedIds.contains(id);
 
         return Padding(
-          padding: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.only(bottom: Spacing.sp8),
           child: AnimatedContainer(
             duration: const Duration(milliseconds: 200),
             decoration: BoxDecoration(
               color: selected
                   ? theme.colorScheme.primary.withValues(alpha: 0.06)
                   : theme.colorScheme.surfaceContainerLowest,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(Radii.lg),
               border: Border.all(
                 color: selected
                     ? theme.colorScheme.primary.withValues(alpha: 0.2)
@@ -343,14 +356,14 @@ class _MemberList extends StatelessWidget {
             ),
             child: Material(
               color: Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
+              borderRadius: BorderRadius.circular(Radii.lg),
               child: InkWell(
                 onTap: () => onToggle(id),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(Radii.lg),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 12,
+                    horizontal: Spacing.sp14,
+                    vertical: Spacing.sp12,
                   ),
                   child: Row(
                     children: [
@@ -372,7 +385,7 @@ class _MemberList extends StatelessWidget {
                               )
                             : null,
                       ),
-                      const SizedBox(width: 14),
+                      const SizedBox(width: Spacing.sp14),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -390,7 +403,7 @@ class _MemberList extends StatelessWidget {
                                   color: theme.colorScheme.onSurface.withValues(
                                     alpha: 0.4,
                                   ),
-                                  fontSize: 11,
+                                  fontSize: FontSize.micro,
                                 ),
                               ),
                           ],

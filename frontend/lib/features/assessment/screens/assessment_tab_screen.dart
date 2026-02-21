@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/services/error_logger_service.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/widgets/app_shimmer.dart';
 import '../models/assessment_model.dart';
 import '../models/assignment_model.dart';
@@ -288,7 +289,12 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
       children: [
         // Segment control
         Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          padding: const EdgeInsets.fromLTRB(
+            Spacing.sp16,
+            Spacing.sp12,
+            Spacing.sp16,
+            Spacing.sp4,
+          ),
           child: Row(
             children: [
               _SegmentButton(
@@ -297,7 +303,7 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
                 isSelected: _selectedSegment == 0,
                 onTap: () => setState(() => _selectedSegment = 0),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: Spacing.sp8),
               _SegmentButton(
                 label: 'Assignments',
                 count: _assignments.length,
@@ -339,9 +345,14 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
     return RefreshIndicator(
       onRefresh: () async => _loadData(),
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.sp16,
+          Spacing.sp8,
+          Spacing.sp16,
+          Spacing.sp80,
+        ),
         itemCount: _assessments.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 8),
+        separatorBuilder: (_, _) => const SizedBox(height: Spacing.sp8),
         itemBuilder: (_, i) => _AssessmentCard(
           assessment: _assessments[i],
           isTeacher: widget.isTeacher,
@@ -376,9 +387,14 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
     return RefreshIndicator(
       onRefresh: () async => _loadData(),
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(16, 8, 16, 80),
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.sp16,
+          Spacing.sp8,
+          Spacing.sp16,
+          Spacing.sp80,
+        ),
         itemCount: _assignments.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 8),
+        separatorBuilder: (_, _) => const SizedBox(height: Spacing.sp8),
         itemBuilder: (_, i) => _AssignmentCard(
           assignment: _assignments[i],
           isTeacher: widget.isTeacher,
@@ -415,14 +431,14 @@ class _SegmentButton extends StatelessWidget {
         onTap: onTap,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: Spacing.sp10),
           decoration: BoxDecoration(
             color: isSelected
                 ? theme.colorScheme.primary.withValues(alpha: 0.1)
                 : theme.colorScheme.surfaceContainerHighest.withValues(
                     alpha: 0.5,
                   ),
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Radii.md),
             border: Border.all(
               color: isSelected
                   ? theme.colorScheme.primary.withValues(alpha: 0.3)
@@ -442,17 +458,17 @@ class _SegmentButton extends StatelessWidget {
                 ),
               ),
               if (count > 0) ...[
-                const SizedBox(width: 6),
+                const SizedBox(width: Spacing.sp6),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
+                    horizontal: Spacing.sp6,
+                    vertical: Spacing.sp2,
                   ),
                   decoration: BoxDecoration(
                     color: isSelected
                         ? theme.colorScheme.primary.withValues(alpha: 0.15)
                         : theme.colorScheme.surfaceContainerHighest,
-                    borderRadius: BorderRadius.circular(8),
+                    borderRadius: BorderRadius.circular(Radii.sm),
                   ),
                   child: Text(
                     '$count',
@@ -498,10 +514,10 @@ class _AssessmentCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(Spacing.sp14),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(Radii.md),
           border: Border.all(
             color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),
@@ -513,7 +529,7 @@ class _AssessmentCard extends StatelessWidget {
             Row(
               children: [
                 _TypeBadge(type: a.type),
-                const SizedBox(width: 8),
+                const SizedBox(width: Spacing.sp8),
                 Expanded(
                   child: Text(
                     a.title,
@@ -526,7 +542,7 @@ class _AssessmentCard extends StatelessWidget {
                 ),
                 _StatusChip(status: a.status),
                 if (isTeacher) ...[
-                  const SizedBox(width: 4),
+                  const SizedBox(width: Spacing.sp4),
                   _PopupMenu(
                     onDelete: onDelete,
                     onToggleStatus: onToggleStatus,
@@ -537,7 +553,7 @@ class _AssessmentCard extends StatelessWidget {
             ),
 
             if (a.description != null && a.description!.isNotEmpty) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: Spacing.sp6),
               Text(
                 a.description!,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -548,7 +564,7 @@ class _AssessmentCard extends StatelessWidget {
               ),
             ],
 
-            const SizedBox(height: 10),
+            const SizedBox(height: Spacing.sp10),
 
             // Info chips row
             Wrap(
@@ -583,7 +599,7 @@ class _AssessmentCard extends StatelessWidget {
 
             // Student attempt status
             if (!isTeacher && a.myAttempts.isNotEmpty) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sp8),
               _StudentAttemptBanner(assessment: a),
             ],
           ],
@@ -616,10 +632,10 @@ class _AssignmentCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(Spacing.sp14),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(Radii.md),
           border: Border.all(
             color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
           ),
@@ -634,7 +650,7 @@ class _AssignmentCard extends StatelessWidget {
                   size: 20,
                   color: theme.colorScheme.primary,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: Spacing.sp8),
                 Expanded(
                   child: Text(
                     a.title,
@@ -650,7 +666,7 @@ class _AssignmentCard extends StatelessWidget {
                 else if (a.isPastDue)
                   _StatusChip(status: 'OVERDUE'),
                 if (isTeacher && onDelete != null) ...[
-                  const SizedBox(width: 4),
+                  const SizedBox(width: Spacing.sp4),
                   GestureDetector(
                     onTap: onDelete,
                     child: Icon(
@@ -664,7 +680,7 @@ class _AssignmentCard extends StatelessWidget {
             ),
 
             if (a.description != null && a.description!.isNotEmpty) ...[
-              const SizedBox(height: 6),
+              const SizedBox(height: Spacing.sp6),
               Text(
                 a.description!,
                 style: theme.textTheme.bodySmall?.copyWith(
@@ -675,7 +691,7 @@ class _AssignmentCard extends StatelessWidget {
               ),
             ],
 
-            const SizedBox(height: 10),
+            const SizedBox(height: Spacing.sp10),
 
             Wrap(
               spacing: 12,
@@ -708,7 +724,7 @@ class _AssignmentCard extends StatelessWidget {
 
             // Student submission status
             if (!isTeacher && a.mySubmission != null) ...[
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sp8),
               _SubmissionBanner(submission: a.mySubmission!),
             ],
           ],
@@ -751,17 +767,20 @@ class _TypeBadge extends StatelessWidget {
       _ => theme.colorScheme.primary,
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp8,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
         type,
         style: theme.textTheme.labelSmall?.copyWith(
           color: color,
           fontWeight: FontWeight.w600,
-          fontSize: 10,
+          fontSize: FontSize.nano,
         ),
       ),
     );
@@ -783,17 +802,20 @@ class _StatusChip extends StatelessWidget {
       _ => (Colors.grey, status),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp8,
+        vertical: Spacing.sp2,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
         label,
         style: theme.textTheme.labelSmall?.copyWith(
           color: color,
           fontWeight: FontWeight.w600,
-          fontSize: 10,
+          fontSize: FontSize.nano,
         ),
       ),
     );
@@ -812,12 +834,12 @@ class _InfoItem extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: theme.colorScheme.onSurfaceVariant),
-        const SizedBox(width: 3),
+        const SizedBox(width: Spacing.sp4),
         Text(
           label,
           style: theme.textTheme.bodySmall?.copyWith(
             color: theme.colorScheme.onSurfaceVariant,
-            fontSize: 12,
+            fontSize: FontSize.caption,
           ),
         ),
       ],
@@ -876,10 +898,13 @@ class _StudentAttemptBanner extends StatelessWidget {
 
     if (inProgress) {
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp10,
+          vertical: Spacing.sp6,
+        ),
         decoration: BoxDecoration(
           color: theme.colorScheme.secondary.withValues(alpha: 0.1),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(Radii.sm),
         ),
         child: Row(
           children: [
@@ -888,7 +913,7 @@ class _StudentAttemptBanner extends StatelessWidget {
               size: 16,
               color: theme.colorScheme.secondary,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: Spacing.sp6),
             Text(
               'In Progress — tap to continue',
               style: theme.textTheme.labelSmall?.copyWith(
@@ -906,12 +931,15 @@ class _StudentAttemptBanner extends StatelessWidget {
           (best.percentage ?? 0) >=
               (assessment.passingMarks! / assessment.totalMarks * 100);
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp10,
+          vertical: Spacing.sp6,
+        ),
         decoration: BoxDecoration(
           color:
               (passed ? theme.colorScheme.primary : theme.colorScheme.secondary)
                   .withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(Radii.sm),
         ),
         child: Row(
           children: [
@@ -924,7 +952,7 @@ class _StudentAttemptBanner extends StatelessWidget {
                   ? theme.colorScheme.primary
                   : theme.colorScheme.secondary,
             ),
-            const SizedBox(width: 6),
+            const SizedBox(width: Spacing.sp6),
             Text(
               'Score: ${best.percentage?.toStringAsFixed(1)}%',
               style: theme.textTheme.labelSmall?.copyWith(
@@ -972,10 +1000,13 @@ class _SubmissionBanner extends StatelessWidget {
     };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp10,
+        vertical: Spacing.sp6,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.08),
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Row(
         children: [
@@ -986,7 +1017,7 @@ class _SubmissionBanner extends StatelessWidget {
             size: 16,
             color: color,
           ),
-          const SizedBox(width: 6),
+          const SizedBox(width: Spacing.sp6),
           Text(
             label,
             style: theme.textTheme.labelSmall?.copyWith(
@@ -1025,14 +1056,14 @@ class _EmptyState extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(icon, size: 56, color: theme.colorScheme.outlineVariant),
-          const SizedBox(height: 12),
+          const SizedBox(height: Spacing.sp12),
           Text(
             title,
             style: theme.textTheme.titleMedium?.copyWith(
               fontWeight: FontWeight.w600,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: Spacing.sp4),
           Text(
             subtitle,
             style: theme.textTheme.bodySmall?.copyWith(
@@ -1041,7 +1072,7 @@ class _EmptyState extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
           if (showAction && actionLabel != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
             FilledButton.icon(
               onPressed: onAction,
               icon: const Icon(Icons.add_rounded, size: 18),
@@ -1060,11 +1091,16 @@ class _ShimmerList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.sp16,
+        Spacing.sp8,
+        Spacing.sp16,
+        Spacing.sp16,
+      ),
       itemCount: 4,
-      separatorBuilder: (_, _) => const SizedBox(height: 8),
+      separatorBuilder: (_, _) => const SizedBox(height: Spacing.sp8),
       itemBuilder: (_, _) => const ShimmerWrap(
-        child: SizedBox(height: 100, width: double.infinity),
+        child: SizedBox(height: Spacing.sp100, width: double.infinity),
       ),
     );
   }

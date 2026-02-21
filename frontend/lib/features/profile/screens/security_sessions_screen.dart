@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../shared/models/login_session.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
@@ -69,8 +70,8 @@ class _SecuritySessionsScreenState extends State<SecuritySessionsScreen> {
               onRefresh: _loadSessions,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 20,
-                  vertical: 16,
+                  horizontal: Spacing.sp20,
+                  vertical: Spacing.sp16,
                 ),
                 itemCount: _sessions.length,
                 itemBuilder: (_, i) => _SessionTile(session: _sessions[i]),
@@ -95,7 +96,7 @@ class _EmptyState extends StatelessWidget {
             size: 80,
             color: theme.colorScheme.primary.withValues(alpha: 0.3),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: Spacing.sp16),
           Text('No session history found', style: theme.textTheme.titleMedium),
         ],
       ),
@@ -117,10 +118,10 @@ class _SessionTile extends StatelessWidget {
     final timeStr = DateFormat('hh:mm a').format(session.createdAt.toLocal());
 
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: Spacing.sp16),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(Radii.xl),
         boxShadow: [
           BoxShadow(
             color: theme.colorScheme.primary.withValues(alpha: 0.04),
@@ -133,14 +134,14 @@ class _SessionTile extends StatelessWidget {
         ),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(Spacing.sp20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(10),
+                  padding: const EdgeInsets.all(Spacing.sp10),
                   decoration: BoxDecoration(
                     color: theme.colorScheme.primary.withValues(alpha: 0.08),
                     shape: BoxShape.circle,
@@ -151,7 +152,7 @@ class _SessionTile extends StatelessWidget {
                     size: 18,
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: Spacing.sp12),
                 Expanded(
                   child: Text(
                     deviceInfo,
@@ -168,7 +169,7 @@ class _SessionTile extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: Spacing.sp16),
             RichText(
               text: TextSpan(
                 style: theme.textTheme.bodyMedium?.copyWith(

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/theme/design_tokens.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -217,23 +218,28 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
       context: context,
       backgroundColor: theme.colorScheme.surface,
       shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.lg)),
       ),
       builder: (ctx) => SafeArea(
         child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 12, 20, 16),
+          padding: const EdgeInsets.fromLTRB(
+            Spacing.sp20,
+            Spacing.sp12,
+            Spacing.sp20,
+            Spacing.sp16,
+          ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               _grabHandle(theme),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.sp16),
               Text(
                 title,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: Spacing.sp8),
               Text(
                 message,
                 textAlign: TextAlign.center,
@@ -241,7 +247,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                   color: theme.colorScheme.secondary.withValues(alpha: 0.7),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: Spacing.sp16),
               Row(
                 children: [
                   Expanded(
@@ -250,7 +256,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                       child: const Text('Cancel'),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: Spacing.sp10),
                   Expanded(
                     child: FilledButton(
                       onPressed: () => Navigator.pop(ctx, true),
@@ -281,7 +287,12 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
           SafeArea(
             bottom: false,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+              padding: const EdgeInsets.fromLTRB(
+                Spacing.sp20,
+                Spacing.sp12,
+                Spacing.sp20,
+                0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -299,7 +310,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                                 letterSpacing: -0.5,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: Spacing.sp2),
                             Text(
                               '${_members.length} member${_members.length != 1 ? 's' : ''}'
                               '${_pending.isNotEmpty ? ' · ${_pending.length} pending' : ''}',
@@ -316,13 +327,13 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                     ],
                   ),
 
-                  const SizedBox(height: 14),
+                  const SizedBox(height: Spacing.sp14),
 
                   // Search bar
                   Container(
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary.withValues(alpha: 0.04),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(Radii.md),
                     ),
                     child: TextField(
                       onChanged: (v) => setState(() => _searchQuery = v),
@@ -330,8 +341,8 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                       decoration: InputDecoration(
                         isDense: true,
                         contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
-                          vertical: 10,
+                          horizontal: Spacing.sp12,
+                          vertical: Spacing.sp10,
                         ),
                         hintText: 'Search members…',
                         hintStyle: theme.textTheme.bodyMedium?.copyWith(
@@ -351,31 +362,31 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                     ),
                   ),
 
-                  const SizedBox(height: 12),
+                  const SizedBox(height: Spacing.sp12),
 
                   // Segmented tabs
                   Container(
                     height: 38,
                     decoration: BoxDecoration(
                       color: theme.colorScheme.primary.withValues(alpha: 0.05),
-                      borderRadius: BorderRadius.circular(10),
+                      borderRadius: BorderRadius.circular(Radii.md),
                     ),
                     child: TabBar(
                       controller: _tabController,
                       indicator: BoxDecoration(
                         color: theme.colorScheme.primary,
-                        borderRadius: BorderRadius.circular(8),
+                        borderRadius: BorderRadius.circular(Radii.sm),
                       ),
                       indicatorSize: TabBarIndicatorSize.tab,
                       labelColor: theme.colorScheme.onPrimary,
                       unselectedLabelColor: theme.colorScheme.secondary
                           .withValues(alpha: 0.6),
                       labelStyle: const TextStyle(
-                        fontSize: 12,
+                        fontSize: FontSize.caption,
                         fontWeight: FontWeight.w700,
                       ),
                       unselectedLabelStyle: const TextStyle(
-                        fontSize: 12,
+                        fontSize: FontSize.caption,
                         fontWeight: FontWeight.w500,
                       ),
                       dividerHeight: 0,
@@ -391,7 +402,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
             ),
           ),
 
-          const SizedBox(height: 8),
+          const SizedBox(height: Spacing.sp8),
 
           // ── Body ──
           Expanded(
@@ -459,7 +470,7 @@ Widget _grabHandle(ThemeData theme) => Center(
     height: 4,
     decoration: BoxDecoration(
       color: theme.colorScheme.secondary.withValues(alpha: 0.2),
-      borderRadius: BorderRadius.circular(2),
+      borderRadius: BorderRadius.circular(Radii.sm),
     ),
   ),
 );
@@ -475,12 +486,15 @@ class _InviteButton extends StatelessWidget {
     final theme = Theme.of(context);
     return Material(
       color: theme.colorScheme.primary,
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(Radii.md),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(Radii.md),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.sp14,
+            vertical: Spacing.sp8,
+          ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -489,12 +503,12 @@ class _InviteButton extends StatelessWidget {
                 size: 16,
                 color: theme.colorScheme.onPrimary,
               ),
-              const SizedBox(width: 6),
+              const SizedBox(width: Spacing.sp6),
               Text(
                 'Invite',
                 style: TextStyle(
                   color: theme.colorScheme.onPrimary,
-                  fontSize: 13,
+                  fontSize: FontSize.body,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -535,9 +549,14 @@ class _MemberListView extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 100),
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.sp20,
+          Spacing.sp4,
+          Spacing.sp20,
+          Spacing.sp100,
+        ),
         itemCount: members.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 4),
+        separatorBuilder: (_, _) => const SizedBox(height: Spacing.sp4),
         itemBuilder: (_, i) => _MemberRow(
           member: members[i],
           onRemove: () => onRemove(members[i]),
@@ -584,10 +603,13 @@ class _MemberRow extends StatelessWidget {
         );
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp12,
+          vertical: Spacing.sp10,
+        ),
         decoration: BoxDecoration(
           color: theme.colorScheme.primary.withValues(alpha: 0.02),
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(Radii.md),
         ),
         child: Row(
           // ... rest of the row content
@@ -609,12 +631,12 @@ class _MemberRow extends StatelessWidget {
                       style: TextStyle(
                         color: theme.colorScheme.primary,
                         fontWeight: FontWeight.bold,
-                        fontSize: 15,
+                        fontSize: FontSize.body,
                       ),
                     )
                   : null,
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: Spacing.sp10),
 
             // Name + subtitle
             Expanded(
@@ -636,7 +658,7 @@ class _MemberRow extends StatelessWidget {
                         color: theme.colorScheme.secondary.withValues(
                           alpha: 0.45,
                         ),
-                        fontSize: 11,
+                        fontSize: FontSize.micro,
                       ),
                     ),
                 ],
@@ -645,7 +667,7 @@ class _MemberRow extends StatelessWidget {
 
             // Role badge
             _roleBadge(member.role, theme.colorScheme),
-            const SizedBox(width: 4),
+            const SizedBox(width: Spacing.sp4),
 
             // Options
             if (canRemove)
@@ -661,7 +683,7 @@ class _MemberRow extends StatelessWidget {
                     size: 18,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(Radii.md),
                   ),
                   onSelected: (v) {
                     if (v == 'remove') onRemove();
@@ -677,12 +699,12 @@ class _MemberRow extends StatelessWidget {
                             color: theme.colorScheme.error,
                             size: 18,
                           ),
-                          const SizedBox(width: 8),
+                          const SizedBox(width: Spacing.sp8),
                           Text(
                             'Remove',
                             style: TextStyle(
                               color: theme.colorScheme.error,
-                              fontSize: 13,
+                              fontSize: FontSize.body,
                             ),
                           ),
                         ],
@@ -704,14 +726,21 @@ class _MemberRow extends StatelessWidget {
       _ => (colorScheme.onSurfaceVariant, 'S'),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp8,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(6),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
         l,
-        style: TextStyle(color: c, fontSize: 10, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: c,
+          fontSize: FontSize.nano,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -741,9 +770,14 @@ class _InviteListView extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(20, 4, 20, 100),
+        padding: const EdgeInsets.fromLTRB(
+          Spacing.sp20,
+          Spacing.sp4,
+          Spacing.sp20,
+          Spacing.sp100,
+        ),
         itemCount: invites.length,
-        separatorBuilder: (_, _) => const SizedBox(height: 4),
+        separatorBuilder: (_, _) => const SizedBox(height: Spacing.sp4),
         itemBuilder: (_, i) => _InviteRow(
           invite: invites[i],
           onCancel: () => onCancel(invites[i]),
@@ -763,10 +797,13 @@ class _InviteRow extends StatelessWidget {
     final theme = Theme.of(context);
     final amber = theme.colorScheme.secondary;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp12,
+        vertical: Spacing.sp10,
+      ),
       decoration: BoxDecoration(
         color: amber.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(color: amber.withValues(alpha: 0.08)),
       ),
       child: Row(
@@ -777,7 +814,7 @@ class _InviteRow extends StatelessWidget {
             height: 40,
             decoration: BoxDecoration(
               color: amber.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(10),
+              borderRadius: BorderRadius.circular(Radii.md),
             ),
             child: Icon(
               invite.isUnresolved
@@ -787,7 +824,7 @@ class _InviteRow extends StatelessWidget {
               size: 18,
             ),
           ),
-          const SizedBox(width: 10),
+          const SizedBox(width: Spacing.sp10),
 
           // Name + role
           Expanded(
@@ -802,17 +839,17 @@ class _InviteRow extends StatelessWidget {
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: Spacing.sp2),
                 Row(
                   children: [
                     _roleBadge(invite.role, theme.colorScheme),
                     if (invite.isUnresolved) ...[
-                      const SizedBox(width: 6),
+                      const SizedBox(width: Spacing.sp6),
                       Text(
                         'Not on platform',
                         style: TextStyle(
                           color: amber,
-                          fontSize: 10,
+                          fontSize: FontSize.nano,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -850,14 +887,21 @@ class _InviteRow extends StatelessWidget {
       _ => (colorScheme.onSurfaceVariant, 'S'),
     };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp8,
+        vertical: Spacing.sp2,
+      ),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(5),
+        borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
         l,
-        style: TextStyle(color: c, fontSize: 10, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: c,
+          fontSize: FontSize.nano,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -878,7 +922,7 @@ class _EmptyState extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Container(
-            padding: const EdgeInsets.all(20),
+            padding: const EdgeInsets.all(Spacing.sp20),
             decoration: BoxDecoration(
               color: theme.colorScheme.primary.withValues(alpha: 0.06),
               shape: BoxShape.circle,
@@ -889,7 +933,7 @@ class _EmptyState extends StatelessWidget {
               color: theme.colorScheme.primary.withValues(alpha: 0.25),
             ),
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: Spacing.sp14),
           Text(
             text,
             style: theme.textTheme.bodyMedium?.copyWith(

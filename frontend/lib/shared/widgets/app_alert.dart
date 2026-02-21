@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/design_tokens.dart';
 
 /// Centralized alert/dialog system. Never expose raw exceptions to users.
 class AppAlert {
@@ -39,7 +40,7 @@ class AppAlert {
                 color: Colors.white,
                 size: 20,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.sp12),
               Expanded(
                 child: Text(
                   message,
@@ -54,9 +55,9 @@ class AppAlert {
           backgroundColor: Theme.of(context).colorScheme.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
-          margin: const EdgeInsets.all(16),
+          margin: const EdgeInsets.all(Spacing.sp16),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -76,7 +77,7 @@ class AppAlert {
                 color: Colors.white,
                 size: 20,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.sp12),
               Expanded(
                 child: Text(
                   message,
@@ -91,9 +92,9 @@ class AppAlert {
           backgroundColor: Theme.of(context).colorScheme.primary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
-          margin: const EdgeInsets.all(16),
+          margin: const EdgeInsets.all(Spacing.sp16),
           duration: const Duration(seconds: 2),
         ),
       );
@@ -113,7 +114,7 @@ class AppAlert {
                 color: Colors.white,
                 size: 20,
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: Spacing.sp12),
               Expanded(
                 child: Text(
                   message,
@@ -128,9 +129,9 @@ class AppAlert {
           backgroundColor: Theme.of(context).colorScheme.secondary,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(Radii.md),
           ),
-          margin: const EdgeInsets.all(16),
+          margin: const EdgeInsets.all(Spacing.sp16),
           duration: const Duration(seconds: 3),
         ),
       );
@@ -149,7 +150,9 @@ class AppAlert {
     final result = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.lg),
+        ),
         icon: icon != null
             ? Icon(
                 icon,
@@ -159,7 +162,10 @@ class AppAlert {
             : null,
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: FontSize.title,
+          ),
         ),
         content: Text(
           message,
@@ -199,10 +205,15 @@ class AppAlert {
     await showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.lg),
+        ),
         title: Text(
           title,
-          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 18),
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            fontSize: FontSize.title,
+          ),
         ),
         content: Text(
           message,
