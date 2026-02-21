@@ -294,7 +294,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: Theme.of(ctx).colorScheme.onSurfaceVariant,
                   borderRadius: BorderRadius.circular(Radii.sm),
                 ),
               ),
@@ -369,7 +369,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
+                  color: Theme.of(ctx).colorScheme.onSurfaceVariant,
                   borderRadius: BorderRadius.circular(Radii.sm),
                 ),
               ),

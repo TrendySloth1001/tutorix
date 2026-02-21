@@ -925,7 +925,7 @@ class _ExploreScreenState extends State<ExploreScreen>
               width: size,
               height: size,
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: theme.colorScheme.surface,
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isSelected

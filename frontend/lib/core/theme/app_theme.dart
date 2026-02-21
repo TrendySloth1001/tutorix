@@ -222,7 +222,7 @@ class AppTheme {
 
   // ── Dark ───────────────────────────────────────────────────────────────
 
-  static const _scaffold = Color(0xFF141310); // slightly darker than surfaceD
+  static const _scaffold = Color(0xFF000000); // true black for OLED
 
   static ThemeData get darkTheme {
     final colorScheme = ColorScheme.dark(
@@ -237,7 +237,7 @@ class AppTheme {
       onSurfaceVariant: AppColors.mutedD,
       outline: AppColors.mutedD,
       outlineVariant: AppColors.mutedD.withValues(alpha: 0.3),
-      surfaceContainerHighest: const Color(0xFF252420),
+      surfaceContainerHighest: const Color(0xFF111110),
       error: AppColors.foreD,
       onError: AppColors.surfaceD,
     );
@@ -251,11 +251,11 @@ class AppTheme {
 
       // Card
       cardTheme: CardThemeData(
-        color: AppColors.surfaceD,
+        color: const Color(0xFF0A0A09),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(Radii.lg),
-          side: BorderSide(color: AppColors.mutedD.withValues(alpha: 0.2)),
+          side: BorderSide(color: AppColors.mutedD.withValues(alpha: 0.15)),
         ),
       ),
 
@@ -418,11 +418,46 @@ class AppTheme {
 
       // Bottom nav
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.surfaceD,
+        backgroundColor: Color(0xFF000000),
         selectedItemColor: AppColors.brandD,
         unselectedItemColor: AppColors.mutedD,
         type: BottomNavigationBarType.fixed,
-        elevation: 8,
+        elevation: 0,
+      ),
+
+      // Dialog
+      dialogTheme: DialogThemeData(
+        backgroundColor: const Color(0xFF0A0A09),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.lg),
+          side: BorderSide(color: AppColors.mutedD.withValues(alpha: 0.15)),
+        ),
+      ),
+
+      // Bottom Sheet
+      bottomSheetTheme: BottomSheetThemeData(
+        backgroundColor: const Color(0xFF0A0A09),
+        surfaceTintColor: Colors.transparent,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.lg)),
+        ),
+      ),
+
+      // Popup Menu
+      popupMenuTheme: PopupMenuThemeData(
+        color: const Color(0xFF0A0A09),
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(Radii.md),
+          side: BorderSide(color: AppColors.mutedD.withValues(alpha: 0.15)),
+        ),
+      ),
+
+      // Drawer
+      drawerTheme: const DrawerThemeData(
+        backgroundColor: Color(0xFF000000),
+        surfaceTintColor: Colors.transparent,
       ),
     );
   }

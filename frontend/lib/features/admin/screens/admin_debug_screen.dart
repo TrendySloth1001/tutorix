@@ -830,7 +830,7 @@ class _ServerLogTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Material(
-      color: Colors.white,
+      color: cs.surface,
       borderRadius: BorderRadius.circular(Radii.md),
       child: InkWell(
         onTap: () => _showDetails(context),
@@ -1175,7 +1175,7 @@ class _LocalLogTile extends StatelessWidget {
         entry.metadata != null;
 
     return Material(
-      color: Colors.white,
+      color: cs.surface,
       borderRadius: BorderRadius.circular(Radii.md),
       child: InkWell(
         onTap: hasDetails ? () => _showDetails(context) : null,
@@ -1645,7 +1645,7 @@ class _StatTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(Spacing.sp16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cs.surface,
         borderRadius: BorderRadius.circular(Radii.md),
         border: Border.all(color: cs.onSurfaceVariant.withValues(alpha: 0.12)),
       ),

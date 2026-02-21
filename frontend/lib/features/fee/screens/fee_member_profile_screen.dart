@@ -127,7 +127,7 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
           child: Container(
-            color: Colors.grey.withValues(alpha: 0.2),
+            color: Theme.of(context).colorScheme.outlineVariant,
             height: 1,
           ),
         ),

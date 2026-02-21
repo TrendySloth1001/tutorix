@@ -198,7 +198,7 @@ class _LedgerSummaryCard extends StatelessWidget {
                   child: _LedgerStat(
                     label: 'Refunded',
                     amount: summary.totalRefunded,
-                    color: const Color(0xFF90CAF9),
+                    color: theme.colorScheme.secondary,
                   ),
                 ),
             ],

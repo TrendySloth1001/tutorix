@@ -324,7 +324,7 @@ class _EnhancedPdfViewerState extends State<_EnhancedPdfViewer> {
     final colors = theme.colorScheme;
 
     return Scaffold(
-      backgroundColor: Colors.grey.shade200,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(
           widget.attachment.fileName ?? 'PDF',

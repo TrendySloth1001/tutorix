@@ -221,7 +221,7 @@ class _BatchListShimmer extends StatelessWidget {
         child: Container(
           height: 76,
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.surface,
             borderRadius: BorderRadius.circular(Radii.md),
           ),
         ),

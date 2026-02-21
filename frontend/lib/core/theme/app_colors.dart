@@ -20,9 +20,9 @@ class AppColors {
   static const Color surface = Color(0xFFFDFBD4); // warm cream – canvas
   static const Color fore = Color(0xFF2E2D1E); // deep olive – text
 
-  // ── Dark Mode ──────────────────────────────────────────────────────────
-  static const Color brandD = Color(0xFFB5B394); // lifted olive
-  static const Color mutedD = Color(0xFF5E5D4F); // dimmed olive
-  static const Color surfaceD = Color(0xFF1B1A16); // warm near-black
-  static const Color foreD = Color(0xFFE6E5C8); // warm cream-white
+  // ── Dark Mode (OLED) ───────────────────────────────────────────────
+  static const Color brandD = Color(0xFFD9D6A0); // vivid olive – pops on black
+  static const Color mutedD = Color(0xFF585749); // olive-gray – visible on black
+  static const Color surfaceD = Color(0xFF000000); // true black – OLED
+  static const Color foreD = Color(0xFFEEEDD8); // bright cream – high OLED contrast
 }
