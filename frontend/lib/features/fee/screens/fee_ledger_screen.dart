@@ -219,7 +219,7 @@ class _LedgerSummaryCard extends StatelessWidget {
                 ),
               ),
               Text(
-                '₹${summary.balance.toStringAsFixed(0)}',
+                '₹${(summary.balance > 0 ? summary.balance : 0).toStringAsFixed(0)}',
                 style: TextStyle(
                   color: summary.balance > 0
                       ? const Color(0xFFEF9A9A)
@@ -230,6 +230,40 @@ class _LedgerSummaryCard extends StatelessWidget {
               ),
             ],
           ),
+          if (summary.balance < 0) ...[
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Available Credits',
+                  style: TextStyle(
+                    color: Color(0xFF81C784),
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                FilledButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(
+                    Icons.account_balance_wallet_rounded,
+                    size: 16,
+                  ),
+                  label: Text('₹${summary.balance.abs().toStringAsFixed(0)}'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(
+                      0xFF81C784,
+                    ).withValues(alpha: 0.15),
+                    foregroundColor: const Color(0xFF81C784),
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    minimumSize: const Size(0, 32),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    elevation: 0,
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (summary.nextDueDate != null) ...[
             const SizedBox(height: 8),
             Row(
@@ -373,27 +407,36 @@ class _TimelineEntry extends StatelessWidget {
                     const SizedBox(height: 4),
                     Row(
                       children: [
-                        Text(
-                          _fmtDateShort(entry.date),
-                          style: const TextStyle(
-                            color: AppColors.mutedOlive,
-                            fontSize: 11,
+                        Expanded(
+                          child: Row(
+                            children: [
+                              Text(
+                                _fmtDateShort(entry.date),
+                                style: const TextStyle(
+                                  color: AppColors.mutedOlive,
+                                  fontSize: 11,
+                                ),
+                              ),
+                              if (entry.mode != null) ...[
+                                const Text(
+                                  ' · ',
+                                  style: TextStyle(color: AppColors.mutedOlive),
+                                ),
+                                Flexible(
+                                  child: Text(
+                                    entry.mode!,
+                                    style: const TextStyle(
+                                      color: AppColors.mutedOlive,
+                                      fontSize: 11,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                ),
+                              ],
+                            ],
                           ),
                         ),
-                        if (entry.mode != null) ...[
-                          const Text(
-                            ' · ',
-                            style: TextStyle(color: AppColors.mutedOlive),
-                          ),
-                          Text(
-                            entry.mode!,
-                            style: const TextStyle(
-                              color: AppColors.mutedOlive,
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                        const Spacer(),
+                        const SizedBox(width: 8),
                         Text(
                           'Balance: ₹${entry.runningBalance.toStringAsFixed(0)}',
                           style: TextStyle(

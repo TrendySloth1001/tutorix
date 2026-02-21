@@ -688,7 +688,7 @@ class _LedgerBanner extends StatelessWidget {
               Expanded(
                 child: _BannerStat(
                   label: 'Balance',
-                  value: '₹${_fmt(balance)}',
+                  value: '₹${_fmt(balance > 0 ? balance : 0)}',
                   color: balance > 0
                       ? const Color(0xFFFFB74D)
                       : const Color(0xFF81C784),
@@ -705,6 +705,40 @@ class _LedgerBanner extends StatelessWidget {
               ),
             ],
           ),
+          if (balance < 0) ...[
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  'Available Credits',
+                  style: TextStyle(
+                    color: Color(0xFF81C784),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                FilledButton.icon(
+                  onPressed: () {},
+                  icon: const Icon(
+                    Icons.account_balance_wallet_rounded,
+                    size: 14,
+                  ),
+                  label: Text('₹${_fmt(balance.abs())}'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(
+                      0xFF81C784,
+                    ).withValues(alpha: 0.15),
+                    foregroundColor: const Color(0xFF81C784),
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    minimumSize: const Size(0, 28),
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    elevation: 0,
+                  ),
+                ),
+              ],
+            ),
+          ],
           if (totalRefunded > 0) ...[
             const SizedBox(height: 12),
             Row(
