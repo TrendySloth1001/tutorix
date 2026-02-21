@@ -359,6 +359,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                 : DateTime.now(),
             studentName: _record!.member?.name,
             receiptNo: receiptNo,
+            paymentMode: 'RAZORPAY',
             taxType: _record!.taxType,
             taxAmount: _record!.taxAmount,
             cgstAmount: _record!.cgstAmount,
@@ -1486,33 +1487,33 @@ class _PaymentRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: payment.isOnline
-          ? () => Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (_) => PaymentReceiptScreen(
-                  coachingName: coachingName,
-                  feeTitle: record.title,
-                  amount: payment.amount,
-                  paymentId: payment.razorpayPaymentId ?? '',
-                  orderId: payment.razorpayOrderId ?? '',
-                  paidAt: payment.paidAt,
-                  receiptNo: payment.receiptNo ?? '',
-                  taxType: record.taxType,
-                  taxAmount: record.taxAmount,
-                  cgstAmount: record.cgstAmount,
-                  sgstAmount: record.sgstAmount,
-                  igstAmount: record.igstAmount,
-                  cessAmount: record.cessAmount,
-                  gstRate: record.gstRate,
-                  sacCode: record.sacCode,
-                  baseAmount: record.baseAmount,
-                  discountAmount: record.discountAmount,
-                  fineAmount: record.fineAmount,
-                ),
-              ),
-            )
-          : null,
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PaymentReceiptScreen(
+            coachingName: coachingName,
+            feeTitle: record.title,
+            amount: payment.amount,
+            paymentId: payment.razorpayPaymentId,
+            orderId: payment.razorpayOrderId,
+            paidAt: payment.paidAt,
+            receiptNo: payment.receiptNo ?? '',
+            paymentMode: payment.mode,
+            transactionRef: payment.transactionRef,
+            taxType: record.taxType,
+            taxAmount: record.taxAmount,
+            cgstAmount: record.cgstAmount,
+            sgstAmount: record.sgstAmount,
+            igstAmount: record.igstAmount,
+            cessAmount: record.cessAmount,
+            gstRate: record.gstRate,
+            sacCode: record.sacCode,
+            baseAmount: record.baseAmount,
+            discountAmount: record.discountAmount,
+            fineAmount: record.fineAmount,
+          ),
+        ),
+      ),
       child: Container(
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
@@ -1558,14 +1559,12 @@ class _PaymentRow extends StatelessWidget {
                 fontSize: 14,
               ),
             ),
-            if (payment.isOnline) ...[
-              const SizedBox(width: 6),
-              const Icon(
-                Icons.receipt_long_rounded,
-                color: AppColors.mutedOlive,
-                size: 16,
-              ),
-            ],
+            const SizedBox(width: 6),
+            const Icon(
+              Icons.receipt_long_rounded,
+              color: AppColors.mutedOlive,
+              size: 16,
+            ),
           ],
         ),
       ),

@@ -2,17 +2,27 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_colors.dart';
 
-/// A clean, minimal payment receipt shown after successful online payment.
+/// A clean, minimal payment receipt shown after successful payment.
+/// Works for all payment modes: Razorpay (online), Cash, UPI, Bank Transfer,
+/// Cheque, Credit Transfer, and others.
 /// Also accessible from payment history in both admin and student views.
 class PaymentReceiptScreen extends StatelessWidget {
   final String coachingName;
   final String feeTitle;
   final double amount;
-  final String paymentId;
-  final String orderId;
+  /// Razorpay payment ID — null for non-Razorpay modes.
+  final String? paymentId;
+  /// Razorpay order ID — null for non-Razorpay modes.
+  final String? orderId;
   final DateTime paidAt;
   final String? studentName;
   final String receiptNo;
+  /// Payment mode string, e.g. 'RAZORPAY', 'CASH', 'UPI', 'BANK_TRANSFER',
+  /// 'CHEQUE', 'CREDIT_TRANSFER', 'ONLINE', 'OTHER'.
+  /// Defaults to 'RAZORPAY' for backward compatibility.
+  final String paymentMode;
+  /// Reference number for non-Razorpay modes (UPI ID, cheque no, etc.).
+  final String? transactionRef;
 
   // Tax breakdown (optional)
   final String taxType; // NONE | GST_INCLUSIVE | GST_EXCLUSIVE
@@ -33,11 +43,13 @@ class PaymentReceiptScreen extends StatelessWidget {
     required this.coachingName,
     required this.feeTitle,
     required this.amount,
-    required this.paymentId,
-    required this.orderId,
+    this.paymentId,
+    this.orderId,
     required this.paidAt,
     this.studentName,
     required this.receiptNo,
+    this.paymentMode = 'RAZORPAY',
+    this.transactionRef,
     this.taxType = 'NONE',
     this.taxAmount = 0,
     this.cgstAmount = 0,
@@ -51,6 +63,34 @@ class PaymentReceiptScreen extends StatelessWidget {
     this.discountAmount,
     this.fineAmount,
   });
+
+  bool get _isRazorpay =>
+      paymentMode == 'RAZORPAY' ||
+      paymentMode == 'ONLINE' ||
+      paymentId != null;
+
+  String get _modeLabel {
+    switch (paymentMode) {
+      case 'RAZORPAY':
+      case 'ONLINE':
+        return 'Razorpay';
+      case 'CASH':
+        return 'Cash';
+      case 'UPI':
+        return 'UPI';
+      case 'BANK_TRANSFER':
+        return 'Bank Transfer';
+      case 'CHEQUE':
+        return 'Cheque';
+      case 'CREDIT_TRANSFER':
+        return 'Credit Transfer';
+      default:
+        return paymentMode;
+    }
+  }
+
+  String get _successLabel =>
+      _isRazorpay ? 'Payment Successful' : 'Payment Recorded';
 
   bool get _hasTax => taxType != 'NONE' && taxAmount > 0;
 
@@ -94,9 +134,9 @@ class PaymentReceiptScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Payment Successful',
-              style: TextStyle(
+            Text(
+              _successLabel,
+              style: const TextStyle(
                 color: Color(0xFF2E7D32),
                 fontWeight: FontWeight.w700,
                 fontSize: 20,
@@ -145,11 +185,19 @@ class PaymentReceiptScreen extends StatelessWidget {
                     _DetailRow('Student', studentName!),
                   ],
                   _Divider(),
-                  _DetailRow('Payment Mode', 'Razorpay'),
-                  _Divider(),
-                  _DetailRow('Order ID', _truncateId(orderId)),
-                  _Divider(),
-                  _DetailRow('Payment ID', _truncateId(paymentId)),
+                  _DetailRow('Payment Mode', _modeLabel),
+                  if (transactionRef != null && transactionRef!.isNotEmpty) ...[
+                    _Divider(),
+                    _DetailRow('Reference', transactionRef!),
+                  ],
+                  if (_isRazorpay && orderId != null && orderId!.isNotEmpty) ...[
+                    _Divider(),
+                    _DetailRow('Order ID', _truncateId(orderId!)),
+                  ],
+                  if (_isRazorpay && paymentId != null && paymentId!.isNotEmpty) ...[
+                    _Divider(),
+                    _DetailRow('Payment ID', _truncateId(paymentId!)),
+                  ],
                 ],
               ),
             ),
@@ -366,10 +414,17 @@ class PaymentReceiptScreen extends StatelessWidget {
       if (cessAmount > 0)
         lines.add('  Cess: ₹${cessAmount.toStringAsFixed(2)}');
     }
+    lines.add('Payment Mode: $_modeLabel');
+    if (transactionRef != null && transactionRef!.isNotEmpty) {
+      lines.add('Reference: $transactionRef');
+    }
+    if (_isRazorpay && orderId != null && orderId!.isNotEmpty) {
+      lines.add('Order ID: $orderId');
+    }
+    if (_isRazorpay && paymentId != null && paymentId!.isNotEmpty) {
+      lines.add('Payment ID: $paymentId');
+    }
     lines.addAll([
-      'Payment Mode: Razorpay',
-      'Order ID: $orderId',
-      'Payment ID: $paymentId',
       'Date: ${_formatDateTime(paidAt)}',
       '━━━━━━━━━━━━━━━━━━━━━━━━',
     ]);

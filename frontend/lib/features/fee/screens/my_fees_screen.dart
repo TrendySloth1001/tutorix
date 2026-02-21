@@ -636,6 +636,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                 : DateTime.now(),
             studentName: record.member?.name,
             receiptNo: receiptNo,
+            paymentMode: 'RAZORPAY',
             taxType: record.taxType,
             taxAmount: record.taxAmount,
             cgstAmount: record.cgstAmount,
@@ -782,6 +783,8 @@ class _AccountShortcutButton extends StatelessWidget {
               Expanded(
                 child: Text(
                   label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: AppColors.darkOlive,
                     fontWeight: FontWeight.w600,
