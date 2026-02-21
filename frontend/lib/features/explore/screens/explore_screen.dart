@@ -428,7 +428,9 @@ class _ExploreScreenState extends State<ExploreScreen>
                       else
                         SliverPadding(
                           padding: EdgeInsets.fromLTRB(
-                            Spacing.sp16, 0, Spacing.sp16,
+                            Spacing.sp16,
+                            0,
+                            Spacing.sp16,
                             MediaQuery.of(context).padding.bottom,
                           ),
                           sliver: SliverList.separated(
