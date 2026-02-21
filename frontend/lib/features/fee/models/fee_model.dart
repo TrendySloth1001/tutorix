@@ -683,23 +683,50 @@ class FeeRefundModel {
   final String mode;
   final DateTime refundedAt;
 
+  /// Name of the admin who processed this refund.
+  final String? processedByName;
+
+  /// Razorpay refund status: INITIATED | PROCESSED | FAILED (null for manual refunds).
+  final String? razorpayStatus;
+
+  /// Razorpay refund ID (null for manual refunds).
+  final String? razorpayRefundId;
+
+  /// The original Razorpay payment ID that was refunded.
+  final String? razorpayPaymentId;
+
   const FeeRefundModel({
     required this.id,
     required this.amount,
     this.reason,
     this.mode = 'CASH',
     required this.refundedAt,
+    this.processedByName,
+    this.razorpayStatus,
+    this.razorpayRefundId,
+    this.razorpayPaymentId,
   });
 
-  factory FeeRefundModel.fromJson(Map<String, dynamic> json) => FeeRefundModel(
-    id: json['id'] as String? ?? '',
-    amount: (json['amount'] as num?)?.toDouble() ?? 0,
-    reason: json['reason'] as String?,
-    mode: json['mode'] as String? ?? 'CASH',
-    refundedAt:
-        DateTime.tryParse(json['refundedAt'] as String? ?? '') ??
-        DateTime.now(),
-  );
+  bool get isOnline =>
+      mode == 'RAZORPAY' || mode == 'ONLINE' || razorpayRefundId != null;
+
+  factory FeeRefundModel.fromJson(Map<String, dynamic> json) {
+    final processedBy = json['processedBy'] as Map<String, dynamic>?;
+    final rzpRefund = json['razorpayRefund'] as Map<String, dynamic>?;
+    return FeeRefundModel(
+      id: json['id'] as String? ?? '',
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      reason: json['reason'] as String?,
+      mode: json['mode'] as String? ?? 'CASH',
+      refundedAt:
+          DateTime.tryParse(json['refundedAt'] as String? ?? '') ??
+          DateTime.now(),
+      processedByName: processedBy?['name'] as String?,
+      razorpayStatus: rzpRefund?['status'] as String?,
+      razorpayRefundId: rzpRefund?['razorpayRefundId'] as String?,
+      razorpayPaymentId: rzpRefund?['razorpayPaymentId'] as String?,
+    );
+  }
 }
 
 /// Summary / analytics response.

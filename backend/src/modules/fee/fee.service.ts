@@ -241,7 +241,13 @@ const RECORD_INCLUDE = {
     member: { select: MEMBER_SELECT },
     assignment: { include: { feeStructure: true } },
     payments: { orderBy: { paidAt: 'desc' as const } },
-    refunds: { orderBy: { refundedAt: 'desc' as const } },
+    refunds: {
+        orderBy: { refundedAt: 'desc' as const },
+        include: {
+            processedBy: { select: { id: true, name: true } },
+            razorpayRefund: { select: { razorpayRefundId: true, razorpayPaymentId: true, status: true, amountPaise: true } },
+        },
+    },
     markedBy: { select: { id: true, name: true } },
 } as const;
 

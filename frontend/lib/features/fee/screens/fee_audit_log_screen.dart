@@ -183,7 +183,9 @@ class _FeeAuditLogScreenState extends State<FeeAuditLogScreen> {
                       itemBuilder: (ctx, i) {
                         if (i == _logs.length) {
                           return const Padding(
-                            padding: EdgeInsets.symmetric(vertical: Spacing.sp16),
+                            padding: EdgeInsets.symmetric(
+                              vertical: Spacing.sp16,
+                            ),
                             child: Center(child: CircularProgressIndicator()),
                           );
                         }
@@ -378,7 +380,9 @@ class _AuditLogTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = _eventColorsFor(theme.colorScheme)[log.event] ?? theme.colorScheme.onSurfaceVariant;
+    final color =
+        _eventColorsFor(theme.colorScheme)[log.event] ??
+        theme.colorScheme.onSurfaceVariant;
     final actorLabel = log.actorType == 'SYSTEM'
         ? 'System'
         : log.actorName ?? log.actorId ?? 'Admin';
@@ -763,9 +767,16 @@ class _FilterSheetState extends State<_FilterSheet> {
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(Radii.lg)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(Radii.lg),
+        ),
       ),
-      padding: const EdgeInsets.fromLTRB(Spacing.sp20, Spacing.sp20, Spacing.sp20, Spacing.sp32),
+      padding: EdgeInsets.fromLTRB(
+        Spacing.sp20,
+        Spacing.sp20,
+        Spacing.sp20,
+        Spacing.sp32 + MediaQuery.of(context).viewPadding.bottom,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -869,7 +880,10 @@ class _FilterChip extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.sp12, vertical: Spacing.sp6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp12,
+          vertical: Spacing.sp6,
+        ),
         decoration: BoxDecoration(
           color: selected
               ? theme.colorScheme.primary
@@ -908,7 +922,10 @@ class _ActiveFilterChips extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp16, vertical: Spacing.sp8),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp16,
+        vertical: Spacing.sp8,
+      ),
       color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
       child: Row(
         children: [
@@ -948,7 +965,10 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp8, vertical: Spacing.sp4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp8,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(Radii.sm),

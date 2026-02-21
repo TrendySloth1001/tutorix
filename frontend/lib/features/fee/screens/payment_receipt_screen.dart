@@ -175,7 +175,7 @@ class PaymentReceiptScreen extends StatelessWidget {
               width: double.infinity,
               padding: const EdgeInsets.all(Spacing.sp20),
               decoration: BoxDecoration(
-                color: theme.colorScheme.surface,
+                color: theme.colorScheme.surfaceContainerHighest,
                 borderRadius: BorderRadius.circular(Radii.lg),
               ),
               child: Column(
@@ -222,7 +222,7 @@ class PaymentReceiptScreen extends StatelessWidget {
                 width: double.infinity,
                 padding: const EdgeInsets.all(Spacing.sp20),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.surface,
+                  color: theme.colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(Radii.lg),
                 ),
                 child: Column(

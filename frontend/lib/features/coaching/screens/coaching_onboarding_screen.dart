@@ -1640,7 +1640,9 @@ class _AddBranchSheetState extends State<_AddBranchSheet> {
         ),
       ),
       padding: EdgeInsets.only(
-        bottom: MediaQuery.of(context).viewInsets.bottom,
+        bottom:
+            MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).viewPadding.bottom,
       ),
       child: SingleChildScrollView(
         padding: const EdgeInsets.all(Spacing.sp24),

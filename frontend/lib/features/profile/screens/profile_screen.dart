@@ -618,7 +618,12 @@ class _PhotoOptionsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(Spacing.sp24),
+      padding: EdgeInsets.fromLTRB(
+        Spacing.sp24,
+        Spacing.sp24,
+        Spacing.sp24,
+        Spacing.sp24 + MediaQuery.of(context).viewPadding.bottom,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: const BorderRadius.vertical(

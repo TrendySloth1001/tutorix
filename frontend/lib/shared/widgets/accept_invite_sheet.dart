@@ -45,11 +45,11 @@ class _AcceptInviteSheet extends StatelessWidget {
           top: Radius.circular(Radii.xl),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         Spacing.sp24,
         Spacing.sp12,
         Spacing.sp24,
-        Spacing.sp32,
+        Spacing.sp32 + MediaQuery.of(context).viewPadding.bottom,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

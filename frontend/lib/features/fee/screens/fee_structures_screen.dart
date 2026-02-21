@@ -697,7 +697,10 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
         left: Spacing.sp20,
         right: Spacing.sp20,
         top: Spacing.sp20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom:
+            MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).viewPadding.bottom +
+            24,
       ),
       child: SingleChildScrollView(
         child: Column(

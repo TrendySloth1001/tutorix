@@ -30,25 +30,61 @@ class AuthController extends ChangeNotifier {
       _invitationsChecked && _pendingInvitations.isNotEmpty;
 
   /// Called once on app start to restore a previous session.
+  ///
+  /// If a cached user exists the controller becomes `isInitialized`
+  /// immediately so the UI can render without a loading spinner.
+  /// A background network refresh keeps the profile up-to-date.
   Future<void> initialize() async {
     final authenticated = await _authService.isAuthenticated();
     if (authenticated) {
+      // 1. Show cached user immediately — no loading screen.
+      final cachedUser = await _authService.getCachedUser();
+      if (cachedUser != null) {
+        _user = cachedUser;
+        _isInitialized = true;
+        notifyListeners();
+
+        // 2. Refresh in background — failures are silent.
+        _refreshSessionInBackground();
+        return;
+      }
+
+      // No cached user — must wait for network.
       try {
         final freshUser = await _userService.getMe();
-        _user = freshUser ?? await _authService.getCachedUser();
+        _user = freshUser;
       } catch (e, stack) {
         _logger.warn(
-          'Failed to fetch fresh user, using cache',
+          'No cached user and network failed',
           category: LogCategory.auth,
           error: e.toString(),
           stackTrace: stack.toString(),
         );
-        _user = await _authService.getCachedUser();
       }
-      await _checkPendingInvitations();
+      if (_user != null) await _checkPendingInvitations();
     }
     _isInitialized = true;
     notifyListeners();
+  }
+
+  /// Silently refresh user profile & invitations in the background.
+  void _refreshSessionInBackground() {
+    Future<void>(() async {
+      try {
+        final freshUser = await _userService.getMe();
+        if (freshUser != null) {
+          _user = freshUser;
+          notifyListeners();
+        }
+      } catch (e) {
+        _logger.debug(
+          'Background user refresh failed: $e',
+          category: LogCategory.auth,
+        );
+      }
+      await _checkPendingInvitations();
+      notifyListeners();
+    });
   }
 
   Future<void> signIn() async {

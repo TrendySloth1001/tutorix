@@ -988,7 +988,12 @@ class _ServerLogTile extends StatelessWidget {
           ),
           child: ListView(
             controller: controller,
-            padding: const EdgeInsets.all(Spacing.sp24),
+            padding: EdgeInsets.fromLTRB(
+              Spacing.sp24,
+              Spacing.sp24,
+              Spacing.sp24,
+              Spacing.sp24 + MediaQuery.of(context).viewPadding.bottom,
+            ),
             children: [
               Center(
                 child: Container(

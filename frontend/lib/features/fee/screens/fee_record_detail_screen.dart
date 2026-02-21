@@ -7,6 +7,7 @@ import '../models/fee_model.dart';
 import '../services/fee_service.dart';
 import '../services/payment_service.dart';
 import 'payment_receipt_screen.dart';
+import 'refund_receipt_screen.dart';
 import '../../../core/theme/design_tokens.dart';
 
 /// Detailed view of a single fee record.
@@ -78,9 +79,9 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: theme.colorScheme.surface,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
           icon: Icon(
@@ -414,7 +415,10 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
             left: Spacing.sp20,
             right: Spacing.sp20,
             top: Spacing.sp20,
-            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+            bottom:
+                MediaQuery.of(ctx).viewInsets.bottom +
+                MediaQuery.of(ctx).viewPadding.bottom +
+                24,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -493,7 +497,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                           }
                           setSt(() => submitting = true);
                           try {
-                            await _svc.recordRefund(
+                            final updatedRecord = await _svc.recordRefund(
                               widget.coachingId,
                               widget.recordId,
                               amount: amt,
@@ -504,6 +508,31 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                             );
                             if (ctx.mounted) Navigator.pop(ctx);
                             _load();
+                            // Navigate to refund receipt
+                            if (mounted) {
+                              final refund = updatedRecord.refunds.isNotEmpty
+                                  ? updatedRecord.refunds.first
+                                  : null;
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => RefundReceiptScreen(
+                                    coachingName:
+                                        widget.coachingName ?? 'Institute',
+                                    feeTitle: _record!.title,
+                                    amount: amt,
+                                    refundedAt:
+                                        refund?.refundedAt ?? DateTime.now(),
+                                    studentName: _record!.member?.name,
+                                    refundMode: mode,
+                                    reason: reasonCtrl.text.trim().isEmpty
+                                        ? null
+                                        : reasonCtrl.text.trim(),
+                                    processedByName: refund?.processedByName,
+                                  ),
+                                ),
+                              );
+                            }
                           } catch (e) {
                             setSt(() => submitting = false);
                             if (ctx.mounted) {
@@ -584,7 +613,10 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
               left: Spacing.sp20,
               right: Spacing.sp20,
               top: Spacing.sp20,
-              bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+              bottom:
+                  MediaQuery.of(ctx).viewInsets.bottom +
+                  MediaQuery.of(ctx).viewPadding.bottom +
+                  24,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -760,24 +792,62 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                               }
                               setSt(() => submitting = true);
                               try {
-                                await _paySvc.initiateOnlineRefund(
-                                  widget.coachingId,
-                                  widget.recordId,
-                                  paymentId: selectedPaymentId!,
-                                  amount: amt,
-                                  reason: reasonCtrl.text.trim().isEmpty
-                                      ? null
-                                      : reasonCtrl.text.trim(),
-                                );
+                                final result = await _paySvc
+                                    .initiateOnlineRefund(
+                                      widget.coachingId,
+                                      widget.recordId,
+                                      paymentId: selectedPaymentId!,
+                                      amount: amt,
+                                      reason: reasonCtrl.text.trim().isEmpty
+                                          ? null
+                                          : reasonCtrl.text.trim(),
+                                    );
                                 if (ctx.mounted) Navigator.pop(ctx);
+                                _load();
+                                // Navigate to refund receipt showing Razorpay status
                                 if (mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text('Refund initiated'),
+                                  // The result is a refreshed record — find the latest refund
+                                  final refunds =
+                                      (result['refunds'] as List<dynamic>?)
+                                          ?.map(
+                                            (e) => FeeRefundModel.fromJson(
+                                              e as Map<String, dynamic>,
+                                            ),
+                                          )
+                                          .toList();
+                                  final latestRefund =
+                                      (refunds != null && refunds.isNotEmpty)
+                                      ? refunds.first
+                                      : null;
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) => RefundReceiptScreen(
+                                        coachingName:
+                                            widget.coachingName ?? 'Institute',
+                                        feeTitle: _record!.title,
+                                        amount: amt,
+                                        refundedAt:
+                                            latestRefund?.refundedAt ??
+                                            DateTime.now(),
+                                        studentName: _record!.member?.name,
+                                        refundMode: 'RAZORPAY',
+                                        reason: reasonCtrl.text.trim().isEmpty
+                                            ? null
+                                            : reasonCtrl.text.trim(),
+                                        processedByName:
+                                            latestRefund?.processedByName,
+                                        razorpayRefundId:
+                                            latestRefund?.razorpayRefundId,
+                                        razorpayPaymentId:
+                                            latestRefund?.razorpayPaymentId,
+                                        razorpayStatus:
+                                            latestRefund?.razorpayStatus ??
+                                            'INITIATED',
+                                      ),
                                     ),
                                   );
                                 }
-                                _load();
                               } catch (e) {
                                 setSt(() => submitting = false);
                                 if (ctx.mounted) {
@@ -898,7 +968,12 @@ class _Body extends StatelessWidget {
             const SizedBox(height: Spacing.sp20),
           ],
           if (record.refunds.isNotEmpty) ...[
-            _RefundHistory(refunds: record.refunds),
+            _RefundHistory(
+              refunds: record.refunds,
+              coachingName: coachingName,
+              feeTitle: record.title,
+              studentName: record.member?.name,
+            ),
             const SizedBox(height: Spacing.sp20),
           ],
           if (failedOrders.isNotEmpty) ...[
@@ -1603,7 +1678,15 @@ class _PaymentRow extends StatelessWidget {
 
 class _RefundHistory extends StatelessWidget {
   final List<FeeRefundModel> refunds;
-  const _RefundHistory({required this.refunds});
+  final String coachingName;
+  final String feeTitle;
+  final String? studentName;
+  const _RefundHistory({
+    required this.refunds,
+    required this.coachingName,
+    required this.feeTitle,
+    this.studentName,
+  });
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -1618,7 +1701,14 @@ class _RefundHistory extends StatelessWidget {
           ),
         ),
         const SizedBox(height: Spacing.sp10),
-        ...refunds.map((r) => _RefundRow(refund: r)),
+        ...refunds.map(
+          (r) => _RefundRow(
+            refund: r,
+            coachingName: coachingName,
+            feeTitle: feeTitle,
+            studentName: studentName,
+          ),
+        ),
       ],
     );
   }
@@ -1626,59 +1716,151 @@ class _RefundHistory extends StatelessWidget {
 
 class _RefundRow extends StatelessWidget {
   final FeeRefundModel refund;
-  const _RefundRow({required this.refund});
+  final String coachingName;
+  final String feeTitle;
+  final String? studentName;
+  const _RefundRow({
+    required this.refund,
+    required this.coachingName,
+    required this.feeTitle,
+    this.studentName,
+  });
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      margin: const EdgeInsets.only(bottom: Spacing.sp8),
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.sp14,
-        vertical: Spacing.sp10,
-      ),
-      decoration: BoxDecoration(
-        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.22),
-        borderRadius: BorderRadius.circular(Radii.md),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.keyboard_return_rounded,
-            color: theme.colorScheme.onSurface,
-            size: 18,
-          ),
-          const SizedBox(width: Spacing.sp10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${refund.mode}${refund.reason != null ? ' · ${refund.reason}' : ''}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: FontSize.body,
-                    color: theme.colorScheme.onSurface,
-                  ),
-                ),
-                Text(
-                  _fmtDateLong(refund.refundedAt),
-                  style: TextStyle(
-                    color: theme.colorScheme.onSurfaceVariant,
-                    fontSize: FontSize.micro,
-                  ),
-                ),
-              ],
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => RefundReceiptScreen(
+              coachingName: coachingName,
+              feeTitle: feeTitle,
+              amount: refund.amount,
+              refundedAt: refund.refundedAt,
+              studentName: studentName,
+              refundMode: refund.mode,
+              reason: refund.reason,
+              processedByName: refund.processedByName,
+              razorpayRefundId: refund.razorpayRefundId,
+              razorpayPaymentId: refund.razorpayPaymentId,
+              razorpayStatus: refund.razorpayStatus,
             ),
           ),
-          Text(
-            '- ₹${refund.amount.toStringAsFixed(0)}',
-            style: TextStyle(
-              fontWeight: FontWeight.w700,
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: Spacing.sp8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp14,
+          vertical: Spacing.sp10,
+        ),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.22),
+          borderRadius: BorderRadius.circular(Radii.md),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.keyboard_return_rounded,
               color: theme.colorScheme.onSurface,
-              fontSize: FontSize.body,
+              size: 18,
             ),
-          ),
-        ],
+            const SizedBox(width: Spacing.sp10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        refund.mode == 'RAZORPAY' ? 'Razorpay' : refund.mode,
+                        style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: FontSize.body,
+                          color: theme.colorScheme.onSurface,
+                        ),
+                      ),
+                      if (refund.razorpayStatus != null) ...[
+                        const SizedBox(width: Spacing.sp8),
+                        _RefundStatusBadge(status: refund.razorpayStatus!),
+                      ],
+                    ],
+                  ),
+                  if (refund.reason != null)
+                    Text(
+                      refund.reason!,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
+                        fontSize: FontSize.micro,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  Text(
+                    _fmtDateLong(refund.refundedAt),
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: FontSize.micro,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Text(
+              '- ₹${refund.amount.toStringAsFixed(0)}',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                color: theme.colorScheme.error,
+                fontSize: FontSize.body,
+              ),
+            ),
+            const SizedBox(width: Spacing.sp4),
+            Icon(
+              Icons.chevron_right_rounded,
+              color: theme.colorScheme.onSurfaceVariant,
+              size: 18,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _RefundStatusBadge extends StatelessWidget {
+  final String status;
+  const _RefundStatusBadge({required this.status});
+  @override
+  Widget build(BuildContext context) {
+    Color color;
+    String label;
+    switch (status) {
+      case 'INITIATED':
+        color = Colors.orange;
+        label = 'Processing';
+        break;
+      case 'FAILED':
+        color = Theme.of(context).colorScheme.error;
+        label = 'Failed';
+        break;
+      default:
+        color = Theme.of(context).colorScheme.primary;
+        label = 'Completed';
+    }
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(4),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: FontSize.micro,
+          fontWeight: FontWeight.w600,
+        ),
       ),
     );
   }
@@ -1950,7 +2132,10 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
         left: Spacing.sp20,
         right: Spacing.sp20,
         top: Spacing.sp20,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        bottom:
+            MediaQuery.of(context).viewInsets.bottom +
+            MediaQuery.of(context).viewPadding.bottom +
+            24,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -2354,11 +2539,11 @@ class _InstallmentPickerSheet extends StatelessWidget {
           top: Radius.circular(Radii.lg),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         Spacing.sp20,
         Spacing.sp20,
         Spacing.sp20,
-        Spacing.sp32,
+        Spacing.sp32 + MediaQuery.of(context).viewPadding.bottom,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

@@ -109,7 +109,12 @@ class _CoachingNotificationsScreenState
       context: context,
       backgroundColor: Colors.transparent,
       builder: (ctx) => Container(
-        padding: const EdgeInsets.all(Spacing.sp24),
+        padding: EdgeInsets.fromLTRB(
+          Spacing.sp24,
+          Spacing.sp24,
+          Spacing.sp24,
+          Spacing.sp24 + MediaQuery.of(ctx).viewPadding.bottom,
+        ),
         decoration: BoxDecoration(
           color: theme.colorScheme.surface,
           borderRadius: const BorderRadius.vertical(

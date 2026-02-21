@@ -109,7 +109,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
             Spacing.sp20,
             Spacing.sp12,
             Spacing.sp20,
-            MediaQuery.of(ctx).viewInsets.bottom + Spacing.sp24,
+            MediaQuery.of(ctx).viewInsets.bottom +
+                MediaQuery.of(ctx).viewPadding.bottom +
+                Spacing.sp24,
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,

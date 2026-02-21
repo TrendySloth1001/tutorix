@@ -1294,11 +1294,11 @@ class _PullSettingsSheet extends StatelessWidget {
           top: Radius.circular(Radii.lg),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(
+      padding: EdgeInsets.fromLTRB(
         Spacing.sp20,
         Spacing.sp20,
         Spacing.sp20,
-        Spacing.sp32,
+        Spacing.sp32 + MediaQuery.of(context).viewPadding.bottom,
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,

@@ -1,27 +1,64 @@
 import '../../../core/constants/api_constants.dart';
+import '../../../core/services/cache_manager.dart';
 import '../../../shared/services/api_client.dart';
 import '../models/fee_model.dart';
 
 class FeeService {
   final ApiClient _api = ApiClient.instance;
+  final CacheManager _cache = CacheManager.instance;
+
+  // ── Cache Helpers ────────────────────────────────────────────────
+
+  /// Network-first with cache fallback. On success the response is cached;
+  /// on network failure the stale cache (if any) is returned.
+  Future<T> _cachedFetch<T>(
+    String key,
+    Future<dynamic> Function() fetcher,
+    T Function(dynamic) parser, {
+    Duration maxAge = const Duration(minutes: 30),
+  }) async {
+    try {
+      final raw = await fetcher();
+      await _cache.put(key, raw);
+      return parser(raw);
+    } catch (e) {
+      final cached = await _cache.get(key, maxAge: maxAge);
+      if (cached != null) {
+        try {
+          return parser(cached);
+        } catch (_) {
+          // Corrupted cache — rethrow original error.
+        }
+      }
+      rethrow;
+    }
+  }
+
+  /// Invalidate all fee cache keys for a coaching.
+  Future<void> _invalidateCoaching(String coachingId) async {
+    await _cache.invalidatePrefix('fee:$coachingId:');
+  }
 
   // ── Fee Structures ───────────────────────────────────────────────
 
   Future<List<FeeStructureModel>> listStructures(String coachingId) async {
-    final data = await _api.getAuthenticatedRaw(
-      ApiConstants.feeStructures(coachingId),
+    return _cachedFetch(
+      'fee:$coachingId:structures',
+      () => _api.getAuthenticatedRaw(ApiConstants.feeStructures(coachingId)),
+      (raw) => (raw as List<dynamic>)
+          .map((e) => FeeStructureModel.fromJson(e as Map<String, dynamic>))
+          .toList(),
     );
-    return (data as List<dynamic>)
-        .map((e) => FeeStructureModel.fromJson(e as Map<String, dynamic>))
-        .toList();
   }
 
   Future<FeeStructureModel?> getCurrentStructure(String coachingId) async {
     try {
-      final data = await _api.getAuthenticated(
-        ApiConstants.feeStructureCurrent(coachingId),
+      return await _cachedFetch(
+        'fee:$coachingId:structure:current',
+        () =>
+            _api.getAuthenticated(ApiConstants.feeStructureCurrent(coachingId)),
+        (raw) => FeeStructureModel.fromJson(raw as Map<String, dynamic>),
       );
-      return FeeStructureModel.fromJson(data);
     } catch (_) {
       return null;
     }
@@ -129,6 +166,7 @@ class FeeService {
     await _api.deleteAuthenticated(
       ApiConstants.feeStructureById(coachingId, structureId),
     );
+    await _invalidateCoaching(coachingId);
   }
 
   Future<Map<String, dynamic>> listAuditLog(
@@ -193,6 +231,7 @@ class FeeService {
       ApiConstants.assignFees(coachingId),
       body: body,
     );
+    await _invalidateCoaching(coachingId);
   }
 
   Future<Map<String, dynamic>> toggleFeePause(
@@ -252,23 +291,30 @@ class FeeService {
     final uri = Uri.parse(
       ApiConstants.feeRecords(coachingId),
     ).replace(queryParameters: params);
-    final data = await _api.getAuthenticated(uri.toString());
-    final map = data;
-    return {
-      'total': map['total'],
-      'page': map['page'],
-      'limit': map['limit'],
-      'records': (map['records'] as List<dynamic>)
-          .map((e) => FeeRecordModel.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    };
+    final cacheKey = 'fee:$coachingId:records:${uri.query}';
+    return _cachedFetch(cacheKey, () => _api.getAuthenticated(uri.toString()), (
+      raw,
+    ) {
+      final map = raw as Map<String, dynamic>;
+      return {
+        'total': map['total'],
+        'page': map['page'],
+        'limit': map['limit'],
+        'records': (map['records'] as List<dynamic>)
+            .map((e) => FeeRecordModel.fromJson(e as Map<String, dynamic>))
+            .toList(),
+      };
+    });
   }
 
   Future<FeeRecordModel> getRecord(String coachingId, String recordId) async {
-    final data = await _api.getAuthenticated(
-      ApiConstants.feeRecordById(coachingId, recordId),
+    return _cachedFetch(
+      'fee:$coachingId:record:$recordId',
+      () => _api.getAuthenticated(
+        ApiConstants.feeRecordById(coachingId, recordId),
+      ),
+      (raw) => FeeRecordModel.fromJson(raw as Map<String, dynamic>),
     );
-    return FeeRecordModel.fromJson(data);
   }
 
   Future<FeeRecordModel> recordRefund(
@@ -287,6 +333,7 @@ class FeeService {
       ApiConstants.feeRecordRefund(coachingId, recordId),
       body: body,
     );
+    await _invalidateCoaching(coachingId);
     return FeeRecordModel.fromJson(data);
   }
 
@@ -310,6 +357,7 @@ class FeeService {
       ApiConstants.feeRecordPay(coachingId, recordId),
       body: body,
     );
+    await _invalidateCoaching(coachingId);
     return FeeRecordModel.fromJson(data);
   }
 
@@ -322,6 +370,7 @@ class FeeService {
       ApiConstants.feeRecordWaive(coachingId, recordId),
       body: {'notes': ?notes},
     );
+    await _invalidateCoaching(coachingId);
     // Backend returns minimal updated record — re-fetch full record
     final data = await _api.getAuthenticated(
       ApiConstants.feeRecordById(coachingId, recordId),
@@ -345,8 +394,12 @@ class FeeService {
     final url = financialYear != null
         ? '${ApiConstants.feeSummary(coachingId)}?fy=$financialYear'
         : ApiConstants.feeSummary(coachingId);
-    final data = await _api.getAuthenticated(url);
-    return FeeSummaryModel.fromJson(data);
+    return _cachedFetch(
+      'fee:$coachingId:summary:${financialYear ?? 'default'}',
+      () => _api.getAuthenticated(url),
+      (raw) => FeeSummaryModel.fromJson(raw as Map<String, dynamic>),
+      maxAge: const Duration(minutes: 10),
+    );
   }
 
   Future<List<FeeRecordModel>> getOverdueReport(String coachingId) async {
@@ -362,8 +415,12 @@ class FeeService {
     String coachingId,
     String memberId,
   ) async {
-    return _api.getAuthenticated(
-      ApiConstants.feeMemberLedger(coachingId, memberId),
+    return _cachedFetch(
+      'fee:$coachingId:ledger:$memberId',
+      () => _api.getAuthenticated(
+        ApiConstants.feeMemberLedger(coachingId, memberId),
+      ),
+      (raw) => raw as Map<String, dynamic>,
     );
   }
 
@@ -400,12 +457,18 @@ class FeeService {
   }
 
   Future<Map<String, dynamic>> getMyFees(String coachingId) async {
-    final data = await _api.getAuthenticated(ApiConstants.feesMy(coachingId));
-    return {
-      'summary': data['summary'],
-      'records': (data['records'] as List<dynamic>)
-          .map((e) => FeeRecordModel.fromJson(e as Map<String, dynamic>))
-          .toList(),
-    };
+    return _cachedFetch(
+      'fee:$coachingId:my',
+      () => _api.getAuthenticated(ApiConstants.feesMy(coachingId)),
+      (raw) {
+        final data = raw as Map<String, dynamic>;
+        return {
+          'summary': data['summary'],
+          'records': (data['records'] as List<dynamic>)
+              .map((e) => FeeRecordModel.fromJson(e as Map<String, dynamic>))
+              .toList(),
+        };
+      },
+    );
   }
 }
