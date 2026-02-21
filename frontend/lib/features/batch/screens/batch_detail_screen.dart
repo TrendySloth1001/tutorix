@@ -2155,9 +2155,7 @@ class _MemberTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isTeacher = member.role == 'TEACHER';
-    final roleColor = isTeacher
-        ? AppColors.activeGreen
-        : AppColors.activeBlue;
+    final roleColor = isTeacher ? AppColors.activeGreen : AppColors.activeBlue;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),

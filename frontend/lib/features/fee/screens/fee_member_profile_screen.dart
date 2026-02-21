@@ -726,7 +726,9 @@ class _LedgerBanner extends StatelessWidget {
                   ),
                   label: Text('₹${_fmt(balance.abs())}'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.successLight.withValues(alpha: 0.15),
+                    backgroundColor: AppColors.successLight.withValues(
+                      alpha: 0.15,
+                    ),
                     foregroundColor: AppColors.successLight,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     minimumSize: const Size(0, 28),

@@ -156,9 +156,7 @@ class AppTheme {
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(
-            color: AppColors.mutedOlive.withValues(alpha: 0.15),
-          ),
+          side: BorderSide(color: AppColors.mutedOlive.withValues(alpha: 0.15)),
         ),
       ),
 
@@ -244,5 +242,4 @@ class AppTheme {
       ),
     );
   }
-
 }

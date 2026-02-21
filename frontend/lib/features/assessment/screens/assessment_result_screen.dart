@@ -128,7 +128,9 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                 '${r.percentage.toStringAsFixed(1)}%',
                 style: theme.textTheme.displayLarge?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: passed ? AppColors.success : theme.colorScheme.onSurface,
+                  color: passed
+                      ? AppColors.success
+                      : theme.colorScheme.onSurface,
                   height: 1.0,
                   letterSpacing: -1.0,
                 ),
@@ -142,17 +144,14 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: (passed ? AppColors.success : AppColors.error).withValues(
-                      alpha: 0.1,
-                    ),
+                    color: (passed ? AppColors.success : AppColors.error)
+                        .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(100),
                   ),
                   child: Text(
                     passed ? 'PASSED' : 'FAILED',
                     style: theme.textTheme.labelMedium?.copyWith(
-                      color: passed
-                          ? AppColors.success
-                          : AppColors.error,
+                      color: passed ? AppColors.success : AppColors.error,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.0,
                     ),
@@ -195,7 +194,12 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                 height: 40,
                 color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
               ),
-              _buildStatItem(theme, 'Wrong', '${r.wrongCount}', AppColors.error),
+              _buildStatItem(
+                theme,
+                'Wrong',
+                '${r.wrongCount}',
+                AppColors.error,
+              ),
               Container(
                 width: 1,
                 height: 40,
@@ -877,17 +881,13 @@ class _StudentResponseSheet extends StatelessWidget {
                         '${r.percentage.toStringAsFixed(1)}%',
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w800,
-                          color: passed
-                              ? AppColors.success
-                              : AppColors.info,
+                          color: passed ? AppColors.success : AppColors.info,
                         ),
                       ),
                       Text(
                         '${r.totalScore.toStringAsFixed(1)} / ${r.maxScore.toStringAsFixed(1)} marks',
                         style: theme.textTheme.bodySmall?.copyWith(
-                          color: passed
-                              ? AppColors.success
-                              : AppColors.info,
+                          color: passed ? AppColors.success : AppColors.info,
                         ),
                       ),
                     ],
@@ -900,9 +900,8 @@ class _StudentResponseSheet extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: (passed ? AppColors.success : AppColors.error).withValues(
-                        alpha: 0.15,
-                      ),
+                      color: (passed ? AppColors.success : AppColors.error)
+                          .withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(

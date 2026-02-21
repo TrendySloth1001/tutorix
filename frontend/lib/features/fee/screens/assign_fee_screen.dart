@@ -418,7 +418,10 @@ class _Body extends StatelessWidget {
                   Expanded(
                     child: Text(
                       'No fee structures found. Create one in Fee Structures first.',
-                      style: TextStyle(color: AppColors.deepOrange, fontSize: 13),
+                      style: TextStyle(
+                        color: AppColors.deepOrange,
+                        fontSize: 13,
+                      ),
                     ),
                   ),
                 ],

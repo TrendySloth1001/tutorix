@@ -128,7 +128,11 @@ class _CoachingNotificationsScreenState
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Icon(Icons.warning_amber_rounded, size: 48, color: AppColors.warning),
+            Icon(
+              Icons.warning_amber_rounded,
+              size: 48,
+              color: AppColors.warning,
+            ),
             const SizedBox(height: 16),
             Text(
               'Member in Another Coaching',

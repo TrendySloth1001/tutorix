@@ -1111,17 +1111,11 @@ class _OverdueBanner extends StatelessWidget {
       decoration: BoxDecoration(
         color: AppColors.errorBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: AppColors.error.withValues(alpha: 0.4),
-        ),
+        border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
       ),
       child: Row(
         children: [
-          Icon(
-            Icons.timer_off_rounded,
-            color: AppColors.error,
-            size: 18,
-          ),
+          Icon(Icons.timer_off_rounded, color: AppColors.error, size: 18),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
@@ -1180,10 +1174,7 @@ class _HeaderCard extends StatelessWidget {
                 if (record.paidAt != null)
                   Text(
                     'Paid: ${_fmtDateLong(record.paidAt!)}',
-                    style: TextStyle(
-                      color: AppColors.success,
-                      fontSize: 13,
-                    ),
+                    style: TextStyle(color: AppColors.success, fontSize: 13),
                   ),
               ],
             ),
@@ -1693,11 +1684,7 @@ class _FailedAttempts extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(
-                  Icons.cancel_rounded,
-                  color: AppColors.error,
-                  size: 18,
-                ),
+                Icon(Icons.cancel_rounded, color: AppColors.error, size: 18),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -2162,11 +2149,7 @@ class _ErrorRetry extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: AppColors.error,
-            size: 40,
-          ),
+          Icon(Icons.error_outline_rounded, color: AppColors.error, size: 40),
           const SizedBox(height: 10),
           Text(
             error,

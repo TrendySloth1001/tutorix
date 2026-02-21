@@ -251,7 +251,9 @@ class _LedgerSummaryCard extends StatelessWidget {
                   ),
                   label: Text('₹${summary.balance.abs().toStringAsFixed(0)}'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.successLight.withValues(alpha: 0.15),
+                    backgroundColor: AppColors.successLight.withValues(
+                      alpha: 0.15,
+                    ),
                     foregroundColor: AppColors.successLight,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     minimumSize: const Size(0, 32),

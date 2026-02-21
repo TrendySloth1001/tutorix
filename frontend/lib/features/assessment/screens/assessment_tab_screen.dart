@@ -229,7 +229,10 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -263,7 +266,10 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              'Delete',
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -882,7 +888,9 @@ class _StudentAttemptBanner extends StatelessWidget {
             const SizedBox(width: 6),
             Text(
               'In Progress — tap to continue',
-              style: theme.textTheme.labelSmall?.copyWith(color: AppColors.warning),
+              style: theme.textTheme.labelSmall?.copyWith(
+                color: AppColors.warning,
+              ),
             ),
           ],
         ),
@@ -897,7 +905,9 @@ class _StudentAttemptBanner extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: (passed ? AppColors.success : AppColors.info).withValues(alpha: 0.08),
+          color: (passed ? AppColors.success : AppColors.info).withValues(
+            alpha: 0.08,
+          ),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(

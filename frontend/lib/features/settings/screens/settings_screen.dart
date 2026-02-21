@@ -493,8 +493,10 @@ class _ThemeSelector extends StatelessWidget {
               onTap: () => context.read<ThemeProvider>().setMode(mode),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
-                padding:
-                    const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                padding: const EdgeInsets.symmetric(
+                  vertical: 14,
+                  horizontal: 8,
+                ),
                 decoration: BoxDecoration(
                   color: selected
                       ? theme.colorScheme.primary.withValues(alpha: 0.1)
@@ -521,8 +523,9 @@ class _ThemeSelector extends StatelessWidget {
                     Text(
                       label,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        fontWeight:
-                            selected ? FontWeight.w600 : FontWeight.normal,
+                        fontWeight: selected
+                            ? FontWeight.w600
+                            : FontWeight.normal,
                         color: selected
                             ? theme.colorScheme.primary
                             : theme.colorScheme.secondary,

@@ -64,8 +64,12 @@ class AppColors {
     if (t.contains('image') || t.contains('jpg') || t.contains('png')) {
       return fileImage;
     }
-    if (t.contains('doc') || t.contains('word') || t.contains('text') ||
-        t.contains('xls') || t.contains('csv') || t.contains('ppt')) {
+    if (t.contains('doc') ||
+        t.contains('word') ||
+        t.contains('text') ||
+        t.contains('xls') ||
+        t.contains('csv') ||
+        t.contains('ppt')) {
       return fileDoc;
     }
     return fileLink;
@@ -81,14 +85,14 @@ class AppColors {
 
   /// Resolve a notice type string to its colour.
   static Color noticeTypeColor(String type) => switch (type.toUpperCase()) {
-        'GENERAL' => noticeGeneral,
-        'TIMETABLE_CHANGE' || 'TIMETABLE' => noticeTimetable,
-        'EVENT' => noticeEvent,
-        'EXAM' => noticeExam,
-        'HOLIDAY' => noticeHoliday,
-        'ASSIGNMENT' => noticeAssignment,
-        _ => noticeGeneral,
-      };
+    'GENERAL' => noticeGeneral,
+    'TIMETABLE_CHANGE' || 'TIMETABLE' => noticeTimetable,
+    'EVENT' => noticeEvent,
+    'EXAM' => noticeExam,
+    'HOLIDAY' => noticeHoliday,
+    'ASSIGNMENT' => noticeAssignment,
+    _ => noticeGeneral,
+  };
 
   // ── Priority colours ──────────────────────────────────────────────────
   static const Color priorityLow = Color(0xFF9E9E9E);

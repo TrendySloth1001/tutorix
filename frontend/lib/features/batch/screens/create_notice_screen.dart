@@ -60,7 +60,12 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
     ('event', 'Event', AppColors.noticeEvent, Icons.event_rounded),
     ('exam', 'Exam', AppColors.noticeExam, Icons.quiz_rounded),
     ('holiday', 'Holiday', AppColors.noticeHoliday, Icons.beach_access_rounded),
-    ('assignment', 'Assignment', AppColors.noticeAssignment, Icons.assignment_rounded),
+    (
+      'assignment',
+      'Assignment',
+      AppColors.noticeAssignment,
+      Icons.assignment_rounded,
+    ),
   ];
 
   static const _dayOptions = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];

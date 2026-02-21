@@ -551,8 +551,6 @@ class _MemberListView extends StatelessWidget {
   }
 }
 
-
-
 // ... existing imports
 
 class _MemberRow extends StatelessWidget {
@@ -593,109 +591,111 @@ class _MemberRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(14),
         ),
         child: Row(
-// ... rest of the row content
-
-        children: [
-          // Avatar
-          CircleAvatar(
-            radius: 20,
-            backgroundColor: theme.colorScheme.primary.withValues(alpha: 0.08),
-            backgroundImage: member.displayPicture != null
-                ? NetworkImage(member.displayPicture!)
-                : null,
-            child: member.displayPicture == null
-                ? Text(
-                    member.displayName.isNotEmpty
-                        ? member.displayName[0].toUpperCase()
-                        : '?',
-                    style: TextStyle(
-                      color: theme.colorScheme.primary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    ),
-                  )
-                : null,
-          ),
-          const SizedBox(width: 10),
-
-          // Name + subtitle
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  member.displayName,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (showEmail && member.subtitle.isNotEmpty)
-                  Text(
-                    member.subtitle,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.secondary.withValues(
-                        alpha: 0.45,
+          // ... rest of the row content
+          children: [
+            // Avatar
+            CircleAvatar(
+              radius: 20,
+              backgroundColor: theme.colorScheme.primary.withValues(
+                alpha: 0.08,
+              ),
+              backgroundImage: member.displayPicture != null
+                  ? NetworkImage(member.displayPicture!)
+                  : null,
+              child: member.displayPicture == null
+                  ? Text(
+                      member.displayName.isNotEmpty
+                          ? member.displayName[0].toUpperCase()
+                          : '?',
+                      style: TextStyle(
+                        color: theme.colorScheme.primary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
                       ),
-                      fontSize: 11,
-                    ),
-                  ),
-              ],
+                    )
+                  : null,
             ),
-          ),
+            const SizedBox(width: 10),
 
-          // Role badge
-          _roleBadge(member.role),
-          const SizedBox(width: 4),
-
-          // Options
-          if (canRemove)
-            SizedBox(
-              width: 28,
-              height: 28,
-              child: PopupMenuButton<String>(
-                padding: EdgeInsets.zero,
-                iconSize: 18,
-                icon: Icon(
-                  Icons.more_vert_rounded,
-                  color: theme.colorScheme.secondary.withValues(alpha: 0.35),
-                  size: 18,
-                ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
-                ),
-                onSelected: (v) {
-                  if (v == 'remove') onRemove();
-                },
-                itemBuilder: (_) => [
-                  const PopupMenuItem(
-                    value: 'remove',
-                    height: 40,
-                    child: Row(
-                      children: [
-                        Icon(
-                          Icons.person_remove_rounded,
-                          color: AppColors.error,
-                          size: 18,
-                        ),
-                        SizedBox(width: 8),
-                        Text(
-                          'Remove',
-                          style: TextStyle(
-                            color: AppColors.error,
-                            fontSize: 13,
-                          ),
-                        ),
-                      ],
+            // Name + subtitle
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    member.displayName,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w600,
                     ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  if (showEmail && member.subtitle.isNotEmpty)
+                    Text(
+                      member.subtitle,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.secondary.withValues(
+                          alpha: 0.45,
+                        ),
+                        fontSize: 11,
+                      ),
+                    ),
                 ],
               ),
             ),
-        ],
+
+            // Role badge
+            _roleBadge(member.role),
+            const SizedBox(width: 4),
+
+            // Options
+            if (canRemove)
+              SizedBox(
+                width: 28,
+                height: 28,
+                child: PopupMenuButton<String>(
+                  padding: EdgeInsets.zero,
+                  iconSize: 18,
+                  icon: Icon(
+                    Icons.more_vert_rounded,
+                    color: theme.colorScheme.secondary.withValues(alpha: 0.35),
+                    size: 18,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  onSelected: (v) {
+                    if (v == 'remove') onRemove();
+                  },
+                  itemBuilder: (_) => [
+                    const PopupMenuItem(
+                      value: 'remove',
+                      height: 40,
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.person_remove_rounded,
+                            color: AppColors.error,
+                            size: 18,
+                          ),
+                          SizedBox(width: 8),
+                          Text(
+                            'Remove',
+                            style: TextStyle(
+                              color: AppColors.error,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
       ),
-    ));
+    );
   }
 
   Widget _roleBadge(String role) {
