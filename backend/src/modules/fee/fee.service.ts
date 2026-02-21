@@ -903,8 +903,13 @@ export class FeeService {
         if (!member) throw Object.assign(new Error('Member not found'), { status: 404 });
 
         const allRecords = assignments.flatMap(a => a.records);
-        const totalFee = allRecords.reduce((s, r) => s + r.finalAmount, 0);
-        const totalPaid = allRecords.reduce((s, r) => s + r.paidAmount, 0);
+        // Exclude WAIVED records from the headline totals — waived fees were forgiven
+        // and should not inflate "Total Fees" or "Total Paid".  Balance is still correct
+        // because WAIVED records contribute equally to both sides, but the absolute figures
+        // (especially the big "Total Fees" number) would be misleading.
+        const billedRecords = allRecords.filter(r => r.status !== 'WAIVED');
+        const totalFee = billedRecords.reduce((s, r) => s + r.finalAmount, 0);
+        const totalPaid = billedRecords.reduce((s, r) => s + r.paidAmount, 0);
         const totalRefund = allRecords.flatMap(r => r.refunds).reduce((s, rf) => s + rf.amount, 0);
         const nextDueBill = allRecords
             .filter(r => r.status === 'PENDING' || r.status === 'PARTIALLY_PAID')
