@@ -184,9 +184,9 @@ class _HomeScreenState extends State<HomeScreen> {
             else
               SliverToBoxAdapter(
                 child: Padding(
-                  padding: const EdgeInsets.only(
+                  padding: EdgeInsets.only(
                     top: Spacing.sp4,
-                    bottom: Spacing.sp100,
+                    bottom: MediaQuery.of(context).padding.bottom,
                   ),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

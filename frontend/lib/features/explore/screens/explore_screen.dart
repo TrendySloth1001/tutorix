@@ -427,7 +427,10 @@ class _ExploreScreenState extends State<ExploreScreen>
                         SliverToBoxAdapter(child: _buildEmptyState(theme))
                       else
                         SliverPadding(
-                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 100),
+                          padding: EdgeInsets.fromLTRB(
+                            Spacing.sp16, 0, Spacing.sp16,
+                            MediaQuery.of(context).padding.bottom,
+                          ),
                           sliver: SliverList.separated(
                             itemCount: _nearby.length,
                             separatorBuilder: (_, _) =>

@@ -136,7 +136,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final user = widget.user;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: Text(
           'Settings',
@@ -148,9 +147,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
         elevation: 0,
       ),
       body: ListView(
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.sp24,
-          vertical: Spacing.sp8,
+        padding: EdgeInsets.fromLTRB(
+          Spacing.sp24,
+          Spacing.sp8,
+          Spacing.sp24,
+          MediaQuery.of(context).padding.bottom + Spacing.sp8,
         ),
         children: [
           // ─── Appearance ───────────────────────────────────────

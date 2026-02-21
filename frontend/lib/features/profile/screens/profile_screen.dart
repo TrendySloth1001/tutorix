@@ -148,7 +148,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     final user = widget.user;
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
         title: Text(
           'Profile',
@@ -168,7 +167,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.sp24),
+          padding: EdgeInsets.fromLTRB(
+            Spacing.sp24,
+            0,
+            Spacing.sp24,
+            MediaQuery.of(context).padding.bottom + Spacing.sp16,
+          ),
           child: Column(
             children: [
               const SizedBox(height: Spacing.sp40),
