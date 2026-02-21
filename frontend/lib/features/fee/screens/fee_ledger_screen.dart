@@ -96,7 +96,10 @@ class _FeeLedgerScreenState extends State<FeeLedgerScreen> {
             ),
             Text(
               name,
-              style: TextStyle(color: cs.onSurfaceVariant, fontSize: FontSize.caption),
+              style: TextStyle(
+                color: cs.onSurfaceVariant,
+                fontSize: FontSize.caption,
+              ),
             ),
           ],
         ),
@@ -132,7 +135,12 @@ class _FeeLedgerScreenState extends State<FeeLedgerScreen> {
                     )
                   else
                     SliverPadding(
-                      padding: const EdgeInsets.fromLTRB(Spacing.sp16, Spacing.sp8, Spacing.sp16, Spacing.sp32),
+                      padding: const EdgeInsets.fromLTRB(
+                        Spacing.sp16,
+                        Spacing.sp8,
+                        Spacing.sp16,
+                        Spacing.sp32,
+                      ),
                       sliver: SliverList(
                         delegate: SliverChildBuilderDelegate((ctx, i) {
                           return _TimelineEntry(
@@ -255,7 +263,9 @@ class _LedgerSummaryCard extends StatelessWidget {
                     foregroundColor: theme.colorScheme.primary.withValues(
                       alpha: 0.5,
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: Spacing.sp12),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.sp12,
+                    ),
                     minimumSize: const Size(0, 32),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     elevation: 0,
@@ -317,7 +327,10 @@ class _LedgerStat extends StatelessWidget {
         ),
         Text(
           label,
-          style: TextStyle(color: color.withValues(alpha: 0.7), fontSize: FontSize.micro),
+          style: TextStyle(
+            color: color.withValues(alpha: 0.7),
+            fontSize: FontSize.micro,
+          ),
         ),
       ],
     );

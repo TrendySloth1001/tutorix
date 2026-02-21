@@ -22,7 +22,11 @@ class AppColors {
 
   // ── Dark Mode (OLED) ───────────────────────────────────────────────
   static const Color brandD = Color(0xFFD9D6A0); // vivid olive – pops on black
-  static const Color mutedD = Color(0xFF585749); // olive-gray – visible on black
+  static const Color mutedD = Color(
+    0xFF585749,
+  ); // olive-gray – visible on black
   static const Color surfaceD = Color(0xFF000000); // true black – OLED
-  static const Color foreD = Color(0xFFEEEDD8); // bright cream – high OLED contrast
+  static const Color foreD = Color(
+    0xFFEEEDD8,
+  ); // bright cream – high OLED contrast
 }
