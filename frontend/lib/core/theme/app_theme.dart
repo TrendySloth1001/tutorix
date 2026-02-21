@@ -35,6 +35,7 @@ class AppTheme {
       onSurfaceVariant: AppColors.muted,
       outline: AppColors.muted,
       outlineVariant: AppColors.muted.withValues(alpha: 0.3),
+      surfaceContainerHighest: const Color(0xFFF0EEC4),
       error: AppColors.fore,
       onError: AppColors.surface,
     );

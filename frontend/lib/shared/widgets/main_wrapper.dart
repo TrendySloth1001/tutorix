@@ -46,6 +46,7 @@ class _MainWrapperState extends State<MainWrapper> {
     ];
 
     return Scaffold(
+      extendBody: true,
       body: IndexedStack(index: _selectedIndex, children: screens),
       bottomNavigationBar: CustomBottomNav(
         selectedIndex: _selectedIndex,

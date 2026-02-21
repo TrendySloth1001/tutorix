@@ -111,6 +111,7 @@ class _CoachingShellState extends State<CoachingShell> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      extendBody: true,
       body: IndexedStack(
         index: _selectedIndex,
         children: List.generate(_screenCount, (i) {

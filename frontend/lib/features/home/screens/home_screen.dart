@@ -185,7 +185,7 @@ class _HomeScreenState extends State<HomeScreen> {
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.only(
-                    top: Spacing.sp8,
+                    top: Spacing.sp4,
                     bottom: Spacing.sp100,
                   ),
                   child: Column(
@@ -251,21 +251,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
 // ── Private sub-widgets ──────────────────────────────────────────────────
 
-/// Smooth S-curve wave along the bottom edge of the header.
+/// Wave (~) curve along the bottom of the header.
 class _WaveClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
+    final h = size.height;
+    final w = size.width;
     final path = Path()
-      ..lineTo(0, size.height - Spacing.sp40)
-      ..cubicTo(
-        size.width * 0.3,
-        size.height,
-        size.width * 0.65,
-        size.height - Spacing.sp48,
-        size.width,
-        size.height - Spacing.sp14,
-      )
-      ..lineTo(size.width, 0)
+      ..lineTo(0, h - Spacing.sp20)
+      ..cubicTo(w * 0.3, h, w * 0.5, h - Spacing.sp32, w, h - Spacing.sp12)
+      ..lineTo(w, 0)
       ..close();
     return path;
   }
@@ -318,9 +313,9 @@ class _HomeHeader extends StatelessWidget {
 
   String get _greeting {
     final h = DateTime.now().hour;
-    if (h < 12) return 'GOOD MORNING';
-    if (h < 17) return 'GOOD AFTERNOON';
-    return 'GOOD EVENING';
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
   }
 
   @override
@@ -333,21 +328,12 @@ class _HomeHeader extends StatelessWidget {
         clipper: _WaveClipper(),
         child: Container(
           padding: EdgeInsets.fromLTRB(
+            Spacing.sp24,
+            topPadding + Spacing.sp20,
             Spacing.sp20,
-            topPadding + Spacing.sp16,
-            Spacing.sp20,
-            Spacing.sp60,
+            Spacing.sp48,
           ),
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
-              colors: [
-                theme.colorScheme.primary,
-                theme.colorScheme.primary.withValues(alpha: 0.82),
-              ],
-            ),
-          ),
+          color: theme.colorScheme.surfaceContainerHighest,
           child: Row(
             children: [
               // ── Avatar ──
@@ -355,14 +341,14 @@ class _HomeHeader extends StatelessWidget {
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(
-                    color: theme.colorScheme.onPrimary.withValues(alpha: 0.25),
+                    color: theme.colorScheme.primary.withValues(alpha: 0.35),
                     width: 2,
                   ),
                 ),
                 child: CircleAvatar(
                   radius: Spacing.sp24,
-                  backgroundColor: theme.colorScheme.onPrimary.withValues(
-                    alpha: 0.15,
+                  backgroundColor: theme.colorScheme.primary.withValues(
+                    alpha: 0.1,
                   ),
                   backgroundImage: user.picture != null
                       ? NetworkImage(user.picture!)
@@ -370,7 +356,7 @@ class _HomeHeader extends StatelessWidget {
                   child: user.picture == null
                       ? Icon(
                           Icons.person_rounded,
-                          color: theme.colorScheme.onPrimary,
+                          color: theme.colorScheme.primary,
                           size: Spacing.sp24,
                         )
                       : null,
@@ -378,7 +364,7 @@ class _HomeHeader extends StatelessWidget {
               ),
               const SizedBox(width: Spacing.sp16),
 
-              // ── Greeting ──
+              // ── Greeting + Name ──
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,18 +373,15 @@ class _HomeHeader extends StatelessWidget {
                     Text(
                       _greeting,
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: theme.colorScheme.onPrimary.withValues(
-                          alpha: 0.7,
-                        ),
+                        color: theme.colorScheme.primary,
                         fontWeight: FontWeight.w600,
-                        letterSpacing: 1.5,
+                        letterSpacing: 1.2,
                       ),
                     ),
-                    const SizedBox(height: Spacing.labelGap),
+                    const SizedBox(height: Spacing.sp2),
                     Text(
                       user.name?.split(' ').first ?? 'User',
-                      style: theme.textTheme.headlineSmall?.copyWith(
-                        color: theme.colorScheme.onPrimary,
+                      style: theme.textTheme.headlineMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.5,
                       ),
@@ -412,7 +395,7 @@ class _HomeHeader extends StatelessWidget {
                 _GlassIconButton(
                   icon: Icons.add_rounded,
                   onPressed: onCreateCoaching!,
-                  foreground: theme.colorScheme.onPrimary,
+                  foreground: theme.colorScheme.primary,
                 ),
                 const SizedBox(width: Spacing.sp8),
               ],
@@ -421,7 +404,7 @@ class _HomeHeader extends StatelessWidget {
                   _GlassIconButton(
                     icon: Icons.notifications_none_rounded,
                     onPressed: onNotificationTap,
-                    foreground: theme.colorScheme.onPrimary,
+                    foreground: theme.colorScheme.primary,
                   ),
                   if (unreadCount > 0)
                     Positioned(
@@ -433,7 +416,7 @@ class _HomeHeader extends StatelessWidget {
                           color: theme.colorScheme.error,
                           shape: BoxShape.circle,
                           border: Border.all(
-                            color: theme.colorScheme.primary,
+                            color: theme.colorScheme.surfaceContainerHighest,
                             width: 2,
                           ),
                         ),
@@ -480,7 +463,7 @@ class _EmptyState extends StatelessWidget {
               ),
               child: Icon(
                 Icons.school_outlined,
-                size: 80,
+                size: Spacing.sp80,
                 color: theme.colorScheme.primary.withValues(alpha: 0.4),
               ),
             ),
@@ -525,7 +508,7 @@ class _SectionHeader extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(
         Spacing.sp20,
-        Spacing.sp16,
+        Spacing.sp24,
         Spacing.sp20,
         Spacing.sp8,
       ),
@@ -533,7 +516,7 @@ class _SectionHeader extends StatelessWidget {
         children: [
           Icon(
             icon,
-            size: 18,
+            size: Spacing.sp20,
             color: theme.colorScheme.primary.withValues(alpha: 0.6),
           ),
           const SizedBox(width: Spacing.sp8),

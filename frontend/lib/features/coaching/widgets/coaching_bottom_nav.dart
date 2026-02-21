@@ -1,10 +1,25 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/design_tokens.dart';
 
-/// Custom bottom navigation for the coaching detail screens.
-///
-/// Three tabs: Dashboard, Members, Profile — using the same pill-style
-/// animation as [CustomBottomNav].
+/// Wave (~) curve along the top edge of the navigation bar.
+class _NavWaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final w = size.width;
+    final path = Path()
+      ..moveTo(0, Spacing.sp12)
+      ..cubicTo(w * 0.5, Spacing.sp32, w * 0.7, 0, w, Spacing.sp20)
+      ..lineTo(w, size.height)
+      ..lineTo(0, size.height)
+      ..close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+/// Coaching detail bottom navigation with a symmetric curved top edge.
 class CoachingBottomNav extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onItemSelected;
@@ -18,49 +33,61 @@ class CoachingBottomNav extends StatelessWidget {
   });
 
   List<_NavDef> get _items => [
-    const _NavDef(icon: Icons.dashboard_rounded, label: 'Dashboard'),
+    const _NavDef(
+      icon: Icons.dashboard_outlined,
+      activeIcon: Icons.dashboard_rounded,
+      label: 'Dashboard',
+    ),
     if (isAdmin)
-      const _NavDef(icon: Icons.people_rounded, label: 'Members')
+      const _NavDef(
+        icon: Icons.people_outline_rounded,
+        activeIcon: Icons.people_rounded,
+        label: 'Members',
+      )
     else
-      const _NavDef(icon: Icons.quiz_rounded, label: 'Assessment'),
-    const _NavDef(icon: Icons.group_work_rounded, label: 'Batches'),
-    const _NavDef(icon: Icons.school_rounded, label: 'Profile'),
+      const _NavDef(
+        icon: Icons.quiz_outlined,
+        activeIcon: Icons.quiz_rounded,
+        label: 'Assessment',
+      ),
+    const _NavDef(
+      icon: Icons.group_work_outlined,
+      activeIcon: Icons.group_work_rounded,
+      label: 'Batches',
+    ),
+    const _NavDef(
+      icon: Icons.school_outlined,
+      activeIcon: Icons.school_rounded,
+      label: 'Profile',
+    ),
   ];
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return Container(
-      decoration: BoxDecoration(
-        color: theme.colorScheme.surface,
-        boxShadow: [
-          BoxShadow(
-            color: theme.colorScheme.primary.withValues(alpha: 0.08),
-            blurRadius: 20,
-            offset: const Offset(0, -8),
-          ),
-        ],
-        borderRadius: const BorderRadius.vertical(
-          top: Radius.circular(Radii.xl),
-        ),
-      ),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(
-            horizontal: Spacing.sp12,
-            vertical: Spacing.sp12,
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: List.generate(_items.length, (i) {
-              final item = _items[i];
-              return _NavItem(
-                icon: item.icon,
-                label: item.label,
-                isSelected: selectedIndex == i,
-                onTap: () => onItemSelected(i),
-              );
-            }),
+    return ClipPath(
+      clipper: _NavWaveClipper(),
+      child: Container(
+        padding: const EdgeInsets.only(top: Spacing.sp24),
+        color: theme.colorScheme.surfaceContainerHighest,
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.sp8,
+              vertical: Spacing.sp8,
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: List.generate(_items.length, (i) {
+                final item = _items[i];
+                return _NavItem(
+                  icon: selectedIndex == i ? item.activeIcon : item.icon,
+                  label: item.label,
+                  isSelected: selectedIndex == i,
+                  onTap: () => onItemSelected(i),
+                );
+              }),
+            ),
           ),
         ),
       ),
@@ -70,8 +97,13 @@ class CoachingBottomNav extends StatelessWidget {
 
 class _NavDef {
   final IconData icon;
+  final IconData activeIcon;
   final String label;
-  const _NavDef({required this.icon, required this.label});
+  const _NavDef({
+    required this.icon,
+    required this.activeIcon,
+    required this.label,
+  });
 }
 
 class _NavItem extends StatelessWidget {
@@ -90,41 +122,43 @@ class _NavItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final color = isSelected
+        ? theme.colorScheme.primary
+        : theme.colorScheme.onSurface.withValues(alpha: 0.45);
+
     return GestureDetector(
       onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        padding: const EdgeInsets.symmetric(
-          horizontal: Spacing.sp16,
-          vertical: Spacing.sp10,
-        ),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? theme.colorScheme.tertiary.withValues(alpha: 0.3)
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(Radii.lg),
-        ),
-        child: Row(
+      behavior: HitTestBehavior.opaque,
+      child: SizedBox(
+        width: Spacing.sp60,
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(
-              icon,
-              size: 22,
-              color: isSelected
-                  ? theme.colorScheme.primary
-                  : theme.colorScheme.secondary.withValues(alpha: 0.5),
-            ),
-            if (isSelected) ...[
-              const SizedBox(width: Spacing.sp8),
-              Text(
-                label,
-                style: theme.textTheme.labelLarge?.copyWith(
-                  color: theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
-                ),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.sp16,
+                vertical: Spacing.sp8,
               ),
-            ],
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? theme.colorScheme.primary.withValues(alpha: 0.12)
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(Radii.lg),
+              ),
+              child: Icon(icon, size: Spacing.sp24, color: color),
+            ),
+            const SizedBox(height: Spacing.sp4),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: FontSize.micro,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w400,
+                color: color,
+              ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ],
         ),
       ),
