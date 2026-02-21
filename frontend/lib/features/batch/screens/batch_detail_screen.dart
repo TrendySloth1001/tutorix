@@ -18,6 +18,7 @@ import 'note_detail_screen.dart';
 import '../../assessment/screens/assessment_tab_screen.dart';
 import '../../assessment/screens/create_assessment_screen.dart';
 import '../../assessment/screens/create_assignment_screen.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Full batch detail — overview, members, notes, notices via TabBar.
 /// Premium design with layered header, rich cards, and polished interactions.
@@ -215,7 +216,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text('Delete', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -280,7 +281,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Remove', style: TextStyle(color: Colors.red)),
+            child: Text('Remove', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -332,7 +333,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text('Delete', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -384,7 +385,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text('Delete', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -478,7 +479,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
                           'delete',
                           'Delete',
                           Icons.delete_rounded,
-                          color: Colors.red,
+                          color: AppColors.error,
                         ),
                       ],
                     ),
@@ -917,9 +918,9 @@ class _OverviewTab extends StatelessWidget {
                       alpha: 0.06,
                     ),
                     color: capacity > 0.9
-                        ? Colors.red
+                        ? AppColors.error
                         : capacity > 0.7
-                        ? Colors.orange
+                        ? AppColors.warning
                         : theme.colorScheme.primary,
                   ),
                 ),
@@ -1009,8 +1010,8 @@ class _OverviewTab extends StatelessWidget {
                 'Status',
                 batch.isActive ? 'Active' : 'Archived',
                 valueColor: batch.isActive
-                    ? const Color(0xFF10B981)
-                    : const Color(0xFFF59E0B),
+                    ? AppColors.activeGreen
+                    : AppColors.pendingAmber,
               ),
             ],
           ),
@@ -1095,7 +1096,7 @@ class _NextClassCard extends StatelessWidget {
         : isTomorrow
         ? 'Tomorrow'
         : '$dayName, ${classDate.day}/${classDate.month}';
-    const color = Color(0xFF10B981); // green
+    const color = AppColors.activeGreen; // green
 
     return Container(
       width: double.infinity,
@@ -1235,7 +1236,7 @@ class _MembersTab extends StatelessWidget {
             'Teachers',
             count: teachers.length,
             icon: Icons.school_rounded,
-            color: const Color(0xFF10B981),
+            color: AppColors.activeGreen,
           ),
           const SizedBox(height: 10),
           ...teachers.map(
@@ -1251,7 +1252,7 @@ class _MembersTab extends StatelessWidget {
           'Students',
           count: students.length,
           icon: Icons.people_rounded,
-          color: const Color(0xFF3B82F6),
+          color: AppColors.activeBlue,
         ),
         const SizedBox(height: 10),
         if (students.isEmpty)
@@ -1348,10 +1349,10 @@ class _NoteCard extends StatelessWidget {
   });
 
   static const _typeConfig = {
-    'pdf': (Icons.picture_as_pdf_rounded, Color(0xFFE53935)),
-    'image': (Icons.image_rounded, Color(0xFF8E24AA)),
-    'doc': (Icons.description_rounded, Color(0xFF1E88E5)),
-    'link': (Icons.link_rounded, Color(0xFF00897B)),
+    'pdf': (Icons.picture_as_pdf_rounded, AppColors.filePdf),
+    'image': (Icons.image_rounded, AppColors.fileImage),
+    'doc': (Icons.description_rounded, AppColors.fileDoc),
+    'link': (Icons.link_rounded, AppColors.fileLink),
   };
 
   (IconData, Color) _primaryType(ThemeData theme) {
@@ -1501,14 +1502,14 @@ class _NoteCard extends StatelessWidget {
                           const SizedBox(height: 8),
                           Container(
                             decoration: BoxDecoration(
-                              color: Colors.red.withValues(alpha: 0.08),
+                              color: AppColors.error.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: IconButton(
                               icon: Icon(
                                 Icons.delete_outline_rounded,
                                 size: 20,
-                                color: Colors.red.shade600,
+                                color: AppColors.error,
                               ),
                               onPressed: onDelete,
                               constraints: const BoxConstraints(
@@ -1800,19 +1801,19 @@ class _NoticeCard extends StatelessWidget {
 
   // Type-based config: (icon, color)
   static const _typeConfig = <String, (IconData, Color)>{
-    'general': (Icons.campaign_rounded, Color(0xFF3B82F6)),
-    'timetable_update': (Icons.schedule_rounded, Color(0xFF8B5CF6)),
-    'event': (Icons.event_rounded, Color(0xFF10B981)),
-    'exam': (Icons.quiz_rounded, Color(0xFFEF4444)),
-    'holiday': (Icons.beach_access_rounded, Color(0xFFF59E0B)),
-    'assignment': (Icons.assignment_rounded, Color(0xFF0EA5E9)),
+    'general': (Icons.campaign_rounded, AppColors.noticeGeneral),
+    'timetable_update': (Icons.schedule_rounded, AppColors.noticeTimetable),
+    'event': (Icons.event_rounded, AppColors.noticeEvent),
+    'exam': (Icons.quiz_rounded, AppColors.noticeExam),
+    'holiday': (Icons.beach_access_rounded, AppColors.noticeHoliday),
+    'assignment': (Icons.assignment_rounded, AppColors.noticeAssignment),
   };
 
   static const _priorityConfig = <String, (Color, IconData)>{
-    'urgent': (Color(0xFFEF4444), Icons.priority_high_rounded),
-    'high': (Color(0xFFF59E0B), Icons.arrow_upward_rounded),
-    'normal': (Color(0xFF3B82F6), Icons.remove_rounded),
-    'low': (Color(0xFF9CA3AF), Icons.arrow_downward_rounded),
+    'urgent': (AppColors.noticeExam, Icons.priority_high_rounded),
+    'high': (AppColors.noticeHoliday, Icons.arrow_upward_rounded),
+    'normal': (AppColors.noticeGeneral, Icons.remove_rounded),
+    'low': (AppColors.priorityLow, Icons.arrow_downward_rounded),
   };
 
   @override
@@ -1820,12 +1821,12 @@ class _NoticeCard extends StatelessWidget {
     final theme = Theme.of(context);
     final typeConf =
         _typeConfig[notice.type] ??
-        (Icons.campaign_rounded, const Color(0xFF3B82F6));
+        (Icons.campaign_rounded, AppColors.noticeGeneral);
     final icon = typeConf.$1;
     final color = typeConf.$2;
     final prioConf =
         _priorityConfig[notice.priority] ??
-        (const Color(0xFF3B82F6), Icons.remove_rounded);
+        (AppColors.noticeGeneral, Icons.remove_rounded);
     final prioColor = prioConf.$1;
 
     return Container(
@@ -1877,7 +1878,7 @@ class _NoticeCard extends StatelessWidget {
                       child: Icon(
                         Icons.delete_outline_rounded,
                         size: 18,
-                        color: Colors.red.shade400,
+                        color: AppColors.error,
                       ),
                     ),
                   ),
@@ -2155,8 +2156,8 @@ class _MemberTile extends StatelessWidget {
     final theme = Theme.of(context);
     final isTeacher = member.role == 'TEACHER';
     final roleColor = isTeacher
-        ? const Color(0xFF10B981)
-        : const Color(0xFF3B82F6);
+        ? AppColors.activeGreen
+        : AppColors.activeBlue;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -2231,7 +2232,7 @@ class _MemberTile extends StatelessWidget {
                 icon: Icon(
                   Icons.close_rounded,
                   size: 18,
-                  color: Colors.red.withValues(alpha: 0.5),
+                  color: AppColors.error.withValues(alpha: 0.5),
                 ),
                 onPressed: onRemove,
               ),

@@ -265,7 +265,7 @@ class _FinancialOverviewCard extends StatelessWidget {
                   child: _MiniStat(
                     label: 'Overdue',
                     value: '₹${_formatAmount(summary.totalOverdue)}',
-                    color: const Color(0xFFC62828),
+                    color: AppColors.error,
                   ),
                 ),
               ],
@@ -397,7 +397,7 @@ class _SimpleStatusRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: isAlert
-                ? const Color(0xFFFFEBEE)
+                ? AppColors.errorBg
                 : AppColors.softGrey.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(12),
           ),
@@ -406,7 +406,7 @@ class _SimpleStatusRow extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: isAlert ? const Color(0xFFC62828) : AppColors.darkOlive,
+              color: isAlert ? AppColors.error : AppColors.darkOlive,
             ),
           ),
         ),
@@ -674,14 +674,14 @@ class _OverdueBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFEBEE),
+        color: AppColors.errorBg,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
           const Icon(
             Icons.warning_amber_rounded,
-            color: Color(0xFFC62828),
+            color: AppColors.error,
             size: 20,
           ),
           const SizedBox(width: 12),
@@ -689,7 +689,7 @@ class _OverdueBanner extends StatelessWidget {
             child: Text(
               '$count student${count == 1 ? '' : 's'} have overdue fees',
               style: const TextStyle(
-                color: Color(0xFFC62828),
+                color: AppColors.error,
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
@@ -701,14 +701,14 @@ class _OverdueBanner extends StatelessWidget {
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: Color(0xFFC62828),
+                color: AppColors.error,
               ),
             )
           else
             TextButton(
               onPressed: onRemind,
               style: TextButton.styleFrom(
-                foregroundColor: const Color(0xFFC62828),
+                foregroundColor: AppColors.error,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 6,
@@ -745,7 +745,7 @@ class _ErrorView extends StatelessWidget {
           children: [
             const Icon(
               Icons.error_outline_rounded,
-              color: Colors.redAccent,
+              color: AppColors.error,
               size: 40,
             ),
             const SizedBox(height: 12),

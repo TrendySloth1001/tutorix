@@ -4,6 +4,7 @@ import 'core/observers/app_lifecycle_observer.dart';
 import 'core/observers/logging_navigator_observer.dart';
 import 'core/services/error_logger_service.dart';
 import 'core/theme/app_theme.dart';
+import 'core/theme/theme_provider.dart';
 import 'features/academic/screens/academic_onboarding_screen.dart';
 import 'features/academic/services/academic_service.dart';
 import 'features/auth/controllers/auth_controller.dart';
@@ -36,10 +37,13 @@ class _TutorixAppState extends State<TutorixApp> {
 
   @override
   Widget build(BuildContext context) {
+    final themeMode = context.watch<ThemeProvider>().mode;
     return MaterialApp(
       title: 'Tutorix',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.lightTheme,
+      darkTheme: AppTheme.darkTheme,
+      themeMode: themeMode,
       navigatorObservers: [LoggingNavigatorObserver()],
       home: const AuthWrapper(),
     );

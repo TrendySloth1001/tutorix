@@ -16,7 +16,7 @@ class AppTheme {
       onTertiary: AppColors.darkOlive,
       surface: AppColors.cream,
       onSurface: AppColors.darkOlive,
-      error: Colors.redAccent,
+      error: AppColors.error,
       onError: Colors.white,
     );
 
@@ -119,71 +119,130 @@ class AppTheme {
     );
   }
 
+  // ── Dark-mode palette tokens ───────────────────────────────────────────
+  static const _darkPrimary = Color(0xFF66BB6A);
+  static const _darkOnPrimary = Color(0xFF0F110F);
+  static const _darkSurface = Color(0xFF1B1E1A);
+  static const _darkOnSurface = Color(0xFFE6E5C8);
+  static const _darkScaffold = Color(0xFF121412);
+  static const _darkInputFill = Color(0xFF1F221E);
+
   static ThemeData get darkTheme {
-  const colorScheme = ColorScheme.dark(
-    primary: Color(0xFF66BB6A),
-    onPrimary: Color(0xFF0F110F),
+    const colorScheme = ColorScheme.dark(
+      primary: _darkPrimary,
+      onPrimary: _darkOnPrimary,
+      secondary: AppColors.mutedOlive,
+      onSecondary: _darkOnPrimary,
+      tertiary: Color(0xFF3A3D39),
+      onTertiary: _darkOnSurface,
+      surface: _darkSurface,
+      onSurface: _darkOnSurface,
+      surfaceContainerHighest: Color(0xFF252825),
+      error: AppColors.error,
+      onError: Colors.white,
+      outline: Color(0xFF4A4D48),
+    );
 
-    secondary: AppColors.mutedOlive,
-    onSecondary: Color(0xFF101210),
+    return ThemeData(
+      useMaterial3: true,
+      brightness: Brightness.dark,
+      fontFamily: 'SF Pro',
+      colorScheme: colorScheme,
+      scaffoldBackgroundColor: _darkScaffold,
 
-    surface: Color(0xFF1B1E1A),
-    onSurface: Color(0xFFE6E5C8),
-
-    background: Color(0xFF121412),
-    onBackground: Color(0xFFE6E5C8),
-
-    error: Colors.redAccent,
-    onError: Colors.white,
-  );
-
-  return ThemeData(
-    useMaterial3: true,
-    brightness: Brightness.dark,
-    fontFamily: 'SF Pro',
-    colorScheme: colorScheme,
-
-    scaffoldBackgroundColor: const Color(0xFF121412),
-
-    cardTheme: CardThemeData(
-      color: const Color(0xFF1B1E1A),
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-        side: BorderSide(
-          color: AppColors.mutedOlive.withValues(alpha: 0.15),
-        ),
-      ),
-    ),
-
-    filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(
-        backgroundColor: const Color(0xFF66BB6A),
-        foregroundColor: const Color(0xFF0F110F),
+      // Card
+      cardTheme: CardThemeData(
+        color: _darkSurface,
+        elevation: 0,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(
+            color: AppColors.mutedOlive.withValues(alpha: 0.15),
+          ),
         ),
       ),
-    ),
 
-    inputDecorationTheme: InputDecorationTheme(
-      filled: true,
-      fillColor: const Color(0xFF1F221E),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: BorderSide(
-          color: AppColors.mutedOlive.withValues(alpha: 0.3),
+      // Buttons
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(
+          backgroundColor: _darkPrimary,
+          foregroundColor: _darkOnPrimary,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         ),
       ),
-      focusedBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFF66BB6A),
-          width: 2,
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: _darkOnSurface,
+          side: BorderSide(color: _darkOnSurface.withValues(alpha: 0.4)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
         ),
       ),
-    ),
-  );
-}
+
+      // Input
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: _darkInputFill,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: AppColors.mutedOlive.withValues(alpha: 0.3),
+          ),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: BorderSide(
+            color: AppColors.mutedOlive.withValues(alpha: 0.2),
+          ),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: _darkPrimary, width: 2),
+        ),
+        labelStyle: const TextStyle(color: _darkOnSurface),
+      ),
+
+      // Text
+      textTheme: const TextTheme(
+        displayLarge: TextStyle(
+          color: _darkOnSurface,
+          fontWeight: FontWeight.bold,
+        ),
+        displayMedium: TextStyle(
+          color: _darkOnSurface,
+          fontWeight: FontWeight.bold,
+        ),
+        titleLarge: TextStyle(
+          color: _darkOnSurface,
+          fontWeight: FontWeight.w600,
+        ),
+        bodyLarge: TextStyle(color: _darkOnSurface),
+        bodyMedium: TextStyle(color: _darkOnSurface),
+      ),
+
+      // AppBar
+      appBarTheme: const AppBarTheme(
+        backgroundColor: _darkScaffold,
+        foregroundColor: _darkOnSurface,
+        elevation: 0,
+        centerTitle: true,
+        systemOverlayStyle: SystemUiOverlayStyle.light,
+      ),
+
+      // Bottom nav
+      bottomNavigationBarTheme: BottomNavigationBarThemeData(
+        backgroundColor: _darkSurface,
+        selectedItemColor: _darkPrimary,
+        unselectedItemColor: AppColors.mutedOlive,
+        type: BottomNavigationBarType.fixed,
+        elevation: 8,
+      ),
+    );
+  }
 
 }

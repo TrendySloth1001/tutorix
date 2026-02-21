@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../services/batch_service.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Screen to create a new notice / announcement for a batch.
 /// Supports different notice types with conditional structured fields.
@@ -42,24 +43,24 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
   late final Animation<double> _fadeAnim;
 
   static const _priorities = [
-    ('low', 'Low', Color(0xFF9E9E9E), Icons.arrow_downward_rounded),
-    ('normal', 'Normal', Color(0xFF42A5F5), Icons.remove_rounded),
-    ('high', 'High', Color(0xFFFFA726), Icons.arrow_upward_rounded),
-    ('urgent', 'Urgent', Color(0xFFEF5350), Icons.priority_high_rounded),
+    ('low', 'Low', AppColors.priorityLow, Icons.arrow_downward_rounded),
+    ('normal', 'Normal', AppColors.priorityNormal, Icons.remove_rounded),
+    ('high', 'High', AppColors.priorityHigh, Icons.arrow_upward_rounded),
+    ('urgent', 'Urgent', AppColors.priorityUrgent, Icons.priority_high_rounded),
   ];
 
   static const _types = [
-    ('general', 'General', Color(0xFF3B82F6), Icons.campaign_rounded),
+    ('general', 'General', AppColors.noticeGeneral, Icons.campaign_rounded),
     (
       'timetable_update',
       'Timetable',
-      Color(0xFF8B5CF6),
+      AppColors.noticeTimetable,
       Icons.schedule_rounded,
     ),
-    ('event', 'Event', Color(0xFF10B981), Icons.event_rounded),
-    ('exam', 'Exam', Color(0xFFEF4444), Icons.quiz_rounded),
-    ('holiday', 'Holiday', Color(0xFFF59E0B), Icons.beach_access_rounded),
-    ('assignment', 'Assignment', Color(0xFF0EA5E9), Icons.assignment_rounded),
+    ('event', 'Event', AppColors.noticeEvent, Icons.event_rounded),
+    ('exam', 'Exam', AppColors.noticeExam, Icons.quiz_rounded),
+    ('holiday', 'Holiday', AppColors.noticeHoliday, Icons.beach_access_rounded),
+    ('assignment', 'Assignment', AppColors.noticeAssignment, Icons.assignment_rounded),
   ];
 
   static const _dayOptions = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -732,7 +733,7 @@ class _FieldLabel extends StatelessWidget {
         ),
         if (required) ...[
           const SizedBox(width: 4),
-          Text('*', style: TextStyle(color: Colors.red.shade300, fontSize: 14)),
+          Text('*', style: TextStyle(color: AppColors.error, fontSize: 14)),
         ],
       ],
     );

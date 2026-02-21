@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/services/cache_manager.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
+import '../../../core/theme/app_colors.dart';
+import '../../../core/theme/theme_provider.dart';
 import '../../profile/services/user_service.dart';
 
 /// App-wide settings screen.
@@ -147,6 +150,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
         children: [
+          // ─── Appearance ───────────────────────────────────────
+          _SectionHeader(title: 'Appearance', icon: Icons.palette_outlined),
+          const SizedBox(height: 12),
+          _ThemeSelector(),
+
+          const SizedBox(height: 32),
+
           // ─── Search Privacy ───────────────────────────────────
           _SectionHeader(title: 'Search Privacy', icon: Icons.shield_outlined),
           const SizedBox(height: 4),
@@ -396,7 +406,7 @@ class _ActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accent = isDestructive ? Colors.redAccent : theme.colorScheme.primary;
+    final accent = isDestructive ? AppColors.error : theme.colorScheme.primary;
 
     return InkWell(
       onTap: onTap,
@@ -408,7 +418,7 @@ class _ActionTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDestructive
-                ? Colors.redAccent.withValues(alpha: 0.15)
+                ? AppColors.error.withValues(alpha: 0.15)
                 : theme.colorScheme.primary.withValues(alpha: 0.08),
           ),
         ),
@@ -431,7 +441,7 @@ class _ActionTile extends StatelessWidget {
                     title,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: isDestructive ? Colors.redAccent : null,
+                      color: isDestructive ? AppColors.error : null,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -452,6 +462,79 @@ class _ActionTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ── Theme selector ─────────────────────────────────────────────────────
+
+class _ThemeSelector extends StatelessWidget {
+  const _ThemeSelector();
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final current = context.watch<ThemeProvider>().mode;
+
+    const modes = [
+      (ThemeMode.system, Icons.brightness_auto_rounded, 'System'),
+      (ThemeMode.light, Icons.light_mode_rounded, 'Light'),
+      (ThemeMode.dark, Icons.dark_mode_rounded, 'Dark'),
+    ];
+
+    return Row(
+      children: modes.map((entry) {
+        final (mode, icon, label) = entry;
+        final selected = current == mode;
+        return Expanded(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            child: GestureDetector(
+              onTap: () => context.read<ThemeProvider>().setMode(mode),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
+                decoration: BoxDecoration(
+                  color: selected
+                      ? theme.colorScheme.primary.withValues(alpha: 0.1)
+                      : theme.colorScheme.secondary.withValues(alpha: 0.05),
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(
+                    color: selected
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.outline.withValues(alpha: 0.15),
+                    width: selected ? 1.5 : 1,
+                  ),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(
+                      icon,
+                      color: selected
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.secondary,
+                      size: 24,
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      label,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        fontWeight:
+                            selected ? FontWeight.w600 : FontWeight.normal,
+                        color: selected
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.secondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      }).toList(),
     );
   }
 }

@@ -192,7 +192,7 @@ class _LedgerSummaryCard extends StatelessWidget {
                 child: _LedgerStat(
                   label: 'Paid',
                   amount: summary.totalPaid,
-                  color: const Color(0xFF81C784),
+                  color: AppColors.successLight,
                 ),
               ),
               if (summary.totalRefunded > 0)
@@ -222,8 +222,8 @@ class _LedgerSummaryCard extends StatelessWidget {
                 '₹${(summary.balance > 0 ? summary.balance : 0).toStringAsFixed(0)}',
                 style: TextStyle(
                   color: summary.balance > 0
-                      ? const Color(0xFFEF9A9A)
-                      : const Color(0xFF81C784),
+                      ? AppColors.errorLight
+                      : AppColors.successLight,
                   fontWeight: FontWeight.w800,
                   fontSize: 18,
                 ),
@@ -238,7 +238,7 @@ class _LedgerSummaryCard extends StatelessWidget {
                 const Text(
                   'Available Credits',
                   style: TextStyle(
-                    color: Color(0xFF81C784),
+                    color: AppColors.successLight,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -251,10 +251,8 @@ class _LedgerSummaryCard extends StatelessWidget {
                   ),
                   label: Text('₹${summary.balance.abs().toStringAsFixed(0)}'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(
-                      0xFF81C784,
-                    ).withValues(alpha: 0.15),
-                    foregroundColor: const Color(0xFF81C784),
+                    backgroundColor: AppColors.successLight.withValues(alpha: 0.15),
+                    foregroundColor: AppColors.successLight,
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     minimumSize: const Size(0, 32),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -441,8 +439,8 @@ class _TimelineEntry extends StatelessWidget {
                           'Balance: ₹${entry.runningBalance.toStringAsFixed(0)}',
                           style: TextStyle(
                             color: entry.runningBalance > 0
-                                ? const Color(0xFFC62828)
-                                : const Color(0xFF2E7D32),
+                                ? AppColors.error
+                                : AppColors.success,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
@@ -487,22 +485,22 @@ _EntryConfig _entryConfig(String type) {
   switch (type) {
     case 'PAYMENT':
       return const _EntryConfig(
-        color: Color(0xFF2E7D32),
-        bgColor: Color(0xFFE8F5E9),
+        color: AppColors.success,
+        bgColor: AppColors.successBg,
         icon: Icons.check_circle_rounded,
         sign: '',
       );
     case 'REFUND':
       return const _EntryConfig(
-        color: Color(0xFF1565C0),
-        bgColor: Color(0xFFE3F2FD),
+        color: AppColors.info,
+        bgColor: AppColors.infoBg,
         icon: Icons.keyboard_return_rounded,
         sign: '-',
       );
     default: // RECORD
       return const _EntryConfig(
-        color: Color(0xFFE65100),
-        bgColor: Color(0xFFFFF3E0),
+        color: AppColors.warning,
+        bgColor: AppColors.warningBg,
         icon: Icons.receipt_long_rounded,
         sign: '+',
       );
@@ -523,7 +521,7 @@ class _ErrorRetry extends StatelessWidget {
         children: [
           const Icon(
             Icons.error_outline_rounded,
-            color: Colors.redAccent,
+            color: AppColors.error,
             size: 40,
           ),
           const SizedBox(height: 10),

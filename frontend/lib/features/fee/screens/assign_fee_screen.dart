@@ -234,7 +234,7 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Failed to assign fee to all students'),
-          backgroundColor: Colors.redAccent,
+          backgroundColor: AppColors.error,
         ),
       );
     } else {
@@ -401,24 +401,24 @@ class _Body extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF3E0),
+                color: AppColors.warningBg,
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: const Color(0xFFE65100).withValues(alpha: 0.3),
+                  color: AppColors.warning.withValues(alpha: 0.3),
                 ),
               ),
               child: const Row(
                 children: [
                   Icon(
                     Icons.warning_amber_rounded,
-                    color: Color(0xFFE65100),
+                    color: AppColors.warning,
                     size: 20,
                   ),
                   SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'No fee structures found. Create one in Fee Structures first.',
-                      style: TextStyle(color: Color(0xFFBF360C), fontSize: 13),
+                      style: TextStyle(color: AppColors.deepOrange, fontSize: 13),
                     ),
                   ),
                 ],
@@ -754,12 +754,12 @@ class _Body extends StatelessWidget {
 
     if (withPartial.isEmpty) return const SizedBox.shrink();
 
-    const cardColor = Color(0xFFFFF3E0);
-    const borderColor = Color(0xFFFFB300);
-    const titleColor = Color(0xFFBF360C);
-    const bodyColor = Color(0xFF5D4037);
-    const paidColor = Color(0xFF2E7D32);
-    const waivedColor = Color(0xFFE65100);
+    const cardColor = AppColors.warningBg;
+    const borderColor = AppColors.amberBorder;
+    const titleColor = AppColors.deepOrange;
+    const bodyColor = AppColors.brown;
+    const paidColor = AppColors.success;
+    const waivedColor = AppColors.warning;
 
     if (withPartial.length == 1) {
       final entry = withPartial.first;
@@ -884,7 +884,7 @@ class _Body extends StatelessWidget {
                         child: Text(
                           'Apply ₹${preview.totalPaid.toStringAsFixed(0)} already paid as discount on new structure',
                           style: const TextStyle(
-                            color: Color(0xFF1B5E20),
+                            color: AppColors.deepGreen,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -1071,7 +1071,7 @@ class _ErrorRetry extends StatelessWidget {
         children: [
           const Icon(
             Icons.error_outline_rounded,
-            color: Colors.redAccent,
+            color: AppColors.error,
             size: 40,
           ),
           const SizedBox(height: 10),

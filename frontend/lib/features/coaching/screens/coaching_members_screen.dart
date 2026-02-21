@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/services/error_logger_service.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
@@ -255,7 +256,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                     child: FilledButton(
                       onPressed: () => Navigator.pop(ctx, true),
                       style: FilledButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
+                        backgroundColor: AppColors.error,
                       ),
                       child: Text(confirmLabel),
                     ),
@@ -675,14 +676,14 @@ class _MemberRow extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.person_remove_rounded,
-                          color: Colors.redAccent,
+                          color: AppColors.error,
                           size: 18,
                         ),
                         SizedBox(width: 8),
                         Text(
                           'Remove',
                           style: TextStyle(
-                            color: Colors.redAccent,
+                            color: AppColors.error,
                             fontSize: 13,
                           ),
                         ),
@@ -699,9 +700,9 @@ class _MemberRow extends StatelessWidget {
 
   Widget _roleBadge(String role) {
     final (Color c, String l) = switch (role) {
-      'ADMIN' => (const Color(0xFF6B5B95), 'A'),
-      'TEACHER' => (const Color(0xFF4A90A4), 'T'),
-      _ => (const Color(0xFF5B8C5A), 'S'),
+      'ADMIN' => (AppColors.roleAdmin, 'A'),
+      'TEACHER' => (AppColors.roleTeacher, 'T'),
+      _ => (AppColors.roleStudent, 'S'),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -761,7 +762,7 @@ class _InviteRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const amber = Color(0xFFC48B3F);
+    const amber = AppColors.rolePending;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -832,7 +833,7 @@ class _InviteRow extends StatelessWidget {
               iconSize: 18,
               icon: Icon(
                 Icons.close_rounded,
-                color: Colors.redAccent.withValues(alpha: 0.6),
+                color: AppColors.error.withValues(alpha: 0.6),
               ),
               onPressed: onCancel,
               tooltip: 'Cancel',
@@ -845,9 +846,9 @@ class _InviteRow extends StatelessWidget {
 
   Widget _roleBadge(String role) {
     final (Color c, String l) = switch (role) {
-      'ADMIN' => (const Color(0xFF6B5B95), 'A'),
-      'TEACHER' => (const Color(0xFF4A90A4), 'T'),
-      _ => (const Color(0xFF5B8C5A), 'S'),
+      'ADMIN' => (AppColors.roleAdmin, 'A'),
+      'TEACHER' => (AppColors.roleTeacher, 'T'),
+      _ => (AppColors.roleStudent, 'S'),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),

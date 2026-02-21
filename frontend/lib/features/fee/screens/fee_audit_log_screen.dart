@@ -285,19 +285,19 @@ class _AuditLogTile extends StatelessWidget {
   const _AuditLogTile({required this.log});
 
   static const _eventColors = <String, Color>{
-    'STRUCTURE_CREATED': Color(0xFF2E7D32),
-    'STRUCTURE_REPLACED': Color(0xFFE65100),
-    'STRUCTURE_UPDATED': Color(0xFF1565C0),
-    'STRUCTURE_DELETED': Color(0xFFC62828),
-    'ASSIGNMENT_CREATED': Color(0xFF2E7D32),
-    'ASSIGNMENT_UPDATED': Color(0xFF1565C0),
-    'ASSIGNMENT_REMOVED': Color(0xFFC62828),
-    'ASSIGNMENT_PAUSED': Color(0xFF7B1FA2),
-    'ASSIGNMENT_UNPAUSED': Color(0xFF2E7D32),
-    'PAYMENT_RECORDED': Color(0xFF2E7D32),
-    'FEE_WAIVED': Color(0xFF7B1FA2),
-    'REFUND_ISSUED': Color(0xFF004D40),
-    'INSTALLMENT_SETTINGS_CHANGED': Color(0xFF1565C0),
+    'STRUCTURE_CREATED': AppColors.success,
+    'STRUCTURE_REPLACED': AppColors.warning,
+    'STRUCTURE_UPDATED': AppColors.info,
+    'STRUCTURE_DELETED': AppColors.error,
+    'ASSIGNMENT_CREATED': AppColors.success,
+    'ASSIGNMENT_UPDATED': AppColors.info,
+    'ASSIGNMENT_REMOVED': AppColors.error,
+    'ASSIGNMENT_PAUSED': AppColors.purple,
+    'ASSIGNMENT_UNPAUSED': AppColors.success,
+    'PAYMENT_RECORDED': AppColors.success,
+    'FEE_WAIVED': AppColors.purple,
+    'REFUND_ISSUED': AppColors.deepTeal,
+    'INSTALLMENT_SETTINGS_CHANGED': AppColors.info,
   };
 
   // Human-readable labels for common JSON keys stored in before/after/meta
@@ -664,7 +664,7 @@ class _DiffRow extends StatelessWidget {
                 ? Text(
                     newVal!,
                     style: const TextStyle(
-                      color: Color(0xFF2E7D32),
+                      color: AppColors.success,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
@@ -673,7 +673,7 @@ class _DiffRow extends StatelessWidget {
                 ? Text(
                     oldVal!,
                     style: const TextStyle(
-                      color: Color(0xFFC62828),
+                      color: AppColors.error,
                       fontSize: 11,
                       decoration: TextDecoration.lineThrough,
                     ),
@@ -685,7 +685,7 @@ class _DiffRow extends StatelessWidget {
                       Text(
                         oldVal!,
                         style: const TextStyle(
-                          color: Color(0xFFC62828),
+                          color: AppColors.error,
                           fontSize: 11,
                           decoration: TextDecoration.lineThrough,
                         ),
@@ -698,7 +698,7 @@ class _DiffRow extends StatelessWidget {
                       Text(
                         newVal!,
                         style: const TextStyle(
-                          color: Color(0xFF2E7D32),
+                          color: AppColors.success,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -994,7 +994,7 @@ class _ErrorRetry extends StatelessWidget {
         children: [
           const Icon(
             Icons.error_outline_rounded,
-            color: Colors.redAccent,
+            color: AppColors.error,
             size: 40,
           ),
           const SizedBox(height: 10),

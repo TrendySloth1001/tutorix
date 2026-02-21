@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../../shared/models/notification_model.dart';
 import '../../../../shared/services/notification_service.dart';
 import '../../../../shared/widgets/app_alert.dart';
@@ -127,7 +128,7 @@ class _CoachingNotificationsScreenState
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
-            Icon(Icons.warning_amber_rounded, size: 48, color: Colors.orange),
+            Icon(Icons.warning_amber_rounded, size: 48, color: AppColors.warning),
             const SizedBox(height: 16),
             Text(
               'Member in Another Coaching',
@@ -165,8 +166,8 @@ class _CoachingNotificationsScreenState
                 icon: const Icon(Icons.person_remove_rounded, size: 20),
                 label: const Text('Remove Membership'),
                 style: OutlinedButton.styleFrom(
-                  foregroundColor: Colors.red,
-                  side: const BorderSide(color: Colors.red, width: 1.5),
+                  foregroundColor: AppColors.error,
+                  side: const BorderSide(color: AppColors.error, width: 1.5),
                   padding: const EdgeInsets.symmetric(vertical: 16),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
@@ -357,8 +358,8 @@ class _CoachingNotificationsScreenState
                           ),
                           label: const Text('Remove Member'),
                           style: OutlinedButton.styleFrom(
-                            foregroundColor: Colors.red,
-                            side: const BorderSide(color: Colors.red),
+                            foregroundColor: AppColors.error,
+                            side: const BorderSide(color: AppColors.error),
                             visualDensity: VisualDensity.compact,
                           ),
                         ),

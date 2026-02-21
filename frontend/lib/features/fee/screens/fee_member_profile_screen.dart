@@ -463,10 +463,10 @@ class _AcademicTabState extends State<_AcademicTab>
   }
 
   Color _gradeColor(double percent) {
-    if (percent >= 80) return const Color(0xFF2E7D32);
-    if (percent >= 60) return const Color(0xFF1565C0);
-    if (percent >= 40) return const Color(0xFFE65100);
-    return const Color(0xFFC62828);
+    if (percent >= 80) return AppColors.success;
+    if (percent >= 60) return AppColors.info;
+    if (percent >= 40) return AppColors.warning;
+    return AppColors.error;
   }
 }
 
@@ -671,7 +671,7 @@ class _LedgerBanner extends StatelessWidget {
               minHeight: 8,
               backgroundColor: Colors.white24,
               valueColor: const AlwaysStoppedAnimation<Color>(
-                Color(0xFF81C784),
+                AppColors.successLight,
               ),
             ),
           ),
@@ -682,7 +682,7 @@ class _LedgerBanner extends StatelessWidget {
                 child: _BannerStat(
                   label: 'Paid',
                   value: '₹${_fmt(totalPaid)}',
-                  color: const Color(0xFF81C784),
+                  color: AppColors.successLight,
                 ),
               ),
               Expanded(
@@ -690,8 +690,8 @@ class _LedgerBanner extends StatelessWidget {
                   label: 'Balance',
                   value: '₹${_fmt(balance > 0 ? balance : 0)}',
                   color: balance > 0
-                      ? const Color(0xFFFFB74D)
-                      : const Color(0xFF81C784),
+                      ? AppColors.warningLight
+                      : AppColors.successLight,
                 ),
               ),
               Expanded(
@@ -699,7 +699,7 @@ class _LedgerBanner extends StatelessWidget {
                   label: 'Overdue',
                   value: '₹${_fmt(totalOverdue)}',
                   color: totalOverdue > 0
-                      ? const Color(0xFFEF9A9A)
+                      ? AppColors.errorLight
                       : Colors.white54,
                 ),
               ),
@@ -713,7 +713,7 @@ class _LedgerBanner extends StatelessWidget {
                 const Text(
                   'Available Credits',
                   style: TextStyle(
-                    color: Color(0xFF81C784),
+                    color: AppColors.successLight,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -726,10 +726,8 @@ class _LedgerBanner extends StatelessWidget {
                   ),
                   label: Text('₹${_fmt(balance.abs())}'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: const Color(
-                      0xFF81C784,
-                    ).withValues(alpha: 0.15),
-                    foregroundColor: const Color(0xFF81C784),
+                    backgroundColor: AppColors.successLight.withValues(alpha: 0.15),
+                    foregroundColor: AppColors.successLight,
                     padding: const EdgeInsets.symmetric(horizontal: 10),
                     minimumSize: const Size(0, 28),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -915,17 +913,17 @@ class _StatusBar extends StatelessWidget {
           if (paid > 0)
             Expanded(
               flex: paid,
-              child: Container(height: 8, color: const Color(0xFF2E7D32)),
+              child: Container(height: 8, color: AppColors.success),
             ),
           if (partial > 0)
             Expanded(
               flex: partial,
-              child: Container(height: 8, color: const Color(0xFFE65100)),
+              child: Container(height: 8, color: AppColors.warning),
             ),
           if (overdue > 0)
             Expanded(
               flex: overdue,
-              child: Container(height: 8, color: const Color(0xFFC62828)),
+              child: Container(height: 8, color: AppColors.error),
             ),
           if (pending > 0)
             Expanded(
@@ -1023,7 +1021,7 @@ class _RecordRow extends StatelessWidget {
                       Text(
                         'Paid ₹${_fmt(paidAmount)}',
                         style: const TextStyle(
-                          color: Color(0xFF2E7D32),
+                          color: AppColors.success,
                           fontSize: 11,
                         ),
                       ),
@@ -1092,7 +1090,7 @@ class _ErrorRetry extends StatelessWidget {
         children: [
           const Icon(
             Icons.error_outline_rounded,
-            color: Colors.redAccent,
+            color: AppColors.error,
             size: 40,
           ),
           const SizedBox(height: 10),
@@ -1117,13 +1115,13 @@ String _cycleName(String c) =>
 Color _statusColor(String s) {
   switch (s) {
     case 'PAID':
-      return const Color(0xFF2E7D32);
+      return AppColors.success;
     case 'PENDING':
-      return const Color(0xFF1565C0);
+      return AppColors.info;
     case 'OVERDUE':
-      return const Color(0xFFC62828);
+      return AppColors.error;
     case 'PARTIALLY_PAID':
-      return const Color(0xFFE65100);
+      return AppColors.warning;
     default:
       return AppColors.mutedOlive;
   }

@@ -7,6 +7,7 @@ import '../../../shared/models/user_model.dart';
 import '../../../shared/services/notification_service.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../../coaching/screens/coaching_onboarding_screen.dart';
 import '../../coaching/screens/coaching_shell.dart';
@@ -339,7 +340,7 @@ class _HomeHeader extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(4),
                         decoration: BoxDecoration(
-                          color: Colors.red,
+                          color: AppColors.error,
                           shape: BoxShape.circle,
                         ),
                         constraints: const BoxConstraints(

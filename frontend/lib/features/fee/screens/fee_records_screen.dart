@@ -426,7 +426,7 @@ class _RecordTile extends StatelessWidget {
                                   child: Text(
                                     'Paid ₹${record.paidAmount.toStringAsFixed(0)}',
                                     style: const TextStyle(
-                                      color: Color(0xFF2E7D32),
+                                      color: AppColors.success,
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -448,7 +448,7 @@ class _RecordTile extends StatelessWidget {
                           _Chip(
                             label: 'Due ${_fmtDate(record.dueDate)}',
                             color: record.isOverdue
-                                ? const Color(0xFFC62828)
+                                ? AppColors.error
                                 : AppColors.mutedOlive,
                           ),
                           if (record.daysOverdue > 0) ...[
@@ -456,7 +456,7 @@ class _RecordTile extends StatelessWidget {
                             Text(
                               '${record.daysOverdue}d late',
                               style: const TextStyle(
-                                color: Color(0xFFC62828),
+                                color: AppColors.error,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -546,7 +546,7 @@ class _ErrorRetry extends StatelessWidget {
         children: [
           const Icon(
             Icons.error_outline_rounded,
-            color: Colors.redAccent,
+            color: AppColors.error,
             size: 40,
           ),
           const SizedBox(height: 10),
@@ -566,13 +566,13 @@ class _ErrorRetry extends StatelessWidget {
 Color _statusColor(String s) {
   switch (s) {
     case 'PAID':
-      return const Color(0xFF2E7D32);
+      return AppColors.success;
     case 'PENDING':
-      return const Color(0xFF1565C0);
+      return AppColors.info;
     case 'OVERDUE':
-      return const Color(0xFFC62828);
+      return AppColors.error;
     case 'PARTIALLY_PAID':
-      return const Color(0xFFE65100);
+      return AppColors.warning;
     case 'WAIVED':
       return AppColors.mutedOlive;
     default:

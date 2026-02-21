@@ -409,7 +409,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   label: 'Errors',
                   value: _stats!.errorCount,
                   icon: Icons.error_outline_rounded,
-                  color: const Color(0xFFD32F2F),
+                  color: AppColors.debugError,
                 ),
               ),
             ],
@@ -422,7 +422,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   label: 'Warnings',
                   value: _stats!.warnCount,
                   icon: Icons.warning_amber_rounded,
-                  color: const Color(0xFFF57C00),
+                  color: AppColors.debugWarning,
                 ),
               ),
               const SizedBox(width: 12),
@@ -431,7 +431,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   label: 'Frontend',
                   value: _stats!.frontendErrorCount,
                   icon: Icons.phone_android_rounded,
-                  color: const Color(0xFF7B1FA2),
+                  color: AppColors.debugPurple,
                 ),
               ),
             ],
@@ -446,7 +446,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   label: 'Requests',
                   value: _stats!.apiRequestCount,
                   icon: Icons.http_rounded,
-                  color: const Color(0xFF388E3C),
+                  color: AppColors.debugSuccess,
                 ),
               ),
               const SizedBox(width: 12),
@@ -455,7 +455,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   label: 'API Errors',
                   value: _stats!.apiErrorCount,
                   icon: Icons.cloud_off_rounded,
-                  color: const Color(0xFFE64A19),
+                  color: AppColors.warning,
                 ),
               ),
             ],
@@ -497,8 +497,8 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                     : Icons.warning_amber_rounded,
                 size: 18,
                 color: isHealthy
-                    ? const Color(0xFF388E3C)
-                    : const Color(0xFFF57C00),
+                    ? AppColors.debugSuccess
+                    : AppColors.debugWarning,
               ),
               const SizedBox(width: 8),
               Text(
@@ -516,10 +516,10 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: successRate / 100,
-              backgroundColor: const Color(0xFFD32F2F).withValues(alpha: 0.15),
+              backgroundColor: AppColors.debugError.withValues(alpha: 0.15),
               color: isHealthy
-                  ? const Color(0xFF388E3C)
-                  : const Color(0xFFF57C00),
+                  ? AppColors.debugSuccess
+                  : AppColors.debugWarning,
               minHeight: 8,
             ),
           ),
@@ -547,11 +547,11 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
         children: [
           _buildDeviceLogRow('Buffered', local.length, AppColors.darkOlive),
           const SizedBox(height: 8),
-          _buildDeviceLogRow('Errors', errorCount, const Color(0xFFD32F2F)),
+          _buildDeviceLogRow('Errors', errorCount, AppColors.debugError),
           const SizedBox(height: 8),
-          _buildDeviceLogRow('Warnings', warnCount, const Color(0xFFF57C00)),
+          _buildDeviceLogRow('Warnings', warnCount, AppColors.debugWarning),
           const SizedBox(height: 8),
-          _buildDeviceLogRow('Info', infoCount, const Color(0xFF1976D2)),
+          _buildDeviceLogRow('Info', infoCount, AppColors.debugInfo),
         ],
       ),
     );
@@ -876,14 +876,14 @@ class _ServerLogTile extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD32F2F).withValues(alpha: 0.06),
+                    color: AppColors.debugError.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     log.error!,
                     style: const TextStyle(
                       fontSize: 12,
-                      color: Color(0xFFD32F2F),
+                      color: AppColors.debugError,
                       fontFamily: 'SF Mono',
                     ),
                     maxLines: 2,
@@ -1010,7 +1010,7 @@ class _ServerLogTile extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD32F2F).withValues(alpha: 0.06),
+                    color: AppColors.debugError.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: SelectableText(
@@ -1018,7 +1018,7 @@ class _ServerLogTile extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 13,
                       fontFamily: 'SF Mono',
-                      color: Color(0xFFD32F2F),
+                      color: AppColors.debugError,
                     ),
                   ),
                 ),
@@ -1214,7 +1214,7 @@ class _LocalLogTile extends StatelessWidget {
                         style: const TextStyle(
                           fontSize: 11,
                           fontFamily: 'SF Mono',
-                          color: Color(0xFFD32F2F),
+                          color: AppColors.debugError,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1304,7 +1304,7 @@ class _LocalLogTile extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD32F2F).withValues(alpha: 0.06),
+                    color: AppColors.debugError.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: SelectableText(
@@ -1312,7 +1312,7 @@ class _LocalLogTile extends StatelessWidget {
                     style: const TextStyle(
                       fontSize: 12,
                       fontFamily: 'SF Mono',
-                      color: Color(0xFFD32F2F),
+                      color: AppColors.debugError,
                     ),
                   ),
                 ),
@@ -1372,34 +1372,34 @@ class _LocalLogTile extends StatelessWidget {
   static Color _levelColor(LogLevel level) {
     switch (level) {
       case LogLevel.debug:
-        return const Color(0xFF90A4AE);
+        return AppColors.debugGrey;
       case LogLevel.info:
-        return const Color(0xFF1976D2);
+        return AppColors.debugInfo;
       case LogLevel.warn:
-        return const Color(0xFFF57C00);
+        return AppColors.debugWarning;
       case LogLevel.error:
-        return const Color(0xFFD32F2F);
+        return AppColors.debugError;
       case LogLevel.fatal:
-        return const Color(0xFF880E4F);
+        return AppColors.debugPink;
     }
   }
 
   static Color _categoryColor(LogCategory cat) {
     switch (cat) {
       case LogCategory.api:
-        return const Color(0xFF1976D2);
+        return AppColors.debugInfo;
       case LogCategory.auth:
-        return const Color(0xFF7B1FA2);
+        return AppColors.debugPurple;
       case LogCategory.navigation:
-        return const Color(0xFF00796B);
+        return AppColors.debugTeal;
       case LogCategory.ui:
-        return const Color(0xFFF57C00);
+        return AppColors.debugWarning;
       case LogCategory.lifecycle:
-        return const Color(0xFF455A64);
+        return AppColors.debugBlueGrey;
       case LogCategory.storage:
-        return const Color(0xFF5D4037);
+        return AppColors.debugBrown;
       case LogCategory.network:
-        return const Color(0xFF0288D1);
+        return AppColors.debugLightBlue;
       case LogCategory.system:
         return AppColors.darkOlive;
     }
@@ -1417,15 +1417,15 @@ class _LevelBadge extends StatelessWidget {
   Color get _color {
     switch (level) {
       case 'FATAL':
-        return const Color(0xFF880E4F);
+        return AppColors.debugPink;
       case 'ERROR':
-        return const Color(0xFFD32F2F);
+        return AppColors.debugError;
       case 'WARN':
-        return const Color(0xFFF57C00);
+        return AppColors.debugWarning;
       case 'INFO':
-        return const Color(0xFF1976D2);
+        return AppColors.debugInfo;
       default:
-        return const Color(0xFF90A4AE);
+        return AppColors.debugGrey;
     }
   }
 
@@ -1496,10 +1496,10 @@ class _StatusCodeBadge extends StatelessWidget {
   const _StatusCodeBadge({required this.statusCode});
 
   Color get _color {
-    if (statusCode >= 500) return const Color(0xFFD32F2F);
-    if (statusCode >= 400) return const Color(0xFFF57C00);
-    if (statusCode >= 300) return const Color(0xFF1976D2);
-    return const Color(0xFF388E3C);
+    if (statusCode >= 500) return AppColors.debugError;
+    if (statusCode >= 400) return AppColors.debugWarning;
+    if (statusCode >= 300) return AppColors.debugInfo;
+    return AppColors.debugSuccess;
   }
 
   @override
@@ -1530,14 +1530,14 @@ class _HttpMethodChip extends StatelessWidget {
   Color get _color {
     switch (method.toUpperCase()) {
       case 'GET':
-        return const Color(0xFF388E3C);
+        return AppColors.debugSuccess;
       case 'POST':
-        return const Color(0xFF1976D2);
+        return AppColors.debugInfo;
       case 'PATCH':
       case 'PUT':
-        return const Color(0xFFF57C00);
+        return AppColors.debugWarning;
       case 'DELETE':
-        return const Color(0xFFD32F2F);
+        return AppColors.debugError;
       default:
         return AppColors.mutedOlive;
     }

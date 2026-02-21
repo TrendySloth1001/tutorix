@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../core/theme/app_colors.dart';
 
 /// Centralized alert/dialog system. Never expose raw exceptions to users.
 class AppAlert {
@@ -51,7 +52,7 @@ class AppAlert {
               ),
             ],
           ),
-          backgroundColor: Colors.red.shade700,
+          backgroundColor: AppColors.error,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -88,7 +89,7 @@ class AppAlert {
               ),
             ],
           ),
-          backgroundColor: Colors.green.shade700,
+          backgroundColor: AppColors.success,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -125,7 +126,7 @@ class AppAlert {
               ),
             ],
           ),
-          backgroundColor: Colors.orange.shade700,
+          backgroundColor: AppColors.warning,
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -151,7 +152,7 @@ class AppAlert {
       builder: (ctx) => AlertDialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         icon: icon != null
-            ? Icon(icon, size: 32, color: confirmColor ?? Colors.red)
+            ? Icon(icon, size: 32, color: confirmColor ?? AppColors.error)
             : null,
         title: Text(
           title,

@@ -4,6 +4,7 @@ import '../../../core/services/error_logger_service.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../services/batch_service.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Screen to create a new note with multiple file attachments.
 class CreateNoteScreen extends StatefulWidget {
@@ -332,9 +333,9 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     final exceeds = _exceedsStorage;
 
     final barColor = exceeds
-        ? Colors.red.shade400
+        ? AppColors.error
         : ratio > 0.8
-        ? Colors.orange.shade400
+        ? AppColors.warning
         : theme.colorScheme.primary;
 
     return Container(
@@ -344,7 +345,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: exceeds
-              ? Colors.red.withValues(alpha: 0.2)
+              ? AppColors.error.withValues(alpha: 0.2)
               : theme.colorScheme.onSurface.withValues(alpha: 0.06),
         ),
       ),
@@ -392,7 +393,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
               style: theme.textTheme.bodySmall?.copyWith(
                 fontSize: 11,
                 color: exceeds
-                    ? Colors.red.shade600
+                    ? AppColors.error
                     : theme.colorScheme.onSurface.withValues(alpha: 0.4),
               ),
             ),
@@ -404,7 +405,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                 'Not enough space — remove some files',
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontSize: 11,
-                  color: Colors.red.shade600,
+                  color: AppColors.error,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -574,9 +575,9 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
   bool _isExpanded = false;
 
   static const _typeConfig = {
-    'pdf': (Icons.picture_as_pdf_rounded, Color(0xFFE53935)),
-    'image': (Icons.image_rounded, Color(0xFF8E24AA)),
-    'doc': (Icons.description_rounded, Color(0xFF1E88E5)),
+    'pdf': (Icons.picture_as_pdf_rounded, AppColors.filePdf),
+    'image': (Icons.image_rounded, AppColors.fileImage),
+    'doc': (Icons.description_rounded, AppColors.fileDoc),
   };
 
   String get _formattedSize {
@@ -667,13 +668,13 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Colors.red.withValues(alpha: 0.08),
+                        color: AppColors.error.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         Icons.close_rounded,
                         size: 18,
-                        color: Colors.red.shade600,
+                        color: AppColors.error,
                       ),
                     ),
                   ),
@@ -783,7 +784,7 @@ class _FieldLabel extends StatelessWidget {
           Text(
             ' *',
             style: TextStyle(
-              color: Colors.red.shade400,
+              color: AppColors.error,
               fontWeight: FontWeight.w600,
             ),
           ),

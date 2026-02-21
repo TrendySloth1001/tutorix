@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
 import '../models/coaching_address.dart';
@@ -1529,7 +1530,7 @@ class _BranchCard extends StatelessWidget {
           IconButton(
             icon: const Icon(Icons.close, size: 20),
             onPressed: onDelete,
-            color: Colors.redAccent,
+            color: AppColors.error,
           ),
         ],
       ),

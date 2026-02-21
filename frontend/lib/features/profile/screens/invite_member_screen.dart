@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../shared/services/invitation_service.dart';
 import '../../../shared/widgets/app_alert.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Invite member — card-based flow, tuned for cream/olive palette.
 class InviteMemberScreen extends StatefulWidget {
@@ -336,7 +337,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                           _RoleCard(
                             label: 'Student',
                             icon: Icons.person_outline_rounded,
-                            accent: const Color(0xFF2E7D32), // rich green
+                            accent: AppColors.success, // rich green
                             selected: _selectedRole == 'STUDENT',
                             surface: surface,
                             faint: faint,
@@ -347,7 +348,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                           _RoleCard(
                             label: 'Teacher',
                             icon: Icons.school_outlined,
-                            accent: const Color(0xFF1565C0), // strong blue
+                            accent: AppColors.info, // strong blue
                             selected: _selectedRole == 'TEACHER',
                             surface: surface,
                             faint: faint,
@@ -358,7 +359,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                           _RoleCard(
                             label: 'Parent',
                             icon: Icons.family_restroom_rounded,
-                            accent: const Color(0xFF6A1B9A), // deep purple
+                            accent: AppColors.roleAdminAlt, // deep purple
                             selected: _selectedRole == 'PARENT',
                             surface: surface,
                             faint: faint,
@@ -543,7 +544,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
     final found = _lookupResult!['found'] == true;
 
     if (!found) {
-      const amber = Color(0xFFD84315); // burnt orange — high contrast on cream
+      const amber = AppColors.warning; // burnt orange — high contrast on cream
       return Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -616,7 +617,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
               width: 7,
               height: 7,
               decoration: const BoxDecoration(
-                color: Color(0xFF2E7D32),
+                color: AppColors.success,
                 shape: BoxShape.circle,
               ),
             ),
@@ -626,7 +627,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
               style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: Color(0xFF2E7D32),
+                color: AppColors.success,
               ),
             ),
           ],
@@ -690,7 +691,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
                 icon: Icons.child_care_rounded,
                 selected: _selectedWardId == ward['id'],
                 badges: ward['isEnrolled'] == true
-                    ? [_badge('Enrolled', const Color(0xFF2E7D32))]
+                    ? [_badge('Enrolled', AppColors.success)]
                     : null,
                 onSurface: onSurface,
                 faint: faint,
@@ -715,21 +716,21 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
     for (final role in roles) {
       switch (role) {
         case 'ADMIN':
-          b.add(_badge('Admin', const Color(0xFF6A1B9A)));
+          b.add(_badge('Admin', AppColors.roleAdminAlt));
           break;
         case 'TEACHER':
-          b.add(_badge('Teacher', const Color(0xFF1565C0)));
+          b.add(_badge('Teacher', AppColors.info));
           break;
         case 'STUDENT':
-          b.add(_badge('Student', const Color(0xFF2E7D32)));
+          b.add(_badge('Student', AppColors.success));
           break;
         case 'PARENT':
-          b.add(_badge('Parent', const Color(0xFFE65100)));
+          b.add(_badge('Parent', AppColors.warning));
           break;
       }
     }
     if (user['isMember'] == true && b.isEmpty) {
-      b.add(_badge('Member', const Color(0xFF455A64)));
+      b.add(_badge('Member', AppColors.roleMember));
     }
     return b;
   }
@@ -967,7 +968,7 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const red = Color(0xFFC62828);
+    const red = AppColors.error;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(

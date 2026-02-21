@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/theme/app_colors.dart';
 import 'package:file_picker/file_picker.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../models/assignment_model.dart';
@@ -149,7 +150,7 @@ class _SubmitAssignmentScreenState extends State<SubmitAssignmentScreen> {
                   icon: Icons.event_outlined,
                   label:
                       'Due: ${a.dueDate!.day}/${a.dueDate!.month}/${a.dueDate!.year}',
-                  color: a.isPastDue ? Colors.red : null,
+                  color: a.isPastDue ? AppColors.error : null,
                 ),
               if (a.totalMarks != null)
                 _DetailChip(
@@ -303,18 +304,18 @@ class _SubmitAssignmentScreenState extends State<SubmitAssignmentScreen> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.red.withValues(alpha: 0.08),
+                color: AppColors.error.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.block_rounded, size: 20, color: Colors.red),
+                  Icon(Icons.block_rounded, size: 20, color: AppColors.error),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
                       'Submission deadline has passed',
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.red,
+                        color: AppColors.error,
                       ),
                     ),
                   ),
@@ -359,9 +360,9 @@ class _SubmissionStatus extends StatelessWidget {
     final theme = Theme.of(context);
     final s = submission;
     final color = switch (s.status) {
-      'GRADED' => Colors.green,
-      'RETURNED' => Colors.orange,
-      _ => Colors.blue,
+      'GRADED' => AppColors.success,
+      'RETURNED' => AppColors.warning,
+      _ => AppColors.info,
     };
 
     return Container(
@@ -405,13 +406,13 @@ class _SubmissionStatus extends StatelessWidget {
                     vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: Colors.orange.withValues(alpha: 0.15),
+                    color: AppColors.warning.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
                   ),
                   child: Text(
                     'Late',
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: Colors.orange,
+                      color: AppColors.warning,
                     ),
                   ),
                 ),

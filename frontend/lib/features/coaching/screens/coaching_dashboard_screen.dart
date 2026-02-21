@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/error_logger_service.dart';
+import '../../../core/theme/app_colors.dart';
 import '../models/coaching_model.dart';
 import '../models/member_model.dart';
 import '../models/invitation_model.dart';
@@ -809,18 +810,18 @@ class _StatChipRow extends StatelessWidget {
         if (admins > 0)
           _Chip(
             label: '$admins Admin${admins > 1 ? 's' : ''}',
-            color: const Color(0xFF6B5B95),
+            color: AppColors.roleAdmin,
           ),
         _Chip(
           label: '$teachers Teacher${teachers != 1 ? 's' : ''}',
-          color: const Color(0xFF4A90A4),
+          color: AppColors.roleTeacher,
         ),
         _Chip(
           label: '$students Student${students != 1 ? 's' : ''}',
-          color: const Color(0xFF5B8C5A),
+          color: AppColors.roleStudent,
         ),
         if (pending > 0)
-          _Chip(label: '$pending Pending', color: const Color(0xFFC48B3F)),
+          _Chip(label: '$pending Pending', color: AppColors.rolePending),
       ],
     );
   }
@@ -1023,9 +1024,9 @@ class _CompactMemberTile extends StatelessWidget {
 
   Widget _roleBadge(String role) {
     final (Color color, String label) = switch (role) {
-      'ADMIN' => (const Color(0xFF6B5B95), 'Admin'),
-      'TEACHER' => (const Color(0xFF4A90A4), 'Teacher'),
-      _ => (const Color(0xFF5B8C5A), 'Student'),
+      'ADMIN' => (AppColors.roleAdmin, 'Admin'),
+      'TEACHER' => (AppColors.roleTeacher, 'Teacher'),
+      _ => (AppColors.roleStudent, 'Student'),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1053,7 +1054,7 @@ class _CompactInviteTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const pendingColor = Color(0xFFC48B3F);
+    const pendingColor = AppColors.rolePending;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Container(
@@ -1213,10 +1214,10 @@ class _NoteCard extends StatelessWidget {
   const _NoteCard({required this.note, required this.onTap});
 
   static const _typeConfig = {
-    'pdf': (Icons.picture_as_pdf_rounded, Color(0xFFE53935)),
-    'image': (Icons.image_rounded, Color(0xFF8E24AA)),
-    'doc': (Icons.description_rounded, Color(0xFF1E88E5)),
-    'link': (Icons.link_rounded, Color(0xFF00897B)),
+    'pdf': (Icons.picture_as_pdf_rounded, AppColors.filePdf),
+    'image': (Icons.image_rounded, AppColors.fileImage),
+    'doc': (Icons.description_rounded, AppColors.fileDoc),
+    'link': (Icons.link_rounded, AppColors.fileLink),
   };
 
   (IconData, Color) _primaryType(ThemeData theme) {
@@ -2033,7 +2034,7 @@ class _FeedAssessmentCard extends StatelessWidget {
     final totalMarks = a['totalMarks'];
 
     final isQuiz = type == 'QUIZ';
-    final color = isQuiz ? const Color(0xFF4A90A4) : const Color(0xFF6B5B95);
+    final color = isQuiz ? AppColors.roleTeacher : AppColors.roleAdmin;
     final icon = isQuiz
         ? Icons.quiz_rounded
         : Icons.assignment_turned_in_rounded;
@@ -2174,7 +2175,7 @@ class _FeedAssignmentCard extends StatelessWidget {
         ? DateTime.tryParse(a['dueDate'] as String)
         : null;
 
-    const color = Color(0xFF5B8C5A);
+    const color = AppColors.roleStudent;
 
     final card = Padding(
       padding: const EdgeInsets.only(bottom: 8),

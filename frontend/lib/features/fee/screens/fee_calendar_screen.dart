@@ -131,7 +131,7 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
                     height: 6,
                     margin: const EdgeInsets.symmetric(horizontal: 1.5),
                     decoration: const BoxDecoration(
-                      color: Colors.redAccent,
+                      color: AppColors.error,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -188,7 +188,7 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
           const SizedBox(height: 20),
           _buildStatCard('Collected', collected, AppColors.primaryGreen),
           const SizedBox(height: 12),
-          _buildStatCard('Due', due, Colors.redAccent),
+          _buildStatCard('Due', due, AppColors.error),
         ],
       ),
     );

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../models/batch_model.dart';
@@ -443,7 +444,7 @@ class _FieldLabel extends StatelessWidget {
           Text(
             ' *',
             style: TextStyle(
-              color: Colors.red.shade400,
+              color: AppColors.error,
               fontWeight: FontWeight.w600,
             ),
           ),

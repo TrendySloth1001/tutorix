@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../core/constants/api_constants.dart';
+import '../../core/theme/app_colors.dart';
 
 class InvitationCard extends StatelessWidget {
   final Map<String, dynamic> invitation;
@@ -253,7 +254,7 @@ class InvitationCard extends StatelessWidget {
                       child: FilledButton(
                         onPressed: isResponding ? null : onAccept,
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF4A5D44),
+                          backgroundColor: AppColors.darkOlive,
                           padding: const EdgeInsets.symmetric(vertical: 12),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
@@ -320,7 +321,7 @@ class InvitationCard extends StatelessWidget {
         color = Colors.teal;
         break;
       default:
-        color = const Color(0xFFF9A825); // Amber darker
+        color = AppColors.warningLight; // Amber darker
     }
 
     // If overlay, make it look better on dark/image background

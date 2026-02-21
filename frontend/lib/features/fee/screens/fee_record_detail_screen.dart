@@ -1109,25 +1109,25 @@ class _OverdueBanner extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFEBEE),
+        color: AppColors.errorBg,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: const Color(0xFFC62828).withValues(alpha: 0.4),
+          color: AppColors.error.withValues(alpha: 0.4),
         ),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.timer_off_rounded,
-            color: Color(0xFFC62828),
+            color: AppColors.error,
             size: 18,
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'This fee is $days day${days == 1 ? '' : 's'} overdue',
-              style: const TextStyle(
-                color: Color(0xFFC62828),
+              style: TextStyle(
+                color: AppColors.error,
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),
@@ -1180,8 +1180,8 @@ class _HeaderCard extends StatelessWidget {
                 if (record.paidAt != null)
                   Text(
                     'Paid: ${_fmtDateLong(record.paidAt!)}',
-                    style: const TextStyle(
-                      color: Color(0xFF2E7D32),
+                    style: TextStyle(
+                      color: AppColors.success,
                       fontSize: 13,
                     ),
                   ),
@@ -1202,8 +1202,8 @@ class _HeaderCard extends StatelessWidget {
               if (record.isPartial)
                 Text(
                   '₹${record.balance.toStringAsFixed(0)} left',
-                  style: const TextStyle(
-                    color: Color(0xFFE65100),
+                  style: TextStyle(
+                    color: AppColors.warning,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1258,14 +1258,14 @@ class _BreakdownCard extends StatelessWidget {
             _Row(
               'Discount',
               '- ₹${record.discountAmount.toStringAsFixed(0)}',
-              color: const Color(0xFF2E7D32),
+              color: AppColors.success,
             ),
           // ── Late Fine ──
           if (record.fineAmount > 0)
             _Row(
               'Late Fine',
               '+ ₹${record.fineAmount.toStringAsFixed(0)}',
-              color: const Color(0xFFC62828),
+              color: AppColors.error,
             ),
           // ── GST_EXCLUSIVE: show taxable base + additive GST above total ──
           if (record.hasTax && isExclusive) ...[
@@ -1351,14 +1351,14 @@ class _BreakdownCard extends StatelessWidget {
             _Row(
               'Paid',
               '₹${record.paidAmount.toStringAsFixed(0)}',
-              color: const Color(0xFF2E7D32),
+              color: AppColors.success,
               bold: true,
             ),
           if (record.isPartial)
             _Row(
               'Balance',
               '₹${record.balance.toStringAsFixed(0)}',
-              color: const Color(0xFFE65100),
+              color: AppColors.warning,
               bold: true,
             ),
           if (record.receiptNo != null) ...[
@@ -1693,9 +1693,9 @@ class _FailedAttempts extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.cancel_rounded,
-                  color: Color(0xFFC62828),
+                  color: AppColors.error,
                   size: 18,
                 ),
                 const SizedBox(width: 10),
@@ -1705,9 +1705,9 @@ class _FailedAttempts extends StatelessWidget {
                     children: [
                       Text(
                         reason,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFFC62828),
+                          color: AppColors.error,
                           fontWeight: FontWeight.w600,
                         ),
                         maxLines: 2,
@@ -1728,7 +1728,7 @@ class _FailedAttempts extends StatelessWidget {
                   amtStr,
                   style: const TextStyle(
                     fontWeight: FontWeight.w700,
-                    color: Color(0xFFC62828),
+                    color: AppColors.error,
                     fontSize: 14,
                   ),
                 ),
@@ -2162,9 +2162,9 @@ class _ErrorRetry extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
-            color: Colors.redAccent,
+            color: AppColors.error,
             size: 40,
           ),
           const SizedBox(height: 10),
@@ -2184,13 +2184,13 @@ class _ErrorRetry extends StatelessWidget {
 Color _statusColor(String s) {
   switch (s) {
     case 'PAID':
-      return const Color(0xFF2E7D32);
+      return AppColors.success;
     case 'PENDING':
-      return const Color(0xFF1565C0);
+      return AppColors.info;
     case 'OVERDUE':
-      return const Color(0xFFC62828);
+      return AppColors.error;
     case 'PARTIALLY_PAID':
-      return const Color(0xFFE65100);
+      return AppColors.warning;
     case 'WAIVED':
       return AppColors.mutedOlive;
     default:
@@ -2357,14 +2357,14 @@ class _InstallmentPickerSheet extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: paid
-                        ? const Color(0xFF2E7D32).withValues(alpha: 0.07)
+                        ? AppColors.success.withValues(alpha: 0.07)
                         : isPayable
                         ? AppColors.darkOlive.withValues(alpha: 0.07)
                         : AppColors.softGrey.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: paid
-                          ? const Color(0xFF2E7D32).withValues(alpha: 0.35)
+                          ? AppColors.success.withValues(alpha: 0.35)
                           : isPayable
                           ? AppColors.darkOlive.withValues(alpha: 0.25)
                           : AppColors.softGrey,
@@ -2377,7 +2377,7 @@ class _InstallmentPickerSheet extends StatelessWidget {
                           item.label,
                           style: TextStyle(
                             color: paid
-                                ? const Color(0xFF2E7D32)
+                                ? AppColors.success
                                 : isPayable
                                 ? AppColors.darkOlive
                                 : AppColors.mutedOlive,
@@ -2390,7 +2390,7 @@ class _InstallmentPickerSheet extends StatelessWidget {
                         '₹${item.amount.toStringAsFixed(0)}',
                         style: TextStyle(
                           color: paid
-                              ? const Color(0xFF2E7D32)
+                              ? AppColors.success
                               : isPayable
                               ? AppColors.darkOlive
                               : AppColors.mutedOlive,
@@ -2400,10 +2400,10 @@ class _InstallmentPickerSheet extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       if (paid)
-                        const Icon(
+                        Icon(
                           Icons.check_circle_rounded,
                           size: 18,
-                          color: Color(0xFF2E7D32),
+                          color: AppColors.success,
                         )
                       else if (!isPayable)
                         const Icon(

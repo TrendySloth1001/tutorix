@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../../shared/widgets/app_shimmer.dart';
 import '../models/assessment_model.dart';
@@ -228,7 +229,7 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -262,7 +263,7 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Delete', style: TextStyle(color: AppColors.error)),
           ),
         ],
       ),
@@ -740,8 +741,8 @@ class _TypeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = switch (type) {
-      'TEST' => Colors.orange,
-      'PRACTICE' => Colors.green,
+      'TEST' => AppColors.warning,
+      'PRACTICE' => AppColors.success,
       _ => theme.colorScheme.primary,
     };
     return Container(
@@ -771,9 +772,9 @@ class _StatusChip extends StatelessWidget {
     final theme = Theme.of(context);
     final (color, label) = switch (status) {
       'DRAFT' => (Colors.grey, 'Draft'),
-      'PUBLISHED' => (Colors.green, 'Live'),
-      'CLOSED' => (Colors.red, 'Closed'),
-      'OVERDUE' => (Colors.orange, 'Overdue'),
+      'PUBLISHED' => (AppColors.success, 'Live'),
+      'CLOSED' => (AppColors.error, 'Closed'),
+      'OVERDUE' => (AppColors.warning, 'Overdue'),
       _ => (Colors.grey, status),
     };
     return Container(
@@ -841,7 +842,7 @@ class _PopupMenu extends StatelessWidget {
         PopupMenuItem(value: 'status', child: Text(statusLabel)),
         const PopupMenuItem(
           value: 'delete',
-          child: Text('Delete', style: TextStyle(color: Colors.red)),
+          child: Text('Delete', style: TextStyle(color: AppColors.error)),
         ),
       ],
       onSelected: (v) {
@@ -868,7 +869,7 @@ class _StudentAttemptBanner extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: Colors.orange.withValues(alpha: 0.1),
+          color: AppColors.warning.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -876,12 +877,12 @@ class _StudentAttemptBanner extends StatelessWidget {
             const Icon(
               Icons.play_circle_outline_rounded,
               size: 16,
-              color: Colors.orange,
+              color: AppColors.warning,
             ),
             const SizedBox(width: 6),
             Text(
               'In Progress — tap to continue',
-              style: theme.textTheme.labelSmall?.copyWith(color: Colors.orange),
+              style: theme.textTheme.labelSmall?.copyWith(color: AppColors.warning),
             ),
           ],
         ),
@@ -896,7 +897,7 @@ class _StudentAttemptBanner extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: (passed ? Colors.green : Colors.blue).withValues(alpha: 0.08),
+          color: (passed ? AppColors.success : AppColors.info).withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -906,13 +907,13 @@ class _StudentAttemptBanner extends StatelessWidget {
                   ? Icons.check_circle_outline_rounded
                   : Icons.info_outline_rounded,
               size: 16,
-              color: passed ? Colors.green : Colors.blue,
+              color: passed ? AppColors.success : AppColors.info,
             ),
             const SizedBox(width: 6),
             Text(
               'Score: ${best.percentage?.toStringAsFixed(1)}%',
               style: theme.textTheme.labelSmall?.copyWith(
-                color: passed ? Colors.green : Colors.blue,
+                color: passed ? AppColors.success : AppColors.info,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -943,9 +944,9 @@ class _SubmissionBanner extends StatelessWidget {
     final theme = Theme.of(context);
     final s = submission;
     final color = switch (s.status) {
-      'GRADED' => Colors.green,
-      'RETURNED' => Colors.orange,
-      _ => Colors.blue,
+      'GRADED' => AppColors.success,
+      'RETURNED' => AppColors.warning,
+      _ => AppColors.info,
     };
     final label = switch (s.status) {
       'GRADED' => 'Graded${s.marks != null ? ' — ${s.marks} marks' : ''}',

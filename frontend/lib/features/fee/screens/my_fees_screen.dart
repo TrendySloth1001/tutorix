@@ -1304,7 +1304,7 @@ class _EmptyState extends StatelessWidget {
           Icon(
             Icons.check_circle_outline_rounded,
             size: 52,
-            color: Color(0xFF2E7D32),
+            color: AppColors.success,
           ),
           SizedBox(height: 12),
           Text(
@@ -1338,7 +1338,7 @@ class _ErrorRetry extends StatelessWidget {
         children: [
           const Icon(
             Icons.error_outline_rounded,
-            color: Colors.redAccent,
+            color: AppColors.error,
             size: 40,
           ),
           const SizedBox(height: 10),
@@ -1358,13 +1358,13 @@ class _ErrorRetry extends StatelessWidget {
 Color _statusColor(String s) {
   switch (s) {
     case 'PAID':
-      return const Color(0xFF2E7D32);
+      return AppColors.success;
     case 'PENDING':
-      return const Color(0xFF1565C0);
+      return AppColors.info;
     case 'OVERDUE':
-      return const Color(0xFFC62828);
+      return AppColors.error;
     case 'PARTIALLY_PAID':
-      return const Color(0xFFE65100);
+      return AppColors.warning;
     case 'WAIVED':
       return AppColors.mutedOlive;
     default:
@@ -1788,14 +1788,14 @@ class _FeeInstallmentSheet extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: paid
-                        ? const Color(0xFF2E7D32).withValues(alpha: 0.07)
+                        ? AppColors.success.withValues(alpha: 0.07)
                         : isPayable
                         ? AppColors.darkOlive.withValues(alpha: 0.07)
                         : AppColors.softGrey.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: paid
-                          ? const Color(0xFF2E7D32).withValues(alpha: 0.35)
+                          ? AppColors.success.withValues(alpha: 0.35)
                           : isPayable
                           ? AppColors.darkOlive.withValues(alpha: 0.25)
                           : AppColors.softGrey,
@@ -1808,7 +1808,7 @@ class _FeeInstallmentSheet extends StatelessWidget {
                           item.label,
                           style: TextStyle(
                             color: paid
-                                ? const Color(0xFF2E7D32)
+                                ? AppColors.success
                                 : isPayable
                                 ? AppColors.darkOlive
                                 : AppColors.mutedOlive,
@@ -1821,7 +1821,7 @@ class _FeeInstallmentSheet extends StatelessWidget {
                         '₹${item.amount.toStringAsFixed(0)}',
                         style: TextStyle(
                           color: paid
-                              ? const Color(0xFF2E7D32)
+                              ? AppColors.success
                               : isPayable
                               ? AppColors.darkOlive
                               : AppColors.mutedOlive,
@@ -1834,7 +1834,7 @@ class _FeeInstallmentSheet extends StatelessWidget {
                         const Icon(
                           Icons.check_circle_rounded,
                           size: 18,
-                          color: Color(0xFF2E7D32),
+                          color: AppColors.success,
                         )
                       else if (!isPayable)
                         const Icon(

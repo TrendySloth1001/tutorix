@@ -396,12 +396,12 @@ class _StructureCard extends StatelessWidget {
                           Icon(
                             Icons.delete_outline_rounded,
                             size: 18,
-                            color: Colors.redAccent,
+                            color: AppColors.error,
                           ),
                           SizedBox(width: 10),
                           Text(
                             'Remove',
-                            style: TextStyle(color: Colors.redAccent),
+                            style: TextStyle(color: AppColors.error),
                           ),
                         ],
                       ),
@@ -995,7 +995,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                     IconButton(
                       icon: const Icon(
                         Icons.remove_circle_outline,
-                        color: Color(0xFFC62828),
+                        color: AppColors.error,
                         size: 20,
                       ),
                       onPressed: () {
@@ -1131,7 +1131,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                       IconButton(
                         icon: const Icon(
                           Icons.remove_circle_outline,
-                          color: Color(0xFFC62828),
+                          color: AppColors.error,
                           size: 20,
                         ),
                         onPressed: () {
@@ -1266,7 +1266,7 @@ class _ErrorRetry extends StatelessWidget {
         children: [
           const Icon(
             Icons.error_outline_rounded,
-            color: Colors.redAccent,
+            color: AppColors.error,
             size: 40,
           ),
           const SizedBox(height: 10),

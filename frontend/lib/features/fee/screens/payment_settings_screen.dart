@@ -105,7 +105,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString()),
-            backgroundColor: const Color(0xFFC62828),
+            backgroundColor: AppColors.error,
           ),
         );
       }
@@ -117,9 +117,9 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F6F2),
+      backgroundColor: AppColors.offWhite,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF7F6F2),
+        backgroundColor: AppColors.offWhite,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(
@@ -163,8 +163,8 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: _razorpayActivated
-                            ? const Color(0xFFE8F5E9)
-                            : const Color(0xFFFFF3E0),
+                            ? AppColors.successBg
+                            : AppColors.warningBg,
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Row(
@@ -174,8 +174,8 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                                 ? Icons.check_circle_rounded
                                 : Icons.info_outline_rounded,
                             color: _razorpayActivated
-                                ? const Color(0xFF2E7D32)
-                                : const Color(0xFFE65100),
+                                ? AppColors.success
+                                : AppColors.warning,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -189,8 +189,8 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     color: _razorpayActivated
-                                        ? const Color(0xFF2E7D32)
-                                        : const Color(0xFFE65100),
+                                        ? AppColors.success
+                                        : AppColors.warning,
                                     fontSize: 14,
                                   ),
                                 ),
@@ -200,8 +200,8 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                                       : 'Contact Tutorix support to link your Razorpay account',
                                   style: TextStyle(
                                     color: _razorpayActivated
-                                        ? const Color(0xFF2E7D32)
-                                        : const Color(0xFFE65100),
+                                        ? AppColors.success
+                                        : AppColors.warning,
                                     fontSize: 12,
                                   ),
                                 ),

@@ -99,9 +99,9 @@ class PaymentReceiptScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F6F2),
+      backgroundColor: AppColors.offWhite,
       appBar: AppBar(
-        backgroundColor: const Color(0xFFF7F6F2),
+        backgroundColor: AppColors.offWhite,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.close_rounded, color: AppColors.darkOlive),
@@ -126,12 +126,12 @@ class PaymentReceiptScreen extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: const Color(0xFF2E7D32).withValues(alpha: 0.1),
+                color: AppColors.success.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.check_rounded,
-                color: Color(0xFF2E7D32),
+                color: AppColors.success,
                 size: 40,
               ),
             ),
@@ -139,7 +139,7 @@ class PaymentReceiptScreen extends StatelessWidget {
             Text(
               _successLabel,
               style: const TextStyle(
-                color: Color(0xFF2E7D32),
+                color: AppColors.success,
                 fontWeight: FontWeight.w700,
                 fontSize: 20,
               ),

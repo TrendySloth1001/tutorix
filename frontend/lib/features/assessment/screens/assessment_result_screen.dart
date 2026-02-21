@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/theme/app_colors.dart';
 import '../models/assessment_model.dart';
 import '../services/assessment_service.dart';
 
@@ -127,7 +128,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                 '${r.percentage.toStringAsFixed(1)}%',
                 style: theme.textTheme.displayLarge?.copyWith(
                   fontWeight: FontWeight.w800,
-                  color: passed ? Colors.green : theme.colorScheme.onSurface,
+                  color: passed ? AppColors.success : theme.colorScheme.onSurface,
                   height: 1.0,
                   letterSpacing: -1.0,
                 ),
@@ -141,7 +142,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: (passed ? Colors.green : Colors.red).withValues(
+                    color: (passed ? AppColors.success : AppColors.error).withValues(
                       alpha: 0.1,
                     ),
                     borderRadius: BorderRadius.circular(100),
@@ -150,8 +151,8 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                     passed ? 'PASSED' : 'FAILED',
                     style: theme.textTheme.labelMedium?.copyWith(
                       color: passed
-                          ? Colors.green.shade700
-                          : Colors.red.shade700,
+                          ? AppColors.success
+                          : AppColors.error,
                       fontWeight: FontWeight.w700,
                       letterSpacing: 1.0,
                     ),
@@ -187,14 +188,14 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
                 theme,
                 'Correct',
                 '${r.correctCount}',
-                Colors.green,
+                AppColors.success,
               ),
               Container(
                 width: 1,
                 height: 40,
                 color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
               ),
-              _buildStatItem(theme, 'Wrong', '${r.wrongCount}', Colors.red),
+              _buildStatItem(theme, 'Wrong', '${r.wrongCount}', AppColors.error),
               Container(
                 width: 1,
                 height: 40,
@@ -464,8 +465,8 @@ class _QuestionResult extends StatelessWidget {
           color: isSkipped
               ? Colors.grey.withValues(alpha: 0.3)
               : isCorrect
-              ? Colors.green.withValues(alpha: 0.4)
-              : Colors.red.withValues(alpha: 0.4),
+              ? AppColors.success.withValues(alpha: 0.4)
+              : AppColors.error.withValues(alpha: 0.4),
         ),
       ),
       child: Column(
@@ -480,8 +481,8 @@ class _QuestionResult extends StatelessWidget {
                       (isSkipped
                               ? Colors.grey
                               : isCorrect
-                              ? Colors.green
-                              : Colors.red)
+                              ? AppColors.success
+                              : AppColors.error)
                           .withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
@@ -492,8 +493,8 @@ class _QuestionResult extends StatelessWidget {
                     color: isSkipped
                         ? Colors.grey
                         : isCorrect
-                        ? Colors.green
-                        : Colors.red,
+                        ? AppColors.success
+                        : AppColors.error,
                   ),
                 ),
               ),
@@ -511,7 +512,7 @@ class _QuestionResult extends StatelessWidget {
               Text(
                 '${answer?.marksAwarded.toStringAsFixed(1) ?? '0'} / ${question.marks}',
                 style: theme.textTheme.labelSmall?.copyWith(
-                  color: isCorrect ? Colors.green : Colors.red,
+                  color: isCorrect ? AppColors.success : AppColors.error,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -542,9 +543,9 @@ class _QuestionResult extends StatelessWidget {
                           : Icons.circle_outlined,
                       size: 16,
                       color: isCorrectOpt
-                          ? Colors.green
+                          ? AppColors.success
                           : isStudentOpt
-                          ? Colors.red
+                          ? AppColors.error
                           : theme.colorScheme.outlineVariant,
                     ),
                     const SizedBox(width: 6),
@@ -555,7 +556,7 @@ class _QuestionResult extends StatelessWidget {
                           fontWeight: isCorrectOpt
                               ? FontWeight.w600
                               : FontWeight.normal,
-                          color: isCorrectOpt ? Colors.green.shade700 : null,
+                          color: isCorrectOpt ? AppColors.success : null,
                         ),
                       ),
                     ),
@@ -571,7 +572,7 @@ class _QuestionResult extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: Colors.blue.withValues(alpha: 0.05),
+                color: AppColors.info.withValues(alpha: 0.05),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -580,14 +581,14 @@ class _QuestionResult extends StatelessWidget {
                   const Icon(
                     Icons.lightbulb_outline_rounded,
                     size: 14,
-                    color: Colors.blue,
+                    color: AppColors.info,
                   ),
                   const SizedBox(width: 6),
                   Expanded(
                     child: Text(
                       question.explanation!,
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: Colors.blue.shade700,
+                        color: AppColors.info,
                       ),
                     ),
                   ),
@@ -646,8 +647,8 @@ class _QuestionResult extends StatelessWidget {
               color: isSkipped
                   ? Colors.grey
                   : isCorrect
-                  ? Colors.green
-                  : Colors.red,
+                  ? AppColors.success
+                  : AppColors.error,
             ),
             const SizedBox(width: 6),
             Text(
@@ -663,8 +664,8 @@ class _QuestionResult extends StatelessWidget {
                 color: isSkipped
                     ? Colors.grey
                     : isCorrect
-                    ? Colors.green.shade700
-                    : Colors.red.shade700,
+                    ? AppColors.success
+                    : AppColors.error,
               ),
             ),
           ],
@@ -676,7 +677,7 @@ class _QuestionResult extends StatelessWidget {
             const Icon(
               Icons.check_circle_rounded,
               size: 16,
-              color: Colors.green,
+              color: AppColors.success,
             ),
             const SizedBox(width: 6),
             Text(
@@ -689,7 +690,7 @@ class _QuestionResult extends StatelessWidget {
               '$correctText$toleranceText',
               style: theme.textTheme.bodySmall?.copyWith(
                 fontWeight: FontWeight.w600,
-                color: Colors.green.shade700,
+                color: AppColors.success,
               ),
             ),
           ],
@@ -859,8 +860,8 @@ class _StudentResponseSheet extends StatelessWidget {
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: passed
-                    ? [Colors.green.shade50, Colors.green.shade100]
-                    : [Colors.blue.shade50, Colors.blue.shade100],
+                    ? [AppColors.successBg, AppColors.successBg]
+                    : [AppColors.infoBg, AppColors.infoBg],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -877,16 +878,16 @@ class _StudentResponseSheet extends StatelessWidget {
                         style: theme.textTheme.headlineMedium?.copyWith(
                           fontWeight: FontWeight.w800,
                           color: passed
-                              ? Colors.green.shade700
-                              : Colors.blue.shade700,
+                              ? AppColors.success
+                              : AppColors.info,
                         ),
                       ),
                       Text(
                         '${r.totalScore.toStringAsFixed(1)} / ${r.maxScore.toStringAsFixed(1)} marks',
                         style: theme.textTheme.bodySmall?.copyWith(
                           color: passed
-                              ? Colors.green.shade600
-                              : Colors.blue.shade600,
+                              ? AppColors.success
+                              : AppColors.info,
                         ),
                       ),
                     ],
@@ -899,7 +900,7 @@ class _StudentResponseSheet extends StatelessWidget {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: (passed ? Colors.green : Colors.red).withValues(
+                      color: (passed ? AppColors.success : AppColors.error).withValues(
                         alpha: 0.15,
                       ),
                       borderRadius: BorderRadius.circular(8),
@@ -907,7 +908,7 @@ class _StudentResponseSheet extends StatelessWidget {
                     child: Text(
                       passed ? 'PASSED' : 'FAILED',
                       style: theme.textTheme.labelSmall?.copyWith(
-                        color: passed ? Colors.green.shade700 : Colors.red,
+                        color: passed ? AppColors.success : AppColors.error,
                         fontWeight: FontWeight.w700,
                       ),
                     ),
@@ -924,13 +925,13 @@ class _StudentResponseSheet extends StatelessWidget {
               _StatBox(
                 label: 'Correct',
                 value: '${r.correctCount}',
-                color: Colors.green,
+                color: AppColors.success,
               ),
               const SizedBox(width: 8),
               _StatBox(
                 label: 'Wrong',
                 value: '${r.wrongCount}',
-                color: Colors.red,
+                color: AppColors.error,
               ),
               const SizedBox(width: 8),
               _StatBox(

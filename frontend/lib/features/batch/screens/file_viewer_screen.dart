@@ -10,6 +10,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/widgets/app_alert.dart';
 import '../models/batch_note_model.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Enhanced file viewer for documents and images.
 /// - Images: full-screen zoomable preview
@@ -450,7 +451,7 @@ class _EnhancedPdfViewerState extends State<_EnhancedPdfViewer> {
                 Icon(
                   Icons.picture_as_pdf_rounded,
                   size: 16,
-                  color: const Color(0xFFE53935).withValues(alpha: 0.6),
+                  color: AppColors.filePdf.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -506,9 +507,9 @@ class _DocumentViewerState extends State<_DocumentViewer> {
   bool _isOpening = false;
 
   static const _typeConfig = {
-    'pdf': (Icons.picture_as_pdf_rounded, Color(0xFFE53935), 'PDF Document'),
-    'doc': (Icons.description_rounded, Color(0xFF1E88E5), 'Document'),
-    'link': (Icons.link_rounded, Color(0xFF00897B), 'Link'),
+    'pdf': (Icons.picture_as_pdf_rounded, AppColors.filePdf, 'PDF Document'),
+    'doc': (Icons.description_rounded, AppColors.fileDoc, 'Document'),
+    'link': (Icons.link_rounded, AppColors.fileLink, 'Link'),
   };
 
   Future<void> _openFile() async {

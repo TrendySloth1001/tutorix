@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/batch_note_model.dart';
 import 'file_viewer_screen.dart';
+import '../../../core/theme/app_colors.dart';
 
 /// Comprehensive note detail screen showing title, description,
 /// uploader info, and tappable file attachments.
@@ -40,7 +41,7 @@ class NoteDetailScreen extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 8),
                   child: _CircleActionButton(
                     icon: Icons.delete_outline_rounded,
-                    color: Colors.red,
+                    color: AppColors.error,
                     onTap: () => _confirmDelete(context),
                   ),
                 ),
@@ -185,7 +186,7 @@ class NoteDetailScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: Colors.red.shade400),
+            Icon(Icons.warning_amber_rounded, color: AppColors.error),
             const SizedBox(width: 10),
             const Text('Delete Note'),
           ],
@@ -205,7 +206,7 @@ class NoteDetailScreen extends StatelessWidget {
               onDelete?.call();
               Navigator.pop(context, true);
             },
-            style: FilledButton.styleFrom(backgroundColor: Colors.red.shade600),
+            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
             child: const Text('Delete'),
           ),
         ],
@@ -235,10 +236,10 @@ class _HeroHeader extends StatelessWidget {
   const _HeroHeader({required this.note, required this.theme});
 
   static const _typeConfig = {
-    'pdf': (Icons.picture_as_pdf_rounded, Color(0xFFE53935)),
-    'image': (Icons.image_rounded, Color(0xFF8E24AA)),
-    'doc': (Icons.description_rounded, Color(0xFF1E88E5)),
-    'link': (Icons.link_rounded, Color(0xFF00897B)),
+    'pdf': (Icons.picture_as_pdf_rounded, AppColors.filePdf),
+    'image': (Icons.image_rounded, AppColors.fileImage),
+    'doc': (Icons.description_rounded, AppColors.fileDoc),
+    'link': (Icons.link_rounded, AppColors.fileLink),
   };
 
   @override
@@ -461,10 +462,10 @@ class _AttachmentCard extends StatelessWidget {
   });
 
   static const _typeConfig = {
-    'pdf': (Icons.picture_as_pdf_rounded, Color(0xFFE53935), 'PDF'),
-    'image': (Icons.image_rounded, Color(0xFF8E24AA), 'Image'),
-    'doc': (Icons.description_rounded, Color(0xFF1E88E5), 'Document'),
-    'link': (Icons.link_rounded, Color(0xFF00897B), 'Link'),
+    'pdf': (Icons.picture_as_pdf_rounded, AppColors.filePdf, 'PDF'),
+    'image': (Icons.image_rounded, AppColors.fileImage, 'Image'),
+    'doc': (Icons.description_rounded, AppColors.fileDoc, 'Document'),
+    'link': (Icons.link_rounded, AppColors.fileLink, 'Link'),
   };
 
   @override

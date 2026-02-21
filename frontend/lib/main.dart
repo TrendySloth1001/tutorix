@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'app.dart';
 import 'core/services/database_service.dart';
 import 'core/services/error_logger_service.dart';
+import 'core/theme/theme_provider.dart';
 import 'features/auth/controllers/auth_controller.dart';
 
 void main() async {
@@ -51,8 +52,13 @@ void main() async {
       logger.info('App started', category: LogCategory.lifecycle);
 
       runApp(
-        ChangeNotifierProvider(
-          create: (_) => AuthController()..initialize(),
+        MultiProvider(
+          providers: [
+            ChangeNotifierProvider(
+              create: (_) => AuthController()..initialize(),
+            ),
+            ChangeNotifierProvider(create: (_) => ThemeProvider()),
+          ],
           child: const TutorixApp(),
         ),
       );
