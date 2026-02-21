@@ -225,7 +225,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         for (int i = 0; i < _joinedCoachings.length; i++) ...[
                           Padding(
                             padding: EdgeInsets.only(
-                              bottom: i < _joinedCoachings.length - 1 ? Spacing.sp12 : 0,
+                              bottom: i < _joinedCoachings.length - 1
+                                  ? Spacing.sp12
+                                  : 0,
                             ),
                             child: CoachingCoverCard(
                               coaching: _joinedCoachings[i],
@@ -362,18 +364,16 @@ class _HomeHeader extends StatelessWidget {
                   backgroundColor: theme.colorScheme.onPrimary.withValues(
                     alpha: 0.15,
                   ),
-                  backgroundImage:
-                      user.picture != null
-                          ? NetworkImage(user.picture!)
-                          : null,
-                  child:
-                      user.picture == null
-                          ? Icon(
-                            Icons.person_rounded,
-                            color: theme.colorScheme.onPrimary,
-                            size: Spacing.sp24,
-                          )
-                          : null,
+                  backgroundImage: user.picture != null
+                      ? NetworkImage(user.picture!)
+                      : null,
+                  child: user.picture == null
+                      ? Icon(
+                          Icons.person_rounded,
+                          color: theme.colorScheme.onPrimary,
+                          size: Spacing.sp24,
+                        )
+                      : null,
                 ),
               ),
               const SizedBox(width: Spacing.sp16),
