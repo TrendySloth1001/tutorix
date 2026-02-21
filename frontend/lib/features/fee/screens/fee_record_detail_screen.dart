@@ -1882,7 +1882,13 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
   @override
   void initState() {
     super.initState();
-    _amountCtrl.text = widget.record.balance.toStringAsFixed(0);
+    final b = widget.record.balance;
+    // Show full precision so the pre-filled value exactly matches the balance —
+    // rounding to 0 decimals (e.g. 1966.66 → "1967") would exceed the balance
+    // guard and block submission without the user changing anything.
+    _amountCtrl.text = b == b.truncateToDouble()
+        ? b.toStringAsFixed(0)
+        : b.toStringAsFixed(2);
   }
 
   @override
@@ -2075,11 +2081,14 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
       ).showSnackBar(const SnackBar(content: Text('Enter a valid amount')));
       return;
     }
-    if (amount > widget.record.balance + 0.01) {
+    // Allow amounts up to the ceiling of the balance (whole-rupee rounding);
+    // the backend will cap at the exact balance if needed.
+    final maxAllowed = widget.record.balance.ceilToDouble();
+    if (amount > maxAllowed + 0.01) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            'Amount exceeds balance of ₹${widget.record.balance.toStringAsFixed(0)}',
+            'Amount exceeds balance of ₹${widget.record.balance.toStringAsFixed(2)}',
           ),
         ),
       );

@@ -791,15 +791,20 @@ export class FeeService {
                 orderBy: { createdAt: 'asc' },
             });
             if (creditTarget) {
-                const newPaidAmount = Math.min(creditTarget.finalAmount, creditTarget.paidAmount + carriedCredit);
+                const balance = creditTarget.finalAmount - creditTarget.paidAmount;
+                // Cap the credit applied at what the record actually needs — if the
+                // student overpaid on the old structure (carriedCredit > balance) we
+                // only credit what's owed; excess is tracked in the audit log.
+                const effectiveCredit = Math.min(carriedCredit, balance);
+                const newPaidAmount = creditTarget.paidAmount + effectiveCredit;
                 const fullyPaid = newPaidAmount >= creditTarget.finalAmount - 0.01;
                 await prisma.feePayment.create({
                     data: {
                         coachingId,
                         recordId: creditTarget.id,
-                        amount: carriedCredit,
+                        amount: effectiveCredit,
                         mode: 'CREDIT_TRANSFER',
-                        notes: `Credit carried from previous fee structure (auto-applied on reassignment)`,
+                        notes: `Credit carried from previous fee structure (auto-applied on reassignment)${carriedCredit > balance ? `. Excess ₹${(carriedCredit - balance).toFixed(2)} not applied.` : ''}`,
                         paidAt: new Date(),
                         recordedById: assignedById,
                     },
@@ -818,7 +823,7 @@ export class FeeService {
                     entityId: creditTarget.id,
                     event: 'PAYMENT_RECORDED',
                     actorId: assignedById,
-                    after: { amount: carriedCredit, mode: 'CREDIT_TRANSFER', isPaid: fullyPaid },
+                    after: { amount: effectiveCredit, mode: 'CREDIT_TRANSFER', isPaid: fullyPaid, carriedTotal: carriedCredit },
                 });
             }
         }
@@ -1034,13 +1039,19 @@ export class FeeService {
             const liveTaxType = fs?.taxType ?? record.taxType ?? 'NONE';
             const finalAmountLocked = netFee + fineNow + (liveTaxType === 'GST_INCLUSIVE' ? 0 : liveTax.taxAmount);
 
-            // Guard against overpayment
+            // Guard against overpayment.
+            // Allow up to +1 rupee over balance to handle whole-rupee UI rounding
+            // (e.g. balance = 1966.66, user submits 1967).
+            // In that case cap the recorded amount at the exact balance so
+            // paidAmount never exceeds finalAmount.
             const balance = finalAmountLocked - record.paidAmount;
-            if (dto.amount > balance + 0.01) {
+            if (dto.amount > balance + 1.0) {
                 throw Object.assign(new Error(`Amount exceeds outstanding balance of ₹${balance.toFixed(2)}`), { status: 400 });
             }
+            // Cap at exact balance — prevents paise over-credit from rounding
+            const effectiveAmount = Math.min(dto.amount, balance);
 
-            const newPaidAmount = record.paidAmount + dto.amount;
+            const newPaidAmount = record.paidAmount + effectiveAmount;
             const isPaid = newPaidAmount >= finalAmountLocked - 0.01;
 
             // Generate sequential receipt number INSIDE transaction
@@ -1050,7 +1061,7 @@ export class FeeService {
                 data: {
                     coachingId,
                     recordId,
-                    amount: dto.amount,
+                    amount: effectiveAmount,
                     mode: dto.mode,
                     transactionRef: dto.transactionRef ?? null,
                     receiptNo: paymentReceiptNo,
@@ -1318,16 +1329,22 @@ export class FeeService {
 
         const refundWhere = { coachingId, ...(fyStart && fyEnd ? { refundedAt: { gte: fyStart, lte: fyEnd } } : {}) };
 
+        // Exclude CREDIT_TRANSFER from cash totals — CT is an internal accounting entry
+        // (prior payments carried forward on reassignment), not new cash received.
+        // Including it would double-count the original RAZORPAY/CASH payment that was
+        // already counted on the source (waived) record.
+        const cashPyWhere = { ...pyWhere, mode: { not: 'CREDIT_TRANSFER' as const } };
+
         const [statusGroups, totalCollected, totalRefunded, outstandingRecords, paymentModes, monthlyCollection, overdueCount, todayCollection] = await Promise.all([
             prisma.feeRecord.groupBy({ by: ['status'], where: recWhere, _count: true, _sum: { finalAmount: true } }),
-            prisma.feePayment.aggregate({ where: pyWhere, _sum: { amount: true } }),
+            prisma.feePayment.aggregate({ where: cashPyWhere, _sum: { amount: true } }),
             prisma.feeRefund.aggregate({ where: refundWhere, _sum: { amount: true } }),
             // Fetch outstanding records to compute actual balance (finalAmount - paidAmount)
             prisma.feeRecord.findMany({
                 where: { ...recWhere, status: { in: ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'] } },
                 select: { finalAmount: true, paidAmount: true, status: true },
             }),
-            prisma.feePayment.groupBy({ by: ['mode'], where: pyWhere, _sum: { amount: true }, _count: true }),
+            prisma.feePayment.groupBy({ by: ['mode'], where: cashPyWhere, _sum: { amount: true }, _count: true }),
             prisma.$queryRaw<Array<{ month: string; total: number; count: number }>>`
                 SELECT TO_CHAR(DATE_TRUNC('month', "paidAt"), 'YYYY-MM') AS month,
                        SUM(amount)::FLOAT AS total,
@@ -1400,17 +1417,21 @@ export class FeeService {
 
         type RawEntry = { date: Date; type: 'RECORD' | 'PAYMENT' | 'REFUND'; label: string; amount: number; mode?: string; ref?: string | null; receiptNo?: string | null; status?: string; recordId: string };
         const raw: RawEntry[] = [];
-        let totalCharged = 0, totalPaid = 0, totalRefunded = 0;
+        // Summary figures are derived from record-level paidAmount (source of truth).
+        // This avoids double-counting CREDIT_TRANSFER entries vs the original payments
+        // on the waived record, and avoids inflating totalPaid when carriedCredit > balance.
+        // WAIVED records are excluded from headline totals (fee was forgiven).
+        const nonWaived = records.filter(r => r.status !== 'WAIVED');
+        const totalCharged = nonWaived.reduce((s, r) => s + r.finalAmount, 0);
+        const totalPaid = nonWaived.reduce((s, r) => s + r.paidAmount, 0);
+        const totalRefunded = records.flatMap(r => r.refunds).reduce((s, rf) => s + rf.amount, 0);
 
         for (const r of records) {
-            totalCharged += r.finalAmount;
             raw.push({ date: r.dueDate, type: 'RECORD', label: r.title, amount: r.finalAmount, status: r.status, recordId: r.id });
             for (const p of r.payments) {
-                totalPaid += p.amount;
                 raw.push({ date: p.paidAt, type: 'PAYMENT', label: `Payment (${p.mode})`, amount: p.amount, mode: p.mode, ref: p.transactionRef, receiptNo: p.receiptNo, recordId: r.id });
             }
             for (const rf of r.refunds) {
-                totalRefunded += rf.amount;
                 raw.push({ date: rf.refundedAt, type: 'REFUND', label: 'Refund', amount: -rf.amount, mode: rf.mode, recordId: r.id });
             }
         }
