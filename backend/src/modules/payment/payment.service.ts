@@ -127,7 +127,39 @@ function computeTax(
 
 // ─── Service ─────────────────────────────────────────────────────────
 
+/** Max retries for Serializable transaction conflicts (Postgres error 40001). */
+const SERIALIZATION_MAX_RETRIES = 3;
+const SERIALIZATION_BASE_DELAY_MS = 50;
+
+/** Checks if a Prisma error is a serialization conflict (P2034 / 40001). */
+function isSerializationError(err: any): boolean {
+    return (
+        err?.code === 'P2034' ||
+        err?.meta?.code === '40001' ||
+        (typeof err?.message === 'string' && err.message.includes('could not serialize'))
+    );
+}
+
 export class PaymentService {
+
+    /**
+     * Wrapper that retries _processPayment on Serializable isolation conflicts.
+     * Concurrent webhook + client verify can collide, causing one to fail with 40001.
+     * This retries with exponential backoff so the client gets a clean response.
+     */
+    async _processPaymentWithRetry(
+        internalOrderId: string, razorpayPaymentId: string, signature: string, userId?: string,
+    ) {
+        for (let attempt = 0; attempt < SERIALIZATION_MAX_RETRIES; attempt++) {
+            try {
+                return await this._processPayment(internalOrderId, razorpayPaymentId, signature, userId);
+            } catch (err: any) {
+                if (!isSerializationError(err) || attempt === SERIALIZATION_MAX_RETRIES - 1) throw err;
+                const delay = SERIALIZATION_BASE_DELAY_MS * (attempt + 1);
+                await new Promise(r => setTimeout(r, delay));
+            }
+        }
+    }
 
     /**
      * Create a Razorpay order for a pending/overdue fee record.
@@ -323,8 +355,8 @@ export class PaymentService {
             throw Object.assign(new Error('Failed to verify payment with Razorpay'), { status: 502 });
         }
 
-        // 3. Record payment in a transaction
-        await this._processPayment(order.id, dto.razorpay_payment_id, dto.razorpay_signature, userId);
+        // 3. Record payment with serialization retry
+        await this._processPaymentWithRetry(order.id, dto.razorpay_payment_id, dto.razorpay_signature, userId);
 
         // 4. Return enriched record + the specific payment for receipt
         const record = await this._getRecordWithDaysOverdue(coachingId, recordId);
@@ -417,6 +449,25 @@ export class PaymentService {
                 },
             });
 
+            // Compute proportional commission reversal:
+            // If the original order had a platformFeePaise and platformFeePercent,
+            // reverse the same % of the refund amount.
+            const originalOrder = await tx.razorpayOrder.findFirst({
+                where: {
+                    razorpayPaymentId: payment.razorpayPaymentId!,
+                    coachingId,
+                    paymentRecorded: true,
+                },
+                select: { amountPaise: true, platformFeePaise: true, platformFeePercent: true },
+            });
+            let commissionReversalPaise: number | null = null;
+            if (originalOrder?.platformFeePaise && originalOrder.amountPaise > 0) {
+                // Proportional reversal: refundPaise / orderPaise * platformFeePaise
+                commissionReversalPaise = Math.round(
+                    (amountPaise / originalOrder.amountPaise) * originalOrder.platformFeePaise
+                );
+            }
+
             const razorpayRefund = await tx.razorpayRefund.create({
                 data: {
                     coachingId,
@@ -424,6 +475,7 @@ export class PaymentService {
                     razorpayPaymentId: payment.razorpayPaymentId!,
                     amountPaise,
                     status: 'INITIATED',
+                    commissionReversalPaise,
                 },
             });
 
@@ -719,10 +771,10 @@ export class PaymentService {
             return { success: true, message: 'Already processed', recordIds: orders.map(o => o.recordId) };
         }
 
-        // 3. Process each sub-order
+        // 3. Process each sub-order with serialization retry
         for (const order of orders) {
             if (order.paymentRecorded) continue;
-            await this._processPayment(order.id, dto.razorpay_payment_id, dto.razorpay_signature, userId);
+            await this._processPaymentWithRetry(order.id, dto.razorpay_payment_id, dto.razorpay_signature, userId);
         }
 
         return {

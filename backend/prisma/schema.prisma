@@ -1090,6 +1090,10 @@ model RazorpayRefund {
   /// INITIATED | PROCESSED | FAILED
   status          String  @default("INITIATED")
 
+  /// Commission reversal tracking — proportional refund of platform fee
+  commissionReversalPaise Int?  // Platform commission reversed for this refund
+  gstOnCommissionReversalPaise Int? // GST portion of reversed commission (if applicable)
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

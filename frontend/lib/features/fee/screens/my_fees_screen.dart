@@ -682,6 +682,11 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       if (!mounted) return;
       final msg = e.toString().replaceFirst('Exception: ', '');
       if (msg == 'Payment cancelled') return;
+      // External wallet: show info instead of error (webhook will confirm)
+      if (msg.contains('being processed via')) {
+        AppAlert.info(context, title: 'Processing', message: msg);
+        return;
+      }
       final viewDetails = await AppAlert.confirm(
         context,
         title: 'Payment Failed',
@@ -764,6 +769,11 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       if (!mounted) return;
       final msg = e.toString().replaceFirst('Exception: ', '');
       if (msg == 'Payment cancelled') return;
+      // External wallet: show info instead of error (webhook will confirm)
+      if (msg.contains('being processed via')) {
+        AppAlert.info(context, title: 'Processing', message: msg);
+        return;
+      }
       AppAlert.error(context, msg);
     }
   }

@@ -101,7 +101,7 @@ webhookRouter.post('/razorpay', async (req: Request, res: Response) => {
                 for (const order of orders) {
                     if (order.paymentRecorded) continue;
                     try {
-                        await paymentSvc._processPayment(order.id, paymentId, signature);
+                        await paymentSvc._processPaymentWithRetry(order.id, paymentId, signature);
                         await prisma.razorpayOrder.update({
                             where: { id: order.id },
                             data: { webhookReceived: true, webhookReceivedAt: new Date() },
@@ -166,58 +166,61 @@ webhookRouter.post('/razorpay', async (req: Request, res: Response) => {
 
             case 'refund.failed': {
                 if (!refundId) break;
-                const rzpRefund = await prisma.razorpayRefund.findFirst({
-                    where: { razorpayRefundId: refundId },
-                    include: {
-                        feeRefund: { select: { id: true, recordId: true, amount: true, coachingId: true } },
-                    },
-                });
-                if (rzpRefund) {
-                    // C3 fix: Wrap refund reversal in Serializable transaction to prevent
-                    // lost updates on paidAmount from concurrent events
-                    await prisma.$transaction(async (tx) => {
-                        await tx.razorpayRefund.update({
-                            where: { id: rzpRefund.id },
-                            data: { status: 'FAILED' },
-                        });
+                // C3 + lookup-inside-tx fix: Find refund AND reverse balance
+                // all inside one Serializable transaction to prevent stale reads
+                let refundNotifData: { recordId: string; amount: number; coachingId: string } | null = null as any;
+                await prisma.$transaction(async (tx) => {
+                    const rzpRefund = await tx.razorpayRefund.findFirst({
+                        where: { razorpayRefundId: refundId },
+                        include: {
+                            feeRefund: { select: { id: true, recordId: true, amount: true, coachingId: true } },
+                        },
+                    });
+                    if (!rzpRefund) return;
 
-                        // H10 fix: Reverse the FeeRecord.paidAmount since refund was not actually sent
-                        if (rzpRefund.feeRefund) {
-                            const { recordId, amount } = rzpRefund.feeRefund;
-                            const record = await tx.feeRecord.findUnique({ where: { id: recordId } });
-                            if (record) {
-                                const restoredPaidAmount = record.paidAmount + amount;
-                                const newStatus =
-                                    restoredPaidAmount >= record.finalAmount - 0.01 ? 'PAID'
-                                        : restoredPaidAmount > 0 ? 'PARTIALLY_PAID'
-                                            : record.dueDate < new Date() ? 'OVERDUE'
-                                                : 'PENDING';
-                                await tx.feeRecord.update({
-                                    where: { id: recordId },
-                                    data: { paidAmount: restoredPaidAmount, status: newStatus },
-                                });
-                            }
-                        }
-                    }, { isolationLevel: 'Serializable' });
+                    await tx.razorpayRefund.update({
+                        where: { id: rzpRefund.id },
+                        data: { status: 'FAILED' },
+                    });
 
-                    // Notify admin about failed refund (outside tx — non-critical)
                     if (rzpRefund.feeRefund) {
-                        const { recordId, amount, coachingId: refCoachingId } = rzpRefund.feeRefund;
-                        if (refCoachingId) {
-                            const coaching = await prisma.coaching.findUnique({
-                                where: { id: refCoachingId },
-                                select: { ownerId: true },
+                        const { recordId, amount } = rzpRefund.feeRefund;
+                        const record = await tx.feeRecord.findUnique({ where: { id: recordId } });
+                        if (record) {
+                            const restoredPaidAmount = record.paidAmount + amount;
+                            const newStatus =
+                                restoredPaidAmount >= record.finalAmount - 0.01 ? 'PAID'
+                                    : restoredPaidAmount > 0 ? 'PARTIALLY_PAID'
+                                        : record.dueDate < new Date() ? 'OVERDUE'
+                                            : 'PENDING';
+                            await tx.feeRecord.update({
+                                where: { id: recordId },
+                                data: { paidAmount: restoredPaidAmount, status: newStatus },
                             });
-                            if (coaching?.ownerId) {
-                                await notifSvc.create({
-                                    userId: coaching.ownerId,
-                                    coachingId: refCoachingId,
-                                    type: 'FEE_PAYMENT',
-                                    title: 'Refund Failed',
-                                    message: `Razorpay refund of ₹${amount.toFixed(0)} failed. The student's balance has been restored.`,
-                                    data: { recordId, refundId },
-                                }).catch(() => {});
-                            }
+                        }
+                        refundNotifData = { recordId, amount, coachingId: rzpRefund.feeRefund.coachingId };
+                    }
+                }, { isolationLevel: 'Serializable' });
+
+                // Notify admin about failed refund (outside tx — non-critical)
+                if (refundNotifData) {
+                    const rId = refundNotifData.recordId;
+                    const rAmt = refundNotifData.amount;
+                    const refCoachingId = refundNotifData.coachingId;
+                    if (refCoachingId) {
+                        const coaching = await prisma.coaching.findUnique({
+                            where: { id: refCoachingId },
+                            select: { ownerId: true },
+                        });
+                        if (coaching?.ownerId) {
+                            await notifSvc.create({
+                                userId: coaching.ownerId,
+                                coachingId: refCoachingId,
+                                type: 'FEE_PAYMENT',
+                                title: 'Refund Failed',
+                                message: `Razorpay refund of ₹${rAmt.toFixed(0)} failed. The student's balance has been restored.`,
+                                data: { recordId: rId, refundId },
+                            }).catch(() => {});
                         }
                     }
                 }
@@ -236,16 +239,15 @@ webhookRouter.post('/razorpay', async (req: Request, res: Response) => {
                 const disputeEntity = payload?.payload?.dispute?.entity;
                 const disputePaymentId = disputeEntity?.payment_id;
                 if (disputePaymentId && coachingId) {
-                    // Find the order associated with this payment
-                    const disputeOrder = await prisma.razorpayOrder.findFirst({
-                        where: { razorpayPaymentId: disputePaymentId },
-                        select: { id: true, recordId: true, coachingId: true },
-                    });
-
                     // Notify coaching owner about the dispute
                     const coaching = await prisma.coaching.findUnique({
                         where: { id: coachingId },
                         select: { ownerId: true },
+                    });
+                    // Lookup order here for notification data (best-effort)
+                    const disputeOrderForNotif = await prisma.razorpayOrder.findFirst({
+                        where: { razorpayPaymentId: disputePaymentId },
+                        select: { id: true, recordId: true, coachingId: true },
                     });
                     if (coaching?.ownerId) {
                         const disputeStatus = event.split('.').pop()!;
@@ -258,16 +260,21 @@ webhookRouter.post('/razorpay', async (req: Request, res: Response) => {
                             message: `A payment dispute of ₹${amount.toFixed(0)} has been ${disputeStatus}. ${
                                 disputeStatus === 'lost' ? 'The disputed amount will be deducted from your settlements.' : ''
                             }`.trim(),
-                            data: { paymentId: disputePaymentId, recordId: disputeOrder?.recordId, disputeId: disputeEntity?.id },
+                            data: { paymentId: disputePaymentId, recordId: disputeOrderForNotif?.recordId, disputeId: disputeEntity?.id },
                         }).catch(() => {});
                     }
 
                     // If dispute is lost, reverse the payment on the fee record
-                    // C4 fix: Wrap in Serializable transaction to prevent lost updates on paidAmount
-                    if (event === 'payment.dispute.lost' && disputeOrder) {
+                    // C4 fix: Order lookup + balance reversal inside single Serializable tx
+                    if (event === 'payment.dispute.lost') {
                         const disputeAmount = disputeEntity?.amount ? disputeEntity.amount / 100 : 0;
                         if (disputeAmount > 0) {
                             await prisma.$transaction(async (tx) => {
+                                const disputeOrder = await tx.razorpayOrder.findFirst({
+                                    where: { razorpayPaymentId: disputePaymentId },
+                                    select: { recordId: true },
+                                });
+                                if (!disputeOrder) return;
                                 const record = await tx.feeRecord.findUnique({ where: { id: disputeOrder.recordId } });
                                 if (record) {
                                     const newPaidAmount = Math.max(0, record.paidAmount - disputeAmount);

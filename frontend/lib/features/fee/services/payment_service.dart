@@ -34,7 +34,12 @@ class PaymentService {
     return data;
   }
 
+  /// Max retries for verify calls (backend may return 500 on serialization retries).
+  static const _verifyMaxRetries = 3;
+  static const _verifyBaseDelay = Duration(milliseconds: 500);
+
   /// Verify payment after Razorpay checkout succeeds.
+  /// Retries on 5xx server errors (backend serialization contention).
   Future<Map<String, dynamic>> verifyPayment(
     String coachingId,
     String recordId, {
@@ -47,11 +52,12 @@ class PaymentService {
       'razorpay_payment_id': razorpayPaymentId,
       'razorpay_signature': razorpaySignature,
     };
-    final data = await _api.postAuthenticated(
-      ApiConstants.feeVerifyPayment(coachingId, recordId),
-      body: body,
+    return _retryOnServerError(
+      () => _api.postAuthenticated(
+        ApiConstants.feeVerifyPayment(coachingId, recordId),
+        body: body,
+      ),
     );
-    return data;
   }
 
   /// Get online-only payments for a record (admin: for refund selection).
@@ -141,6 +147,7 @@ class PaymentService {
   }
 
   /// Verify multi-pay after Razorpay checkout.
+  /// Retries on 5xx server errors (backend serialization contention).
   Future<Map<String, dynamic>> verifyMultiPayment(
     String coachingId, {
     required String razorpayOrderId,
@@ -152,9 +159,11 @@ class PaymentService {
       'razorpay_payment_id': razorpayPaymentId,
       'razorpay_signature': razorpaySignature,
     };
-    return _api.postAuthenticated(
-      ApiConstants.feeMultiPayVerify(coachingId),
-      body: body,
+    return _retryOnServerError(
+      () => _api.postAuthenticated(
+        ApiConstants.feeMultiPayVerify(coachingId),
+        body: body,
+      ),
     );
   }
 
@@ -295,6 +304,40 @@ class PaymentService {
         _checkoutTimeout,
       ),
     );
+  }
+
+  // ── Retry Helper ──────────────────────────────────────────────
+
+  /// Retries an API call on 5xx server errors with exponential backoff.
+  /// 4xx errors (client-side) are thrown immediately.
+  Future<Map<String, dynamic>> _retryOnServerError(
+    Future<Map<String, dynamic>> Function() apiCall,
+  ) async {
+    for (int attempt = 0; attempt <= _verifyMaxRetries; attempt++) {
+      try {
+        return await apiCall();
+      } catch (e) {
+        final isServerError = _isRetryableError(e);
+        if (!isServerError || attempt == _verifyMaxRetries) rethrow;
+        // Exponential backoff: 500ms, 1000ms, 1500ms
+        await Future.delayed(_verifyBaseDelay * (attempt + 1));
+      }
+    }
+    throw Exception('Verify failed after $_verifyMaxRetries retries');
+  }
+
+  /// Returns true if the error is a retryable server-side error (5xx).
+  bool _isRetryableError(Object error) {
+    final msg = error.toString().toLowerCase();
+    // Match common 5xx status codes or "server error" messages
+    return msg.contains('500') ||
+        msg.contains('502') ||
+        msg.contains('503') ||
+        msg.contains('504') ||
+        msg.contains('server error') ||
+        msg.contains('internal error') ||
+        msg.contains('serialization') ||
+        msg.contains('timeout');
   }
 
   void dispose() {

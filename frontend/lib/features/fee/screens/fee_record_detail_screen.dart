@@ -332,12 +332,19 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
 
       if (!mounted) return;
 
+      final oid = response.orderId;
+      final pid = response.paymentId;
+      final sig = response.signature;
+      if (oid == null || pid == null || sig == null) {
+        throw Exception('Incomplete payment response from Razorpay');
+      }
+
       final verified = await _paySvc.verifyPayment(
         widget.coachingId,
         widget.recordId,
-        razorpayOrderId: response.orderId!,
-        razorpayPaymentId: response.paymentId!,
-        razorpaySignature: response.signature!,
+        razorpayOrderId: oid,
+        razorpayPaymentId: pid,
+        razorpaySignature: sig,
       );
 
       if (!mounted) return;
@@ -355,8 +362,8 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
             coachingName: widget.coachingName ?? 'Institute',
             feeTitle: _record!.title,
             amount: paidAmount,
-            paymentId: response.paymentId!,
-            orderId: response.orderId!,
+            paymentId: pid,
+            orderId: oid,
             paidAt: vp?['paidAt'] != null
                 ? DateTime.tryParse(vp!['paidAt'] as String) ?? DateTime.now()
                 : DateTime.now(),
@@ -391,6 +398,11 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
       if (!mounted) return;
       final msg = e.toString().replaceFirst('Exception: ', '');
       if (msg == 'Payment cancelled') return; // user dismissed — no snackbar
+      // External wallet: show info instead of error (webhook will confirm)
+      if (msg.contains('being processed via')) {
+        AppAlert.info(context, title: 'Processing', message: msg);
+        return;
+      }
       AppAlert.error(context, msg);
     }
   }
