@@ -113,25 +113,25 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
         backgroundColor: cs.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.darkOlive,
+            color: cs.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Reports',
           style: TextStyle(
-            color: AppColors.darkOlive,
+            color: cs.onSurface,
             fontWeight: FontWeight.w700,
             fontSize: 20,
           ),
         ),
         bottom: TabBar(
           controller: _tabs,
-          indicatorColor: AppColors.darkOlive,
-          labelColor: AppColors.darkOlive,
-          unselectedLabelColor: AppColors.mutedOlive,
+          indicatorColor: cs.primary,
+          labelColor: cs.primary,
+          unselectedLabelColor: cs.onSurfaceVariant,
           tabs: const [
             Tab(text: 'Overdue'),
             Tab(text: 'FY Collection'),
@@ -143,7 +143,7 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
         children: [
           // ── Overdue tab ──
           RefreshIndicator(
-            color: AppColors.darkOlive,
+            color: cs.primary,
             onRefresh: _loadOverdue,
             child: _loadingOverdue
                 ? const Center(child: CircularProgressIndicator())
@@ -152,22 +152,22 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
                 : _overdueRecords.isEmpty
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
-                    children: const [
-                      SizedBox(height: 200),
+                    children: [
+                      const SizedBox(height: 200),
                       Center(
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
+                            const Icon(
                               Icons.check_circle_outline_rounded,
                               size: 52,
                               color: AppColors.success,
                             ),
-                            SizedBox(height: 12),
+                            const SizedBox(height: 12),
                             Text(
                               'No overdue fees!',
                               style: TextStyle(
-                                color: AppColors.darkOlive,
+                                color: cs.onSurface,
                                 fontWeight: FontWeight.w700,
                                 fontSize: 16,
                               ),
@@ -186,7 +186,7 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
 
           // ── FY Collection tab ──
           RefreshIndicator(
-            color: AppColors.darkOlive,
+            color: cs.primary,
             onRefresh: _loadSummary,
             child: _loadingSummary
                 ? const Center(child: CircularProgressIndicator())
@@ -224,6 +224,7 @@ class _OverdueList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -234,11 +235,11 @@ class _OverdueList extends StatelessWidget {
           padding: const EdgeInsets.only(bottom: 10),
           child: Card(
             elevation: 0,
-            color: AppColors.softGrey.withValues(alpha: 0.1),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
               side: BorderSide(
-                color: AppColors.mutedOlive.withValues(alpha: 0.2),
+                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
               ),
             ),
             child: InkWell(
@@ -282,17 +283,17 @@ class _OverdueList extends StatelessWidget {
                         children: [
                           Text(
                             r.member?.name ?? 'Unknown Student',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w700,
-                              color: AppColors.darkOlive,
+                              color: theme.colorScheme.onSurface,
                               fontSize: 15,
                             ),
                           ),
                           const SizedBox(height: 2),
                           Text(
                             r.title,
-                            style: const TextStyle(
-                              color: AppColors.mutedOlive,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurfaceVariant,
                               fontSize: 12,
                             ),
                           ),
@@ -324,8 +325,8 @@ class _OverdueList extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             '+₹${r.fineAmount.toStringAsFixed(0)} fine',
-                            style: const TextStyle(
-                              color: AppColors.mutedOlive,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurfaceVariant,
                               fontSize: 10,
                             ),
                           ),
@@ -362,6 +363,7 @@ class _FYReport extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return SingleChildScrollView(
       physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(16),
@@ -377,23 +379,23 @@ class _FYReport extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: AppColors.softGrey.withValues(alpha: 0.1),
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: AppColors.mutedOlive.withValues(alpha: 0.2),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
                   ),
                 ),
                 child: DropdownButton<String>(
                   value: selectedFY,
                   underline: const SizedBox.shrink(),
                   isDense: true,
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.keyboard_arrow_down_rounded,
-                    color: AppColors.darkOlive,
+                    color: theme.colorScheme.onSurface,
                     size: 18,
                   ),
-                  style: const TextStyle(
-                    color: AppColors.darkOlive,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),
@@ -422,11 +424,11 @@ class _FYReport extends StatelessWidget {
             child: Column(
               children: [
                 if (summary.monthlyCollection.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 24),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
                     child: Text(
                       'No data for this financial year',
-                      style: TextStyle(color: AppColors.mutedOlive),
+                      style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                     ),
                   )
                 else ...[
@@ -448,9 +450,9 @@ class _FYReport extends StatelessWidget {
                             children: [
                               Text(
                                 d.month,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 15,
-                                  color: AppColors.darkOlive,
+                                  color: theme.colorScheme.onSurface,
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -461,16 +463,16 @@ class _FYReport extends StatelessWidget {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: AppColors.softGrey.withValues(
+                                  color: theme.colorScheme.outlineVariant.withValues(
                                     alpha: 0.3,
                                   ),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
                                   '${d.count} txn',
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 12,
-                                    color: AppColors.mutedOlive,
+                                    color: theme.colorScheme.onSurfaceVariant,
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -481,10 +483,10 @@ class _FYReport extends StatelessWidget {
                                 child: Text(
                                   '₹${_formatAmount(d.total)}',
                                   textAlign: TextAlign.end,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontSize: 15,
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.darkOlive,
+                                    color: theme.colorScheme.onSurface,
                                   ),
                                 ),
                               ),
@@ -515,12 +517,13 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       elevation: 0,
-      color: AppColors.softGrey.withValues(alpha: 0.1),
+      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: AppColors.mutedOlive.withValues(alpha: 0.2)),
+        side: BorderSide(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -529,10 +532,10 @@ class _SectionCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: AppColors.darkOlive,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 16),
@@ -550,32 +553,33 @@ class _FinancialOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       elevation: 0,
-      color: AppColors.softGrey.withValues(alpha: 0.1),
+      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: AppColors.mutedOlive.withValues(alpha: 0.2)),
+        side: BorderSide(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            const Text(
+            Text(
               'Total Collected',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: AppColors.mutedOlive,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               '₹${_formatAmount(summary.totalCollected)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 36,
                 fontWeight: FontWeight.w800,
-                color: AppColors.darkOlive,
+                color: theme.colorScheme.onSurface,
                 height: 1.0,
               ),
             ),
@@ -586,18 +590,18 @@ class _FinancialOverviewCard extends StatelessWidget {
                   child: _MiniStat(
                     label: 'Today',
                     value: '₹${_formatAmount(summary.todayCollection)}',
-                    color: AppColors.darkOlive,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
-                Container(width: 1, height: 30, color: AppColors.softGrey),
+                Container(width: 1, height: 30, color: theme.colorScheme.outlineVariant),
                 Expanded(
                   child: _MiniStat(
                     label: 'Pending',
                     value: '₹${_formatAmount(summary.totalPending)}',
-                    color: AppColors.darkOlive,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
-                Container(width: 1, height: 30, color: AppColors.softGrey),
+                Container(width: 1, height: 30, color: theme.colorScheme.outlineVariant),
                 Expanded(
                   child: _MiniStat(
                     label: 'Overdue',
@@ -606,7 +610,7 @@ class _FinancialOverviewCard extends StatelessWidget {
                   ),
                 ),
                 if (summary.totalRefunded > 0) ...[
-                  Container(width: 1, height: 30, color: AppColors.softGrey),
+                  Container(width: 1, height: 30, color: theme.colorScheme.outlineVariant),
                   Expanded(
                     child: _MiniStat(
                       label: 'Refunded',
@@ -636,6 +640,7 @@ class _MiniStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       children: [
         Text(
@@ -649,10 +654,10 @@ class _MiniStat extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: AppColors.mutedOlive,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -666,6 +671,7 @@ class _MonthlyBarChart extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     if (data.isEmpty) return const SizedBox.shrink();
     final maxVal = data.map((d) => d.total).reduce((a, b) => a > b ? a : b);
     return Row(
@@ -682,9 +688,9 @@ class _MonthlyBarChart extends StatelessWidget {
                 if (d.total > 0)
                   Text(
                     _formatAmount(d.total),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 9,
-                      color: AppColors.mutedOlive,
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -697,7 +703,7 @@ class _MonthlyBarChart extends StatelessWidget {
                           '₹${d.total.toStringAsFixed(0)} · ${d.count} payments',
                       child: Container(
                         decoration: BoxDecoration(
-                          color: AppColors.darkOlive.withValues(alpha: 0.8),
+                          color: theme.colorScheme.primary.withValues(alpha: 0.8),
                           borderRadius: BorderRadius.vertical(
                             top: Radius.circular(6),
                           ),
@@ -709,9 +715,9 @@ class _MonthlyBarChart extends StatelessWidget {
                 const SizedBox(height: 6),
                 Text(
                   month,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 10,
-                    color: AppColors.mutedOlive,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                 ),
               ],
@@ -731,6 +737,7 @@ class _ErrorRetry extends StatelessWidget {
   const _ErrorRetry({required this.error, required this.onRetry});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -744,7 +751,7 @@ class _ErrorRetry extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),

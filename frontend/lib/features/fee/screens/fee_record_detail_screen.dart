@@ -76,58 +76,58 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: cs.surface,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: cs.surface,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Fee Details',
           style: TextStyle(
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),
         actions: [
           if (widget.isAdmin && _record != null)
             PopupMenuButton<String>(
-              icon: const Icon(
+              icon: Icon(
                 Icons.more_vert_rounded,
-                color: AppColors.darkOlive,
+                color: theme.colorScheme.onSurface,
               ),
               onSelected: (v) => _onAction(v),
               itemBuilder: (_) => [
                 if (!_record!.isPaid && !_record!.isWaived) ...[
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'remind',
                     child: Row(
                       children: [
                         Icon(
                           Icons.notifications_outlined,
                           size: 20,
-                          color: AppColors.darkOlive,
+                          color: theme.colorScheme.onSurface,
                         ),
                         SizedBox(width: 12),
                         Text('Send Reminder'),
                       ],
                     ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'waive',
                     child: Row(
                       children: [
                         Icon(
                           Icons.remove_circle_outline,
                           size: 20,
-                          color: AppColors.darkOlive,
+                          color: theme.colorScheme.onSurface,
                         ),
                         SizedBox(width: 12),
                         Text('Waive Fee'),
@@ -136,14 +136,14 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                   ),
                 ],
                 if (_record!.paidAmount > 0)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'refund',
                     child: Row(
                       children: [
                         Icon(
                           Icons.keyboard_return,
                           size: 20,
-                          color: AppColors.darkOlive,
+                          color: theme.colorScheme.onSurface,
                         ),
                         SizedBox(width: 12),
                         Text('Record Refund'),
@@ -151,14 +151,14 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                     ),
                   ),
                 if (_record!.paidAmount > 0)
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'online_refund',
                     child: Row(
                       children: [
                         Icon(
                           Icons.currency_rupee_rounded,
                           size: 20,
-                          color: AppColors.darkOlive,
+                          color: theme.colorScheme.onSurface,
                         ),
                         SizedBox(width: 12),
                         Text('Online Refund'),
@@ -207,13 +207,14 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
   }
 
   void _showWaiveDialog() {
+    final theme = Theme.of(context);
     final notesCtrl = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text(
+        title: Text(
           'Waive Fee',
-          style: TextStyle(color: AppColors.darkOlive),
+          style: TextStyle(color: theme.colorScheme.onSurface),
         ),
         content: TextField(
           controller: notesCtrl,
@@ -393,6 +394,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
   }
 
   void _showRefundSheet() {
+    final theme = Theme.of(context);
     final amtCtrl = TextEditingController();
     final reasonCtrl = TextEditingController();
     String mode = 'CASH';
@@ -403,8 +405,8 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
       backgroundColor: Colors.transparent,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setSt) => Container(
-          decoration: const BoxDecoration(
-            color: AppColors.cream,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
           padding: EdgeInsets.only(
@@ -422,18 +424,18 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.softGrey,
+                    color: theme.colorScheme.outlineVariant,
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Record Refund',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   fontSize: 18,
-                  color: AppColors.darkOlive,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(height: 16),
@@ -511,11 +513,11 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                           }
                         },
                   child: submitting
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
-                            color: AppColors.cream,
+                            color: theme.colorScheme.onPrimary,
                             strokeWidth: 2,
                           ),
                         )
@@ -530,6 +532,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
   }
 
   void _showOnlineRefundSheet() {
+    final theme = Theme.of(context);
     bool loading = true;
     List<Map<String, dynamic>> payments = [];
     String? selectedPaymentId;
@@ -570,8 +573,8 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
           }
 
           return Container(
-            decoration: const BoxDecoration(
-              color: AppColors.cream,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surface,
               borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
             ),
             padding: EdgeInsets.only(
@@ -589,24 +592,24 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                     width: 40,
                     height: 4,
                     decoration: BoxDecoration(
-                      color: AppColors.softGrey,
+                      color: theme.colorScheme.outlineVariant,
                       borderRadius: BorderRadius.circular(2),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Online Refund',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 18,
-                    color: AppColors.darkOlive,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
+                Text(
                   'Select an online payment to refund via Razorpay',
-                  style: TextStyle(color: AppColors.mutedOlive, fontSize: 13),
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
                 ),
                 const SizedBox(height: 16),
                 if (loading)
@@ -617,12 +620,12 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                     ),
                   )
                 else if (payments.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.all(20),
+                  Padding(
+                    padding: const EdgeInsets.all(20),
                     child: Center(
                       child: Text(
                         'No online payments found for this record',
-                        style: TextStyle(color: AppColors.mutedOlive),
+                        style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                       ),
                     ),
                   )
@@ -638,8 +641,8 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                       padding: const EdgeInsets.only(bottom: 8),
                       child: Material(
                         color: selected
-                            ? AppColors.darkOlive.withValues(alpha: 0.08)
-                            : AppColors.softGrey.withValues(alpha: 0.2),
+                            ? theme.colorScheme.primary.withValues(alpha: 0.08)
+                            : theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(12),
@@ -655,7 +658,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                                   selected
                                       ? Icons.radio_button_checked
                                       : Icons.radio_button_off,
-                                  color: AppColors.darkOlive,
+                                  color: theme.colorScheme.onSurface,
                                   size: 20,
                                 ),
                                 const SizedBox(width: 12),
@@ -666,16 +669,16 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                                     children: [
                                       Text(
                                         '₹${amt.toStringAsFixed(0)}',
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w700,
-                                          color: AppColors.darkOlive,
+                                          color: theme.colorScheme.onSurface,
                                         ),
                                       ),
                                       if (date != null)
                                         Text(
                                           '${date.day}/${date.month}/${date.year}',
-                                          style: const TextStyle(
-                                            color: AppColors.mutedOlive,
+                                          style: TextStyle(
+                                            color: theme.colorScheme.onSurfaceVariant,
                                             fontSize: 12,
                                           ),
                                         ),
@@ -684,8 +687,8 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                                 ),
                                 Text(
                                   p['receiptNo'] as String? ?? '',
-                                  style: const TextStyle(
-                                    color: AppColors.mutedOlive,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurfaceVariant,
                                     fontSize: 11,
                                   ),
                                 ),
@@ -773,11 +776,11 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                               }
                             },
                       child: submitting
-                          ? const SizedBox(
+                          ? SizedBox(
                               height: 20,
                               width: 20,
                               child: CircularProgressIndicator(
-                                color: AppColors.cream,
+                                color: theme.colorScheme.onPrimary,
                                 strokeWidth: 2,
                               ),
                             )
@@ -851,6 +854,7 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -900,7 +904,7 @@ class _Body extends StatelessWidget {
               child: FilledButton.icon(
                 onPressed: onCollect,
                 style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.darkOlive,
+                  backgroundColor: theme.colorScheme.primary,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(12),
                   ),
@@ -929,7 +933,7 @@ class _Body extends StatelessWidget {
                       child: FilledButton.icon(
                         onPressed: onPayOnline,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.darkOlive,
+                          backgroundColor: theme.colorScheme.primary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -952,8 +956,8 @@ class _Body extends StatelessWidget {
                       child: OutlinedButton.icon(
                         onPressed: onPayFull,
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.darkOlive,
-                          side: const BorderSide(color: AppColors.darkOlive),
+                          foregroundColor: theme.colorScheme.primary,
+                          side: BorderSide(color: theme.colorScheme.primary),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
@@ -978,7 +982,7 @@ class _Body extends StatelessWidget {
                 child: FilledButton.icon(
                   onPressed: onPayFull,
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.darkOlive,
+                    backgroundColor: theme.colorScheme.primary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -1069,26 +1073,27 @@ class _ActionButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: AppColors.softGrey.withValues(alpha: 0.3),
+            color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.mutedOlive.withValues(alpha: 0.2),
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
             ),
           ),
           child: Column(
             children: [
-              Icon(icon, color: AppColors.darkOlive, size: 22),
+              Icon(icon, color: theme.colorScheme.onSurface, size: 22),
               const SizedBox(height: 4),
               Text(
                 label,
-                style: const TextStyle(
-                  color: AppColors.darkOlive,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.w600,
                   fontSize: 12,
                 ),
@@ -1139,6 +1144,7 @@ class _HeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final statusColor = _statusColor(record.status);
     return Container(
       padding: const EdgeInsets.all(20),
@@ -1155,10 +1161,10 @@ class _HeaderCard extends StatelessWidget {
               children: [
                 Text(
                   record.title,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
-                    color: AppColors.darkOlive,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -1166,8 +1172,8 @@ class _HeaderCard extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Due: ${_fmtDateLong(record.dueDate)}',
-                  style: const TextStyle(
-                    color: AppColors.mutedOlive,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
                     fontSize: 13,
                   ),
                 ),
@@ -1184,10 +1190,10 @@ class _HeaderCard extends StatelessWidget {
             children: [
               Text(
                 '₹${record.finalAmount.toStringAsFixed(0)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w900,
                   fontSize: 26,
-                  color: AppColors.darkOlive,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               if (record.isPartial)
@@ -1213,22 +1219,23 @@ class _BreakdownCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isInclusive = record.taxType == 'GST_INCLUSIVE';
     final isExclusive = record.taxType == 'GST_EXCLUSIVE';
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.softGrey.withValues(alpha: 0.22),
+        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Breakdown',
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: AppColors.darkOlive,
+              color: theme.colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 12),
@@ -1274,25 +1281,25 @@ class _BreakdownCard extends StatelessWidget {
               _Row(
                 '  CGST @ ${(record.gstRate / 2).toStringAsFixed(1)}%',
                 '₹${record.cgstAmount.toStringAsFixed(0)}',
-                color: AppColors.mutedOlive,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             if (record.sgstAmount > 0)
               _Row(
                 '  SGST @ ${(record.gstRate / 2).toStringAsFixed(1)}%',
                 '₹${record.sgstAmount.toStringAsFixed(0)}',
-                color: AppColors.mutedOlive,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             if (record.igstAmount > 0)
               _Row(
                 '  IGST @ ${record.gstRate.toStringAsFixed(1)}%',
                 '₹${record.igstAmount.toStringAsFixed(0)}',
-                color: AppColors.mutedOlive,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             if (record.cessAmount > 0)
               _Row(
                 '  Cess',
                 '₹${record.cessAmount.toStringAsFixed(0)}',
-                color: AppColors.mutedOlive,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
           ],
           // ── Total ──
@@ -1308,31 +1315,31 @@ class _BreakdownCard extends StatelessWidget {
             _Row(
               '  incl. GST ${record.gstRate.toStringAsFixed(0)}%',
               '₹${record.taxAmount.toStringAsFixed(0)}',
-              color: AppColors.mutedOlive,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
             if (record.cgstAmount > 0)
               _Row(
                 '  CGST @ ${(record.gstRate / 2).toStringAsFixed(1)}%',
                 '₹${record.cgstAmount.toStringAsFixed(0)}',
-                color: AppColors.mutedOlive,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             if (record.sgstAmount > 0)
               _Row(
                 '  SGST @ ${(record.gstRate / 2).toStringAsFixed(1)}%',
                 '₹${record.sgstAmount.toStringAsFixed(0)}',
-                color: AppColors.mutedOlive,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             if (record.igstAmount > 0)
               _Row(
                 '  IGST @ ${record.gstRate.toStringAsFixed(1)}%',
                 '₹${record.igstAmount.toStringAsFixed(0)}',
-                color: AppColors.mutedOlive,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             if (record.cessAmount > 0)
               _Row(
                 '  incl. Cess',
                 '₹${record.cessAmount.toStringAsFixed(0)}',
-                color: AppColors.mutedOlive,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
           ],
           if (record.hasTax && record.sacCode != null)
@@ -1367,24 +1374,24 @@ class _BreakdownCard extends StatelessWidget {
                 },
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.receipt_rounded,
                       size: 14,
-                      color: AppColors.mutedOlive,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       'Receipt: ${record.receiptNo}',
-                      style: const TextStyle(
-                        color: AppColors.mutedOlive,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
                     const SizedBox(width: 4),
-                    const Icon(
+                    Icon(
                       Icons.copy_rounded,
                       size: 12,
-                      color: AppColors.mutedOlive,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ],
                 ),
@@ -1405,6 +1412,7 @@ class _Row extends StatelessWidget {
   const _Row(this.label, this.value, {this.color, this.bold = false});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
@@ -1413,7 +1421,7 @@ class _Row extends StatelessWidget {
           Text(
             label,
             style: TextStyle(
-              color: AppColors.mutedOlive,
+              color: theme.colorScheme.onSurfaceVariant,
               fontSize: 13,
               fontWeight: bold ? FontWeight.w600 : FontWeight.normal,
             ),
@@ -1421,7 +1429,7 @@ class _Row extends StatelessWidget {
           Text(
             value,
             style: TextStyle(
-              color: color ?? AppColors.darkOlive,
+              color: color ?? theme.colorScheme.onSurface,
               fontWeight: bold ? FontWeight.w700 : FontWeight.w500,
               fontSize: 13,
             ),
@@ -1443,14 +1451,15 @@ class _PaymentHistory extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Payment History',
           style: TextStyle(
             fontWeight: FontWeight.w700,
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 10),
@@ -1477,6 +1486,7 @@ class _PaymentRow extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: () => Navigator.push(
         context,
@@ -1509,7 +1519,7 @@ class _PaymentRow extends StatelessWidget {
         margin: const EdgeInsets.only(bottom: 8),
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         decoration: BoxDecoration(
-          color: AppColors.softGrey.withValues(alpha: 0.22),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.22),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -1526,16 +1536,16 @@ class _PaymentRow extends StatelessWidget {
                 children: [
                   Text(
                     '${payment.modeLabel}${payment.transactionRef != null ? ' · ${payment.transactionRef}' : ''}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w600,
                       fontSize: 13,
-                      color: AppColors.darkOlive,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   Text(
                     _fmtDateLong(payment.paidAt),
-                    style: const TextStyle(
-                      color: AppColors.mutedOlive,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 11,
                     ),
                   ),
@@ -1551,9 +1561,9 @@ class _PaymentRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 6),
-            const Icon(
+            Icon(
               Icons.receipt_long_rounded,
-              color: AppColors.mutedOlive,
+              color: theme.colorScheme.onSurfaceVariant,
               size: 16,
             ),
           ],
@@ -1568,14 +1578,15 @@ class _RefundHistory extends StatelessWidget {
   const _RefundHistory({required this.refunds});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Refund History',
           style: TextStyle(
             fontWeight: FontWeight.w700,
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 10),
@@ -1590,18 +1601,19 @@ class _RefundRow extends StatelessWidget {
   const _RefundRow({required this.refund});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.softGrey.withValues(alpha: 0.22),
+        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.keyboard_return_rounded,
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
             size: 18,
           ),
           const SizedBox(width: 10),
@@ -1611,16 +1623,16 @@ class _RefundRow extends StatelessWidget {
               children: [
                 Text(
                   '${refund.mode}${refund.reason != null ? ' · ${refund.reason}' : ''}',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
-                    color: AppColors.darkOlive,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 Text(
                   _fmtDateLong(refund.refundedAt),
-                  style: const TextStyle(
-                    color: AppColors.mutedOlive,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
                     fontSize: 11,
                   ),
                 ),
@@ -1629,9 +1641,9 @@ class _RefundRow extends StatelessWidget {
           ),
           Text(
             '- ₹${refund.amount.toStringAsFixed(0)}',
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: AppColors.darkOlive,
+              color: theme.colorScheme.onSurface,
               fontSize: 14,
             ),
           ),
@@ -1647,14 +1659,15 @@ class _FailedAttempts extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Failed Attempts',
           style: TextStyle(
             fontWeight: FontWeight.w700,
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
           ),
         ),
         const SizedBox(height: 10),
@@ -1679,7 +1692,7 @@ class _FailedAttempts extends StatelessWidget {
             margin: const EdgeInsets.only(bottom: 8),
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
             decoration: BoxDecoration(
-              color: AppColors.softGrey.withValues(alpha: 0.22),
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.22),
               borderRadius: BorderRadius.circular(10),
             ),
             child: Row(
@@ -1703,9 +1716,9 @@ class _FailedAttempts extends StatelessWidget {
                       if (dateStr.isNotEmpty)
                         Text(
                           dateStr,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 11,
-                            color: AppColors.mutedOlive,
+                            color: theme.colorScheme.onSurfaceVariant,
                           ),
                         ),
                     ],
@@ -1752,22 +1765,23 @@ class _MemberCard extends StatelessWidget {
   const _MemberCard({required this.member});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: AppColors.softGrey.withValues(alpha: 0.22),
+        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(14),
       ),
       child: Row(
         children: [
           CircleAvatar(
             radius: 22,
-            backgroundColor: AppColors.softGrey,
+            backgroundColor: theme.colorScheme.outlineVariant,
             backgroundImage: member.picture != null
                 ? NetworkImage(member.picture!)
                 : null,
             child: member.picture == null
-                ? const Icon(Icons.person_rounded, color: AppColors.mutedOlive)
+                ? Icon(Icons.person_rounded, color: theme.colorScheme.onSurfaceVariant)
                 : null,
           ),
           const SizedBox(width: 12),
@@ -1777,24 +1791,24 @@ class _MemberCard extends StatelessWidget {
               children: [
                 Text(
                   member.name ?? 'Unknown',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w600,
-                    color: AppColors.darkOlive,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
                 if (member.parentName != null)
                   Text(
                     'Parent: ${member.parentName}',
-                    style: const TextStyle(
-                      color: AppColors.mutedOlive,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
                   ),
                 if (member.phone != null || member.parentPhone != null)
                   Text(
                     member.phone ?? member.parentPhone ?? '',
-                    style: const TextStyle(
-                      color: AppColors.mutedOlive,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
                   ),
@@ -1880,10 +1894,11 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.cream,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: EdgeInsets.only(
         left: 20,
@@ -1900,7 +1915,7 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.softGrey,
+                color: theme.colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1908,11 +1923,11 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
           const SizedBox(height: 16),
           Text(
             'Collect Payment',
-            style: Theme.of(context).textTheme.titleLarge,
+            style: theme.textTheme.titleLarge,
           ),
           Text(
             'Balance: ₹${widget.record.balance.toStringAsFixed(0)}',
-            style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -1924,11 +1939,11 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
             ),
           ),
           const SizedBox(height: 14),
-          const Text(
+          Text(
             'Payment Mode',
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: AppColors.darkOlive,
+              color: theme.colorScheme.onSurface,
               fontSize: 13,
             ),
           ),
@@ -1947,13 +1962,13 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
                   ),
                   decoration: BoxDecoration(
                     color: sel
-                        ? AppColors.darkOlive
-                        : AppColors.softGrey.withValues(alpha: 0.3),
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: sel
-                          ? AppColors.darkOlive
-                          : AppColors.mutedOlive.withValues(alpha: 0.3),
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
                     ),
                   ),
                   child: Row(
@@ -1962,13 +1977,13 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
                       Icon(
                         _modeIcon(m),
                         size: 13,
-                        color: sel ? AppColors.cream : AppColors.darkOlive,
+                        color: sel ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         _modeLabel(m),
                         style: TextStyle(
-                          color: sel ? AppColors.cream : AppColors.darkOlive,
+                          color: sel ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -2003,24 +2018,24 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: AppColors.mutedOlive.withValues(alpha: 0.4),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.calendar_today_rounded,
                     size: 16,
-                    color: AppColors.mutedOlive,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     _paidAt != null
                         ? 'Paid on: ${_fmtDateLong(_paidAt!)}'
                         : 'Payment date: Today',
-                    style: const TextStyle(
-                      color: AppColors.darkOlive,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
                       fontSize: 13,
                     ),
                   ),
@@ -2034,11 +2049,11 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
             child: FilledButton(
               onPressed: _submitting ? null : _submit,
               child: _submitting
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
-                        color: AppColors.cream,
+                        color: theme.colorScheme.onPrimary,
                         strokeWidth: 2,
                       ),
                     )
@@ -2145,6 +2160,7 @@ class _ErrorRetry extends StatelessWidget {
   const _ErrorRetry({required this.error, required this.onRetry});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -2154,7 +2170,7 @@ class _ErrorRetry extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.mutedOlive),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
@@ -2266,11 +2282,12 @@ class _InstallmentPickerSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final options = _options;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.cream,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
       child: Column(
@@ -2283,16 +2300,16 @@ class _InstallmentPickerSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.softGrey,
+                color: theme.colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Choose Payment Option',
             style: TextStyle(
-              color: AppColors.darkOlive,
+              color: theme.colorScheme.onSurface,
               fontSize: 17,
               fontWeight: FontWeight.w700,
             ),
@@ -2300,7 +2317,7 @@ class _InstallmentPickerSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Outstanding balance: ₹${balance.toStringAsFixed(0)}',
-            style: const TextStyle(color: AppColors.mutedOlive, fontSize: 12),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
           ),
           if (options.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -2308,8 +2325,8 @@ class _InstallmentPickerSheet extends StatelessWidget {
               options.length == installmentCount && fixedItems.isEmpty
                   ? 'Split into $installmentCount equal installments'
                   : '${options.length} payment options available',
-              style: const TextStyle(
-                color: AppColors.mutedOlive,
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
                 fontSize: 11,
                 fontStyle: FontStyle.italic,
               ),
@@ -2342,15 +2359,15 @@ class _InstallmentPickerSheet extends StatelessWidget {
                     color: paid
                         ? AppColors.success.withValues(alpha: 0.07)
                         : isPayable
-                        ? AppColors.darkOlive.withValues(alpha: 0.07)
-                        : AppColors.softGrey.withValues(alpha: 0.3),
+                        ? theme.colorScheme.primary.withValues(alpha: 0.07)
+                        : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: paid
                           ? AppColors.success.withValues(alpha: 0.35)
                           : isPayable
-                          ? AppColors.darkOlive.withValues(alpha: 0.25)
-                          : AppColors.softGrey,
+                          ? theme.colorScheme.primary.withValues(alpha: 0.25)
+                          : theme.colorScheme.outlineVariant,
                     ),
                   ),
                   child: Row(
@@ -2362,8 +2379,8 @@ class _InstallmentPickerSheet extends StatelessWidget {
                             color: paid
                                 ? AppColors.success
                                 : isPayable
-                                ? AppColors.darkOlive
-                                : AppColors.mutedOlive,
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
                           ),
@@ -2375,8 +2392,8 @@ class _InstallmentPickerSheet extends StatelessWidget {
                           color: paid
                               ? AppColors.success
                               : isPayable
-                              ? AppColors.darkOlive
-                              : AppColors.mutedOlive,
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                         ),
@@ -2389,10 +2406,10 @@ class _InstallmentPickerSheet extends StatelessWidget {
                           color: AppColors.success,
                         )
                       else if (!isPayable)
-                        const Icon(
+                        Icon(
                           Icons.lock_outline_rounded,
                           size: 14,
-                          color: AppColors.mutedOlive,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                     ],
                   ),
@@ -2404,8 +2421,8 @@ class _InstallmentPickerSheet extends StatelessWidget {
           // Pay full balance option
           OutlinedButton(
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.darkOlive,
-              side: const BorderSide(color: AppColors.darkOlive),
+              foregroundColor: theme.colorScheme.primary,
+              side: BorderSide(color: theme.colorScheme.primary),
               minimumSize: const Size.fromHeight(48),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

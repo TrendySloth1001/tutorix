@@ -61,17 +61,18 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
       appBar: AppBar(
         title: const Text('Fee Calendar'),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        titleTextStyle: const TextStyle(
-          color: AppColors.darkOlive,
+        titleTextStyle: TextStyle(
+          color: theme.colorScheme.onSurface,
           fontSize: 20,
           fontWeight: FontWeight.bold,
         ),
-        iconTheme: const IconThemeData(color: AppColors.darkOlive),
+        iconTheme: IconThemeData(color: theme.colorScheme.onSurface),
       ),
       body: Column(
         children: [
@@ -99,13 +100,13 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
         _focusedDay = focusedDay;
         _fetchMonthData(focusedDay);
       },
-      calendarStyle: const CalendarStyle(
+      calendarStyle: CalendarStyle(
         todayDecoration: BoxDecoration(
-          color: AppColors.mutedOlive,
+          color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.5),
           shape: BoxShape.circle,
         ),
         selectedDecoration: BoxDecoration(
-          color: AppColors.darkOlive,
+          color: Theme.of(context).colorScheme.primary,
           shape: BoxShape.circle,
         ),
       ),
@@ -179,10 +180,10 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
         children: [
           Text(
             DateFormat.yMMMMEEEEd().format(_selectedDay!),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: AppColors.darkOlive,
+              color: Theme.of(context).colorScheme.onSurface,
             ),
           ),
           const SizedBox(height: 20),

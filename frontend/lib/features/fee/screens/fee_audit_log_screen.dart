@@ -120,22 +120,23 @@ class _FeeAuditLogScreenState extends State<FeeAuditLogScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Fee Audit Log',
           style: TextStyle(
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -144,8 +145,8 @@ class _FeeAuditLogScreenState extends State<FeeAuditLogScreen> {
             icon: Icon(
               Icons.filter_alt_rounded,
               color: (_filterEntityType != null || _filterEvent != null)
-                  ? AppColors.darkOlive
-                  : AppColors.mutedOlive,
+                  ? theme.colorScheme.onSurface
+                  : theme.colorScheme.onSurfaceVariant,
             ),
             onPressed: _showFilterSheet,
           ),
@@ -173,7 +174,7 @@ class _FeeAuditLogScreenState extends State<FeeAuditLogScreen> {
                   ),
                 Expanded(
                   child: RefreshIndicator(
-                    color: AppColors.darkOlive,
+                    color: theme.colorScheme.primary,
                     onRefresh: _load,
                     child: ListView.builder(
                       controller: _scrollCtrl,
@@ -208,8 +209,8 @@ class _FeeAuditLogScreenState extends State<FeeAuditLogScreen> {
                   ),
                   child: Text(
                     'Showing ${_logs.length} of $_total events',
-                    style: const TextStyle(
-                      color: AppColors.mutedOlive,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 11,
                     ),
                   ),
@@ -251,18 +252,19 @@ class _DateDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(top: 16, bottom: 8),
       child: Row(
         children: [
           Expanded(
-            child: Divider(color: AppColors.softGrey.withValues(alpha: 0.5)),
+            child: Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
           ),
           const SizedBox(width: 10),
           Text(
             _fmtDate(date),
-            style: const TextStyle(
-              color: AppColors.mutedOlive,
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
               fontSize: 11,
               fontWeight: FontWeight.w600,
               letterSpacing: 0.5,
@@ -270,7 +272,7 @@ class _DateDivider extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Divider(color: AppColors.softGrey.withValues(alpha: 0.5)),
+            child: Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
           ),
         ],
       ),
@@ -371,7 +373,8 @@ class _AuditLogTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = _eventColors[log.event] ?? AppColors.mutedOlive;
+    final theme = Theme.of(context);
+    final color = _eventColors[log.event] ?? theme.colorScheme.onSurfaceVariant;
     final actorLabel = log.actorType == 'SYSTEM'
         ? 'System'
         : log.actorName ?? log.actorId ?? 'Admin';
@@ -379,9 +382,9 @@ class _AuditLogTile extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: AppColors.softGrey.withValues(alpha: 0.2),
+        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.mutedOlive.withValues(alpha: 0.15)),
+        border: Border.all(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.15)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -417,13 +420,13 @@ class _AuditLogTile extends StatelessWidget {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.softGrey.withValues(alpha: 0.5),
+                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
                     log.entityType,
-                    style: const TextStyle(
-                      color: AppColors.mutedOlive,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 10,
                       fontWeight: FontWeight.w600,
                     ),
@@ -432,8 +435,8 @@ class _AuditLogTile extends StatelessWidget {
                 const Spacer(),
                 Text(
                   _fmtTime(log.createdAt),
-                  style: const TextStyle(
-                    color: AppColors.mutedOlive,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
                     fontSize: 11,
                   ),
                 ),
@@ -445,8 +448,8 @@ class _AuditLogTile extends StatelessWidget {
             if (log.feeStructureName != null) ...[
               Text(
                 log.feeStructureName!,
-                style: const TextStyle(
-                  color: AppColors.darkOlive,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
                   fontWeight: FontWeight.w600,
                   fontSize: 13,
                 ),
@@ -458,8 +461,8 @@ class _AuditLogTile extends StatelessWidget {
             if (log.note != null && log.note!.isNotEmpty) ...[
               Text(
                 log.note!,
-                style: const TextStyle(
-                  color: AppColors.darkOlive,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
                   fontSize: 12,
                   height: 1.4,
                 ),
@@ -468,22 +471,22 @@ class _AuditLogTile extends StatelessWidget {
             ],
 
             // ── Changes section ──
-            ..._buildChanges(),
+            ..._buildChanges(theme),
 
             // ── Actor ──
             const SizedBox(height: 4),
             Row(
               children: [
-                const Icon(
+                Icon(
                   Icons.person_outline_rounded,
                   size: 13,
-                  color: AppColors.mutedOlive,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
                 const SizedBox(width: 4),
                 Text(
                   actorLabel,
-                  style: const TextStyle(
-                    color: AppColors.mutedOlive,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
                     fontSize: 11,
                   ),
                 ),
@@ -495,7 +498,7 @@ class _AuditLogTile extends StatelessWidget {
     );
   }
 
-  List<Widget> _buildChanges() {
+  List<Widget> _buildChanges(ThemeData theme) {
     final before = log.before ?? {};
     final after = log.after ?? {};
     final meta = log.meta ?? {};
@@ -534,11 +537,11 @@ class _AuditLogTile extends StatelessWidget {
     if (rows.isEmpty) return [];
 
     return [
-      const Divider(height: 16, color: AppColors.softGrey),
-      const Text(
+      Divider(height: 16, color: theme.colorScheme.outlineVariant),
+      Text(
         'DETAILS',
         style: TextStyle(
-          color: AppColors.mutedOlive,
+          color: theme.colorScheme.onSurfaceVariant,
           fontSize: 10,
           fontWeight: FontWeight.w700,
           letterSpacing: 0.5,
@@ -607,6 +610,7 @@ class _DiffRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     // Meta rows: just label + value (no arrow)
     if (isMeta) {
       return Padding(
@@ -618,8 +622,8 @@ class _DiffRow extends StatelessWidget {
               width: 110,
               child: Text(
                 label,
-                style: const TextStyle(
-                  color: AppColors.mutedOlive,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
                   fontSize: 11,
                   fontWeight: FontWeight.w500,
                 ),
@@ -628,8 +632,8 @@ class _DiffRow extends StatelessWidget {
             Expanded(
               child: Text(
                 newVal ?? '—',
-                style: const TextStyle(
-                  color: AppColors.darkOlive,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
                   fontSize: 11,
                 ),
               ),
@@ -652,8 +656,8 @@ class _DiffRow extends StatelessWidget {
             width: 110,
             child: Text(
               label,
-              style: const TextStyle(
-                color: AppColors.mutedOlive,
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
                 fontSize: 11,
                 fontWeight: FontWeight.w500,
               ),
@@ -690,10 +694,10 @@ class _DiffRow extends StatelessWidget {
                           decoration: TextDecoration.lineThrough,
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.arrow_forward_rounded,
                         size: 11,
-                        color: AppColors.mutedOlive,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                       Text(
                         newVal!,
@@ -744,13 +748,14 @@ class _FilterSheetState extends State<_FilterSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.6,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.cream,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
       child: Column(
@@ -762,26 +767,26 @@ class _FilterSheetState extends State<_FilterSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.softGrey,
+                color: theme.colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Filter Audit Log',
             style: TextStyle(
-              color: AppColors.darkOlive,
+              color: theme.colorScheme.onSurface,
               fontWeight: FontWeight.w800,
               fontSize: 16,
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Entity Type',
             style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: AppColors.darkOlive,
+              color: theme.colorScheme.onSurface,
               fontSize: 13,
             ),
           ),
@@ -822,8 +827,8 @@ class _FilterSheetState extends State<_FilterSheet> {
               Expanded(
                 child: FilledButton(
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.darkOlive,
-                    foregroundColor: AppColors.cream,
+                    backgroundColor: theme.colorScheme.primary,
+                    foregroundColor: theme.colorScheme.onPrimary,
                   ),
                   onPressed: () {
                     Navigator.pop(context);
@@ -852,20 +857,21 @@ class _FilterChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.darkOlive
-              : AppColors.softGrey.withValues(alpha: 0.3),
+              ? theme.colorScheme.primary
+              : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(20),
         ),
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? AppColors.cream : AppColors.darkOlive,
+            color: selected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -890,15 +896,16 @@ class _ActiveFilterChips extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      color: AppColors.darkOlive.withValues(alpha: 0.06),
+      color: theme.colorScheme.onSurface.withValues(alpha: 0.06),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.filter_alt_rounded,
             size: 14,
-            color: AppColors.mutedOlive,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
           const SizedBox(width: 6),
           if (entityType != null) _Chip(label: entityType!),
@@ -909,10 +916,10 @@ class _ActiveFilterChips extends StatelessWidget {
           const Spacer(),
           GestureDetector(
             onTap: onClear,
-            child: const Text(
+            child: Text(
               'Clear',
               style: TextStyle(
-                color: AppColors.darkOlive,
+                color: theme.colorScheme.onSurface,
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -929,16 +936,17 @@ class _Chip extends StatelessWidget {
   const _Chip({required this.label});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.darkOlive.withValues(alpha: 0.1),
+        color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         label,
-        style: const TextStyle(
-          color: AppColors.darkOlive,
+        style: TextStyle(
+          color: theme.colorScheme.onSurface,
           fontSize: 11,
           fontWeight: FontWeight.w600,
         ),
@@ -953,28 +961,29 @@ class _EmptyState extends StatelessWidget {
   const _EmptyState();
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final theme = Theme.of(context);
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             Icons.history_toggle_off_rounded,
             size: 48,
-            color: AppColors.mutedOlive,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
             'No audit events yet',
             style: TextStyle(
-              color: AppColors.mutedOlive,
+              color: theme.colorScheme.onSurfaceVariant,
               fontWeight: FontWeight.w500,
             ),
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Text(
             'Events like creating structures, assigning fees,\nand recording payments will appear here.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppColors.mutedOlive, fontSize: 12),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
           ),
         ],
       ),
@@ -988,6 +997,7 @@ class _ErrorRetry extends StatelessWidget {
   const _ErrorRetry({required this.error, required this.onRetry});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1001,7 +1011,7 @@ class _ErrorRetry extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.mutedOlive),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),

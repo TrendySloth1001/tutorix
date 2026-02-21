@@ -113,16 +113,16 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
         backgroundColor: cs.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.darkOlive,
+            color: cs.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Fee Records',
           style: TextStyle(
-            color: AppColors.darkOlive,
+            color: cs.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -155,7 +155,7 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
                 : _records.isEmpty
                 ? const _EmptyState()
                 : RefreshIndicator(
-                    color: AppColors.darkOlive,
+                    color: cs.primary,
                     onRefresh: () => _load(reset: true),
                     child: ListView.builder(
                       controller: _scrollCtrl,
@@ -207,25 +207,26 @@ class _SearchBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(12, 10, 12, 4),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        style: const TextStyle(color: AppColors.darkOlive, fontSize: 14),
+        style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Search by student name...',
-          hintStyle: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
-          prefixIcon: const Icon(
+          hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
+          prefixIcon: Icon(
             Icons.search_rounded,
-            color: AppColors.mutedOlive,
+            color: theme.colorScheme.onSurfaceVariant,
             size: 20,
           ),
           suffixIcon: controller.text.isNotEmpty
               ? IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.clear_rounded,
-                    color: AppColors.mutedOlive,
+                    color: theme.colorScheme.onSurfaceVariant,
                     size: 18,
                   ),
                   onPressed: () {
@@ -235,7 +236,7 @@ class _SearchBar extends StatelessWidget {
                 )
               : null,
           filled: true,
-          fillColor: AppColors.softGrey.withValues(alpha: 0.3),
+          fillColor: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
           contentPadding: const EdgeInsets.symmetric(
             horizontal: 12,
             vertical: 10,
@@ -265,9 +266,10 @@ class _FilterBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       height: 44,
-      color: Theme.of(context).colorScheme.surface,
+      color: theme.colorScheme.surface,
       child: ListView(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -285,19 +287,19 @@ class _FilterBar extends StatelessWidget {
                 ),
                 decoration: BoxDecoration(
                   color: isSelected
-                      ? AppColors.darkOlive
-                      : AppColors.softGrey.withValues(alpha: 0.3),
+                      ? theme.colorScheme.primary
+                      : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
                     color: isSelected
-                        ? AppColors.darkOlive
-                        : AppColors.mutedOlive.withValues(alpha: 0.3),
+                        ? theme.colorScheme.primary
+                        : theme.colorScheme.outlineVariant,
                   ),
                 ),
                 child: Text(
                   e.value,
                   style: TextStyle(
-                    color: isSelected ? AppColors.cream : AppColors.darkOlive,
+                    color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -323,6 +325,7 @@ class _RecordTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final statusColor = _statusColor(record.status);
     final memberName = record.member?.name ?? 'Unknown Student';
     final memberPic = record.member?.picture;
@@ -331,10 +334,10 @@ class _RecordTile extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 10),
       child: Card(
         elevation: 0,
-        color: AppColors.softGrey.withValues(alpha: 0.1),
+        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: AppColors.mutedOlive.withValues(alpha: 0.2)),
+          side: BorderSide(color: theme.colorScheme.outlineVariant),
         ),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
@@ -349,12 +352,12 @@ class _RecordTile extends StatelessWidget {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppColors.mutedOlive.withValues(alpha: 0.2),
+                      color: theme.colorScheme.outlineVariant,
                     ),
                   ),
                   child: CircleAvatar(
                     radius: 22,
-                    backgroundColor: AppColors.softGrey.withValues(alpha: 0.5),
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
                     backgroundImage: memberPic != null && memberPic.isNotEmpty
                         ? NetworkImage(memberPic)
                         : null,
@@ -363,8 +366,8 @@ class _RecordTile extends StatelessWidget {
                             memberName.isNotEmpty
                                 ? memberName[0].toUpperCase()
                                 : '?',
-                            style: const TextStyle(
-                              color: AppColors.darkOlive,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface,
                               fontWeight: FontWeight.w700,
                             ),
                           )
@@ -387,9 +390,9 @@ class _RecordTile extends StatelessWidget {
                               children: [
                                 Text(
                                   memberName,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontWeight: FontWeight.w700,
-                                    color: AppColors.darkOlive,
+                                    color: theme.colorScheme.onSurface,
                                     fontSize: 15,
                                   ),
                                   maxLines: 1,
@@ -398,8 +401,8 @@ class _RecordTile extends StatelessWidget {
                                 const SizedBox(height: 2),
                                 Text(
                                   record.title,
-                                  style: const TextStyle(
-                                    color: AppColors.mutedOlive,
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurfaceVariant,
                                     fontSize: 12,
                                   ),
                                   maxLines: 1,
@@ -414,9 +417,9 @@ class _RecordTile extends StatelessWidget {
                             children: [
                               Text(
                                 '₹${record.finalAmount.toStringAsFixed(0)}',
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontWeight: FontWeight.w800,
-                                  color: AppColors.darkOlive,
+                                  color: theme.colorScheme.onSurface,
                                   fontSize: 15,
                                 ),
                               ),
@@ -449,7 +452,7 @@ class _RecordTile extends StatelessWidget {
                             label: 'Due ${_fmtDate(record.dueDate)}',
                             color: record.isOverdue
                                 ? AppColors.error
-                                : AppColors.mutedOlive,
+                                : theme.colorScheme.onSurfaceVariant,
                           ),
                           if (record.daysOverdue > 0) ...[
                             const SizedBox(width: 6),
@@ -487,12 +490,13 @@ class _Chip extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
         color: isFilled
             ? color.withValues(alpha: 0.1)
-            : AppColors.softGrey.withValues(alpha: 0.3),
+            : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
           color: isFilled ? Colors.transparent : color.withValues(alpha: 0.3),
@@ -514,19 +518,20 @@ class _EmptyState extends StatelessWidget {
   const _EmptyState();
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final theme = Theme.of(context);
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Icon(
             Icons.receipt_long_outlined,
             size: 48,
-            color: AppColors.mutedOlive,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
             'No fee records found',
-            style: TextStyle(color: AppColors.mutedOlive),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -553,7 +558,7 @@ class _ErrorRetry extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),

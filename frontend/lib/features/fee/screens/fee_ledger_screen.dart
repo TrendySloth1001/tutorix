@@ -80,32 +80,32 @@ class _FeeLedgerScreenState extends State<FeeLedgerScreen> {
         backgroundColor: cs.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.darkOlive,
+            color: cs.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Financial Ledger',
               style: TextStyle(
-                color: AppColors.darkOlive,
+                color: cs.onSurface,
                 fontWeight: FontWeight.w700,
                 fontSize: 17,
               ),
             ),
             Text(
               name,
-              style: const TextStyle(color: AppColors.mutedOlive, fontSize: 12),
+              style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
             ),
           ],
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.darkOlive),
+            icon: Icon(Icons.refresh_rounded, color: cs.onSurface),
             onPressed: _load,
           ),
         ],
@@ -115,7 +115,7 @@ class _FeeLedgerScreenState extends State<FeeLedgerScreen> {
           : _error != null
           ? _ErrorRetry(error: _error!, onRetry: _load)
           : RefreshIndicator(
-              color: AppColors.darkOlive,
+              color: cs.primary,
               onRefresh: _load,
               child: CustomScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
@@ -125,11 +125,11 @@ class _FeeLedgerScreenState extends State<FeeLedgerScreen> {
                       child: _LedgerSummaryCard(summary: _summary!),
                     ),
                   if (_timeline.isEmpty)
-                    const SliverFillRemaining(
+                    SliverFillRemaining(
                       child: Center(
                         child: Text(
                           'No transactions yet',
-                          style: TextStyle(color: AppColors.mutedOlive),
+                          style: TextStyle(color: cs.onSurfaceVariant),
                         ),
                       ),
                     )
@@ -160,20 +160,21 @@ class _LedgerSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: AppColors.darkOlive,
+        color: theme.colorScheme.primary,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Account Summary',
             style: TextStyle(
-              color: AppColors.cream,
+              color: theme.colorScheme.onPrimary,
               fontWeight: FontWeight.w700,
               fontSize: 16,
             ),
@@ -185,7 +186,7 @@ class _LedgerSummaryCard extends StatelessWidget {
                 child: _LedgerStat(
                   label: 'Charged',
                   amount: summary.totalCharged,
-                  color: AppColors.cream,
+                  color: theme.colorScheme.onPrimary,
                 ),
               ),
               Expanded(
@@ -214,7 +215,7 @@ class _LedgerSummaryCard extends StatelessWidget {
               Text(
                 'Outstanding Balance',
                 style: TextStyle(
-                  color: AppColors.cream.withValues(alpha: 0.8),
+                  color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
                   fontSize: 13,
                 ),
               ),
@@ -272,14 +273,14 @@ class _LedgerSummaryCard extends StatelessWidget {
                 Text(
                   'Next Due',
                   style: TextStyle(
-                    color: AppColors.cream.withValues(alpha: 0.7),
+                    color: theme.colorScheme.onPrimary.withValues(alpha: 0.7),
                     fontSize: 12,
                   ),
                 ),
                 Text(
                   '₹${summary.nextDueAmount.toStringAsFixed(0)} · ${_fmtDateShort(summary.nextDueDate!)}',
-                  style: const TextStyle(
-                    color: AppColors.cream,
+                  style: TextStyle(
+                    color: theme.colorScheme.onPrimary,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -333,6 +334,7 @@ class _TimelineEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final config = _entryConfig(entry.type);
 
     return IntrinsicHeight(
@@ -359,7 +361,7 @@ class _TimelineEntry extends StatelessWidget {
                     child: Container(
                       width: 2,
                       margin: const EdgeInsets.symmetric(vertical: 2),
-                      color: AppColors.softGrey.withValues(alpha: 0.4),
+                      color: theme.colorScheme.outlineVariant,
                     ),
                   ),
               ],
@@ -387,9 +389,9 @@ class _TimelineEntry extends StatelessWidget {
                         Expanded(
                           child: Text(
                             entry.label,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontWeight: FontWeight.w600,
-                              color: AppColors.darkOlive,
+                              color: theme.colorScheme.onSurface,
                               fontSize: 13,
                             ),
                           ),
@@ -412,21 +414,21 @@ class _TimelineEntry extends StatelessWidget {
                             children: [
                               Text(
                                 _fmtDateShort(entry.date),
-                                style: const TextStyle(
-                                  color: AppColors.mutedOlive,
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurfaceVariant,
                                   fontSize: 11,
                                 ),
                               ),
                               if (entry.mode != null) ...[
-                                const Text(
+                                Text(
                                   ' · ',
-                                  style: TextStyle(color: AppColors.mutedOlive),
+                                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
                                 ),
                                 Flexible(
                                   child: Text(
                                     entry.mode!,
-                                    style: const TextStyle(
-                                      color: AppColors.mutedOlive,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurfaceVariant,
                                       fontSize: 11,
                                     ),
                                     overflow: TextOverflow.ellipsis,
@@ -453,8 +455,8 @@ class _TimelineEntry extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         'Ref: ${entry.ref}',
-                        style: const TextStyle(
-                          color: AppColors.mutedOlive,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant,
                           fontSize: 10,
                         ),
                       ),
@@ -530,7 +532,7 @@ class _ErrorRetry extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.mutedOlive),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),

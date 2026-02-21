@@ -81,13 +81,13 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
             CircleAvatar(
               radius: 16,
               backgroundImage: picture != null ? NetworkImage(picture) : null,
-              backgroundColor: AppColors.mutedOlive.withValues(alpha: 0.2),
+              backgroundColor: cs.surfaceContainerHighest,
               child: picture == null
                   ? Text(
                       displayName[0].toUpperCase(),
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
-                        color: AppColors.darkOlive,
+                        color: cs.onSurface,
                       ),
                     )
                   : null,
@@ -98,15 +98,15 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
               children: [
                 Text(
                   displayName,
-                  style: const TextStyle(
-                    color: AppColors.darkOlive,
+                  style: TextStyle(
+                    color: cs.onSurface,
                     fontWeight: FontWeight.w700,
                     fontSize: 16,
                   ),
                 ),
-                const Text(
+                Text(
                   'Student Profile',
-                  style: TextStyle(color: AppColors.mutedOlive, fontSize: 12),
+                  style: TextStyle(color: cs.onSurfaceVariant, fontSize: 12),
                 ),
               ],
             ),
@@ -114,7 +114,7 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.darkOlive),
+            icon: Icon(Icons.refresh_rounded, color: cs.onSurface),
             onPressed: () {
               _load();
               setState(() {});
@@ -134,9 +134,9 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
         child: Column(
           children: [
             TabBar(
-              labelColor: AppColors.darkOlive,
-              unselectedLabelColor: AppColors.mutedOlive,
-              indicatorColor: AppColors.darkOlive,
+              labelColor: cs.primary,
+              unselectedLabelColor: cs.onSurfaceVariant,
+              indicatorColor: cs.primary,
               indicatorSize: TabBarIndicatorSize.label,
               labelStyle: const TextStyle(fontWeight: FontWeight.w600),
               tabs: const [
@@ -207,6 +207,7 @@ class _FeeTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final ledger = profile['ledger'] as Map<String, dynamic>? ?? {};
     final assignments = (profile['assignments'] as List<dynamic>?) ?? [];
 
@@ -257,12 +258,12 @@ class _FeeTab extends StatelessWidget {
         _LedgerBanner(ledger: ledger),
         const SizedBox(height: 20),
         if (filteredAssignments.isEmpty)
-          const Padding(
-            padding: EdgeInsets.symmetric(vertical: 40),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 40),
             child: Center(
               child: Text(
                 'No active fee assignments',
-                style: TextStyle(color: AppColors.mutedOlive),
+                style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
               ),
             ),
           )
@@ -349,19 +350,20 @@ class _AcademicTabState extends State<_AcademicTab>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    final theme = Theme.of(context);
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null)
       return _ErrorRetry(error: _error!, onRetry: _loadResults);
     if (_results.isEmpty) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.school_outlined, size: 48, color: AppColors.mutedOlive),
-            SizedBox(height: 16),
+            Icon(Icons.school_outlined, size: 48, color: theme.colorScheme.onSurfaceVariant),
+            const SizedBox(height: 16),
             Text(
               'No academic records found',
-              style: TextStyle(color: AppColors.mutedOlive),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
           ],
         ),
@@ -387,7 +389,7 @@ class _AcademicTabState extends State<_AcademicTab>
           margin: const EdgeInsets.only(bottom: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
-            side: BorderSide(color: AppColors.softGrey.withValues(alpha: 0.5)),
+            side: BorderSide(color: theme.colorScheme.outlineVariant),
           ),
           child: Padding(
             padding: const EdgeInsets.all(16),
@@ -417,18 +419,18 @@ class _AcademicTabState extends State<_AcademicTab>
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 15,
-                          color: AppColors.darkOlive,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         '${type.toUpperCase()} • ${date != null ? DateFormat('MMM d, y').format(date) : ''}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.mutedOlive,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                       ),
                     ],
@@ -439,17 +441,17 @@ class _AcademicTabState extends State<_AcademicTab>
                   children: [
                     Text(
                       '${_fmt(score)}/${_fmt(totalMarks)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 14,
-                        color: AppColors.darkOlive,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
-                    const Text(
+                    Text(
                       'Score',
                       style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.mutedOlive,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ],
@@ -545,11 +547,12 @@ class _InfoCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: AppColors.softGrey.withValues(alpha: 0.5)),
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
       ),
       child: Padding(
         padding: const EdgeInsets.all(16),
@@ -558,10 +561,10 @@ class _InfoCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
-                color: AppColors.mutedOlive,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const Divider(height: 24),
@@ -586,28 +589,29 @@ class _InfoRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Row(
         children: [
-          Icon(icon, size: 18, color: AppColors.mutedOlive),
+          Icon(icon, size: 18, color: theme.colorScheme.onSurfaceVariant),
           const SizedBox(width: 12),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 11,
-                  color: AppColors.mutedOlive,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
               ),
               Text(
                 value,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.darkOlive,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -627,6 +631,7 @@ class _LedgerBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final totalFee = (ledger['totalFee'] as num?)?.toDouble() ?? 0;
     final totalPaid = (ledger['totalPaid'] as num?)?.toDouble() ?? 0;
     final totalRefunded = (ledger['totalRefunded'] as num?)?.toDouble() ?? 0;
@@ -638,7 +643,7 @@ class _LedgerBanner extends StatelessWidget {
 
     return Container(
       decoration: BoxDecoration(
-        color: AppColors.darkOlive,
+        color: theme.colorScheme.primary,
         borderRadius: BorderRadius.circular(20),
       ),
       padding: const EdgeInsets.all(20),
@@ -808,6 +813,7 @@ class _AssignmentSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final feeStructure =
         assignment['feeStructure'] as Map<String, dynamic>? ?? {};
     final structureName = feeStructure['name'] as String? ?? 'Fee Plan';
@@ -848,24 +854,24 @@ class _AssignmentSection extends StatelessWidget {
                   children: [
                     Text(
                       structureName,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
-                        color: AppColors.darkOlive,
+                        color: theme.colorScheme.onSurface,
                       ),
                     ),
                     const SizedBox(height: 2),
                     _SmallChip(
                       label: _cycleName(cycle),
-                      color: AppColors.mutedOlive,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ],
                 ),
               ),
               Text(
                 '$paidCount/$total',
-                style: const TextStyle(
-                  color: AppColors.mutedOlive,
+                style: TextStyle(
+                  color: theme.colorScheme.onSurfaceVariant,
                   fontSize: 12,
                 ),
               ),
@@ -930,7 +936,7 @@ class _StatusBar extends StatelessWidget {
           if (pending > 0)
             Expanded(
               flex: pending,
-              child: Container(height: 8, color: AppColors.softGrey),
+              child: Container(height: 8, color: Theme.of(context).colorScheme.outlineVariant),
             ),
         ],
       ),
@@ -947,6 +953,7 @@ class _RecordRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final title = record['title'] as String? ?? 'Fee';
     final status = record['status'] as String? ?? 'PENDING';
     final finalAmount = (record['finalAmount'] as num?)?.toDouble() ?? 0;
@@ -960,7 +967,7 @@ class _RecordRow extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Material(
-        color: AppColors.softGrey.withValues(alpha: 0.2),
+        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           borderRadius: BorderRadius.circular(12),
@@ -984,10 +991,10 @@ class _RecordRow extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w600,
                           fontSize: 13,
-                          color: AppColors.darkOlive,
+                          color: theme.colorScheme.onSurface,
                         ),
                       ),
                       Row(
@@ -1000,7 +1007,7 @@ class _RecordRow extends StatelessWidget {
                             const SizedBox(width: 4),
                             _SmallChip(
                               label: _fmtDate(dueDate),
-                              color: AppColors.mutedOlive,
+                              color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ],
                         ],
@@ -1013,9 +1020,9 @@ class _RecordRow extends StatelessWidget {
                   children: [
                     Text(
                       '₹${_fmt(finalAmount)}',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontWeight: FontWeight.w800,
-                        color: AppColors.darkOlive,
+                        color: theme.colorScheme.onSurface,
                         fontSize: 14,
                       ),
                     ),
@@ -1036,13 +1043,13 @@ class _RecordRow extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: AppColors.mutedOlive.withValues(alpha: 0.1),
+                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(
+                      child: Icon(
                         Icons.notifications_active_outlined,
                         size: 16,
-                        color: AppColors.mutedOlive,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -1099,7 +1106,7 @@ class _ErrorRetry extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
+            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),

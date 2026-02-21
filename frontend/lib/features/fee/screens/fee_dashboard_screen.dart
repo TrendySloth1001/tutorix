@@ -99,13 +99,13 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded),
-          color: AppColors.darkOlive,
+          color: cs.onSurface,
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Fee Management',
           style: TextStyle(
-            color: AppColors.darkOlive,
+            color: cs.onSurface,
             fontWeight: FontWeight.w700,
             fontSize: 20,
           ),
@@ -120,13 +120,13 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
             },
           ),
           IconButton(
-            icon: const Icon(Icons.refresh_rounded, color: AppColors.darkOlive),
+            icon: Icon(Icons.refresh_rounded, color: cs.onSurface),
             onPressed: _load,
           ),
         ],
       ),
       body: RefreshIndicator(
-        color: AppColors.darkOlive,
+        color: cs.primary,
         onRefresh: _load,
         child: _loading
             ? const Center(child: CircularProgressIndicator())
@@ -213,32 +213,33 @@ class _FinancialOverviewCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       elevation: 0,
-      color: AppColors.softGrey.withValues(alpha: 0.1),
+      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: AppColors.mutedOlive.withValues(alpha: 0.2)),
+        side: BorderSide(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
         child: Column(
           children: [
-            const Text(
+            Text(
               'Total Collected',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w500,
-                color: AppColors.mutedOlive,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               '₹${_formatAmount(summary.totalCollected)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 36,
                 fontWeight: FontWeight.w800,
-                color: AppColors.darkOlive,
+                color: theme.colorScheme.onSurface,
                 height: 1.0,
               ),
             ),
@@ -249,18 +250,18 @@ class _FinancialOverviewCard extends StatelessWidget {
                   child: _MiniStat(
                     label: 'Today',
                     value: '₹${_formatAmount(summary.todayCollection)}',
-                    color: AppColors.darkOlive,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
-                Container(width: 1, height: 30, color: AppColors.softGrey),
+                Container(width: 1, height: 30, color: theme.colorScheme.outlineVariant),
                 Expanded(
                   child: _MiniStat(
                     label: 'Pending',
                     value: '₹${_formatAmount(summary.totalPending)}',
-                    color: AppColors.darkOlive,
+                    color: theme.colorScheme.onSurface,
                   ),
                 ),
-                Container(width: 1, height: 30, color: AppColors.softGrey),
+                Container(width: 1, height: 30, color: theme.colorScheme.outlineVariant),
                 Expanded(
                   child: _MiniStat(
                     label: 'Overdue',
@@ -289,6 +290,7 @@ class _MiniStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       children: [
         Text(
@@ -302,10 +304,10 @@ class _MiniStat extends StatelessWidget {
         const SizedBox(height: 4),
         Text(
           label,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 12,
             fontWeight: FontWeight.w500,
-            color: AppColors.mutedOlive,
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
@@ -320,12 +322,13 @@ class _SectionCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Card(
       elevation: 0,
-      color: AppColors.softGrey.withValues(alpha: 0.1),
+      color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: AppColors.mutedOlive.withValues(alpha: 0.2)),
+        side: BorderSide(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2)),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -334,10 +337,10 @@ class _SectionCard extends StatelessWidget {
           children: [
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w700,
-                color: AppColors.darkOlive,
+                color: theme.colorScheme.onSurface,
               ),
             ),
             const SizedBox(height: 16),
@@ -386,11 +389,12 @@ class _SimpleStatusRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       children: [
         Text(
           label,
-          style: const TextStyle(fontSize: 15, color: AppColors.darkOlive),
+          style: TextStyle(fontSize: 15, color: theme.colorScheme.onSurface),
         ),
         const Spacer(),
         Container(
@@ -398,7 +402,7 @@ class _SimpleStatusRow extends StatelessWidget {
           decoration: BoxDecoration(
             color: isAlert
                 ? AppColors.errorBg
-                : AppColors.softGrey.withValues(alpha: 0.3),
+                : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(12),
           ),
           child: Text(
@@ -406,7 +410,7 @@ class _SimpleStatusRow extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: isAlert ? AppColors.error : AppColors.darkOlive,
+              color: isAlert ? AppColors.error : theme.colorScheme.onSurface,
             ),
           ),
         ),
@@ -438,10 +442,11 @@ class _PaymentModeList extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     if (modes.isEmpty) {
-      return const Text(
+      return Text(
         'No payments recorded yet',
-        style: TextStyle(color: AppColors.mutedOlive, fontSize: 13),
+        style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
       );
     }
     return Column(
@@ -453,13 +458,13 @@ class _PaymentModeList extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.softGrey.withValues(alpha: 0.3),
+                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.payments_outlined,
                   size: 16,
-                  color: AppColors.darkOlive,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               const SizedBox(width: 12),
@@ -468,17 +473,17 @@ class _PaymentModeList extends StatelessWidget {
                 children: [
                   Text(
                     _modeLabel(m.mode),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w600,
-                      color: AppColors.darkOlive,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                   Text(
                     '${m.count} txns',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
-                      color: AppColors.mutedOlive,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                   ),
                 ],
@@ -486,10 +491,10 @@ class _PaymentModeList extends StatelessWidget {
               const Spacer(),
               Text(
                 '₹${_formatAmount(m.total)}',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 15,
                   fontWeight: FontWeight.w700,
-                  color: AppColors.darkOlive,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
             ],
@@ -580,6 +585,7 @@ class _ActionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(12),
@@ -588,24 +594,24 @@ class _ActionTile extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: AppColors.darkOlive.withValues(alpha: 0.1),
+              color: theme.colorScheme.onSurface.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, size: 20, color: AppColors.darkOlive),
+            child: Icon(icon, size: 20, color: theme.colorScheme.onSurface),
           ),
           const SizedBox(width: 14),
           Text(
             label,
-            style: const TextStyle(
+            style: TextStyle(
               fontWeight: FontWeight.w600,
-              color: AppColors.darkOlive,
+              color: theme.colorScheme.onSurface,
               fontSize: 15,
             ),
           ),
           const Spacer(),
-          const Icon(
+          Icon(
             Icons.chevron_right_rounded,
-            color: AppColors.mutedOlive,
+            color: theme.colorScheme.onSurfaceVariant,
             size: 20,
           ),
         ],
@@ -627,24 +633,25 @@ class _FYDropdown extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(right: 8),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
         decoration: BoxDecoration(
-          color: AppColors.softGrey.withValues(alpha: 0.3),
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(20),
         ),
         child: DropdownButton<String>(
           value: selected,
           underline: const SizedBox.shrink(),
-          icon: const Icon(
+          icon: Icon(
             Icons.keyboard_arrow_down_rounded,
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
             size: 18,
           ),
-          style: const TextStyle(
-            color: AppColors.darkOlive,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w600,
             fontSize: 13,
           ),
@@ -737,6 +744,7 @@ class _ErrorView extends StatelessWidget {
   const _ErrorView({required this.error, required this.onRetry});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(24),
@@ -752,7 +760,7 @@ class _ErrorView extends StatelessWidget {
             Text(
               error,
               textAlign: TextAlign.center,
-              style: const TextStyle(color: AppColors.mutedOlive),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
             ),
             const SizedBox(height: 16),
             OutlinedButton(onPressed: onRetry, child: const Text('Retry')),

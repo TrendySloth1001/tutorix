@@ -199,16 +199,16 @@ class _MyFeesScreenState extends State<MyFeesScreen>
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: cs.surface,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: cs.surface,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
@@ -216,8 +216,8 @@ class _MyFeesScreenState extends State<MyFeesScreen>
           _selectMode
               ? '${_selected.length} selected'
               : 'Fees · ${widget.coachingName}',
-          style: const TextStyle(
-            color: AppColors.darkOlive,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w700,
             fontSize: 17,
           ),
@@ -229,16 +229,16 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                 _selected.clear();
                 _selectMode = false;
               }),
-              child: const Text(
+              child: Text(
                 'Cancel',
-                style: TextStyle(color: AppColors.darkOlive),
+                style: TextStyle(color: theme.colorScheme.onSurface),
               ),
             ),
           if (!_selectMode && _payableRecords.isNotEmpty)
             IconButton(
-              icon: const Icon(
+              icon: Icon(
                 Icons.checklist_rounded,
-                color: AppColors.darkOlive,
+                color: theme.colorScheme.onSurface,
               ),
               tooltip: 'Select fees to pay',
               onPressed: _selectAllPayable,
@@ -248,9 +248,9 @@ class _MyFeesScreenState extends State<MyFeesScreen>
             ? null
             : TabBar(
                 controller: _tab,
-                labelColor: AppColors.darkOlive,
-                unselectedLabelColor: AppColors.mutedOlive,
-                indicatorColor: AppColors.darkOlive,
+                labelColor: theme.colorScheme.primary,
+                unselectedLabelColor: theme.colorScheme.onSurfaceVariant,
+                indicatorColor: theme.colorScheme.primary,
                 indicatorWeight: 2.5,
                 labelStyle: const TextStyle(
                   fontWeight: FontWeight.w700,
@@ -269,7 +269,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                 : _error != null
                 ? _ErrorRetry(error: _error!, onRetry: _load)
                 : RefreshIndicator(
-                    color: AppColors.darkOlive,
+                    color: theme.colorScheme.primary,
                     onRefresh: _load,
                     child: _records.isEmpty
                         ? ListView(
@@ -290,7 +290,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                     : _error != null
                     ? _ErrorRetry(error: _error!, onRetry: _load)
                     : RefreshIndicator(
-                        color: AppColors.darkOlive,
+                        color: theme.colorScheme.primary,
                         onRefresh: _load,
                         child: _records.isEmpty
                             ? ListView(
@@ -304,7 +304,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                       ),
                 // ─── Tab 1: History ───
                 RefreshIndicator(
-                  color: AppColors.darkOlive,
+                  color: theme.colorScheme.primary,
                   onRefresh: _loadTransactions,
                   child: _txLoading
                       ? const Center(child: CircularProgressIndicator())
@@ -332,6 +332,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
 
   // ─── Build the fee list body ───
   Widget _buildBody() {
+    final theme = Theme.of(context);
     final payable = _payableRecords;
     final settled = _records
         .where((r) => r.status == 'PAID' || r.status == 'WAIVED')
@@ -391,11 +392,11 @@ class _MyFeesScreenState extends State<MyFeesScreen>
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
               child: Row(
                 children: [
-                  const Text(
+                  Text(
                     'Payable',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
-                      color: AppColors.darkOlive,
+                      color: theme.colorScheme.onSurface,
                       fontSize: 15,
                     ),
                   ),
@@ -481,11 +482,11 @@ class _MyFeesScreenState extends State<MyFeesScreen>
               padding: const EdgeInsets.fromLTRB(16, 16, 16, 4),
               child: Row(
                 children: [
-                  const Text(
+                  Text(
                     'Settled',
                     style: TextStyle(
                       fontWeight: FontWeight.w800,
-                      color: AppColors.mutedOlive,
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 15,
                     ),
                   ),
@@ -768,8 +769,9 @@ class _AccountShortcutButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Material(
-      color: AppColors.darkOlive.withValues(alpha: 0.07),
+      color: theme.colorScheme.onSurface.withValues(alpha: 0.07),
       borderRadius: BorderRadius.circular(12),
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
@@ -778,24 +780,24 @@ class _AccountShortcutButton extends StatelessWidget {
           padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
           child: Row(
             children: [
-              Icon(icon, size: 18, color: AppColors.darkOlive),
+              Icon(icon, size: 18, color: theme.colorScheme.onSurface),
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
                   label,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppColors.darkOlive,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w600,
                     fontSize: 13,
                   ),
                 ),
               ),
-              const Icon(
+              Icon(
                 Icons.chevron_right_rounded,
                 size: 18,
-                color: AppColors.mutedOlive,
+                color: theme.colorScheme.onSurfaceVariant,
               ),
             ],
           ),
@@ -841,17 +843,17 @@ class _PayBar extends StatelessWidget {
                 children: [
                   Text(
                     '$selectedCount fee${selectedCount > 1 ? 's' : ''} selected',
-                    style: const TextStyle(
-                      color: AppColors.mutedOlive,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 12,
                     ),
                   ),
                   Text(
                     '\u20b9${totalAmount.toStringAsFixed(0)}',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontWeight: FontWeight.w800,
                       fontSize: 22,
-                      color: AppColors.darkOlive,
+                      color: theme.colorScheme.onSurface,
                     ),
                   ),
                 ],
@@ -861,7 +863,7 @@ class _PayBar extends StatelessWidget {
             FilledButton.icon(
               onPressed: onPayFull,
               style: FilledButton.styleFrom(
-                backgroundColor: AppColors.darkOlive,
+                backgroundColor: theme.colorScheme.primary,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
                   vertical: 10,
@@ -924,7 +926,7 @@ class _FeeCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: isSelected
               ? BoxDecoration(
-                  border: Border.all(color: AppColors.darkOlive, width: 1.5),
+                  border: Border.all(color: theme.colorScheme.primary, width: 1.5),
                   borderRadius: BorderRadius.circular(16),
                 )
               : null,
@@ -941,8 +943,8 @@ class _FeeCard extends StatelessWidget {
                             ? Icons.check_circle_rounded
                             : Icons.radio_button_unchecked_rounded,
                         color: isSelected
-                            ? AppColors.darkOlive
-                            : AppColors.mutedOlive,
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurfaceVariant,
                         size: 22,
                       ),
                     ),
@@ -952,9 +954,9 @@ class _FeeCard extends StatelessWidget {
                       children: [
                         Text(
                           record.title,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w700,
-                            color: AppColors.darkOlive,
+                            color: theme.colorScheme.onSurface,
                             fontSize: 14,
                           ),
                         ),
@@ -962,8 +964,8 @@ class _FeeCard extends StatelessWidget {
                             record.member!.wardId != null)
                           Text(
                             'For: ${record.member!.name ?? 'Ward'}',
-                            style: const TextStyle(
-                              color: AppColors.mutedOlive,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurfaceVariant,
                               fontSize: 12,
                             ),
                           ),
@@ -977,9 +979,9 @@ class _FeeCard extends StatelessWidget {
                         canPay
                             ? '₹${record.balance.toStringAsFixed(0)}'
                             : '₹${record.finalAmount.toStringAsFixed(0)}',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w800,
-                          color: AppColors.darkOlive,
+                          color: theme.colorScheme.onSurface,
                           fontSize: 17,
                         ),
                       ),
@@ -991,10 +993,10 @@ class _FeeCard extends StatelessWidget {
               const SizedBox(height: 10),
               Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.calendar_today_rounded,
                     size: 13,
-                    color: AppColors.mutedOlive,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 4),
                   Text(
@@ -1002,7 +1004,7 @@ class _FeeCard extends StatelessWidget {
                     style: TextStyle(
                       color: record.isOverdue
                           ? theme.colorScheme.error
-                          : AppColors.mutedOlive,
+                          : theme.colorScheme.onSurfaceVariant,
                       fontSize: 12,
                       fontWeight: record.isOverdue
                           ? FontWeight.w600
@@ -1068,16 +1070,16 @@ class _FeeCard extends StatelessWidget {
                 const SizedBox(height: 6),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.date_range_rounded,
                       size: 12,
-                      color: AppColors.mutedOlive,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       _validityLabel(record.validFrom, record.validUntil),
-                      style: const TextStyle(
-                        color: AppColors.mutedOlive,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
                         fontSize: 11,
                       ),
                     ),
@@ -1089,17 +1091,17 @@ class _FeeCard extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.receipt_long_rounded,
                       size: 12,
-                      color: AppColors.mutedOlive,
+                      color: theme.colorScheme.onSurfaceVariant,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       'GST ${record.gstRate.toStringAsFixed(0)}%'
                       ' · Tax ₹${record.taxAmount.toStringAsFixed(0)}',
-                      style: const TextStyle(
-                        color: AppColors.mutedOlive,
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
                         fontSize: 11,
                       ),
                     ),
@@ -1128,7 +1130,7 @@ class _FeeCard extends StatelessWidget {
                           child: FilledButton.icon(
                             onPressed: onPayOnline,
                             style: FilledButton.styleFrom(
-                              backgroundColor: AppColors.darkOlive,
+                              backgroundColor: theme.colorScheme.primary,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
                               ),
@@ -1155,9 +1157,9 @@ class _FeeCard extends StatelessWidget {
                           child: OutlinedButton.icon(
                             onPressed: onPayFull,
                             style: OutlinedButton.styleFrom(
-                              foregroundColor: AppColors.darkOlive,
-                              side: const BorderSide(
-                                color: AppColors.darkOlive,
+                              foregroundColor: theme.colorScheme.primary,
+                              side: BorderSide(
+                                color: theme.colorScheme.primary,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(10),
@@ -1184,7 +1186,7 @@ class _FeeCard extends StatelessWidget {
                     child: FilledButton.icon(
                       onPressed: onPayFull,
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.darkOlive,
+                        backgroundColor: theme.colorScheme.primary,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),
@@ -1260,12 +1262,13 @@ class _ProgressBar extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final ratio = total > 0 ? (paid / total).clamp(0.0, 1.0) : 0.0;
     return ClipRRect(
       borderRadius: BorderRadius.circular(4),
       child: LinearProgressIndicator(
         value: ratio,
-        backgroundColor: AppColors.softGrey.withValues(alpha: 0.4),
+        backgroundColor: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
         valueColor: AlwaysStoppedAnimation(statusColor),
         minHeight: 4,
       ),
@@ -1297,28 +1300,29 @@ class _EmptyState extends StatelessWidget {
   const _EmptyState();
   @override
   Widget build(BuildContext context) {
-    return const Center(
+    final theme = Theme.of(context);
+    return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(
+          const Icon(
             Icons.check_circle_outline_rounded,
             size: 52,
             color: AppColors.success,
           ),
-          SizedBox(height: 12),
+          const SizedBox(height: 12),
           Text(
             'No fees due!',
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              color: AppColors.darkOlive,
+              color: theme.colorScheme.onSurface,
               fontSize: 16,
             ),
           ),
-          SizedBox(height: 4),
+          const SizedBox(height: 4),
           Text(
             'You are all caught up.',
-            style: TextStyle(color: AppColors.mutedOlive),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
         ],
       ),
@@ -1332,6 +1336,7 @@ class _ErrorRetry extends StatelessWidget {
   const _ErrorRetry({required this.error, required this.onRetry});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1345,7 +1350,7 @@ class _ErrorRetry extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.mutedOlive),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
@@ -1419,11 +1424,12 @@ class _TransactionHistory extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     if (transactions.isEmpty) {
       return ListView(
         physics: const AlwaysScrollableScrollPhysics(),
-        children: const [
-          SizedBox(height: 120),
+        children: [
+          const SizedBox(height: 120),
           Center(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -1431,21 +1437,21 @@ class _TransactionHistory extends StatelessWidget {
                 Icon(
                   Icons.receipt_long_rounded,
                   size: 52,
-                  color: AppColors.mutedOlive,
+                  color: theme.colorScheme.onSurfaceVariant,
                 ),
-                SizedBox(height: 12),
+                const SizedBox(height: 12),
                 Text(
                   'No transactions yet',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.darkOlive,
+                    color: theme.colorScheme.onSurface,
                     fontSize: 16,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   'Your payment history will appear here.',
-                  style: TextStyle(color: AppColors.mutedOlive, fontSize: 13),
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
                 ),
               ],
             ),
@@ -1577,9 +1583,9 @@ class _TxnCard extends StatelessWidget {
                     Expanded(
                       child: Text(
                         title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.w700,
-                          color: AppColors.darkOlive,
+                          color: theme.colorScheme.onSurface,
                           fontSize: 13,
                         ),
                         maxLines: 2,
@@ -1622,9 +1628,9 @@ class _TxnCard extends StatelessWidget {
                     padding: const EdgeInsets.only(top: 2),
                     child: Text(
                       dateStr,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
-                        color: AppColors.mutedOlive,
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
                     ),
                   ),
@@ -1716,11 +1722,12 @@ class _FeeInstallmentSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final options = _options;
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.cream,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
       child: Column(
@@ -1732,16 +1739,16 @@ class _FeeInstallmentSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.softGrey,
+                color: theme.colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
           ),
           const SizedBox(height: 16),
-          const Text(
+          Text(
             'Choose Payment Option',
             style: TextStyle(
-              color: AppColors.darkOlive,
+              color: theme.colorScheme.onSurface,
               fontSize: 17,
               fontWeight: FontWeight.w700,
             ),
@@ -1749,7 +1756,7 @@ class _FeeInstallmentSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Outstanding balance: ₹${balance.toStringAsFixed(0)}',
-            style: const TextStyle(color: AppColors.mutedOlive, fontSize: 12),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
           ),
           if (options.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -1757,8 +1764,8 @@ class _FeeInstallmentSheet extends StatelessWidget {
               options.length == installmentCount && fixedItems.isEmpty
                   ? 'Split into $installmentCount equal installments'
                   : '${options.length} payment options available',
-              style: const TextStyle(
-                color: AppColors.mutedOlive,
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
                 fontSize: 11,
                 fontStyle: FontStyle.italic,
               ),
@@ -1790,15 +1797,15 @@ class _FeeInstallmentSheet extends StatelessWidget {
                     color: paid
                         ? AppColors.success.withValues(alpha: 0.07)
                         : isPayable
-                        ? AppColors.darkOlive.withValues(alpha: 0.07)
-                        : AppColors.softGrey.withValues(alpha: 0.3),
+                        ? theme.colorScheme.onSurface.withValues(alpha: 0.07)
+                        : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: paid
                           ? AppColors.success.withValues(alpha: 0.35)
                           : isPayable
-                          ? AppColors.darkOlive.withValues(alpha: 0.25)
-                          : AppColors.softGrey,
+                          ? theme.colorScheme.onSurface.withValues(alpha: 0.25)
+                          : theme.colorScheme.outlineVariant,
                     ),
                   ),
                   child: Row(
@@ -1810,8 +1817,8 @@ class _FeeInstallmentSheet extends StatelessWidget {
                             color: paid
                                 ? AppColors.success
                                 : isPayable
-                                ? AppColors.darkOlive
-                                : AppColors.mutedOlive,
+                                ? theme.colorScheme.onSurface
+                                : theme.colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.w600,
                             fontSize: 14,
                           ),
@@ -1823,8 +1830,8 @@ class _FeeInstallmentSheet extends StatelessWidget {
                           color: paid
                               ? AppColors.success
                               : isPayable
-                              ? AppColors.darkOlive
-                              : AppColors.mutedOlive,
+                              ? theme.colorScheme.onSurface
+                              : theme.colorScheme.onSurfaceVariant,
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                         ),
@@ -1837,10 +1844,10 @@ class _FeeInstallmentSheet extends StatelessWidget {
                           color: AppColors.success,
                         )
                       else if (!isPayable)
-                        const Icon(
+                        Icon(
                           Icons.lock_outline_rounded,
                           size: 14,
-                          color: AppColors.mutedOlive,
+                          color: theme.colorScheme.onSurfaceVariant,
                         ),
                     ],
                   ),
@@ -1852,8 +1859,8 @@ class _FeeInstallmentSheet extends StatelessWidget {
           // Pay full balance
           OutlinedButton(
             style: OutlinedButton.styleFrom(
-              foregroundColor: AppColors.darkOlive,
-              side: const BorderSide(color: AppColors.darkOlive),
+              foregroundColor: theme.colorScheme.primary,
+              side: BorderSide(color: theme.colorScheme.primary),
               minimumSize: const Size.fromHeight(48),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(12),

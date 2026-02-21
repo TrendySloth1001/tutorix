@@ -150,9 +150,9 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text(
+        title: Text(
           'Remove Structure',
-          style: TextStyle(color: AppColors.darkOlive),
+          style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
         ),
         content: Text(
           'Remove "${s.name}"? If it has active records it will be archived instead.',
@@ -185,30 +185,31 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.surface,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.surface,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Fee Structure',
           style: TextStyle(
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),
         actions: [
           IconButton(
-            icon: const Icon(
+            icon: Icon(
               Icons.history_rounded,
-              color: AppColors.mutedOlive,
+              color: theme.colorScheme.onSurfaceVariant,
             ),
             tooltip: 'Audit Log',
             onPressed: () => Navigator.push(
@@ -225,16 +226,16 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
           ? null
           : FloatingActionButton(
               onPressed: _showCreateSheet,
-              backgroundColor: AppColors.darkOlive,
+              backgroundColor: theme.colorScheme.primary,
               tooltip: 'New Fee Structure',
-              child: const Icon(Icons.add_rounded, color: AppColors.cream),
+              child: Icon(Icons.add_rounded, color: theme.colorScheme.onPrimary),
             ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
           ? _ErrorRetry(error: _error!, onRetry: _load)
           : RefreshIndicator(
-              color: AppColors.darkOlive,
+              color: theme.colorScheme.primary,
               onRefresh: _load,
               child: _structures.isEmpty
                   ? ListView(
@@ -244,28 +245,28 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              const Icon(
+                              Icon(
                                 Icons.receipt_long_outlined,
                                 size: 56,
-                                color: AppColors.mutedOlive,
+                                color: theme.colorScheme.onSurfaceVariant,
                               ),
                               const SizedBox(height: 16),
-                              const Text(
+                              Text(
                                 'No fee structures yet',
                                 style: TextStyle(
-                                  color: AppColors.darkOlive,
+                                  color: theme.colorScheme.onSurface,
                                   fontWeight: FontWeight.w700,
                                   fontSize: 16,
                                 ),
                               ),
                               const SizedBox(height: 8),
-                              const Padding(
-                                padding: EdgeInsets.symmetric(horizontal: 40),
+                              Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 40),
                                 child: Text(
                                   'Tap + to create structures like "Monthly Tuition" or "Annual Fee". Each can be assigned to multiple students.',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    color: AppColors.mutedOlive,
+                                    color: theme.colorScheme.onSurfaceVariant,
                                     fontSize: 13,
                                   ),
                                 ),
@@ -307,12 +308,13 @@ class _StructureCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
       decoration: BoxDecoration(
-        color: Theme.of(context).colorScheme.surface,
+        color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.mutedOlive.withValues(alpha: 0.2)),
+        border: Border.all(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -333,12 +335,12 @@ class _StructureCard extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.darkOlive.withValues(alpha: 0.08),
+                    color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.receipt_rounded,
-                    color: AppColors.darkOlive,
+                    color: theme.colorScheme.onSurface,
                     size: 18,
                   ),
                 ),
@@ -349,8 +351,8 @@ class _StructureCard extends StatelessWidget {
                     children: [
                       Text(
                         structure.name,
-                        style: const TextStyle(
-                          color: AppColors.darkOlive,
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurface,
                           fontWeight: FontWeight.w700,
                           fontSize: 15,
                         ),
@@ -361,8 +363,8 @@ class _StructureCard extends StatelessWidget {
                           padding: const EdgeInsets.only(top: 2),
                           child: Text(
                             structure.description!,
-                            style: const TextStyle(
-                              color: AppColors.mutedOlive,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurfaceVariant,
                               fontSize: 12,
                             ),
                             maxLines: 1,
@@ -375,15 +377,15 @@ class _StructureCard extends StatelessWidget {
                 // Actions
                 IconButton(
                   icon: const Icon(Icons.edit_rounded, size: 18),
-                  color: AppColors.mutedOlive,
+                  color: theme.colorScheme.onSurfaceVariant,
                   tooltip: 'Edit',
                   onPressed: onEdit,
                 ),
                 PopupMenuButton<String>(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.more_vert_rounded,
                     size: 18,
-                    color: AppColors.mutedOlive,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                   onSelected: (v) {
                     if (v == 'delete') onDelete();
@@ -419,8 +421,8 @@ class _StructureCard extends StatelessWidget {
               children: [
                 Text(
                   '\u20b9${structure.amount.toStringAsFixed(0)}',
-                  style: const TextStyle(
-                    color: AppColors.darkOlive,
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
                     fontWeight: FontWeight.w900,
                     fontSize: 26,
                   ),
@@ -430,8 +432,8 @@ class _StructureCard extends StatelessWidget {
                   padding: const EdgeInsets.only(bottom: 3),
                   child: Text(
                     '/ ${structure.cycleLabel}',
-                    style: const TextStyle(
-                      color: AppColors.mutedOlive,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
                       fontSize: 13,
                     ),
                   ),
@@ -491,21 +493,22 @@ class _Chip extends StatelessWidget {
   const _Chip({required this.icon, required this.label});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: AppColors.softGrey.withValues(alpha: 0.5),
+        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 11, color: AppColors.mutedOlive),
+          Icon(icon, size: 11, color: theme.colorScheme.onSurfaceVariant),
           const SizedBox(width: 4),
           Text(
             label,
-            style: const TextStyle(
-              color: AppColors.mutedOlive,
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
@@ -649,13 +652,14 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.92,
       ),
-      decoration: const BoxDecoration(
-        color: AppColors.cream,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: EdgeInsets.only(
         left: 20,
@@ -673,7 +677,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                 width: 40,
                 height: 4,
                 decoration: BoxDecoration(
-                  color: AppColors.softGrey,
+                  color: theme.colorScheme.outlineVariant,
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -681,7 +685,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
             const SizedBox(height: 16),
             Text(
               widget.existing != null ? 'Edit Structure' : 'New Fee Structure',
-              style: Theme.of(context).textTheme.titleLarge,
+              style: theme.textTheme.titleLarge,
             ),
             const SizedBox(height: 16),
             TextField(
@@ -711,11 +715,11 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
               ),
             ),
             const SizedBox(height: 14),
-            const Text(
+            Text(
               'Billing Cycle',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: AppColors.darkOlive,
+                color: theme.colorScheme.onSurface,
                 fontSize: 13,
               ),
             ),
@@ -734,14 +738,14 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                     ),
                     decoration: BoxDecoration(
                       color: sel
-                          ? AppColors.darkOlive
-                          : AppColors.softGrey.withValues(alpha: 0.3),
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       _cycleLabels[c] ?? c,
                       style: TextStyle(
-                        color: sel ? AppColors.cream : AppColors.darkOlive,
+                        color: sel ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -766,20 +770,20 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
             const SizedBox(height: 20),
             const Divider(),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Tax Configuration',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
-                color: AppColors.darkOlive,
+                color: theme.colorScheme.onSurface,
                 fontSize: 14,
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
+            Text(
               'Tax Type',
               style: TextStyle(
                 fontWeight: FontWeight.w600,
-                color: AppColors.darkOlive,
+                color: theme.colorScheme.onSurface,
                 fontSize: 13,
               ),
             ),
@@ -798,14 +802,14 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                     ),
                     decoration: BoxDecoration(
                       color: sel
-                          ? AppColors.darkOlive
-                          : AppColors.softGrey.withValues(alpha: 0.3),
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       _taxLabels[t] ?? t,
                       style: TextStyle(
-                        color: sel ? AppColors.cream : AppColors.darkOlive,
+                        color: sel ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -816,11 +820,11 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
             ),
             if (_taxType != 'NONE') ...[
               const SizedBox(height: 14),
-              const Text(
+              Text(
                 'GST Rate',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.darkOlive,
+                  color: theme.colorScheme.onSurface,
                   fontSize: 13,
                 ),
               ),
@@ -839,14 +843,14 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                       ),
                       decoration: BoxDecoration(
                         color: sel
-                            ? AppColors.darkOlive
-                            : AppColors.softGrey.withValues(alpha: 0.3),
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         '${r.toStringAsFixed(0)}%',
                         style: TextStyle(
-                          color: sel ? AppColors.cream : AppColors.darkOlive,
+                          color: sel ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -856,11 +860,11 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                 }).toList(),
               ),
               const SizedBox(height: 14),
-              const Text(
+              Text(
                 'Supply Type',
                 style: TextStyle(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.darkOlive,
+                  color: theme.colorScheme.onSurface,
                   fontSize: 13,
                 ),
               ),
@@ -883,16 +887,16 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                           ),
                           decoration: BoxDecoration(
                             color: sel
-                                ? AppColors.darkOlive
-                                : AppColors.softGrey.withValues(alpha: 0.3),
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
                             e.$2,
                             style: TextStyle(
                               color: sel
-                                  ? AppColors.cream
-                                  : AppColors.darkOlive,
+                                  ? theme.colorScheme.onPrimary
+                                  : theme.colorScheme.onSurface,
                               fontSize: 12,
                               fontWeight: FontWeight.w600,
                             ),
@@ -926,18 +930,18 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Line Items (optional)',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.darkOlive,
+                    color: theme.colorScheme.onSurface,
                     fontSize: 14,
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.add_circle_rounded,
-                    color: AppColors.darkOlive,
+                    color: theme.colorScheme.onSurface,
                   ),
                   onPressed: () {
                     setState(() {
@@ -953,11 +957,11 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
               ],
             ),
             if (_lineItems.isEmpty)
-              const Padding(
-                padding: EdgeInsets.only(bottom: 8),
+              Padding(
+                padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   'Add breakdowns like "Books", "Lab Fee"',
-                  style: TextStyle(color: AppColors.mutedOlive, fontSize: 12),
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
                 ),
               ),
             ..._lineItems.asMap().entries.map((entry) {
@@ -1015,27 +1019,27 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
             const SizedBox(height: 20),
             const Divider(),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Installment Settings',
               style: TextStyle(
                 fontWeight: FontWeight.w700,
-                color: AppColors.darkOlive,
+                color: theme.colorScheme.onSurface,
                 fontSize: 14,
               ),
             ),
             const SizedBox(height: 4),
-            const Text(
+            Text(
               'Control whether parents can pay in installments and define the allowed amounts.',
-              style: TextStyle(color: AppColors.mutedOlive, fontSize: 12),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
             ),
             const SizedBox(height: 8),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              activeColor: AppColors.darkOlive,
-              title: const Text(
+              activeColor: theme.colorScheme.primary,
+              title: Text(
                 'Allow installment payments',
                 style: TextStyle(
-                  color: AppColors.darkOlive,
+                  color: theme.colorScheme.onSurface,
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
                 ),
@@ -1057,11 +1061,11 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
+                  Text(
                     'Fixed installment amounts',
                     style: TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: AppColors.darkOlive,
+                      color: theme.colorScheme.onSurface,
                       fontSize: 13,
                     ),
                   ),
@@ -1082,17 +1086,17 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                     icon: const Icon(Icons.add_rounded, size: 16),
                     label: const Text('Add'),
                     style: TextButton.styleFrom(
-                      foregroundColor: AppColors.darkOlive,
+                      foregroundColor: theme.colorScheme.primary,
                     ),
                   ),
                 ],
               ),
               if (_installmentAmounts.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.only(bottom: 8),
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 8),
                   child: Text(
                     'Leave empty to allow any amount. Add specific amounts to restrict payment options.',
-                    style: TextStyle(color: AppColors.mutedOlive, fontSize: 12),
+                    style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
                   ),
                 ),
               ..._installmentAmounts.asMap().entries.map((entry) {
@@ -1154,11 +1158,11 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
               child: FilledButton(
                 onPressed: _submitting ? null : _submit,
                 child: _submitting
-                    ? const SizedBox(
+                    ? SizedBox(
                         height: 20,
                         width: 20,
                         child: CircularProgressIndicator(
-                          color: AppColors.cream,
+                          color: theme.colorScheme.onPrimary,
                           strokeWidth: 2,
                         ),
                       )
@@ -1260,6 +1264,7 @@ class _ErrorRetry extends StatelessWidget {
   const _ErrorRetry({required this.error, required this.onRetry});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1273,7 +1278,7 @@ class _ErrorRetry extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.mutedOlive),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),

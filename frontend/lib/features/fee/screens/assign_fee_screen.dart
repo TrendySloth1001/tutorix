@@ -80,23 +80,23 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: cs.surface,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: cs.surface,
+        backgroundColor: theme.colorScheme.surface,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Assign Fee',
           style: TextStyle(
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w700,
           ),
         ),
@@ -389,6 +389,7 @@ class _Body extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -442,13 +443,13 @@ class _Body extends StatelessWidget {
                     ),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? AppColors.darkOlive.withValues(alpha: 0.07)
-                          : AppColors.softGrey.withValues(alpha: 0.2),
+                          ? theme.colorScheme.onSurface.withValues(alpha: 0.07)
+                          : theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
-                            ? AppColors.darkOlive.withValues(alpha: 0.5)
-                            : AppColors.mutedOlive.withValues(alpha: 0.15),
+                            ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
+                            : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.15),
                         width: isSelected ? 1.5 : 1,
                       ),
                     ),
@@ -460,20 +461,20 @@ class _Body extends StatelessWidget {
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
                             color: isSelected
-                                ? AppColors.darkOlive
+                                ? theme.colorScheme.primary
                                 : Colors.transparent,
                             border: Border.all(
                               color: isSelected
-                                  ? AppColors.darkOlive
-                                  : AppColors.mutedOlive,
+                                  ? theme.colorScheme.primary
+                                  : theme.colorScheme.onSurfaceVariant,
                               width: 2,
                             ),
                           ),
                           child: isSelected
-                              ? const Icon(
+                              ? Icon(
                                   Icons.check,
                                   size: 12,
-                                  color: AppColors.cream,
+                                  color: theme.colorScheme.onPrimary,
                                 )
                               : null,
                         ),
@@ -486,9 +487,7 @@ class _Body extends StatelessWidget {
                                 s.name,
                                 style: TextStyle(
                                   fontWeight: FontWeight.w700,
-                                  color: isSelected
-                                      ? AppColors.darkOlive
-                                      : AppColors.darkOlive,
+                                  color: theme.colorScheme.onSurface,
                                   fontSize: 14,
                                 ),
                               ),
@@ -496,8 +495,8 @@ class _Body extends StatelessWidget {
                               Text(
                                 '₹${s.amount.toStringAsFixed(0)} · ${s.cycleLabel}'
                                 '${s.allowInstallments ? ' · Installments' : ''}',
-                                style: const TextStyle(
-                                  color: AppColors.mutedOlive,
+                                style: TextStyle(
+                                  color: theme.colorScheme.onSurfaceVariant,
                                   fontSize: 12,
                                 ),
                               ),
@@ -506,8 +505,8 @@ class _Body extends StatelessWidget {
                         ),
                         Text(
                           '${s.assignmentCount} student${s.assignmentCount == 1 ? '' : 's'}',
-                          style: const TextStyle(
-                            color: AppColors.mutedOlive,
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant,
                             fontSize: 11,
                           ),
                         ),
@@ -530,12 +529,12 @@ class _Body extends StatelessWidget {
               Switch(
                 value: customAmountEnabled,
                 onChanged: onCustomAmountToggled,
-                activeThumbColor: AppColors.darkOlive,
+                activeThumbColor: theme.colorScheme.primary,
               ),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 'Custom amount for this assignment',
-                style: TextStyle(color: AppColors.darkOlive, fontSize: 13),
+                style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 13),
               ),
             ],
           ),
@@ -606,24 +605,24 @@ class _Body extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: AppColors.mutedOlive.withValues(alpha: 0.4),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.calendar_today_rounded,
                     size: 16,
-                    color: AppColors.mutedOlive,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     startDate != null
                         ? 'Starts ${_fmtDate(startDate!)}'
                         : 'Start date: Today',
-                    style: const TextStyle(
-                      color: AppColors.darkOlive,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
                       fontSize: 13,
                     ),
                   ),
@@ -649,24 +648,24 @@ class _Body extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: AppColors.mutedOlive.withValues(alpha: 0.4),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.event_rounded,
                     size: 16,
-                    color: AppColors.mutedOlive,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
                   const SizedBox(width: 8),
                   Text(
                     endDate != null
                         ? 'Ends ${_fmtDate(endDate!)}'
                         : 'End date: None (ongoing)',
-                    style: const TextStyle(
-                      color: AppColors.darkOlive,
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurface,
                       fontSize: 13,
                     ),
                   ),
@@ -686,16 +685,16 @@ class _Body extends StatelessWidget {
               const Spacer(),
               TextButton(
                 onPressed: onSelectAll,
-                child: const Text(
+                child: Text(
                   'All',
-                  style: TextStyle(color: AppColors.darkOlive, fontSize: 12),
+                  style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 12),
                 ),
               ),
               TextButton(
                 onPressed: onClearAll,
-                child: const Text(
+                child: Text(
                   'Clear',
-                  style: TextStyle(color: AppColors.mutedOlive, fontSize: 12),
+                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
                 ),
               ),
             ],
@@ -703,7 +702,7 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '${selectedMemberIds.length} of ${members.length} selected',
-            style: const TextStyle(color: AppColors.mutedOlive, fontSize: 12),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
           ),
           const SizedBox(height: 10),
           if (members.isEmpty)
@@ -724,11 +723,11 @@ class _Body extends StatelessWidget {
             child: FilledButton(
               onPressed: submitting ? null : onSubmit,
               child: submitting
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 20,
                       width: 20,
                       child: CircularProgressIndicator(
-                        color: AppColors.cream,
+                        color: theme.colorScheme.onPrimary,
                         strokeWidth: 2,
                       ),
                     )
@@ -943,20 +942,21 @@ class _StepHeader extends StatelessWidget {
   const _StepHeader({required this.step, required this.title});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Row(
       children: [
         Container(
           width: 26,
           height: 26,
-          decoration: const BoxDecoration(
-            color: AppColors.darkOlive,
+          decoration: BoxDecoration(
+            color: theme.colorScheme.primary,
             shape: BoxShape.circle,
           ),
           child: Center(
             child: Text(
               step,
-              style: const TextStyle(
-                color: AppColors.cream,
+              style: TextStyle(
+                color: theme.colorScheme.onPrimary,
                 fontWeight: FontWeight.w700,
                 fontSize: 12,
               ),
@@ -966,9 +966,9 @@ class _StepHeader extends StatelessWidget {
         const SizedBox(width: 10),
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontWeight: FontWeight.w700,
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
             fontSize: 15,
           ),
         ),
@@ -989,6 +989,7 @@ class _MemberOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -996,13 +997,13 @@ class _MemberOption extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: isSelected
-              ? AppColors.darkOlive.withValues(alpha: 0.07)
-              : AppColors.softGrey.withValues(alpha: 0.2),
+              ? theme.colorScheme.onSurface.withValues(alpha: 0.07)
+              : theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: isSelected
-                ? AppColors.darkOlive
-                : AppColors.mutedOlive.withValues(alpha: 0.2),
+                ? theme.colorScheme.primary
+                : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
             width: isSelected ? 1.5 : 1,
           ),
         ),
@@ -1010,15 +1011,15 @@ class _MemberOption extends StatelessWidget {
           children: [
             CircleAvatar(
               radius: 16,
-              backgroundColor: AppColors.softGrey,
+              backgroundColor: theme.colorScheme.outlineVariant,
               backgroundImage:
                   (member.user?.picture ?? member.ward?.picture) != null
                   ? NetworkImage(member.user?.picture ?? member.ward!.picture!)
                   : null,
               child: (member.user?.picture ?? member.ward?.picture) == null
-                  ? const Icon(
+                  ? Icon(
                       Icons.person_rounded,
-                      color: AppColors.mutedOlive,
+                      color: theme.colorScheme.onSurfaceVariant,
                       size: 16,
                     )
                   : null,
@@ -1027,9 +1028,9 @@ class _MemberOption extends StatelessWidget {
             Expanded(
               child: Text(
                 member.displayName,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w500,
-                  color: AppColors.darkOlive,
+                  color: theme.colorScheme.onSurface,
                   fontSize: 13,
                 ),
               ),
@@ -1037,7 +1038,7 @@ class _MemberOption extends StatelessWidget {
             Checkbox(
               value: isSelected,
               onChanged: (_) => onTap(),
-              activeColor: AppColors.darkOlive,
+              activeColor: theme.colorScheme.primary,
               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
             ),
           ],
@@ -1052,11 +1053,12 @@ class _Hint extends StatelessWidget {
   const _Hint(this.text);
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Text(
         text,
-        style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
+        style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
       ),
     );
   }
@@ -1068,6 +1070,7 @@ class _ErrorRetry extends StatelessWidget {
   const _ErrorRetry({required this.error, required this.onRetry});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -1081,7 +1084,7 @@ class _ErrorRetry extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: const TextStyle(color: AppColors.mutedOlive),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
@@ -1213,6 +1216,7 @@ class _PullSettingsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final rows = <_SettingRow>[];
     if (log.customAmount != null)
       rows.add(
@@ -1248,9 +1252,9 @@ class _PullSettingsSheet extends StatelessWidget {
       );
 
     return Container(
-      decoration: const BoxDecoration(
-        color: AppColors.cream,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
       ),
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
       child: Column(
@@ -1262,7 +1266,7 @@ class _PullSettingsSheet extends StatelessWidget {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: AppColors.softGrey,
+                color: theme.colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -1273,24 +1277,24 @@ class _PullSettingsSheet extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.darkOlive.withValues(alpha: 0.08),
+                  color: theme.colorScheme.onSurface.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.history_rounded,
-                  color: AppColors.darkOlive,
+                  color: theme.colorScheme.onSurface,
                   size: 18,
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       'Previous Assignment Found',
                       style: TextStyle(
-                        color: AppColors.darkOlive,
+                        color: theme.colorScheme.onSurface,
                         fontWeight: FontWeight.w700,
                         fontSize: 15,
                       ),
@@ -1298,7 +1302,7 @@ class _PullSettingsSheet extends StatelessWidget {
                     Text(
                       'This student had custom settings last time. Want to reuse them?',
                       style: TextStyle(
-                        color: AppColors.mutedOlive,
+                        color: theme.colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -1314,8 +1318,8 @@ class _PullSettingsSheet extends StatelessWidget {
                 if (log.assignedBy != null) 'by ${log.assignedBy}',
                 if (log.assignedAt != null) _fmtDate(log.assignedAt!),
               ].join(' · '),
-              style: const TextStyle(
-                color: AppColors.mutedOlive,
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
                 fontSize: 11,
                 fontStyle: FontStyle.italic,
               ),
@@ -1325,7 +1329,7 @@ class _PullSettingsSheet extends StatelessWidget {
           // Settings rows
           Container(
             decoration: BoxDecoration(
-              color: AppColors.softGrey.withValues(alpha: 0.3),
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Column(
@@ -1338,12 +1342,12 @@ class _PullSettingsSheet extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          Icon(r.icon, size: 15, color: AppColors.mutedOlive),
+                          Icon(r.icon, size: 15, color: theme.colorScheme.onSurfaceVariant),
                           const SizedBox(width: 10),
                           Text(
                             r.label,
-                            style: const TextStyle(
-                              color: AppColors.mutedOlive,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurfaceVariant,
                               fontSize: 12,
                               fontWeight: FontWeight.w500,
                             ),
@@ -1351,8 +1355,8 @@ class _PullSettingsSheet extends StatelessWidget {
                           const Spacer(),
                           Text(
                             r.value,
-                            style: const TextStyle(
-                              color: AppColors.darkOlive,
+                            style: TextStyle(
+                              color: theme.colorScheme.onSurface,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
@@ -1370,8 +1374,8 @@ class _PullSettingsSheet extends StatelessWidget {
               Expanded(
                 child: OutlinedButton(
                   style: OutlinedButton.styleFrom(
-                    foregroundColor: AppColors.mutedOlive,
-                    side: const BorderSide(color: AppColors.softGrey),
+                    foregroundColor: theme.colorScheme.onSurfaceVariant,
+                    side: BorderSide(color: theme.colorScheme.outlineVariant),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1386,7 +1390,7 @@ class _PullSettingsSheet extends StatelessWidget {
                 flex: 2,
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.darkOlive,
+                    backgroundColor: theme.colorScheme.primary,
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -1396,14 +1400,14 @@ class _PullSettingsSheet extends StatelessWidget {
                     Navigator.pop(context);
                     onPull();
                   },
-                  icon: const Icon(
+                  icon: Icon(
                     Icons.download_rounded,
                     size: 16,
-                    color: AppColors.cream,
+                    color: theme.colorScheme.onPrimary,
                   ),
-                  label: const Text(
+                  label: Text(
                     'Pull Settings',
-                    style: TextStyle(color: AppColors.cream),
+                    style: TextStyle(color: theme.colorScheme.onPrimary),
                   ),
                 ),
               ),

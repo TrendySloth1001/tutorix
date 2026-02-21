@@ -116,22 +116,23 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.offWhite,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(
+          icon: Icon(
             Icons.arrow_back_ios_new_rounded,
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
           ),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Payment Settings',
           style: TextStyle(
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w700,
             fontSize: 17,
           ),
@@ -208,8 +209,8 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                                 if (_razorpayAccountId != null)
                                   Text(
                                     'Account: $_razorpayAccountId',
-                                    style: const TextStyle(
-                                      color: AppColors.mutedOlive,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.onSurfaceVariant,
                                       fontSize: 11,
                                     ),
                                   ),
@@ -222,11 +223,11 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
 
                     // ── Tax Details ──
                     const SizedBox(height: 24),
-                    const Text(
+                    Text(
                       'Tax Details',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.darkOlive,
+                        color: theme.colorScheme.onSurface,
                         fontSize: 16,
                       ),
                     ),
@@ -268,19 +269,19 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
 
                     // ── Bank Details ──
                     const SizedBox(height: 24),
-                    const Text(
+                    Text(
                       'Bank Account Details',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.darkOlive,
+                        color: theme.colorScheme.onSurface,
                         fontSize: 16,
                       ),
                     ),
                     const SizedBox(height: 4),
-                    const Text(
+                    Text(
                       'Required for receiving payments via Razorpay Route',
                       style: TextStyle(
-                        color: AppColors.mutedOlive,
+                        color: theme.colorScheme.onSurfaceVariant,
                         fontSize: 12,
                       ),
                     ),
@@ -333,17 +334,17 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                       child: FilledButton(
                         onPressed: _saving ? null : _save,
                         style: FilledButton.styleFrom(
-                          backgroundColor: AppColors.darkOlive,
+                          backgroundColor: theme.colorScheme.primary,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(12),
                           ),
                         ),
                         child: _saving
-                            ? const SizedBox(
+                            ? SizedBox(
                                 height: 20,
                                 width: 20,
                                 child: CircularProgressIndicator(
-                                  color: AppColors.cream,
+                                  color: theme.colorScheme.onPrimary,
                                   strokeWidth: 2,
                                 ),
                               )

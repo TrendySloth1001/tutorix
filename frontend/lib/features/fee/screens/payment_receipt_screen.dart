@@ -98,19 +98,20 @@ class PaymentReceiptScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.offWhite,
+      backgroundColor: theme.scaffoldBackgroundColor,
       appBar: AppBar(
-        backgroundColor: AppColors.offWhite,
+        backgroundColor: theme.scaffoldBackgroundColor,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close_rounded, color: AppColors.darkOlive),
+          icon: Icon(Icons.close_rounded, color: theme.colorScheme.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Payment Receipt',
           style: TextStyle(
-            color: AppColors.darkOlive,
+            color: theme.colorScheme.onSurface,
             fontWeight: FontWeight.w700,
             fontSize: 17,
           ),
@@ -147,17 +148,17 @@ class PaymentReceiptScreen extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               _formatDateTime(paidAt),
-              style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
             ),
             const SizedBox(height: 32),
 
             // ─── Amount ───
             Text(
               '₹${amount.toStringAsFixed(2)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w900,
                 fontSize: 36,
-                color: AppColors.darkOlive,
+                color: theme.colorScheme.onSurface,
                 letterSpacing: -1,
               ),
             ),
@@ -221,11 +222,11 @@ class PaymentReceiptScreen extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
+                    Text(
                       'Amount Breakdown',
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: AppColors.darkOlive,
+                        color: theme.colorScheme.onSurface,
                         fontSize: 14,
                       ),
                     ),
@@ -351,9 +352,9 @@ class PaymentReceiptScreen extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: () => _copyReceipt(context),
                     style: OutlinedButton.styleFrom(
-                      foregroundColor: AppColors.darkOlive,
+                      foregroundColor: theme.colorScheme.primary,
                       side: BorderSide(
-                        color: AppColors.mutedOlive.withValues(alpha: 0.3),
+                        color: theme.colorScheme.outlineVariant,
                       ),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -372,7 +373,7 @@ class PaymentReceiptScreen extends StatelessWidget {
                   child: FilledButton.icon(
                     onPressed: () => Navigator.pop(context),
                     style: FilledButton.styleFrom(
-                      backgroundColor: AppColors.darkOlive,
+                      backgroundColor: theme.colorScheme.primary,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -479,6 +480,7 @@ class _DetailRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
       child: Row(
@@ -488,15 +490,15 @@ class _DetailRow extends StatelessWidget {
             width: 110,
             child: Text(
               label,
-              style: const TextStyle(color: AppColors.mutedOlive, fontSize: 13),
+              style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
             ),
           ),
           Expanded(
             child: Text(
               value,
               textAlign: TextAlign.right,
-              style: const TextStyle(
-                color: AppColors.darkOlive,
+              style: TextStyle(
+                color: theme.colorScheme.onSurface,
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),
@@ -511,6 +513,6 @@ class _DetailRow extends StatelessWidget {
 class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Divider(height: 1, color: AppColors.softGrey.withValues(alpha: 0.5));
+    return Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant);
   }
 }
