@@ -179,9 +179,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
       if (!mounted) return;
 
       final msg = result['message'] as String? ?? 'Status updated';
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(msg)),
-      );
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
       _load();
     } catch (e) {
       if (!mounted) return;
@@ -208,9 +206,9 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
     try {
       await _svc.deleteLinkedAccount(widget.coachingId);
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Linked account removed')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Linked account removed')));
       _load();
     } catch (e) {
       if (!mounted) return;
@@ -297,7 +295,8 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
 
     // Linked account exists
     final isActive = _razorpayActivated;
-    final isPending = _onboardingStatus == 'under_review' ||
+    final isPending =
+        _onboardingStatus == 'under_review' ||
         _onboardingStatus == 'needs_clarification';
 
     final Color statusColor;

@@ -407,11 +407,17 @@ class _SimpleStatusRow extends StatelessWidget {
       children: [
         Text(
           label,
-          style: TextStyle(fontSize: FontSize.body, color: theme.colorScheme.onSurface),
+          style: TextStyle(
+            fontSize: FontSize.body,
+            color: theme.colorScheme.onSurface,
+          ),
         ),
         const Spacer(),
         Container(
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.sp10, vertical: Spacing.sp4),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.sp10,
+            vertical: Spacing.sp4,
+          ),
           decoration: BoxDecoration(
             color: isAlert
                 ? theme.colorScheme.error.withValues(alpha: 0.08)
@@ -668,7 +674,10 @@ class _FYDropdown extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.only(right: Spacing.sp8),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.sp12, vertical: Spacing.sp4),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp12,
+          vertical: Spacing.sp4,
+        ),
         decoration: BoxDecoration(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
           borderRadius: BorderRadius.circular(Radii.lg),
@@ -711,7 +720,10 @@ class _OverdueBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp16, vertical: Spacing.sp12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp16,
+        vertical: Spacing.sp12,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(Radii.lg),
@@ -761,7 +773,10 @@ class _OverdueBanner extends StatelessWidget {
               ),
               child: const Text(
                 'Remind',
-                style: TextStyle(fontSize: FontSize.caption, fontWeight: FontWeight.w700),
+                style: TextStyle(
+                  fontSize: FontSize.caption,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
             ),
         ],
