@@ -14,6 +14,11 @@ const adminAuth = [authMiddleware, requireCoachingRole('ADMIN', 'OWNER')] as con
 const memberAuth = [authMiddleware, requireCoachingMember()] as const;
 const reminderLimiter = rateLimiter(60_000, 10, 'fee-reminder'); // 10 reminders/min per user
 
+// S4 fix: Rate limit payment endpoints to prevent abuse
+const orderLimiter = rateLimiter(60_000, 10, 'create-order');     // 10 orders/min per user
+const verifyLimiter = rateLimiter(60_000, 15, 'verify-payment');  // 15 verifications/min per user
+const refundLimiter = rateLimiter(60_000, 5, 'online-refund');    // 5 refunds/min per user
+
 // All routes under /coaching/:coachingId/fee
 
 // ── Fee Structures (admin-only) ─────────────────────────────────────
@@ -58,14 +63,14 @@ router.get('/my', ...memberAuth, ctrl.getMyFees.bind(ctrl));
 router.get('/my-transactions', ...memberAuth, ctrl.getMyTransactions.bind(ctrl));
 
 // ── Online Payment — student-facing (any member) ───────────────────
-router.post('/records/:recordId/create-order', ...memberAuth, payCtrl.createOrder.bind(payCtrl));
-router.post('/records/:recordId/verify-payment', ...memberAuth, payCtrl.verifyPayment.bind(payCtrl));
+router.post('/records/:recordId/create-order', ...memberAuth, orderLimiter, payCtrl.createOrder.bind(payCtrl));
+router.post('/records/:recordId/verify-payment', ...memberAuth, verifyLimiter, payCtrl.verifyPayment.bind(payCtrl));
 router.get('/records/:recordId/online-payments', ...adminAuth, payCtrl.getOnlinePayments.bind(payCtrl));
-router.post('/records/:recordId/online-refund', ...adminAuth, payCtrl.initiateOnlineRefund.bind(payCtrl));
+router.post('/records/:recordId/online-refund', ...adminAuth, refundLimiter, payCtrl.initiateOnlineRefund.bind(payCtrl));
 
 // ── Multi-record payment — student-facing ──────────────────────────
-router.post('/multi-pay/create-order', ...memberAuth, payCtrl.createMultiOrder.bind(payCtrl));
-router.post('/multi-pay/verify', ...memberAuth, payCtrl.verifyMultiPayment.bind(payCtrl));
+router.post('/multi-pay/create-order', ...memberAuth, orderLimiter, payCtrl.createMultiOrder.bind(payCtrl));
+router.post('/multi-pay/verify', ...memberAuth, verifyLimiter, payCtrl.verifyMultiPayment.bind(payCtrl));
 
 // ── Failed order tracking ──────────────────────────────────────────
 router.post('/orders/:internalOrderId/fail', ...memberAuth, payCtrl.failOrder.bind(payCtrl));

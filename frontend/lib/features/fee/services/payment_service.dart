@@ -112,6 +112,7 @@ class PaymentService {
     String coachingId, {
     String? gstNumber,
     String? panNumber,
+    String? contactPhone,
     String? bankAccountName,
     String? bankAccountNumber,
     String? bankIfscCode,
@@ -120,6 +121,7 @@ class PaymentService {
     final body = <String, dynamic>{
       'gstNumber': ?gstNumber,
       'panNumber': ?panNumber,
+      'contactPhone': ?contactPhone,
       'bankAccountName': ?bankAccountName,
       'bankAccountNumber': ?bankAccountNumber,
       'bankIfscCode': ?bankIfscCode,
@@ -168,6 +170,15 @@ class PaymentService {
   Future<void> deleteLinkedAccount(String coachingId) async {
     await _api.deleteAuthenticated(
       '${ApiConstants.paymentSettings(coachingId)}/linked-account',
+    );
+  }
+
+  /// Verify bank account via penny-drop (₹1 transfer + validation).
+  /// Returns { verified: bool, nameAtBank?: string, message: string }
+  Future<Map<String, dynamic>> verifyBankAccount(String coachingId) async {
+    return _api.postAuthenticated(
+      '${ApiConstants.paymentSettings(coachingId)}/verify-bank',
+      body: {},
     );
   }
 

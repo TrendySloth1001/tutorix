@@ -121,7 +121,8 @@ export class PaymentController {
     async getPaymentSettings(req: Request, res: Response) {
         try {
             const { coachingId } = req.params as { coachingId: string };
-            const data = await svc.getPaymentSettings(coachingId);
+            const userId = requireUserId(req);
+            const data = await svc.getPaymentSettings(coachingId, userId);
             res.json(data);
         } catch (e: any) {
             res.status(e.status ?? 500).json({ error: e.message });
@@ -132,8 +133,9 @@ export class PaymentController {
     async failOrder(req: Request, res: Response) {
         try {
             const { coachingId, internalOrderId } = req.params as { coachingId: string; internalOrderId: string };
+            const userId = requireUserId(req);
             const body = validateBody(failOrderSchema, req.body);
-            await svc.markOrderFailed(coachingId, internalOrderId, body.reason ?? 'User cancelled');
+            await svc.markOrderFailed(coachingId, internalOrderId, body.reason ?? 'User cancelled', userId);
             res.json({ ok: true });
         } catch (e: any) {
             res.status(e.status ?? 500).json({ error: e.message, fieldErrors: e.fieldErrors });
@@ -188,4 +190,17 @@ export class PaymentController {
         } catch (e: any) {
             res.status(e.status ?? 500).json({ error: e.message });
         }
-    }}
+    }
+
+    /** POST /coaching/:coachingId/payment-settings/verify-bank */
+    async verifyBankAccount(req: Request, res: Response) {
+        try {
+            const { coachingId } = req.params as { coachingId: string };
+            const userId = requireUserId(req);
+            const data = await svc.verifyBankAccount(coachingId, userId);
+            res.json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+}

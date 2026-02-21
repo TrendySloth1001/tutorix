@@ -23,6 +23,7 @@ import { webhookRouter } from './modules/payment/payment.webhook.js';
 import { PaymentController } from './modules/payment/payment.controller.js';
 import { requestLoggerMiddleware } from './shared/middleware/request-logger.middleware.js';
 import { authMiddleware } from './shared/middleware/auth.middleware.js';
+import { rateLimiter } from './shared/middleware/rate-limiter.middleware.js';
 import { AdminLogsController } from './modules/admin/logs.controller.js';
 
 
@@ -65,13 +66,20 @@ const paymentCtrl = new PaymentController();
 app.get('/payment/config', authMiddleware, paymentCtrl.getConfig.bind(paymentCtrl));
 
 // Coaching payment settings (bank account, GST, etc.)
-app.get('/coaching/:coachingId/payment-settings', authMiddleware, paymentCtrl.getPaymentSettings.bind(paymentCtrl));
-app.patch('/coaching/:coachingId/payment-settings', authMiddleware, paymentCtrl.updatePaymentSettings.bind(paymentCtrl));
+const settingsLimiter = rateLimiter(60_000, 15, 'payment-settings');    // 15 reads/writes per min
+const verifyBankLimiter = rateLimiter(300_000, 3, 'verify-bank');       // 3 penny drops per 5 min (costs ₹2 each)
+const linkedAccountLimiter = rateLimiter(60_000, 5, 'linked-account');  // 5 linked account ops per min
+
+app.get('/coaching/:coachingId/payment-settings', authMiddleware, settingsLimiter, paymentCtrl.getPaymentSettings.bind(paymentCtrl));
+app.patch('/coaching/:coachingId/payment-settings', authMiddleware, settingsLimiter, paymentCtrl.updatePaymentSettings.bind(paymentCtrl));
 
 // Razorpay Route linked account management
-app.post('/coaching/:coachingId/payment-settings/linked-account', authMiddleware, paymentCtrl.createLinkedAccount.bind(paymentCtrl));
-app.post('/coaching/:coachingId/payment-settings/linked-account/refresh', authMiddleware, paymentCtrl.refreshLinkedAccountStatus.bind(paymentCtrl));
-app.delete('/coaching/:coachingId/payment-settings/linked-account', authMiddleware, paymentCtrl.deleteLinkedAccount.bind(paymentCtrl));
+app.post('/coaching/:coachingId/payment-settings/linked-account', authMiddleware, linkedAccountLimiter, paymentCtrl.createLinkedAccount.bind(paymentCtrl));
+app.post('/coaching/:coachingId/payment-settings/linked-account/refresh', authMiddleware, linkedAccountLimiter, paymentCtrl.refreshLinkedAccountStatus.bind(paymentCtrl));
+app.delete('/coaching/:coachingId/payment-settings/linked-account', authMiddleware, linkedAccountLimiter, paymentCtrl.deleteLinkedAccount.bind(paymentCtrl));
+
+// Bank account penny-drop verification
+app.post('/coaching/:coachingId/payment-settings/verify-bank', authMiddleware, verifyBankLimiter, paymentCtrl.verifyBankAccount.bind(paymentCtrl));
 
 app.get('/hello', (req, res) => {
   res.json({ message: 'Hello from Express TypeScript!' });

@@ -48,6 +48,10 @@ class _MyFeesScreenState extends State<MyFeesScreen>
   final Set<String> _selected = {};
   bool _selectMode = false;
 
+  // Server-authoritative: online payments are only available when coaching
+  // has completed Razorpay Route onboarding.
+  bool _onlinePayEnabled = false;
+
   @override
   void initState() {
     super.initState();
@@ -120,6 +124,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
     try {
       final result = await _svc.getMyFees(widget.coachingId);
       final records = (result['records'] as List<FeeRecordModel>);
+      final onlinePay = result['onlinePaymentEnabled'] as bool? ?? false;
       // Sort: overdue first, then pending, then partial, then paid/waived
       records.sort(
         (a, b) => _statusOrder(a.status).compareTo(_statusOrder(b.status)),
@@ -128,6 +133,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       final firstMemberId = records.isNotEmpty ? records.first.memberId : null;
       setState(() {
         _records = records;
+        _onlinePayEnabled = onlinePay;
         if (firstMemberId != null) _myMemberId = firstMemberId;
         _loading = false;
         _selected.removeWhere((id) => !records.any((r) => r.id == id));
@@ -324,7 +330,8 @@ class _MyFeesScreenState extends State<MyFeesScreen>
           ? _PayBar(
               selectedCount: _selected.length,
               totalAmount: _selectedTotal,
-              onPayFull: _payMulti,
+              onPayFull: _onlinePayEnabled ? _payMulti : null,
+              onlinePayEnabled: _onlinePayEnabled,
             )
           : null,
     );
@@ -479,8 +486,10 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                       }
                     },
                     onLongPress: () => _toggleSelect(r.id),
-                    onPayOnline: () => _initiatePayment(r),
-                    onPayFull: () => _paySingle(r),
+                    onPayOnline: _onlinePayEnabled
+                        ? () => _initiatePayment(r)
+                        : null,
+                    onPayFull: _onlinePayEnabled ? () => _paySingle(r) : null,
                   ),
                 );
               }, childCount: payable.length),
@@ -841,11 +850,13 @@ class _AccountShortcutButton extends StatelessWidget {
 class _PayBar extends StatelessWidget {
   final int selectedCount;
   final double totalAmount;
-  final VoidCallback onPayFull;
+  final VoidCallback? onPayFull;
+  final bool onlinePayEnabled;
   const _PayBar({
     required this.selectedCount,
     required this.totalAmount,
     required this.onPayFull,
+    required this.onlinePayEnabled,
   });
 
   @override
@@ -895,27 +906,40 @@ class _PayBar extends StatelessWidget {
               ),
             ),
             const SizedBox(width: Spacing.sp12),
-            FilledButton.icon(
-              onPressed: onPayFull,
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.primary,
-                padding: const EdgeInsets.symmetric(
-                  horizontal: Spacing.sp16,
-                  vertical: Spacing.sp10,
+            if (onlinePayEnabled)
+              FilledButton.icon(
+                onPressed: onPayFull,
+                style: FilledButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.sp16,
+                    vertical: Spacing.sp10,
+                  ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(Radii.md),
+                  ),
                 ),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(Radii.md),
+                icon: const Icon(Icons.bolt_rounded, size: 18),
+                label: const Text(
+                  'Pay Now',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: FontSize.body,
+                  ),
+                ),
+              )
+            else
+              Flexible(
+                child: Text(
+                  'Online payments not enabled',
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: FontSize.caption,
+                    fontWeight: FontWeight.w500,
+                  ),
+                  textAlign: TextAlign.end,
                 ),
               ),
-              icon: const Icon(Icons.bolt_rounded, size: 18),
-              label: const Text(
-                'Pay Now',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: FontSize.body,
-                ),
-              ),
-            ),
           ],
         ),
       ),
@@ -1158,8 +1182,8 @@ class _FeeCard extends StatelessWidget {
                   statusColor: statusColor,
                 ),
               ],
-              // Pay Online (only in non-select mode)
-              if (canPay && !selectMode) ...[
+              // Pay Online (only in non-select mode and when enabled)
+              if (canPay && !selectMode && onPayFull != null) ...[
                 const SizedBox(height: Spacing.sp10),
                 if (_hasInstallments(record)) ...[
                   // Two-button layout: installment (primary) + full (outlined)
@@ -1244,6 +1268,42 @@ class _FeeCard extends StatelessWidget {
                     ),
                   ),
                 ],
+              ],
+              // Show info when online payment is not available
+              if (canPay && !selectMode && onPayFull == null) ...[
+                const SizedBox(height: Spacing.sp10),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.sp12,
+                    vertical: Spacing.sp8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: theme.colorScheme.surfaceContainerHighest.withValues(
+                      alpha: 0.5,
+                    ),
+                    borderRadius: BorderRadius.circular(Radii.sm),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 14,
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                      const SizedBox(width: Spacing.sp6),
+                      Expanded(
+                        child: Text(
+                          'Ask your coaching admin to enable online payments',
+                          style: TextStyle(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontSize: FontSize.micro,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ],
           ),

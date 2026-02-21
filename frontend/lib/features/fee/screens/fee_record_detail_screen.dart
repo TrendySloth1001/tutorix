@@ -37,6 +37,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
   List<Map<String, dynamic>> _failedOrders = [];
   bool _loading = true;
   String? _error;
+  bool _onlinePayEnabled = false;
 
   @override
   void initState() {
@@ -57,12 +58,14 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
     });
     try {
       final results = await Future.wait([
-        _svc.getRecord(widget.coachingId, widget.recordId),
+        _svc.getRecordWithMeta(widget.coachingId, widget.recordId),
         _paySvc.getFailedOrders(widget.coachingId, widget.recordId),
       ]);
       if (!mounted) return;
+      final meta = results[0] as Map<String, dynamic>;
       setState(() {
-        _record = results[0] as FeeRecordModel;
+        _record = meta['record'] as FeeRecordModel;
+        _onlinePayEnabled = meta['onlinePaymentEnabled'] as bool? ?? false;
         _failedOrders = (results[1] as List).cast<Map<String, dynamic>>();
         _loading = false;
       });
@@ -181,8 +184,9 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
               onRemind: () => _onAction('remind'),
               onWaive: () => _onAction('waive'),
               onRefund: () => _onAction('refund'),
-              onPayOnline: _initiateOnlinePayment,
-              onPayFull: () => _payOnline(null),
+              onPayOnline: _onlinePayEnabled ? _initiateOnlinePayment : null,
+              onPayFull: _onlinePayEnabled ? () => _payOnline(null) : null,
+              onlinePayEnabled: _onlinePayEnabled,
               coachingName: widget.coachingName ?? 'Institute',
               failedOrders: _failedOrders,
             ),
@@ -898,8 +902,9 @@ class _Body extends StatelessWidget {
   final VoidCallback onRemind;
   final VoidCallback onWaive;
   final VoidCallback onRefund;
-  final VoidCallback onPayOnline;
-  final VoidCallback onPayFull;
+  final VoidCallback? onPayOnline;
+  final VoidCallback? onPayFull;
+  final bool onlinePayEnabled;
   final String coachingName;
   final List<Map<String, dynamic>> failedOrders;
 
@@ -910,8 +915,9 @@ class _Body extends StatelessWidget {
     required this.onRemind,
     required this.onWaive,
     required this.onRefund,
-    required this.onPayOnline,
-    required this.onPayFull,
+    this.onPayOnline,
+    this.onPayFull,
+    this.onlinePayEnabled = false,
     required this.coachingName,
     this.failedOrders = const [],
   });
@@ -1022,7 +1028,39 @@ class _Body extends StatelessWidget {
             ),
           // ─── Pay Online (Student / Parent) ───
           if (!isAdmin && !record.isPaid && !record.isWaived) ...[
-            if (_hasInstallments(record)) ...[
+            if (!onlinePayEnabled) ...[
+              // Online payments not enabled — show info message
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(Spacing.sp16),
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.surfaceContainerHighest.withValues(
+                    alpha: 0.5,
+                  ),
+                  borderRadius: BorderRadius.circular(Radii.md),
+                ),
+                child: Row(
+                  children: [
+                    Icon(
+                      Icons.info_outline_rounded,
+                      size: 18,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                    const SizedBox(width: Spacing.sp12),
+                    Expanded(
+                      child: Text(
+                        'Online payments are not yet enabled. Ask your coaching admin to set up online payments.',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontSize: FontSize.caption,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ] else if (_hasInstallments(record)) ...[
               // Two-button row: installment (primary) + full (outlined)
               Row(
                 children: [
@@ -1849,7 +1887,7 @@ class _RefundStatusBadge extends StatelessWidget {
     String label;
     switch (status) {
       case 'INITIATED':
-        color = Colors.orange;
+        color = Theme.of(context).colorScheme.tertiary;
         label = 'Processing';
         break;
       case 'FAILED':

@@ -169,6 +169,8 @@ model Coaching {
   bankAccountNumber String?
   bankIfscCode      String?
   bankName          String?
+  bankVerified      Boolean @default(false)  // Penny-drop verification status
+  bankVerifiedAt    DateTime?               // When penny-drop was last verified
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

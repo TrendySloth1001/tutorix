@@ -1001,12 +1001,22 @@ export class FeeService {
     }
 
     async getRecordById(coachingId: string, recordId: string) {
-        const record = await prisma.feeRecord.findFirst({
-            where: { id: recordId, coachingId },
-            include: RECORD_INCLUDE,
-        });
+        const [record, coaching] = await Promise.all([
+            prisma.feeRecord.findFirst({
+                where: { id: recordId, coachingId },
+                include: RECORD_INCLUDE,
+            }),
+            prisma.coaching.findUnique({
+                where: { id: coachingId },
+                select: { razorpayActivated: true },
+            }),
+        ]);
         if (!record) throw Object.assign(new Error('Record not found'), { status: 404 });
-        return { ...record, daysOverdue: record.status === 'OVERDUE' ? calcDaysOverdue(record.dueDate) : 0 };
+        return {
+            ...record,
+            daysOverdue: record.status === 'OVERDUE' ? calcDaysOverdue(record.dueDate) : 0,
+            onlinePaymentEnabled: coaching?.razorpayActivated ?? false,
+        };
     }
 
     /** Record a payment (full or partial) against a FeeRecord. */
@@ -1615,6 +1625,13 @@ export class FeeService {
     async getMyFees(coachingId: string, userId: string) {
         await this._markOverdueRecords(coachingId);
 
+        // Check if online payments are enabled (Razorpay Route activated) — server-authoritative
+        const coaching = await prisma.coaching.findUnique({
+            where: { id: coachingId },
+            select: { razorpayActivated: true },
+        });
+        const onlinePaymentEnabled = coaching?.razorpayActivated ?? false;
+
         // Find member record for this user (or ward of this user)
         const member = await prisma.coachingMember.findFirst({
             where: { coachingId, userId },
@@ -1630,7 +1647,7 @@ export class FeeService {
             ...wardMembers.map(w => w.id),
         ];
 
-        if (memberIds.length === 0) return { records: [], summary: { totalDue: 0, totalPaid: 0, totalOverdue: 0 } };
+        if (memberIds.length === 0) return { records: [], onlinePaymentEnabled, summary: { totalDue: 0, totalPaid: 0, totalOverdue: 0 } };
 
         const records = await prisma.feeRecord.findMany({
             where: { coachingId, memberId: { in: memberIds } },
@@ -1646,6 +1663,7 @@ export class FeeService {
         const enriched = records.map(r => ({ ...r, daysOverdue: r.status === 'OVERDUE' ? calcDaysOverdue(r.dueDate) : 0 }));
         return {
             records: enriched,
+            onlinePaymentEnabled,
             summary: {
                 totalDue: enriched.filter(r => ['PENDING', 'PARTIALLY_PAID', 'OVERDUE'].includes(r.status)).reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0),
                 totalPaid: enriched.reduce((s, r) => s + r.paidAmount, 0),

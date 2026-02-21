@@ -169,9 +169,9 @@ export const createOrderSchema = z.object({
 });
 
 export const verifyPaymentSchema = z.object({
-    razorpay_order_id: z.string().min(1, 'Order ID required'),
-    razorpay_payment_id: z.string().min(1, 'Payment ID required'),
-    razorpay_signature: z.string().min(1, 'Signature required'),
+    razorpay_order_id: z.string().regex(/^order_[A-Za-z0-9]{14,}$/, 'Invalid Razorpay order ID format'),
+    razorpay_payment_id: z.string().regex(/^pay_[A-Za-z0-9]{14,}$/, 'Invalid Razorpay payment ID format'),
+    razorpay_signature: z.string().regex(/^[a-f0-9]{64}$/, 'Invalid signature format'),
 });
 
 export const initiateRefundSchema = z.object({
@@ -181,7 +181,7 @@ export const initiateRefundSchema = z.object({
 });
 
 export const multiPayCreateOrderSchema = z.object({
-    recordIds: z.array(uuidString).min(1, 'At least one record required'),
+    recordIds: z.array(uuidString).min(1, 'At least one record required').max(20, 'Cannot pay for more than 20 records at once'),
 });
 
 export const failOrderSchema = z.object({
@@ -207,8 +207,9 @@ export const financialYearSchema = z.string().regex(
 export const paymentSettingsSchema = z.object({
     gstNumber: z.string().regex(/^\d{2}[A-Z]{5}\d{4}[A-Z]\d[A-Z\d][A-Z]\d$/, 'Invalid GSTIN format').or(z.literal('')).optional(),
     panNumber: z.string().regex(/^[A-Z]{5}\d{4}[A-Z]$/, 'Invalid PAN format').or(z.literal('')).optional(),
+    contactPhone: z.string().regex(/^[6-9]\d{9}$/, 'Invalid Indian phone number').or(z.literal('')).optional(),
     bankAccountName: z.string().max(200).optional(),
-    bankAccountNumber: z.string().min(8).max(20).optional().or(z.literal('')),
+    bankAccountNumber: z.string().min(8).max(20).regex(/^\d+$/, 'Account number must contain only digits').optional().or(z.literal('')),
     bankIfscCode: z.string().regex(/^[A-Z]{4}0[A-Z0-9]{6}$/, 'Invalid IFSC format').or(z.literal('')).optional(),
     bankName: z.string().max(200).optional(),
 });

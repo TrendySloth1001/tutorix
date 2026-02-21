@@ -307,6 +307,20 @@ class FeeService {
     });
   }
 
+  /// Returns { record: FeeRecordModel, onlinePaymentEnabled: bool }
+  Future<Map<String, dynamic>> getRecordWithMeta(
+    String coachingId,
+    String recordId,
+  ) async {
+    final json = await _api.getAuthenticated(
+      ApiConstants.feeRecordById(coachingId, recordId),
+    );
+    return {
+      'record': FeeRecordModel.fromJson(json),
+      'onlinePaymentEnabled': json['onlinePaymentEnabled'] as bool? ?? false,
+    };
+  }
+
   Future<FeeRecordModel> getRecord(String coachingId, String recordId) async {
     return _cachedFetch(
       'fee:$coachingId:record:$recordId',

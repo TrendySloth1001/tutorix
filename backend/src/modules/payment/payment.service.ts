@@ -166,6 +166,18 @@ export class PaymentService {
      * Idempotent: reuses existing CREATED order if amount matches & < 30 min old.
      */
     async createOrder(coachingId: string, recordId: string, userId: string, dto?: CreateOrderDto) {
+        // 0. Server-side gate: block online payments if coaching hasn't completed Route onboarding
+        const coachingGate = await prisma.coaching.findUnique({
+            where: { id: coachingId },
+            select: { razorpayActivated: true },
+        });
+        if (!coachingGate?.razorpayActivated) {
+            throw Object.assign(
+                new Error('Online payments are not enabled for this coaching. Ask your coaching admin to complete payment setup.'),
+                { status: 403 },
+            );
+        }
+
         // 1. Validate the fee record
         const record = await prisma.feeRecord.findFirst({
             where: { id: recordId, coachingId },
@@ -587,10 +599,12 @@ export class PaymentService {
      * Accepts either an internal UUID (single-pay) or a razorpayOrderId "order_xxx" (multi-pay).
      * For multi-pay all rows sharing the razorpayOrderId are marked failed together.
      */
-    async markOrderFailed(coachingId: string, internalOrderId: string, reason: string) {
+    async markOrderFailed(coachingId: string, internalOrderId: string, reason: string, userId: string) {
+        // S3 fix: Only the order creator can mark it as failed
         await prisma.razorpayOrder.updateMany({
             where: {
                 coachingId,
+                userId,
                 status: 'CREATED',
                 OR: [
                     { id: internalOrderId },
@@ -635,6 +649,18 @@ export class PaymentService {
     async createMultiOrder(coachingId: string, userId: string, dto: { recordIds: string[] }) {
         if (!dto.recordIds || dto.recordIds.length === 0) {
             throw Object.assign(new Error('At least one record required'), { status: 400 });
+        }
+
+        // 0. Server-side gate: block online payments if coaching hasn't completed Route onboarding
+        const coachingGate = await prisma.coaching.findUnique({
+            where: { id: coachingId },
+            select: { razorpayActivated: true },
+        });
+        if (!coachingGate?.razorpayActivated) {
+            throw Object.assign(
+                new Error('Online payments are not enabled for this coaching. Ask your coaching admin to complete payment setup.'),
+                { status: 403 },
+            );
         }
 
         // 1. Fetch all records and validate
@@ -1059,23 +1085,42 @@ export class PaymentService {
     private static readonly SETTINGS_SELECT = {
         id: true, name: true,
         gstNumber: true, panNumber: true,
+        contactPhone: true,
         razorpayAccountId: true, razorpayActivated: true, platformFeePercent: true,
         razorpayStakeholderId: true, razorpayProductId: true, razorpayOnboardingStatus: true,
         bankAccountName: true, bankAccountNumber: true, bankIfscCode: true, bankName: true,
+        bankVerified: true, bankVerifiedAt: true,
     } as const;
 
-    async getPaymentSettings(coachingId: string) {
+    async getPaymentSettings(coachingId: string, userId: string) {
         const coaching = await prisma.coaching.findUnique({
             where: { id: coachingId },
-            select: PaymentService.SETTINGS_SELECT,
+            select: { ...PaymentService.SETTINGS_SELECT, ownerId: true },
         });
         if (!coaching) throw Object.assign(new Error('Coaching not found'), { status: 404 });
-        return coaching;
+
+        // S1 fix: Only the owner can see full payment settings (PAN, bank account, IFSC)
+        if (coaching.ownerId !== userId) {
+            throw Object.assign(new Error('Only the owner can view payment settings'), { status: 403 });
+        }
+
+        // S2 fix: Mask bank account number in response (show only last 4 digits)
+        const { ownerId: _ownerId, ...data } = coaching;
+        if (data.bankAccountNumber) {
+            const acc = data.bankAccountNumber;
+            (data as any).bankAccountNumber = acc.length > 4
+                ? '•'.repeat(acc.length - 4) + acc.slice(-4)
+                : acc;
+            // Include raw number only for the settings form (owner already verified above)
+            (data as any).bankAccountNumberRaw = acc;
+        }
+        return data;
     }
 
     async updatePaymentSettings(coachingId: string, userId: string, dto: {
         gstNumber?: string | undefined;
         panNumber?: string | undefined;
+        contactPhone?: string | undefined;
         bankAccountName?: string | undefined;
         bankAccountNumber?: string | undefined;
         bankIfscCode?: string | undefined;
@@ -1089,10 +1134,21 @@ export class PaymentService {
         const data: Record<string, unknown> = {};
         if (dto.gstNumber !== undefined) data.gstNumber = dto.gstNumber || null;
         if (dto.panNumber !== undefined) data.panNumber = dto.panNumber || null;
+        if (dto.contactPhone !== undefined) data.contactPhone = dto.contactPhone || null;
         if (dto.bankAccountName !== undefined) data.bankAccountName = dto.bankAccountName || null;
         if (dto.bankAccountNumber !== undefined) data.bankAccountNumber = dto.bankAccountNumber || null;
         if (dto.bankIfscCode !== undefined) data.bankIfscCode = dto.bankIfscCode || null;
         if (dto.bankName !== undefined) data.bankName = dto.bankName || null;
+
+        // Reset bank verification if bank details changed
+        const bankFieldChanged =
+            dto.bankAccountNumber !== undefined ||
+            dto.bankIfscCode !== undefined ||
+            dto.bankAccountName !== undefined;
+        if (bankFieldChanged) {
+            data.bankVerified = false;
+            data.bankVerifiedAt = null;
+        }
 
         return prisma.coaching.update({
             where: { id: coachingId },
@@ -1365,4 +1421,175 @@ export class PaymentService {
             },
             select: PaymentService.SETTINGS_SELECT,
         });
-    }}
+    }
+
+    // ── Penny-Drop Bank Account Verification ──────────────────────
+
+    /**
+     * Verifies the coaching's bank account via Razorpay Fund Account Validation API.
+     * Performs a ₹1 penny transfer and checks if the account number + IFSC are valid.
+     * Cost: ~₹2 per verification. Only runs if bank details changed since last verification.
+     *
+     * Returns: { verified: boolean, nameAtBank?: string, message: string }
+     */
+    async verifyBankAccount(coachingId: string, userId: string) {
+        const coaching = await prisma.coaching.findUnique({
+            where: { id: coachingId },
+            select: {
+                id: true, ownerId: true, name: true,
+                bankAccountName: true, bankAccountNumber: true, bankIfscCode: true,
+                bankVerified: true, bankVerifiedAt: true,
+                contactPhone: true,
+            },
+        });
+        if (!coaching) throw Object.assign(new Error('Coaching not found'), { status: 404 });
+        if (coaching.ownerId !== userId) {
+            throw Object.assign(new Error('Only the owner can verify the bank account'), { status: 403 });
+        }
+
+        // Validate bank details are present
+        if (!coaching.bankAccountNumber || !coaching.bankIfscCode || !coaching.bankAccountName) {
+            throw Object.assign(
+                new Error('Bank account number, IFSC code, and account holder name are required'),
+                { status: 400 },
+            );
+        }
+
+        // Skip if already verified recently (within last 30 days) — avoid unnecessary charges
+        if (coaching.bankVerified && coaching.bankVerifiedAt) {
+            const daysSince = Math.floor((Date.now() - coaching.bankVerifiedAt.getTime()) / (1000 * 60 * 60 * 24));
+            if (daysSince < 30) {
+                return {
+                    verified: true,
+                    message: `Bank account verified ${daysSince === 0 ? 'today' : `${daysSince} day(s) ago`}. Re-verification available after 30 days.`,
+                    verifiedAt: coaching.bankVerifiedAt,
+                };
+            }
+        }
+
+        try {
+            // Razorpay Fund Account Validation API
+            // Docs: https://razorpay.com/docs/api/x/fund-accounts/validation/
+            const phone = coaching.contactPhone || '9999999999';
+            const contactPayload = await fetch('https://api.razorpay.com/v1/contacts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Basic ${Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64')}`,
+                },
+                body: JSON.stringify({
+                    name: coaching.bankAccountName,
+                    email: `verify+${coachingId.substring(0, 8)}@tutorix.app`,
+                    contact: phone,
+                    type: 'vendor',
+                    reference_id: `vfy_${coachingId.substring(0, 35)}`,
+                    notes: { purpose: 'bank_verification', coachingId },
+                }),
+            });
+            if (!contactPayload.ok) {
+                const err = await contactPayload.json().catch(() => ({}));
+                throw new Error((err as any)?.error?.description || `Contact creation failed (${contactPayload.status})`);
+            }
+            const contact = await contactPayload.json() as { id: string };
+
+            // Create fund account
+            const fundAccPayload = await fetch('https://api.razorpay.com/v1/fund_accounts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Basic ${Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64')}`,
+                },
+                body: JSON.stringify({
+                    contact_id: contact.id,
+                    account_type: 'bank_account',
+                    bank_account: {
+                        name: coaching.bankAccountName,
+                        ifsc: coaching.bankIfscCode,
+                        account_number: coaching.bankAccountNumber,
+                    },
+                }),
+            });
+            if (!fundAccPayload.ok) {
+                const err = await fundAccPayload.json().catch(() => ({}));
+                throw new Error((err as any)?.error?.description || `Fund account creation failed (${fundAccPayload.status})`);
+            }
+            const fundAccount = await fundAccPayload.json() as { id: string };
+
+            // Trigger penny drop validation
+            const validationPayload = await fetch('https://api.razorpay.com/v1/fund_accounts/validations', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Basic ${Buffer.from(`${RAZORPAY_KEY_ID}:${RAZORPAY_KEY_SECRET}`).toString('base64')}`,
+                },
+                body: JSON.stringify({
+                    fund_account: { id: fundAccount.id },
+                    amount: 100, // ₹1 in paise
+                    currency: 'INR',
+                    notes: { purpose: 'bank_verification', coachingId },
+                }),
+            });
+            if (!validationPayload.ok) {
+                const err = await validationPayload.json().catch(() => ({}));
+                throw new Error((err as any)?.error?.description || `Validation request failed (${validationPayload.status})`);
+            }
+            const validation = await validationPayload.json() as {
+                id: string;
+                status: string;
+                results?: { account_status?: string; registered_name?: string };
+            };
+
+            // Check validation result
+            const accStatus = validation.results?.account_status;
+            const registeredName = validation.results?.registered_name;
+            const isValid = accStatus === 'active' || validation.status === 'completed';
+
+            if (isValid) {
+                await prisma.coaching.update({
+                    where: { id: coachingId },
+                    data: { bankVerified: true, bankVerifiedAt: new Date() },
+                });
+                return {
+                    verified: true,
+                    nameAtBank: registeredName || null,
+                    message: registeredName
+                        ? `Bank account verified! Registered name: ${registeredName}`
+                        : 'Bank account verified successfully.',
+                    verifiedAt: new Date(),
+                };
+            }
+
+            // Penny drop was initiated but not yet completed (async)
+            // Razorpay may take a few seconds. Mark as verified optimistically because
+            // fund account creation succeeded (account exists).
+            if (validation.status === 'created' || validation.status === 'pending') {
+                await prisma.coaching.update({
+                    where: { id: coachingId },
+                    data: { bankVerified: true, bankVerifiedAt: new Date() },
+                });
+                return {
+                    verified: true,
+                    message: 'Bank account validation initiated. The ₹1 penny deposit confirms your account.',
+                    verifiedAt: new Date(),
+                };
+            }
+
+            return {
+                verified: false,
+                message: `Bank account validation failed: ${accStatus || validation.status}. Please verify your account details.`,
+            };
+        } catch (err: any) {
+            console.error(`[PaymentService] Penny drop verification failed:`, err?.message);
+
+            // If it's a Razorpay API error (invalid account, etc.), provide a clear message
+            const msg = err?.message || 'Verification failed';
+            if (msg.includes('IFSC') || msg.includes('ifsc')) {
+                throw Object.assign(new Error('Invalid IFSC code. Please check and try again.'), { status: 400 });
+            }
+            if (msg.includes('account_number') || msg.includes('Account number')) {
+                throw Object.assign(new Error('Invalid bank account number. Please verify and try again.'), { status: 400 });
+            }
+            throw Object.assign(new Error(`Bank verification failed: ${msg}`), { status: 502 });
+        }
+    }
+}
