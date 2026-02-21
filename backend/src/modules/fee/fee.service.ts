@@ -381,7 +381,8 @@ export class FeeService {
             lastLogAfter != null &&
             ((lastLogAfter.customAmount != null) ||
              ((lastLogAfter.discountAmount as number ?? 0) > 0) ||
-             (lastLogAfter.scholarshipTag != null));
+             (lastLogAfter.scholarshipTag != null) ||
+             ((lastLogAfter.scholarshipAmount as number ?? 0) > 0));
 
         return {
             hasAssignment: true,
@@ -634,22 +635,29 @@ export class FeeService {
             select: { id: true, feeStructureId: true },
         });
         let structureChanged = false;
+        let carriedCredit = 0; // sum of paidAmounts from auto-waived records — applied as discount on new fee
         if (existingAssignment && existingAssignment.feeStructureId !== dto.feeStructureId) {
             structureChanged = true;
-            // 1. Hard-delete fully unpaid records — no payment history to preserve
+            // 1. Hard-delete fully unpaid records — no payment history to preserve.
+            //    Covers ALL non-settled statuses (PENDING, OVERDUE, PARTIALLY_PAID with paidAmount=0).
             await prisma.feeRecord.deleteMany({
                 where: {
                     assignmentId: existingAssignment.id,
                     paidAmount: 0,
-                    status: { in: ['PENDING', 'OVERDUE'] },
+                    status: { notIn: ['PAID', 'WAIVED'] },
                 },
             });
-            // 2. Auto-waive partially-paid records using the same business rule as waiveFee:
+            // 2. Auto-waive any record that has been partially paid, regardless of status.
+            //    This covers PARTIALLY_PAID, OVERDUE-with-partial-payment, etc.
             //    finalAmount = paidAmount (remaining balance forgiven), status = WAIVED.
             //    The collected amount stays — no refund, no manual labour needed.
             const partialRecords = await prisma.feeRecord.findMany({
-                where: { assignmentId: existingAssignment.id, status: 'PARTIALLY_PAID' },
-                select: { id: true, paidAmount: true, finalAmount: true },
+                where: {
+                    assignmentId: existingAssignment.id,
+                    paidAmount: { gt: 0 },
+                    status: { notIn: ['PAID', 'WAIVED'] },
+                },
+                select: { id: true, paidAmount: true, finalAmount: true, status: true },
             });
             await Promise.all(partialRecords.map(r =>
                 prisma.feeRecord.update({
@@ -668,20 +676,27 @@ export class FeeService {
                     entityId: r.id,
                     event: 'FEE_WAIVED',
                     actorId: assignedById,
-                    before: { status: 'PARTIALLY_PAID', finalAmount: r.finalAmount, paidAmount: r.paidAmount },
+                    before: { status: r.status, finalAmount: r.finalAmount, paidAmount: r.paidAmount },
                     after: { status: 'WAIVED', notes: 'Remaining balance auto-waived — fee structure reassigned by admin' },
                 });
             }
+            // 3. Carry forward what the student already paid as a credit on the new fee.
+            //    This prevents them from being charged twice for money already collected.
+            carriedCredit = partialRecords.reduce((s, r) => s + r.paidAmount, 0);
         }
 
-        // Build amounts
+        // Build amounts.
+        // Note: carriedCredit is NOT included here — it is applied as a CREDIT_TRANSFER
+        // payment on the new record after creation, keeping pre-tax / post-tax math clean.
         const totalDiscount = (dto.discountAmount ?? 0) + (dto.scholarshipAmount ?? 0);
-        const finalAmount = (dto.customAmount ?? structure.amount) - totalDiscount;
+        const rawAmount = dto.customAmount ?? structure.amount;
 
-        // H5: Guard against negative finalAmount
-        if (finalAmount < 0) {
+        // H5: Guard against admin-set discount exceeding the fee amount
+        if (rawAmount - totalDiscount < 0) {
             throw Object.assign(new Error('Total discount + scholarship cannot exceed the fee amount'), { status: 400 });
         }
+
+        const finalAmount = rawAmount - totalDiscount;
 
         const startDate = dto.startDate ? new Date(dto.startDate) : new Date();
 
@@ -737,7 +752,7 @@ export class FeeService {
         if (structure.cycle !== 'INSTALLMENT') {
             const tax = computeTax(finalAmount, structure.taxType ?? 'NONE', structure.gstRate ?? 0, structure.gstSupplyType ?? 'INTRA_STATE', structure.cessRate ?? 0);
             const updatedFinalAmount = tax.totalWithTax;
-            const grossBase = finalAmount + totalDiscount;
+            const grossBase = rawAmount; // baseAmount = structure amount pre-discount, always equals rawAmount
             const taxSnapshot = {
                 taxType: structure.taxType ?? 'NONE',
                 taxAmount: tax.taxAmount,
@@ -749,7 +764,7 @@ export class FeeService {
                 sacCode: structure.sacCode ?? null,
                 hsnCode: structure.hsnCode ?? null,
             };
-            // 1. PENDING with no payments
+            // 1. PENDING with no payments — sync amounts including carried credit discount
             await prisma.feeRecord.updateMany({
                 where: { assignmentId: assignment.id, status: 'PENDING', paidAmount: 0 },
                 data: { baseAmount: grossBase, discountAmount: totalDiscount, amount: updatedFinalAmount, finalAmount: updatedFinalAmount, ...taxSnapshot },
@@ -767,6 +782,47 @@ export class FeeService {
             ));
         }
 
+        // Apply carried credit as a CREDIT_TRANSFER payment on the first active record.
+        // This keeps pre-tax/post-tax math clean: finalAmount stays correct (tax-inclusive),
+        // and balance = finalAmount - paidAmount naturally accounts for the credit.
+        if (carriedCredit > 0) {
+            const creditTarget = await prisma.feeRecord.findFirst({
+                where: { assignmentId: assignment.id, status: { notIn: ['PAID', 'WAIVED'] } },
+                orderBy: { createdAt: 'asc' },
+            });
+            if (creditTarget) {
+                const newPaidAmount = Math.min(creditTarget.finalAmount, creditTarget.paidAmount + carriedCredit);
+                const fullyPaid = newPaidAmount >= creditTarget.finalAmount - 0.01;
+                await prisma.feePayment.create({
+                    data: {
+                        coachingId,
+                        recordId: creditTarget.id,
+                        amount: carriedCredit,
+                        mode: 'CREDIT_TRANSFER',
+                        notes: `Credit carried from previous fee structure (auto-applied on reassignment)`,
+                        paidAt: new Date(),
+                        recordedById: assignedById,
+                    },
+                });
+                await prisma.feeRecord.update({
+                    where: { id: creditTarget.id },
+                    data: {
+                        paidAmount: newPaidAmount,
+                        status: fullyPaid ? 'PAID' : 'PARTIALLY_PAID',
+                        paidAt: fullyPaid ? new Date() : creditTarget.paidAt,
+                    },
+                });
+                void writeAuditLog({
+                    coachingId,
+                    entityType: 'PAYMENT',
+                    entityId: creditTarget.id,
+                    event: 'PAYMENT_RECORDED',
+                    actorId: assignedById,
+                    after: { amount: carriedCredit, mode: 'CREDIT_TRANSFER', isPaid: fullyPaid },
+                });
+            }
+        }
+
         void writeAuditLog({
             coachingId,
             entityType: 'ASSIGNMENT',
@@ -778,8 +834,11 @@ export class FeeService {
                 memberId: dto.memberId,
                 feeStructureId: dto.feeStructureId,
                 customAmount: dto.customAmount ?? null,
-                discountAmount: totalDiscount,
+                discountAmount: dto.discountAmount ?? 0,
+                discountReason: dto.discountReason ?? null,
                 scholarshipTag: dto.scholarshipTag ?? null,
+                scholarshipAmount: dto.scholarshipAmount ?? null,
+                ...(carriedCredit > 0 && { carriedCredit }),
             },
         });
 

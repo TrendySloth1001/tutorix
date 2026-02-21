@@ -282,9 +282,16 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
       setState(() {
         _previews[memberId] = preview;
       });
-      // After state is set, offer to restore previous assignment settings
+      // Defer showing the sheet until after the current frame is fully built.
+      // Calling showModalBottomSheet synchronously after setState risks the
+      // sheet being silently dropped while the widget tree is still dirty.
       if (preview.hasAssignment && preview.lastLog != null) {
-        _showPullSettingsSheet(preview.lastLog!);
+        final log = preview.lastLog!;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted && _selectedMemberIds.contains(memberId)) {
+            _showPullSettingsSheet(log);
+          }
+        });
       }
     } catch (_) {
       if (!mounted) return;
