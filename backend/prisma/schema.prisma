@@ -954,6 +954,8 @@ model FeePayment {
   @@index([recordId])
   @@index([coachingId])
   @@index([coachingId, paidAt])
+  /// C2 fix: Prevents duplicate payment rows from concurrent webhook + verify
+  @@unique([recordId, razorpayPaymentId])
 }
 
 /// Refund against a FeeRecord — creates a negative entry for clean ledger accounting.
@@ -1028,6 +1030,8 @@ model RazorpayOrder {
   transferId        String?  // Razorpay transfer_id
   transferStatus    String?  // created, processed, settled, failed
   platformFeePaise  Int?     // Tutorix commission in paise
+  /// H3 fix: Snapshot commission % at order creation so rate changes don't affect in-flight payments
+  platformFeePercent Float?  // Commission % snapshotted at order time
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1037,6 +1041,8 @@ model RazorpayOrder {
   @@index([userId])
   @@index([status])
   @@index([razorpayOrderId])
+  /// H2 fix: Transfer webhook lookups need this index
+  @@index([transferId])
 }
 
 /// Logs every Razorpay webhook event for audit + replay.
@@ -1076,7 +1082,8 @@ model RazorpayRefund {
   feeRefund       FeeRefund @relation(fields: [feeRefundId], references: [id], onDelete: Cascade)
 
   /// Razorpay IDs
-  razorpayRefundId  String?  // populated after Razorpay confirms
+  /// H1 fix: Unique constraint prevents duplicate refund records from concurrent webhooks
+  razorpayRefundId  String?  @unique // populated after Razorpay confirms
   razorpayPaymentId String   // the original payment to refund
 
   amountPaise     Int

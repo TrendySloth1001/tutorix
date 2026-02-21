@@ -240,7 +240,11 @@ export class PaymentService {
             },
         });
 
-        // 5. Store in DB
+        // 5. Store in DB — H3 fix: snapshot commission % at order creation
+        const coaching = await prisma.coaching.findUnique({
+            where: { id: coachingId },
+            select: { platformFeePercent: true },
+        });
         const order = await prisma.razorpayOrder.create({
             data: {
                 coachingId,
@@ -251,6 +255,7 @@ export class PaymentService {
                 currency: 'INR',
                 receipt,
                 notes: rzpOrder.notes as any,
+                platformFeePercent: coaching?.platformFeePercent ?? 1.0,
             },
         });
 
@@ -341,7 +346,8 @@ export class PaymentService {
 
     /**
      * Admin-initiated online refund via Razorpay.
-     * Creates a FeeRefund + RazorpayRefund, calls Razorpay API.
+     * H4 fix: DB-first approach — create records in INITIATED state, call Razorpay API,
+     * then update. If API succeeds but app crashes, webhook can find the record.
      */
     async initiateOnlineRefund(coachingId: string, recordId: string, dto: InitiateRefundDto, userId: string) {
         // 1. Find the FeePayment
@@ -388,21 +394,8 @@ export class PaymentService {
 
         const amountPaise = toPaise(refundAmount);
 
-        // 4. Call Razorpay refund API
-        let rzpRefund: any;
-        try {
-            rzpRefund = await razorpay.payments.refund(payment.razorpayPaymentId, {
-                amount: amountPaise,
-                notes: { reason: dto.reason ?? 'Admin initiated refund', recordId, coachingId },
-            });
-        } catch (err: any) {
-            throw Object.assign(
-                new Error(`Razorpay refund failed: ${err?.error?.description || err.message}`),
-                { status: 502 },
-            );
-        }
-
-        // 5. Create FeeRefund + RazorpayRefund + update FeeRecord in transaction
+        // 4. H4 fix: Create DB records FIRST in INITIATED state (before calling Razorpay)
+        //    so webhook can always find them even if app crashes after API call.
         const newPaidAmount = record.paidAmount - refundAmount;
         const isPastDue = record.dueDate < new Date();
         const newStatus =
@@ -412,7 +405,7 @@ export class PaymentService {
                         : isPastDue ? 'OVERDUE'
                             : 'PARTIALLY_PAID';
 
-        const result = await prisma.$transaction(async (tx) => {
+        const { feeRefund, razorpayRefund } = await prisma.$transaction(async (tx) => {
             const feeRefund = await tx.feeRefund.create({
                 data: {
                     coachingId,
@@ -424,13 +417,10 @@ export class PaymentService {
                 },
             });
 
-            // H9 fix: Start refund status as INITIATED (Razorpay may still be processing)
-            // Webhook will update to PROCESSED when refund is confirmed
-            await tx.razorpayRefund.create({
+            const razorpayRefund = await tx.razorpayRefund.create({
                 data: {
                     coachingId,
                     feeRefundId: feeRefund.id,
-                    razorpayRefundId: rzpRefund.id,
                     razorpayPaymentId: payment.razorpayPaymentId!,
                     amountPaise,
                     status: 'INITIATED',
@@ -442,8 +432,39 @@ export class PaymentService {
                 data: { paidAmount: newPaidAmount, status: newStatus },
             });
 
-            return feeRefund;
-        });
+            return { feeRefund, razorpayRefund };
+        }, { isolationLevel: 'Serializable' });
+
+        // 5. Call Razorpay refund API (after DB records exist)
+        try {
+            const rzpRefund = await razorpay.payments.refund(payment.razorpayPaymentId, {
+                amount: amountPaise,
+                notes: { reason: dto.reason ?? 'Admin initiated refund', recordId, coachingId },
+            });
+
+            // Update RazorpayRefund with Razorpay's refund ID
+            await prisma.razorpayRefund.update({
+                where: { id: razorpayRefund.id },
+                data: { razorpayRefundId: rzpRefund.id },
+            });
+        } catch (err: any) {
+            // API failed — reverse the DB records
+            console.error(`[PaymentService] Razorpay refund API failed, reversing DB:`, err?.message);
+            await prisma.$transaction(async (tx) => {
+                await tx.razorpayRefund.delete({ where: { id: razorpayRefund.id } });
+                await tx.feeRefund.delete({ where: { id: feeRefund.id } });
+                await tx.feeRecord.update({
+                    where: { id: recordId },
+                    data: { paidAmount: record.paidAmount, status: record.status },
+                });
+            }).catch((cleanupErr) => {
+                console.error(`[PaymentService] Failed to cleanup refund records:`, cleanupErr?.message);
+            });
+            throw Object.assign(
+                new Error(`Razorpay refund failed: ${err?.error?.description || err.message}`),
+                { status: 502 },
+            );
+        }
 
         return this._getRecordWithDaysOverdue(coachingId, recordId);
     }
@@ -599,6 +620,11 @@ export class PaymentService {
         });
 
         // 5. Create RazorpayOrder rows for each record (proportional split)
+        // H3 fix: Snapshot commission % at order creation
+        const multiCoaching = await prisma.coaching.findUnique({
+            where: { id: coachingId },
+            select: { platformFeePercent: true },
+        });
         const orderRows = [];
         let remainingPaise = amountPaise;
         for (let i = 0; i < records.length; i++) {
@@ -621,6 +647,7 @@ export class PaymentService {
                     currency: 'INR',
                     receipt: `${receipt}_${i}`,
                     notes: { multiPay: true, index: i, totalRecords: records.length } as any,
+                    platformFeePercent: multiCoaching?.platformFeePercent ?? 1.0, // H3 fix: snapshot
                 },
             });
             orderRows.push(row);
@@ -713,8 +740,10 @@ export class PaymentService {
         const orderForReceipt = await prisma.razorpayOrder.findUniqueOrThrow({ where: { id: internalOrderId } });
         if (orderForReceipt.paymentRecorded) return; // already processed
 
+        // C1 fix: Serializable isolation prevents concurrent webhook + verify from
+        // both seeing paymentRecorded=false and double-crediting paidAmount.
         await prisma.$transaction(async (tx) => {
-            // Lock the order row
+            // Lock the order row under Serializable snapshot
             const order = await tx.razorpayOrder.findUniqueOrThrow({
                 where: { id: internalOrderId },
             });
@@ -830,25 +859,29 @@ export class PaymentService {
                     }
                 }
             }
-        });
+        }, { isolationLevel: 'Serializable' });
 
         // ── Razorpay Route Transfer (move funds to coaching's bank) ───
+        // H3 fix: Re-read the order to get the latest state (paymentRecorded, etc.)
+        // and use the snapshotted platformFeePercent from order creation time.
+        const freshOrder = await prisma.razorpayOrder.findUniqueOrThrow({ where: { id: internalOrderId } });
         try {
             const coaching = await prisma.coaching.findUnique({
-                where: { id: orderForReceipt.coachingId },
-                select: { razorpayAccountId: true, razorpayActivated: true, platformFeePercent: true },
+                where: { id: freshOrder.coachingId },
+                select: { razorpayAccountId: true, razorpayActivated: true },
             });
             if (coaching?.razorpayAccountId && coaching.razorpayActivated) {
-                const platformPercent = coaching.platformFeePercent ?? 1.0;
-                const platformFeePaise = Math.round(orderForReceipt.amountPaise * (platformPercent / 100));
-                const transferAmount = orderForReceipt.amountPaise - platformFeePaise;
+                // H3 fix: Use snapshotted commission % from order time, not live config
+                const platformPercent = freshOrder.platformFeePercent ?? 1.0;
+                const platformFeePaise = Math.round(freshOrder.amountPaise * (platformPercent / 100));
+                const transferAmount = freshOrder.amountPaise - platformFeePaise;
 
                 const transfer = await razorpay.payments.transfer(razorpayPaymentId, {
                     transfers: [{
                         account: coaching.razorpayAccountId,
                         amount: transferAmount,
                         currency: 'INR',
-                        notes: { coachingId: orderForReceipt.coachingId, recordId: orderForReceipt.recordId },
+                        notes: { coachingId: freshOrder.coachingId, recordId: freshOrder.recordId },
                     }],
                 });
 
@@ -867,7 +900,7 @@ export class PaymentService {
                     transferStatus: 'failed',
                     transferId: null,
                     notes: {
-                        ...(orderForReceipt.notes as any ?? {}),
+                        ...(freshOrder.notes as any ?? {}),
                         transferError: transferErr?.message ?? 'Unknown transfer error',
                         transferFailedAt: new Date().toISOString(),
                     } as any,

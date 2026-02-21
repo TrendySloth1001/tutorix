@@ -173,29 +173,36 @@ webhookRouter.post('/razorpay', async (req: Request, res: Response) => {
                     },
                 });
                 if (rzpRefund) {
-                    await prisma.razorpayRefund.update({
-                        where: { id: rzpRefund.id },
-                        data: { status: 'FAILED' },
-                    });
+                    // C3 fix: Wrap refund reversal in Serializable transaction to prevent
+                    // lost updates on paidAmount from concurrent events
+                    await prisma.$transaction(async (tx) => {
+                        await tx.razorpayRefund.update({
+                            where: { id: rzpRefund.id },
+                            data: { status: 'FAILED' },
+                        });
 
-                    // H10 fix: Reverse the FeeRecord.paidAmount since refund was not actually sent
+                        // H10 fix: Reverse the FeeRecord.paidAmount since refund was not actually sent
+                        if (rzpRefund.feeRefund) {
+                            const { recordId, amount } = rzpRefund.feeRefund;
+                            const record = await tx.feeRecord.findUnique({ where: { id: recordId } });
+                            if (record) {
+                                const restoredPaidAmount = record.paidAmount + amount;
+                                const newStatus =
+                                    restoredPaidAmount >= record.finalAmount - 0.01 ? 'PAID'
+                                        : restoredPaidAmount > 0 ? 'PARTIALLY_PAID'
+                                            : record.dueDate < new Date() ? 'OVERDUE'
+                                                : 'PENDING';
+                                await tx.feeRecord.update({
+                                    where: { id: recordId },
+                                    data: { paidAmount: restoredPaidAmount, status: newStatus },
+                                });
+                            }
+                        }
+                    }, { isolationLevel: 'Serializable' });
+
+                    // Notify admin about failed refund (outside tx — non-critical)
                     if (rzpRefund.feeRefund) {
                         const { recordId, amount, coachingId: refCoachingId } = rzpRefund.feeRefund;
-                        const record = await prisma.feeRecord.findUnique({ where: { id: recordId } });
-                        if (record) {
-                            const restoredPaidAmount = record.paidAmount + amount;
-                            const newStatus =
-                                restoredPaidAmount >= record.finalAmount - 0.01 ? 'PAID'
-                                    : restoredPaidAmount > 0 ? 'PARTIALLY_PAID'
-                                        : record.dueDate < new Date() ? 'OVERDUE'
-                                            : 'PENDING';
-                            await prisma.feeRecord.update({
-                                where: { id: recordId },
-                                data: { paidAmount: restoredPaidAmount, status: newStatus },
-                            });
-                        }
-
-                        // Notify admin about failed refund
                         if (refCoachingId) {
                             const coaching = await prisma.coaching.findUnique({
                                 where: { id: refCoachingId },
@@ -256,22 +263,25 @@ webhookRouter.post('/razorpay', async (req: Request, res: Response) => {
                     }
 
                     // If dispute is lost, reverse the payment on the fee record
+                    // C4 fix: Wrap in Serializable transaction to prevent lost updates on paidAmount
                     if (event === 'payment.dispute.lost' && disputeOrder) {
                         const disputeAmount = disputeEntity?.amount ? disputeEntity.amount / 100 : 0;
                         if (disputeAmount > 0) {
-                            const record = await prisma.feeRecord.findUnique({ where: { id: disputeOrder.recordId } });
-                            if (record) {
-                                const newPaidAmount = Math.max(0, record.paidAmount - disputeAmount);
-                                const isPastDue = record.dueDate < new Date();
-                                const newStatus =
-                                    newPaidAmount >= record.finalAmount - 0.01 ? 'PAID'
-                                        : newPaidAmount > 0 ? (isPastDue ? 'OVERDUE' : 'PARTIALLY_PAID')
-                                            : isPastDue ? 'OVERDUE' : 'PENDING';
-                                await prisma.feeRecord.update({
-                                    where: { id: disputeOrder.recordId },
-                                    data: { paidAmount: newPaidAmount, status: newStatus },
-                                });
-                            }
+                            await prisma.$transaction(async (tx) => {
+                                const record = await tx.feeRecord.findUnique({ where: { id: disputeOrder.recordId } });
+                                if (record) {
+                                    const newPaidAmount = Math.max(0, record.paidAmount - disputeAmount);
+                                    const isPastDue = record.dueDate < new Date();
+                                    const newStatus =
+                                        newPaidAmount >= record.finalAmount - 0.01 ? 'PAID'
+                                            : newPaidAmount > 0 ? (isPastDue ? 'OVERDUE' : 'PARTIALLY_PAID')
+                                                : isPastDue ? 'OVERDUE' : 'PENDING';
+                                    await tx.feeRecord.update({
+                                        where: { id: disputeOrder.recordId },
+                                        data: { paidAmount: newPaidAmount, status: newStatus },
+                                    });
+                                }
+                            }, { isolationLevel: 'Serializable' });
                         }
                     }
                 }
