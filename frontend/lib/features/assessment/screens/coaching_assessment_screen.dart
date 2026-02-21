@@ -120,7 +120,12 @@ class _CoachingAssessmentScreenState extends State<CoachingAssessmentScreen> {
               ),
             )
           : ListView.separated(
-              padding: const EdgeInsets.all(Spacing.sp16),
+              padding: EdgeInsets.fromLTRB(
+                Spacing.sp16,
+                Spacing.sp16,
+                Spacing.sp16,
+                MediaQuery.of(context).padding.bottom,
+              ),
               itemCount: _batches.length,
               separatorBuilder: (_, _) => const SizedBox(height: Spacing.sp10),
               itemBuilder: (_, i) {
@@ -214,7 +219,12 @@ class _BatchListShimmer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView.separated(
-      padding: const EdgeInsets.all(Spacing.sp16),
+      padding: EdgeInsets.fromLTRB(
+        Spacing.sp16,
+        Spacing.sp16,
+        Spacing.sp16,
+        MediaQuery.of(context).padding.bottom,
+      ),
       itemCount: 4,
       separatorBuilder: (_, _) => const SizedBox(height: Spacing.sp10),
       itemBuilder: (_, _) => ShimmerWrap(

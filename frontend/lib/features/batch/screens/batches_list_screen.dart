@@ -278,11 +278,11 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
                       await Future.delayed(const Duration(milliseconds: 500));
                     },
                     child: ListView.separated(
-                      padding: const EdgeInsets.fromLTRB(
+                      padding: EdgeInsets.fromLTRB(
                         Spacing.sp20,
                         0,
                         Spacing.sp20,
-                        Spacing.sp100,
+                        MediaQuery.of(context).padding.bottom,
                       ),
                       itemCount: _batches.length,
                       separatorBuilder: (_, _) =>

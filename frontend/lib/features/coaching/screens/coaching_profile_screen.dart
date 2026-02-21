@@ -542,7 +542,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
 
                   // ─── CONTENT SECTIONS (About starts here) ───
                   SliverPadding(
-                    padding: const EdgeInsets.only(bottom: Spacing.sp100),
+                    padding: EdgeInsets.only(
+                      bottom: MediaQuery.of(context).padding.bottom,
+                    ),
                     sliver: SliverList(
                       delegate: SliverChildListDelegate([
                         if (_isOwner && !_coaching.onboardingComplete)

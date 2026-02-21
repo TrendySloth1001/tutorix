@@ -364,11 +364,11 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                 await Future.delayed(const Duration(milliseconds: 500));
               },
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(
+                padding: EdgeInsets.fromLTRB(
                   Spacing.sp20,
                   0,
                   Spacing.sp20,
-                  Spacing.sp100,
+                  MediaQuery.of(context).padding.bottom,
                 ),
                 children: [
                   // ── Role badge (for students/teachers) ──

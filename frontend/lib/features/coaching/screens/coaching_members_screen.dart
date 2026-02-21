@@ -549,11 +549,11 @@ class _MemberListView extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(
+        padding: EdgeInsets.fromLTRB(
           Spacing.sp20,
           Spacing.sp4,
           Spacing.sp20,
-          Spacing.sp100,
+          MediaQuery.of(context).padding.bottom,
         ),
         itemCount: members.length,
         separatorBuilder: (_, _) => const SizedBox(height: Spacing.sp4),
@@ -770,11 +770,11 @@ class _InviteListView extends StatelessWidget {
     return RefreshIndicator(
       onRefresh: onRefresh,
       child: ListView.separated(
-        padding: const EdgeInsets.fromLTRB(
+        padding: EdgeInsets.fromLTRB(
           Spacing.sp20,
           Spacing.sp4,
           Spacing.sp20,
-          Spacing.sp100,
+          MediaQuery.of(context).padding.bottom,
         ),
         itemCount: invites.length,
         separatorBuilder: (_, _) => const SizedBox(height: Spacing.sp4),
