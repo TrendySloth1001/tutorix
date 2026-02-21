@@ -225,7 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         for (int i = 0; i < _joinedCoachings.length; i++) ...[
                           Padding(
                             padding: EdgeInsets.only(
-                              bottom: i < _joinedCoachings.length - 1 ? 12 : 0,
+                              bottom: i < _joinedCoachings.length - 1 ? Spacing.sp12 : 0,
                             ),
                             child: CoachingCoverCard(
                               coaching: _joinedCoachings[i],
@@ -248,6 +248,58 @@ class _HomeScreenState extends State<HomeScreen> {
 }
 
 // ── Private sub-widgets ──────────────────────────────────────────────────
+
+/// Smooth S-curve wave along the bottom edge of the header.
+class _WaveClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) {
+    final path = Path()
+      ..lineTo(0, size.height - Spacing.sp40)
+      ..cubicTo(
+        size.width * 0.3,
+        size.height,
+        size.width * 0.65,
+        size.height - Spacing.sp48,
+        size.width,
+        size.height - Spacing.sp14,
+      )
+      ..lineTo(size.width, 0)
+      ..close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+/// Semi-transparent circular icon button for use on coloured backgrounds.
+class _GlassIconButton extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback onPressed;
+  final Color foreground;
+
+  const _GlassIconButton({
+    required this.icon,
+    required this.onPressed,
+    required this.foreground,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: foreground.withValues(alpha: 0.12),
+      shape: const CircleBorder(),
+      child: InkWell(
+        onTap: onPressed,
+        customBorder: const CircleBorder(),
+        child: Padding(
+          padding: const EdgeInsets.all(Spacing.sp10),
+          child: Icon(icon, color: foreground, size: Spacing.sp24),
+        ),
+      ),
+    );
+  }
+}
 
 class _HomeHeader extends StatelessWidget {
   final UserModel user;
@@ -272,33 +324,61 @@ class _HomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    return SliverAppBar(
-      expandedHeight: 120,
-      floating: true,
-      pinned: true,
-      backgroundColor: theme.colorScheme.surface,
-      elevation: 0,
-      flexibleSpace: FlexibleSpaceBar(
-        background: Container(
-          padding: const EdgeInsets.fromLTRB(Spacing.sp24, 60, Spacing.sp24, 0),
+    final topPadding = MediaQuery.of(context).padding.top;
+
+    return SliverToBoxAdapter(
+      child: ClipPath(
+        clipper: _WaveClipper(),
+        child: Container(
+          padding: EdgeInsets.fromLTRB(
+            Spacing.sp20,
+            topPadding + Spacing.sp16,
+            Spacing.sp20,
+            Spacing.sp60,
+          ),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [
+                theme.colorScheme.primary,
+                theme.colorScheme.primary.withValues(alpha: 0.82),
+              ],
+            ),
+          ),
           child: Row(
             children: [
-              CircleAvatar(
-                radius: 24,
-                backgroundColor: theme.colorScheme.primary.withValues(
-                  alpha: 0.1,
+              // ── Avatar ──
+              Container(
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(
+                    color: theme.colorScheme.onPrimary.withValues(alpha: 0.25),
+                    width: 2,
+                  ),
                 ),
-                backgroundImage: user.picture != null
-                    ? NetworkImage(user.picture!)
-                    : null,
-                child: user.picture == null
-                    ? Icon(
-                        Icons.person_rounded,
-                        color: theme.colorScheme.primary,
-                      )
-                    : null,
+                child: CircleAvatar(
+                  radius: Spacing.sp24,
+                  backgroundColor: theme.colorScheme.onPrimary.withValues(
+                    alpha: 0.15,
+                  ),
+                  backgroundImage:
+                      user.picture != null
+                          ? NetworkImage(user.picture!)
+                          : null,
+                  child:
+                      user.picture == null
+                          ? Icon(
+                            Icons.person_rounded,
+                            color: theme.colorScheme.onPrimary,
+                            size: Spacing.sp24,
+                          )
+                          : null,
+                ),
               ),
               const SizedBox(width: Spacing.sp16),
+
+              // ── Greeting ──
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -306,17 +386,19 @@ class _HomeHeader extends StatelessWidget {
                   children: [
                     Text(
                       _greeting,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        color: theme.colorScheme.secondary.withValues(
-                          alpha: 0.6,
+                      style: theme.textTheme.labelSmall?.copyWith(
+                        color: theme.colorScheme.onPrimary.withValues(
+                          alpha: 0.7,
                         ),
-                        fontWeight: FontWeight.bold,
-                        letterSpacing: 1,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1.5,
                       ),
                     ),
+                    const SizedBox(height: Spacing.labelGap),
                     Text(
                       user.name?.split(' ').first ?? 'User',
                       style: theme.textTheme.headlineSmall?.copyWith(
+                        color: theme.colorScheme.onPrimary,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.5,
                       ),
@@ -324,33 +406,40 @@ class _HomeHeader extends StatelessWidget {
                   ],
                 ),
               ),
-              if (onCreateCoaching != null)
-                IconButton.filledTonal(
-                  icon: const Icon(Icons.add_rounded),
-                  onPressed: onCreateCoaching,
-                  tooltip: 'Create Coaching',
+
+              // ── Action buttons ──
+              if (onCreateCoaching != null) ...[
+                _GlassIconButton(
+                  icon: Icons.add_rounded,
+                  onPressed: onCreateCoaching!,
+                  foreground: theme.colorScheme.onPrimary,
                 ),
-              const SizedBox(width: Spacing.sp4),
+                const SizedBox(width: Spacing.sp8),
+              ],
               Stack(
                 children: [
-                  IconButton(
-                    icon: const Icon(Icons.notifications_none_rounded),
+                  _GlassIconButton(
+                    icon: Icons.notifications_none_rounded,
                     onPressed: onNotificationTap,
-                    color: theme.colorScheme.primary,
+                    foreground: theme.colorScheme.onPrimary,
                   ),
                   if (unreadCount > 0)
                     Positioned(
-                      right: Spacing.sp8,
-                      top: Spacing.sp8,
+                      right: 0,
+                      top: 0,
                       child: Container(
                         padding: const EdgeInsets.all(Spacing.sp4),
                         decoration: BoxDecoration(
                           color: theme.colorScheme.error,
                           shape: BoxShape.circle,
+                          border: Border.all(
+                            color: theme.colorScheme.primary,
+                            width: 2,
+                          ),
                         ),
                         constraints: const BoxConstraints(
-                          minWidth: 16,
-                          minHeight: 16,
+                          minWidth: Spacing.sp16,
+                          minHeight: Spacing.sp16,
                         ),
                         child: Text(
                           unreadCount > 99 ? '99+' : '$unreadCount',
