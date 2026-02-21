@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/services/error_logger_service.dart';
-import '../../../core/theme/app_colors.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:latlong2/latlong.dart';
@@ -826,7 +825,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                 colors.onSurface.withValues(alpha: 0.08),
                 colors.onSurface.withValues(alpha: 0.6),
               ),
-              _buildStatusBadge(),
+              _buildStatusBadge(theme),
             ],
           ),
         ],
@@ -852,14 +851,14 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     );
   }
 
-  Widget _buildStatusBadge() {
+  Widget _buildStatusBadge(ThemeData theme) {
     final isActive = _coaching.status == 'active';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
         color: isActive
-            ? AppColors.success.withValues(alpha: 0.12)
-            : AppColors.error.withValues(alpha: 0.12),
+            ? theme.colorScheme.primary.withValues(alpha: 0.12)
+            : theme.colorScheme.error.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
@@ -869,7 +868,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
             width: 5,
             height: 5,
             decoration: BoxDecoration(
-              color: isActive ? AppColors.success : AppColors.error,
+              color: isActive
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.error,
               shape: BoxShape.circle,
             ),
           ),
@@ -877,7 +878,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
           Text(
             isActive ? 'Active' : 'Inactive',
             style: TextStyle(
-              color: isActive ? AppColors.success : AppColors.error,
+              color: isActive
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.error,
               fontSize: 11,
               fontWeight: FontWeight.w500,
             ),
@@ -944,7 +947,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Material(
-        color: AppColors.warningBg,
+        color: theme.colorScheme.secondary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
         child: InkWell(
           onTap: () => _openUpdateScreen(step: step),
@@ -956,12 +959,12 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                 Container(
                   padding: const EdgeInsets.all(8),
                   decoration: BoxDecoration(
-                    color: AppColors.warning.withValues(alpha: 0.15),
+                    color: theme.colorScheme.secondary.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: Icon(
                     Icons.rocket_launch_rounded,
-                    color: AppColors.warning,
+                    color: theme.colorScheme.secondary,
                     size: 20,
                   ),
                 ),
@@ -974,14 +977,14 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                         'Complete your profile',
                         style: TextStyle(
                           fontWeight: FontWeight.w600,
-                          color: AppColors.warning,
+                          color: theme.colorScheme.secondary,
                           fontSize: 14,
                         ),
                       ),
                       Text(
                         'Continue from ${stepNames[step]}',
                         style: TextStyle(
-                          color: AppColors.warning,
+                          color: theme.colorScheme.secondary,
                           fontSize: 12,
                         ),
                       ),
@@ -991,7 +994,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                 Icon(
                   Icons.arrow_forward_ios_rounded,
                   size: 16,
-                  color: AppColors.warning,
+                  color: theme.colorScheme.secondary,
                 ),
               ],
             ),
@@ -1259,12 +1262,16 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
           const SizedBox(height: 10),
           Row(
             children: [
-              Icon(Icons.gps_fixed_rounded, size: 16, color: AppColors.success),
+              Icon(
+                Icons.gps_fixed_rounded,
+                size: 16,
+                color: theme.colorScheme.primary,
+              ),
               const SizedBox(width: 6),
               Text(
                 'GPS location saved',
                 style: TextStyle(
-                  color: AppColors.success,
+                  color: theme.colorScheme.primary,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),

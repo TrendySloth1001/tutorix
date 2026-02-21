@@ -2,45 +2,63 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'app_colors.dart';
 
-/// Application-wide Material 3 theme built from [AppColors].
+/// Application-wide Material 3 theme built from the four-role [AppColors].
+///
+/// ColorScheme mapping (both modes):
+///   primary       → brand   (actions, emphasis)
+///   onPrimary     → surface (text on brand fills)
+///   secondary     → muted   (structure, de-emphasis)
+///   onSecondary   → surface
+///   surface       → surface (backgrounds)
+///   onSurface     → fore    (primary text)
+///   onSurfaceVariant → muted (secondary text)
+///   outline       → muted
+///   outlineVariant → muted at 30 %
+///   error         → fore    (no separate hue – use weight / icons)
+///   onError       → surface
 class AppTheme {
   AppTheme._();
 
+  // ── Light ──────────────────────────────────────────────────────────────
+
   static ThemeData get lightTheme {
-    const colorScheme = ColorScheme.light(
-      primary: AppColors.darkOlive,
-      onPrimary: AppColors.cream,
-      secondary: AppColors.mutedOlive,
-      onSecondary: AppColors.cream,
-      tertiary: AppColors.softGrey,
-      onTertiary: AppColors.darkOlive,
-      surface: AppColors.cream,
-      onSurface: AppColors.darkOlive,
-      error: AppColors.error,
-      onError: Colors.white,
+    final colorScheme = ColorScheme.light(
+      primary: AppColors.brand,
+      onPrimary: AppColors.surface,
+      secondary: AppColors.muted,
+      onSecondary: AppColors.surface,
+      tertiary: AppColors.muted,
+      onTertiary: AppColors.fore,
+      surface: AppColors.surface,
+      onSurface: AppColors.fore,
+      onSurfaceVariant: AppColors.muted,
+      outline: AppColors.muted,
+      outlineVariant: AppColors.muted.withValues(alpha: 0.3),
+      error: AppColors.fore,
+      onError: AppColors.surface,
     );
 
     return ThemeData(
       useMaterial3: true,
       fontFamily: 'SF Pro',
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: AppColors.cream,
+      scaffoldBackgroundColor: AppColors.surface,
 
       // Card
       cardTheme: CardThemeData(
-        color: AppColors.softGrey.withValues(alpha: 0.3),
+        color: AppColors.muted.withValues(alpha: 0.08),
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: AppColors.mutedOlive.withValues(alpha: 0.2)),
+          side: BorderSide(color: AppColors.muted.withValues(alpha: 0.2)),
         ),
       ),
 
       // Buttons
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: AppColors.darkOlive,
-          foregroundColor: AppColors.cream,
+          backgroundColor: AppColors.brand,
+          foregroundColor: AppColors.surface,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -49,8 +67,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.darkOlive,
-          side: const BorderSide(color: AppColors.darkOlive, width: 1.5),
+          foregroundColor: AppColors.brand,
+          side: const BorderSide(color: AppColors.brand, width: 1.5),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -61,48 +79,44 @@ class AppTheme {
       // Input
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: AppColors.softGrey.withValues(alpha: 0.1),
+        fillColor: AppColors.muted.withValues(alpha: 0.06),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: AppColors.mutedOlive.withValues(alpha: 0.5),
-          ),
+          borderSide: BorderSide(color: AppColors.muted.withValues(alpha: 0.5)),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide(
-            color: AppColors.mutedOlive.withValues(alpha: 0.3),
-          ),
+          borderSide: BorderSide(color: AppColors.muted.withValues(alpha: 0.3)),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: AppColors.darkOlive, width: 2),
+          borderSide: const BorderSide(color: AppColors.brand, width: 2),
         ),
-        labelStyle: const TextStyle(color: AppColors.darkOlive),
+        labelStyle: const TextStyle(color: AppColors.brand),
       ),
 
       // Text
       textTheme: const TextTheme(
         displayLarge: TextStyle(
-          color: AppColors.darkOlive,
+          color: AppColors.fore,
           fontWeight: FontWeight.bold,
         ),
         displayMedium: TextStyle(
-          color: AppColors.darkOlive,
+          color: AppColors.fore,
           fontWeight: FontWeight.bold,
         ),
         titleLarge: TextStyle(
-          color: AppColors.darkOlive,
+          color: AppColors.fore,
           fontWeight: FontWeight.w600,
         ),
-        bodyLarge: TextStyle(color: AppColors.darkOlive),
-        bodyMedium: TextStyle(color: AppColors.darkOlive),
+        bodyLarge: TextStyle(color: AppColors.fore),
+        bodyMedium: TextStyle(color: AppColors.fore),
       ),
 
       // AppBar
       appBarTheme: const AppBarTheme(
-        backgroundColor: AppColors.cream,
-        foregroundColor: AppColors.darkOlive,
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.fore,
         elevation: 0,
         centerTitle: true,
         systemOverlayStyle: SystemUiOverlayStyle.dark,
@@ -110,37 +124,35 @@ class AppTheme {
 
       // Bottom nav
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: AppColors.cream,
-        selectedItemColor: AppColors.darkOlive,
-        unselectedItemColor: AppColors.mutedOlive,
+        backgroundColor: AppColors.surface,
+        selectedItemColor: AppColors.brand,
+        unselectedItemColor: AppColors.muted,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),
     );
   }
 
-  // ── Dark-mode palette tokens ───────────────────────────────────────────
-  static const _darkPrimary = Color(0xFF66BB6A);
-  static const _darkOnPrimary = Color(0xFF0F110F);
-  static const _darkSurface = Color(0xFF1B1E1A);
-  static const _darkOnSurface = Color(0xFFE6E5C8);
-  static const _darkScaffold = Color(0xFF121412);
-  static const _darkInputFill = Color(0xFF1F221E);
+  // ── Dark ───────────────────────────────────────────────────────────────
+
+  static const _scaffold = Color(0xFF141310); // slightly darker than surfaceD
 
   static ThemeData get darkTheme {
-    const colorScheme = ColorScheme.dark(
-      primary: _darkPrimary,
-      onPrimary: _darkOnPrimary,
-      secondary: AppColors.mutedOlive,
-      onSecondary: _darkOnPrimary,
-      tertiary: Color(0xFF3A3D39),
-      onTertiary: _darkOnSurface,
-      surface: _darkSurface,
-      onSurface: _darkOnSurface,
-      surfaceContainerHighest: Color(0xFF252825),
-      error: AppColors.error,
-      onError: Colors.white,
-      outline: Color(0xFF4A4D48),
+    final colorScheme = ColorScheme.dark(
+      primary: AppColors.brandD,
+      onPrimary: AppColors.surfaceD,
+      secondary: AppColors.mutedD,
+      onSecondary: AppColors.foreD,
+      tertiary: AppColors.mutedD,
+      onTertiary: AppColors.foreD,
+      surface: AppColors.surfaceD,
+      onSurface: AppColors.foreD,
+      onSurfaceVariant: AppColors.mutedD,
+      outline: AppColors.mutedD,
+      outlineVariant: AppColors.mutedD.withValues(alpha: 0.3),
+      surfaceContainerHighest: const Color(0xFF252420),
+      error: AppColors.foreD,
+      onError: AppColors.surfaceD,
     );
 
     return ThemeData(
@@ -148,23 +160,23 @@ class AppTheme {
       brightness: Brightness.dark,
       fontFamily: 'SF Pro',
       colorScheme: colorScheme,
-      scaffoldBackgroundColor: _darkScaffold,
+      scaffoldBackgroundColor: _scaffold,
 
       // Card
       cardTheme: CardThemeData(
-        color: _darkSurface,
+        color: AppColors.surfaceD,
         elevation: 0,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
-          side: BorderSide(color: AppColors.mutedOlive.withValues(alpha: 0.15)),
+          side: BorderSide(color: AppColors.mutedD.withValues(alpha: 0.2)),
         ),
       ),
 
       // Buttons
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          backgroundColor: _darkPrimary,
-          foregroundColor: _darkOnPrimary,
+          backgroundColor: AppColors.brandD,
+          foregroundColor: AppColors.surfaceD,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -173,8 +185,8 @@ class AppTheme {
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
-          foregroundColor: _darkOnSurface,
-          side: BorderSide(color: _darkOnSurface.withValues(alpha: 0.4)),
+          foregroundColor: AppColors.foreD,
+          side: BorderSide(color: AppColors.foreD.withValues(alpha: 0.4)),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),
@@ -185,58 +197,58 @@ class AppTheme {
       // Input
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: _darkInputFill,
+        fillColor: AppColors.mutedD.withValues(alpha: 0.12),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: AppColors.mutedOlive.withValues(alpha: 0.3),
+            color: AppColors.mutedD.withValues(alpha: 0.3),
           ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: AppColors.mutedOlive.withValues(alpha: 0.2),
+            color: AppColors.mutedD.withValues(alpha: 0.2),
           ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
-          borderSide: const BorderSide(color: _darkPrimary, width: 2),
+          borderSide: const BorderSide(color: AppColors.brandD, width: 2),
         ),
-        labelStyle: const TextStyle(color: _darkOnSurface),
+        labelStyle: const TextStyle(color: AppColors.foreD),
       ),
 
       // Text
       textTheme: const TextTheme(
         displayLarge: TextStyle(
-          color: _darkOnSurface,
+          color: AppColors.foreD,
           fontWeight: FontWeight.bold,
         ),
         displayMedium: TextStyle(
-          color: _darkOnSurface,
+          color: AppColors.foreD,
           fontWeight: FontWeight.bold,
         ),
         titleLarge: TextStyle(
-          color: _darkOnSurface,
+          color: AppColors.foreD,
           fontWeight: FontWeight.w600,
         ),
-        bodyLarge: TextStyle(color: _darkOnSurface),
-        bodyMedium: TextStyle(color: _darkOnSurface),
+        bodyLarge: TextStyle(color: AppColors.foreD),
+        bodyMedium: TextStyle(color: AppColors.foreD),
       ),
 
       // AppBar
       appBarTheme: const AppBarTheme(
-        backgroundColor: _darkScaffold,
-        foregroundColor: _darkOnSurface,
+        backgroundColor: _scaffold,
+        foregroundColor: AppColors.foreD,
         elevation: 0,
         centerTitle: true,
         systemOverlayStyle: SystemUiOverlayStyle.light,
       ),
 
       // Bottom nav
-      bottomNavigationBarTheme: BottomNavigationBarThemeData(
-        backgroundColor: _darkSurface,
-        selectedItemColor: _darkPrimary,
-        unselectedItemColor: AppColors.mutedOlive,
+      bottomNavigationBarTheme: const BottomNavigationBarThemeData(
+        backgroundColor: AppColors.surfaceD,
+        selectedItemColor: AppColors.brandD,
+        unselectedItemColor: AppColors.mutedD,
         type: BottomNavigationBarType.fixed,
         elevation: 8,
       ),

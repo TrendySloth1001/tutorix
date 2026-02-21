@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
-import '../../../core/theme/app_colors.dart';
 import '../services/fee_service.dart';
 
 class FeeCalendarScreen extends StatefulWidget {
@@ -131,8 +130,8 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
                     width: 6,
                     height: 6,
                     margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                    decoration: const BoxDecoration(
-                      color: AppColors.error,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.error,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -141,8 +140,8 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
                     width: 6,
                     height: 6,
                     margin: const EdgeInsets.symmetric(horizontal: 1.5),
-                    decoration: const BoxDecoration(
-                      color: AppColors.primaryGreen,
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary,
                       shape: BoxShape.circle,
                     ),
                   ),
@@ -187,9 +186,13 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
             ),
           ),
           const SizedBox(height: 20),
-          _buildStatCard('Collected', collected, AppColors.primaryGreen),
+          _buildStatCard(
+            'Collected',
+            collected,
+            Theme.of(context).colorScheme.primary,
+          ),
           const SizedBox(height: 12),
-          _buildStatCard('Due', due, AppColors.error),
+          _buildStatCard('Due', due, Theme.of(context).colorScheme.error),
         ],
       ),
     );

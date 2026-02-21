@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 import '../models/assignment_model.dart';
 import '../services/assessment_service.dart';
 import 'file_viewer_screen.dart';
@@ -109,7 +108,7 @@ class _AssignmentSubmissionsScreenState
                   Text(
                     '${_submissions!.where((s) => s.status == 'GRADED').length} graded',
                     style: theme.textTheme.bodySmall?.copyWith(
-                      color: AppColors.success,
+                      color: theme.colorScheme.primary,
                     ),
                   ),
               ],
@@ -185,9 +184,9 @@ class _SubmissionCard extends StatelessWidget {
     final theme = Theme.of(context);
     final s = submission;
     final statusColor = switch (s.status) {
-      'GRADED' => AppColors.success,
-      'RETURNED' => AppColors.warning,
-      _ => AppColors.info,
+      'GRADED' => theme.colorScheme.primary,
+      'RETURNED' => theme.colorScheme.secondary,
+      _ => theme.colorScheme.secondary,
     };
 
     return Card(
@@ -266,13 +265,13 @@ class _SubmissionCard extends StatelessWidget {
                   Icon(
                     Icons.warning_amber_rounded,
                     size: 14,
-                    color: AppColors.warning,
+                    color: theme.colorScheme.secondary,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     'Submitted late',
                     style: theme.textTheme.labelSmall?.copyWith(
-                      color: AppColors.warning,
+                      color: theme.colorScheme.secondary,
                     ),
                   ),
                 ],
@@ -325,7 +324,7 @@ class _SubmissionCard extends StatelessWidget {
                 'Marks: ${s.marks}',
                 style: theme.textTheme.bodyMedium?.copyWith(
                   fontWeight: FontWeight.w600,
-                  color: AppColors.success,
+                  color: theme.colorScheme.primary,
                 ),
               ),
             ],

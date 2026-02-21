@@ -3,7 +3,6 @@ import 'package:intl/intl.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../services/batch_service.dart';
-import '../../../core/theme/app_colors.dart';
 
 /// Screen to create a new notice / announcement for a batch.
 /// Supports different notice types with conditional structured fields.
@@ -42,30 +41,22 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
   late final AnimationController _animCtrl;
   late final Animation<double> _fadeAnim;
 
-  static const _priorities = [
-    ('low', 'Low', AppColors.priorityLow, Icons.arrow_downward_rounded),
-    ('normal', 'Normal', AppColors.priorityNormal, Icons.remove_rounded),
-    ('high', 'High', AppColors.priorityHigh, Icons.arrow_upward_rounded),
-    ('urgent', 'Urgent', AppColors.priorityUrgent, Icons.priority_high_rounded),
+  static List<(String, String, Color, IconData)> _priorities(
+    ColorScheme colors,
+  ) => [
+    ('low', 'Low', colors.onSurfaceVariant, Icons.arrow_downward_rounded),
+    ('normal', 'Normal', colors.secondary, Icons.remove_rounded),
+    ('high', 'High', colors.primary, Icons.arrow_upward_rounded),
+    ('urgent', 'Urgent', colors.error, Icons.priority_high_rounded),
   ];
 
-  static const _types = [
-    ('general', 'General', AppColors.noticeGeneral, Icons.campaign_rounded),
-    (
-      'timetable_update',
-      'Timetable',
-      AppColors.noticeTimetable,
-      Icons.schedule_rounded,
-    ),
-    ('event', 'Event', AppColors.noticeEvent, Icons.event_rounded),
-    ('exam', 'Exam', AppColors.noticeExam, Icons.quiz_rounded),
-    ('holiday', 'Holiday', AppColors.noticeHoliday, Icons.beach_access_rounded),
-    (
-      'assignment',
-      'Assignment',
-      AppColors.noticeAssignment,
-      Icons.assignment_rounded,
-    ),
+  static List<(String, String, Color, IconData)> _types(ColorScheme colors) => [
+    ('general', 'General', colors.secondary, Icons.campaign_rounded),
+    ('timetable_update', 'Timetable', colors.primary, Icons.schedule_rounded),
+    ('event', 'Event', colors.primary, Icons.event_rounded),
+    ('exam', 'Exam', colors.error, Icons.quiz_rounded),
+    ('holiday', 'Holiday', colors.secondary, Icons.beach_access_rounded),
+    ('assignment', 'Assignment', colors.secondary, Icons.assignment_rounded),
   ];
 
   static const _dayOptions = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -193,7 +184,7 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                 Wrap(
                   spacing: 8,
                   runSpacing: 8,
-                  children: _types.map((t) {
+                  children: _types(theme.colorScheme).map((t) {
                     final selected = _type == t.$1;
                     return GestureDetector(
                       onTap: () => setState(() => _type = t.$1),
@@ -265,7 +256,7 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
                 _FieldLabel('Priority', required: true),
                 const SizedBox(height: 10),
                 Row(
-                  children: _priorities.map((p) {
+                  children: _priorities(theme.colorScheme).map((p) {
                     final selected = _priority == p.$1;
                     return Expanded(
                       child: Padding(
@@ -738,7 +729,10 @@ class _FieldLabel extends StatelessWidget {
         ),
         if (required) ...[
           const SizedBox(width: 4),
-          Text('*', style: TextStyle(color: AppColors.error, fontSize: 14)),
+          Text(
+            '*',
+            style: TextStyle(color: theme.colorScheme.error, fontSize: 14),
+          ),
         ],
       ],
     );

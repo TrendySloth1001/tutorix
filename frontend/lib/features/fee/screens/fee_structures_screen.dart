@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
 import 'fee_audit_log_screen.dart';
@@ -397,20 +396,20 @@ class _StructureCard extends StatelessWidget {
                   onSelected: (v) {
                     if (v == 'delete') onDelete();
                   },
-                  itemBuilder: (_) => [
-                    const PopupMenuItem(
+                  itemBuilder: (ctx) => [
+                    PopupMenuItem(
                       value: 'delete',
                       child: Row(
                         children: [
                           Icon(
                             Icons.delete_outline_rounded,
                             size: 18,
-                            color: AppColors.error,
+                            color: theme.colorScheme.error,
                           ),
-                          SizedBox(width: 10),
+                          const SizedBox(width: 10),
                           Text(
                             'Remove',
-                            style: TextStyle(color: AppColors.error),
+                            style: TextStyle(color: theme.colorScheme.error),
                           ),
                         ],
                       ),
@@ -1021,9 +1020,9 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                       ),
                     ),
                     IconButton(
-                      icon: const Icon(
+                      icon: Icon(
                         Icons.remove_circle_outline,
-                        color: AppColors.error,
+                        color: theme.colorScheme.error,
                         size: 20,
                       ),
                       onPressed: () {
@@ -1163,9 +1162,9 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.remove_circle_outline,
-                          color: AppColors.error,
+                          color: theme.colorScheme.error,
                           size: 20,
                         ),
                         onPressed: () {
@@ -1299,9 +1298,9 @@ class _ErrorRetry extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
-            color: AppColors.error,
+            color: theme.colorScheme.error,
             size: 40,
           ),
           const SizedBox(height: 10),

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 import '../services/payment_service.dart';
 
 /// Admin screen for configuring coaching payment settings:
@@ -105,7 +104,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(e.toString()),
-            backgroundColor: AppColors.error,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -164,8 +163,10 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: _razorpayActivated
-                            ? AppColors.successBg
-                            : AppColors.warningBg,
+                            ? theme.colorScheme.primary.withValues(alpha: 0.08)
+                            : theme.colorScheme.secondary.withValues(
+                                alpha: 0.08,
+                              ),
                         borderRadius: BorderRadius.circular(14),
                       ),
                       child: Row(
@@ -175,8 +176,8 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                                 ? Icons.check_circle_rounded
                                 : Icons.info_outline_rounded,
                             color: _razorpayActivated
-                                ? AppColors.success
-                                : AppColors.warning,
+                                ? theme.colorScheme.primary
+                                : theme.colorScheme.secondary,
                           ),
                           const SizedBox(width: 12),
                           Expanded(
@@ -190,8 +191,8 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                                   style: TextStyle(
                                     fontWeight: FontWeight.w700,
                                     color: _razorpayActivated
-                                        ? AppColors.success
-                                        : AppColors.warning,
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.secondary,
                                     fontSize: 14,
                                   ),
                                 ),
@@ -201,8 +202,8 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                                       : 'Contact Tutorix support to link your Razorpay account',
                                   style: TextStyle(
                                     color: _razorpayActivated
-                                        ? AppColors.success
-                                        : AppColors.warning,
+                                        ? theme.colorScheme.primary
+                                        : theme.colorScheme.secondary,
                                     fontSize: 12,
                                   ),
                                 ),

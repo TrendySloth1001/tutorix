@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../../../core/services/error_logger_service.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
@@ -256,7 +255,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
                     child: FilledButton(
                       onPressed: () => Navigator.pop(ctx, true),
                       style: FilledButton.styleFrom(
-                        backgroundColor: AppColors.error,
+                        backgroundColor: theme.colorScheme.error,
                       ),
                       child: Text(confirmLabel),
                     ),
@@ -645,7 +644,7 @@ class _MemberRow extends StatelessWidget {
             ),
 
             // Role badge
-            _roleBadge(member.role),
+            _roleBadge(member.role, theme.colorScheme),
             const SizedBox(width: 4),
 
             // Options
@@ -668,21 +667,21 @@ class _MemberRow extends StatelessWidget {
                     if (v == 'remove') onRemove();
                   },
                   itemBuilder: (_) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'remove',
                       height: 40,
                       child: Row(
                         children: [
                           Icon(
                             Icons.person_remove_rounded,
-                            color: AppColors.error,
+                            color: theme.colorScheme.error,
                             size: 18,
                           ),
-                          SizedBox(width: 8),
+                          const SizedBox(width: 8),
                           Text(
                             'Remove',
                             style: TextStyle(
-                              color: AppColors.error,
+                              color: theme.colorScheme.error,
                               fontSize: 13,
                             ),
                           ),
@@ -698,11 +697,11 @@ class _MemberRow extends StatelessWidget {
     );
   }
 
-  Widget _roleBadge(String role) {
+  Widget _roleBadge(String role, ColorScheme colorScheme) {
     final (Color c, String l) = switch (role) {
-      'ADMIN' => (AppColors.roleAdmin, 'A'),
-      'TEACHER' => (AppColors.roleTeacher, 'T'),
-      _ => (AppColors.roleStudent, 'S'),
+      'ADMIN' => (colorScheme.primary, 'A'),
+      'TEACHER' => (colorScheme.secondary, 'T'),
+      _ => (colorScheme.onSurfaceVariant, 'S'),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -762,7 +761,7 @@ class _InviteRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const amber = AppColors.rolePending;
+    final amber = theme.colorScheme.secondary;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -806,7 +805,7 @@ class _InviteRow extends StatelessWidget {
                 const SizedBox(height: 2),
                 Row(
                   children: [
-                    _roleBadge(invite.role),
+                    _roleBadge(invite.role, theme.colorScheme),
                     if (invite.isUnresolved) ...[
                       const SizedBox(width: 6),
                       Text(
@@ -833,7 +832,7 @@ class _InviteRow extends StatelessWidget {
               iconSize: 18,
               icon: Icon(
                 Icons.close_rounded,
-                color: AppColors.error.withValues(alpha: 0.6),
+                color: theme.colorScheme.error.withValues(alpha: 0.6),
               ),
               onPressed: onCancel,
               tooltip: 'Cancel',
@@ -844,11 +843,11 @@ class _InviteRow extends StatelessWidget {
     );
   }
 
-  Widget _roleBadge(String role) {
+  Widget _roleBadge(String role, ColorScheme colorScheme) {
     final (Color c, String l) = switch (role) {
-      'ADMIN' => (AppColors.roleAdmin, 'A'),
-      'TEACHER' => (AppColors.roleTeacher, 'T'),
-      _ => (AppColors.roleStudent, 'S'),
+      'ADMIN' => (colorScheme.primary, 'A'),
+      'TEACHER' => (colorScheme.secondary, 'T'),
+      _ => (colorScheme.onSurfaceVariant, 'S'),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),

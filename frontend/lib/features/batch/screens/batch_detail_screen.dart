@@ -18,7 +18,6 @@ import 'note_detail_screen.dart';
 import '../../assessment/screens/assessment_tab_screen.dart';
 import '../../assessment/screens/create_assessment_screen.dart';
 import '../../assessment/screens/create_assignment_screen.dart';
-import '../../../core/theme/app_colors.dart';
 
 /// Full batch detail — overview, members, notes, notices via TabBar.
 /// Premium design with layered header, rich cards, and polished interactions.
@@ -216,7 +215,10 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Delete', style: TextStyle(color: AppColors.error)),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+            ),
           ),
         ],
       ),
@@ -281,7 +283,10 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Remove', style: TextStyle(color: AppColors.error)),
+            child: Text(
+              'Remove',
+              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+            ),
           ),
         ],
       ),
@@ -333,7 +338,10 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Delete', style: TextStyle(color: AppColors.error)),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+            ),
           ),
         ],
       ),
@@ -385,7 +393,10 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: Text('Delete', style: TextStyle(color: AppColors.error)),
+            child: Text(
+              'Delete',
+              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
+            ),
           ),
         ],
       ),
@@ -479,7 +490,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
                           'delete',
                           'Delete',
                           Icons.delete_rounded,
-                          color: AppColors.error,
+                          color: theme.colorScheme.error,
                         ),
                       ],
                     ),
@@ -918,9 +929,9 @@ class _OverviewTab extends StatelessWidget {
                       alpha: 0.06,
                     ),
                     color: capacity > 0.9
-                        ? AppColors.error
+                        ? theme.colorScheme.error
                         : capacity > 0.7
-                        ? AppColors.warning
+                        ? theme.colorScheme.secondary
                         : theme.colorScheme.primary,
                   ),
                 ),
@@ -1010,8 +1021,8 @@ class _OverviewTab extends StatelessWidget {
                 'Status',
                 batch.isActive ? 'Active' : 'Archived',
                 valueColor: batch.isActive
-                    ? AppColors.activeGreen
-                    : AppColors.pendingAmber,
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.secondary,
               ),
             ],
           ),
@@ -1096,7 +1107,7 @@ class _NextClassCard extends StatelessWidget {
         : isTomorrow
         ? 'Tomorrow'
         : '$dayName, ${classDate.day}/${classDate.month}';
-    const color = AppColors.activeGreen; // green
+    final color = theme.colorScheme.primary; // green
 
     return Container(
       width: double.infinity,
@@ -1216,6 +1227,7 @@ class _MembersTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final teachers = members.where((m) => m.role == 'TEACHER').toList();
     final students = members.where((m) => m.role == 'STUDENT').toList();
 
@@ -1236,7 +1248,7 @@ class _MembersTab extends StatelessWidget {
             'Teachers',
             count: teachers.length,
             icon: Icons.school_rounded,
-            color: AppColors.activeGreen,
+            color: theme.colorScheme.primary,
           ),
           const SizedBox(height: 10),
           ...teachers.map(
@@ -1252,7 +1264,7 @@ class _MembersTab extends StatelessWidget {
           'Students',
           count: students.length,
           icon: Icons.people_rounded,
-          color: AppColors.activeBlue,
+          color: theme.colorScheme.primary,
         ),
         const SizedBox(height: 10),
         if (students.isEmpty)
@@ -1348,11 +1360,11 @@ class _NoteCard extends StatelessWidget {
     this.onTap,
   });
 
-  static const _typeConfig = {
-    'pdf': (Icons.picture_as_pdf_rounded, AppColors.filePdf),
-    'image': (Icons.image_rounded, AppColors.fileImage),
-    'doc': (Icons.description_rounded, AppColors.fileDoc),
-    'link': (Icons.link_rounded, AppColors.fileLink),
+  static Map<String, (IconData, Color)> _typeConfig(ColorScheme colors) => {
+    'pdf': (Icons.picture_as_pdf_rounded, colors.onSurface),
+    'image': (Icons.image_rounded, colors.secondary),
+    'doc': (Icons.description_rounded, colors.primary),
+    'link': (Icons.link_rounded, colors.onSurfaceVariant),
   };
 
   (IconData, Color) _primaryType(ThemeData theme) {
@@ -1361,7 +1373,7 @@ class _NoteCard extends StatelessWidget {
     }
     // Use the first attachment type for the main icon
     final first = note.attachments.first.fileType;
-    return _typeConfig[first] ??
+    return _typeConfig(theme.colorScheme)[first] ??
         (Icons.attach_file_rounded, theme.colorScheme.primary);
   }
 
@@ -1502,14 +1514,16 @@ class _NoteCard extends StatelessWidget {
                           const SizedBox(height: 8),
                           Container(
                             decoration: BoxDecoration(
-                              color: AppColors.error.withValues(alpha: 0.08),
+                              color: theme.colorScheme.error.withValues(
+                                alpha: 0.08,
+                              ),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: IconButton(
                               icon: Icon(
                                 Icons.delete_outline_rounded,
                                 size: 20,
-                                color: AppColors.error,
+                                color: theme.colorScheme.error,
                               ),
                               onPressed: onDelete,
                               constraints: const BoxConstraints(
@@ -1619,7 +1633,7 @@ class _NoteCard extends StatelessWidget {
                       // Show first 2 attachments with descriptions in reading flow
                       ...note.attachments.take(2).expand((a) {
                         final ac =
-                            _typeConfig[a.fileType] ??
+                            _typeConfig(theme.colorScheme)[a.fileType] ??
                             (
                               Icons.attach_file_rounded,
                               theme.colorScheme.primary,
@@ -1800,33 +1814,33 @@ class _NoticeCard extends StatelessWidget {
   });
 
   // Type-based config: (icon, color)
-  static const _typeConfig = <String, (IconData, Color)>{
-    'general': (Icons.campaign_rounded, AppColors.noticeGeneral),
-    'timetable_update': (Icons.schedule_rounded, AppColors.noticeTimetable),
-    'event': (Icons.event_rounded, AppColors.noticeEvent),
-    'exam': (Icons.quiz_rounded, AppColors.noticeExam),
-    'holiday': (Icons.beach_access_rounded, AppColors.noticeHoliday),
-    'assignment': (Icons.assignment_rounded, AppColors.noticeAssignment),
+  static Map<String, (IconData, Color)> _typeConfig(ColorScheme colors) => {
+    'general': (Icons.campaign_rounded, colors.secondary),
+    'timetable_update': (Icons.schedule_rounded, colors.primary),
+    'event': (Icons.event_rounded, colors.primary),
+    'exam': (Icons.quiz_rounded, colors.error),
+    'holiday': (Icons.beach_access_rounded, colors.secondary),
+    'assignment': (Icons.assignment_rounded, colors.secondary),
   };
 
-  static const _priorityConfig = <String, (Color, IconData)>{
-    'urgent': (AppColors.noticeExam, Icons.priority_high_rounded),
-    'high': (AppColors.noticeHoliday, Icons.arrow_upward_rounded),
-    'normal': (AppColors.noticeGeneral, Icons.remove_rounded),
-    'low': (AppColors.priorityLow, Icons.arrow_downward_rounded),
+  static Map<String, (Color, IconData)> _priorityConfig(ColorScheme colors) => {
+    'urgent': (colors.error, Icons.priority_high_rounded),
+    'high': (colors.primary, Icons.arrow_upward_rounded),
+    'normal': (colors.secondary, Icons.remove_rounded),
+    'low': (colors.onSurfaceVariant, Icons.arrow_downward_rounded),
   };
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final typeConf =
-        _typeConfig[notice.type] ??
-        (Icons.campaign_rounded, AppColors.noticeGeneral);
+        _typeConfig(theme.colorScheme)[notice.type] ??
+        (Icons.campaign_rounded, theme.colorScheme.secondary);
     final icon = typeConf.$1;
     final color = typeConf.$2;
     final prioConf =
-        _priorityConfig[notice.priority] ??
-        (AppColors.noticeGeneral, Icons.remove_rounded);
+        _priorityConfig(theme.colorScheme)[notice.priority] ??
+        (theme.colorScheme.secondary, Icons.remove_rounded);
     final prioColor = prioConf.$1;
 
     return Container(
@@ -1878,7 +1892,7 @@ class _NoticeCard extends StatelessWidget {
                       child: Icon(
                         Icons.delete_outline_rounded,
                         size: 18,
-                        color: AppColors.error,
+                        color: theme.colorScheme.error,
                       ),
                     ),
                   ),
@@ -2154,8 +2168,7 @@ class _MemberTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final isTeacher = member.role == 'TEACHER';
-    final roleColor = isTeacher ? AppColors.activeGreen : AppColors.activeBlue;
+    final roleColor = theme.colorScheme.primary;
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -2230,7 +2243,7 @@ class _MemberTile extends StatelessWidget {
                 icon: Icon(
                   Icons.close_rounded,
                   size: 18,
-                  color: AppColors.error.withValues(alpha: 0.5),
+                  color: theme.colorScheme.error.withValues(alpha: 0.5),
                 ),
                 onPressed: onRemove,
               ),

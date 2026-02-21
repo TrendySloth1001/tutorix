@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../../shared/widgets/app_shimmer.dart';
 import '../models/assessment_model.dart';
@@ -229,9 +228,9 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
+            child: Text(
               'Delete',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
             ),
           ),
         ],
@@ -266,9 +265,9 @@ class _AssessmentTabScreenState extends State<AssessmentTabScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text(
+            child: Text(
               'Delete',
-              style: TextStyle(color: AppColors.error),
+              style: TextStyle(color: Theme.of(ctx).colorScheme.error),
             ),
           ),
         ],
@@ -747,8 +746,8 @@ class _TypeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final color = switch (type) {
-      'TEST' => AppColors.warning,
-      'PRACTICE' => AppColors.success,
+      'TEST' => theme.colorScheme.secondary,
+      'PRACTICE' => theme.colorScheme.primary,
       _ => theme.colorScheme.primary,
     };
     return Container(
@@ -778,9 +777,9 @@ class _StatusChip extends StatelessWidget {
     final theme = Theme.of(context);
     final (color, label) = switch (status) {
       'DRAFT' => (Colors.grey, 'Draft'),
-      'PUBLISHED' => (AppColors.success, 'Live'),
-      'CLOSED' => (AppColors.error, 'Closed'),
-      'OVERDUE' => (AppColors.warning, 'Overdue'),
+      'PUBLISHED' => (theme.colorScheme.primary, 'Live'),
+      'CLOSED' => (theme.colorScheme.error, 'Closed'),
+      'OVERDUE' => (theme.colorScheme.secondary, 'Overdue'),
       _ => (Colors.grey, status),
     };
     return Container(
@@ -839,6 +838,7 @@ class _PopupMenu extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return PopupMenuButton<String>(
       icon: const Icon(Icons.more_vert_rounded, size: 18),
       iconSize: 18,
@@ -846,9 +846,12 @@ class _PopupMenu extends StatelessWidget {
       constraints: const BoxConstraints(),
       itemBuilder: (_) => [
         PopupMenuItem(value: 'status', child: Text(statusLabel)),
-        const PopupMenuItem(
+        PopupMenuItem(
           value: 'delete',
-          child: Text('Delete', style: TextStyle(color: AppColors.error)),
+          child: Text(
+            'Delete',
+            style: TextStyle(color: theme.colorScheme.error),
+          ),
         ),
       ],
       onSelected: (v) {
@@ -875,21 +878,21 @@ class _StudentAttemptBanner extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: AppColors.warning.withValues(alpha: 0.1),
+          color: theme.colorScheme.secondary.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.play_circle_outline_rounded,
               size: 16,
-              color: AppColors.warning,
+              color: theme.colorScheme.secondary,
             ),
             const SizedBox(width: 6),
             Text(
               'In Progress — tap to continue',
               style: theme.textTheme.labelSmall?.copyWith(
-                color: AppColors.warning,
+                color: theme.colorScheme.secondary,
               ),
             ),
           ],
@@ -905,9 +908,9 @@ class _StudentAttemptBanner extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
         decoration: BoxDecoration(
-          color: (passed ? AppColors.success : AppColors.info).withValues(
-            alpha: 0.08,
-          ),
+          color:
+              (passed ? theme.colorScheme.primary : theme.colorScheme.secondary)
+                  .withValues(alpha: 0.08),
           borderRadius: BorderRadius.circular(8),
         ),
         child: Row(
@@ -917,13 +920,17 @@ class _StudentAttemptBanner extends StatelessWidget {
                   ? Icons.check_circle_outline_rounded
                   : Icons.info_outline_rounded,
               size: 16,
-              color: passed ? AppColors.success : AppColors.info,
+              color: passed
+                  ? theme.colorScheme.primary
+                  : theme.colorScheme.secondary,
             ),
             const SizedBox(width: 6),
             Text(
               'Score: ${best.percentage?.toStringAsFixed(1)}%',
               style: theme.textTheme.labelSmall?.copyWith(
-                color: passed ? AppColors.success : AppColors.info,
+                color: passed
+                    ? theme.colorScheme.primary
+                    : theme.colorScheme.secondary,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -954,9 +961,9 @@ class _SubmissionBanner extends StatelessWidget {
     final theme = Theme.of(context);
     final s = submission;
     final color = switch (s.status) {
-      'GRADED' => AppColors.success,
-      'RETURNED' => AppColors.warning,
-      _ => AppColors.info,
+      'GRADED' => theme.colorScheme.primary,
+      'RETURNED' => theme.colorScheme.secondary,
+      _ => theme.colorScheme.secondary,
     };
     final label = switch (s.status) {
       'GRADED' => 'Graded${s.marks != null ? ' — ${s.marks} marks' : ''}',

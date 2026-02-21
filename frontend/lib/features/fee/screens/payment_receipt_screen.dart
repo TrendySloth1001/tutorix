@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/theme/app_colors.dart';
 
 /// A clean, minimal payment receipt shown after successful payment.
 /// Works for all payment modes: Razorpay (online), Cash, UPI, Bank Transfer,
@@ -127,20 +126,20 @@ class PaymentReceiptScreen extends StatelessWidget {
               width: 72,
               height: 72,
               decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.1),
+                color: theme.colorScheme.primary.withValues(alpha: 0.1),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.check_rounded,
-                color: AppColors.success,
+                color: theme.colorScheme.primary,
                 size: 40,
               ),
             ),
             const SizedBox(height: 16),
             Text(
               _successLabel,
-              style: const TextStyle(
-                color: AppColors.success,
+              style: TextStyle(
+                color: theme.colorScheme.primary,
                 fontWeight: FontWeight.w700,
                 fontSize: 20,
               ),

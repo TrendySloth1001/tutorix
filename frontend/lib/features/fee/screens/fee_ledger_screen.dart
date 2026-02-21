@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
 
@@ -190,7 +189,7 @@ class _LedgerSummaryCard extends StatelessWidget {
                 child: _LedgerStat(
                   label: 'Paid',
                   amount: summary.totalPaid,
-                  color: AppColors.successLight,
+                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
                 ),
               ),
               if (summary.totalRefunded > 0)
@@ -220,8 +219,8 @@ class _LedgerSummaryCard extends StatelessWidget {
                 '₹${(summary.balance > 0 ? summary.balance : 0).toStringAsFixed(0)}',
                 style: TextStyle(
                   color: summary.balance > 0
-                      ? AppColors.errorLight
-                      : AppColors.successLight,
+                      ? theme.colorScheme.error.withValues(alpha: 0.5)
+                      : theme.colorScheme.primary.withValues(alpha: 0.5),
                   fontWeight: FontWeight.w800,
                   fontSize: 18,
                 ),
@@ -233,10 +232,10 @@ class _LedgerSummaryCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Available Credits',
                   style: TextStyle(
-                    color: AppColors.successLight,
+                    color: theme.colorScheme.primary.withValues(alpha: 0.5),
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -249,10 +248,12 @@ class _LedgerSummaryCard extends StatelessWidget {
                   ),
                   label: Text('₹${summary.balance.abs().toStringAsFixed(0)}'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.successLight.withValues(
-                      alpha: 0.15,
+                    backgroundColor: theme.colorScheme.primary.withValues(
+                      alpha: 0.08,
                     ),
-                    foregroundColor: AppColors.successLight,
+                    foregroundColor: theme.colorScheme.primary.withValues(
+                      alpha: 0.5,
+                    ),
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     minimumSize: const Size(0, 32),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
@@ -332,7 +333,7 @@ class _TimelineEntry extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final config = _entryConfig(entry.type);
+    final config = _entryConfig(entry.type, theme.colorScheme);
 
     return IntrinsicHeight(
       child: Row(
@@ -442,8 +443,8 @@ class _TimelineEntry extends StatelessWidget {
                           'Balance: ₹${entry.runningBalance.toStringAsFixed(0)}',
                           style: TextStyle(
                             color: entry.runningBalance > 0
-                                ? AppColors.error
-                                : AppColors.success,
+                                ? theme.colorScheme.error
+                                : theme.colorScheme.primary,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
@@ -484,26 +485,26 @@ class _EntryConfig {
   });
 }
 
-_EntryConfig _entryConfig(String type) {
+_EntryConfig _entryConfig(String type, ColorScheme cs) {
   switch (type) {
     case 'PAYMENT':
-      return const _EntryConfig(
-        color: AppColors.success,
-        bgColor: AppColors.successBg,
+      return _EntryConfig(
+        color: cs.primary,
+        bgColor: cs.primary.withValues(alpha: 0.08),
         icon: Icons.check_circle_rounded,
         sign: '',
       );
     case 'REFUND':
-      return const _EntryConfig(
-        color: AppColors.info,
-        bgColor: AppColors.infoBg,
+      return _EntryConfig(
+        color: cs.secondary,
+        bgColor: cs.secondary.withValues(alpha: 0.08),
         icon: Icons.keyboard_return_rounded,
         sign: '-',
       );
     default: // RECORD
-      return const _EntryConfig(
-        color: AppColors.warning,
-        bgColor: AppColors.warningBg,
+      return _EntryConfig(
+        color: cs.secondary,
+        bgColor: cs.secondary.withValues(alpha: 0.08),
         icon: Icons.receipt_long_rounded,
         sign: '+',
       );
@@ -518,22 +519,21 @@ class _ErrorRetry extends StatelessWidget {
   const _ErrorRetry({required this.error, required this.onRetry});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
-            color: AppColors.error,
+            color: theme.colorScheme.error,
             size: 40,
           ),
           const SizedBox(height: 10),
           Text(
             error,
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-            ),
+            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),

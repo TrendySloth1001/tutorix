@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../services/admin_logs_service.dart';
 import '../../../core/services/error_logger_service.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_alert.dart';
 
 /// Admin debug console with server logs, local device logs, and statistics.
@@ -105,11 +104,12 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Scaffold(
-      backgroundColor: AppColors.cream,
+      backgroundColor: theme.colorScheme.surface,
       appBar: AppBar(
-        backgroundColor: AppColors.darkOlive,
-        foregroundColor: AppColors.cream,
+        backgroundColor: theme.colorScheme.primary,
+        foregroundColor: theme.colorScheme.surface,
         elevation: 0,
         title: const Row(
           children: [
@@ -125,9 +125,9 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
           controller: _tabController,
           isScrollable: true,
           tabAlignment: TabAlignment.start,
-          indicatorColor: AppColors.cream,
-          labelColor: AppColors.cream,
-          unselectedLabelColor: AppColors.softGrey,
+          indicatorColor: theme.colorScheme.surface,
+          labelColor: theme.colorScheme.surface,
+          unselectedLabelColor: theme.colorScheme.outlineVariant,
           indicatorWeight: 3,
           tabs: [
             Tab(
@@ -179,10 +179,11 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
   }
 
   Widget _buildBadge(String text) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: AppColors.cream.withValues(alpha: 0.2),
+        color: cs.surface.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
@@ -200,16 +201,14 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
         _buildServerFilters(),
         Expanded(
           child: _loading
-              ? const Center(
-                  child: CircularProgressIndicator(color: AppColors.darkOlive),
-                )
+              ? const Center(child: CircularProgressIndicator())
               : _logs.isEmpty
               ? _buildEmptyState(
                   Icons.cloud_off_outlined,
                   'No server logs found',
                 )
               : RefreshIndicator(
-                  color: AppColors.darkOlive,
+                  color: Theme.of(context).colorScheme.primary,
                   onRefresh: _loadLogs,
                   child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
@@ -237,23 +236,27 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
           _offset += _limit;
           _loadLogs();
         },
-        icon: const Icon(Icons.expand_more_rounded, color: AppColors.darkOlive),
+        icon: Icon(
+          Icons.expand_more_rounded,
+          color: Theme.of(context).colorScheme.primary,
+        ),
         label: Text(
           'Load more (${_totalLogs - _offset - _limit} remaining)',
-          style: const TextStyle(color: AppColors.darkOlive),
+          style: TextStyle(color: Theme.of(context).colorScheme.primary),
         ),
       ),
     );
   }
 
   Widget _buildServerFilters() {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.softGrey.withValues(alpha: 0.25),
+        color: cs.outlineVariant.withValues(alpha: 0.25),
         border: Border(
           bottom: BorderSide(
-            color: AppColors.mutedOlive.withValues(alpha: 0.15),
+            color: cs.onSurfaceVariant.withValues(alpha: 0.15),
           ),
         ),
       ),
@@ -318,13 +321,14 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
   }
 
   Widget _buildLocalFilters() {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.softGrey.withValues(alpha: 0.25),
+        color: cs.outlineVariant.withValues(alpha: 0.25),
         border: Border(
           bottom: BorderSide(
-            color: AppColors.mutedOlive.withValues(alpha: 0.15),
+            color: cs.onSurfaceVariant.withValues(alpha: 0.15),
           ),
         ),
       ),
@@ -372,10 +376,9 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
   // ── Stats Tab ──────────────────────────────────────────────────────────
 
   Widget _buildStatsTab() {
+    final cs = Theme.of(context).colorScheme;
     if (_statsLoading) {
-      return const Center(
-        child: CircularProgressIndicator(color: AppColors.darkOlive),
-      );
+      return const Center(child: CircularProgressIndicator());
     }
 
     if (_stats == null) {
@@ -386,7 +389,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
     }
 
     return RefreshIndicator(
-      color: AppColors.darkOlive,
+      color: cs.primary,
       onRefresh: _loadStats,
       child: ListView(
         padding: const EdgeInsets.all(16),
@@ -400,7 +403,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   label: 'Total Logs',
                   value: _stats!.totalLogs,
                   icon: Icons.list_alt_rounded,
-                  color: AppColors.darkOlive,
+                  color: cs.onSurface,
                 ),
               ),
               const SizedBox(width: 12),
@@ -409,7 +412,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   label: 'Errors',
                   value: _stats!.errorCount,
                   icon: Icons.error_outline_rounded,
-                  color: AppColors.debugError,
+                  color: cs.error,
                 ),
               ),
             ],
@@ -422,7 +425,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   label: 'Warnings',
                   value: _stats!.warnCount,
                   icon: Icons.warning_amber_rounded,
-                  color: AppColors.debugWarning,
+                  color: cs.secondary,
                 ),
               ),
               const SizedBox(width: 12),
@@ -431,7 +434,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   label: 'Frontend',
                   value: _stats!.frontendErrorCount,
                   icon: Icons.phone_android_rounded,
-                  color: AppColors.debugPurple,
+                  color: cs.primary,
                 ),
               ),
             ],
@@ -446,7 +449,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   label: 'Requests',
                   value: _stats!.apiRequestCount,
                   icon: Icons.http_rounded,
-                  color: AppColors.debugSuccess,
+                  color: cs.primary,
                 ),
               ),
               const SizedBox(width: 12),
@@ -455,7 +458,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   label: 'API Errors',
                   value: _stats!.apiErrorCount,
                   icon: Icons.cloud_off_rounded,
-                  color: AppColors.warning,
+                  color: cs.secondary,
                 ),
               ),
             ],
@@ -474,6 +477,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
   }
 
   Widget _buildApiHealthBar() {
+    final cs = Theme.of(context).colorScheme;
     final total = _stats!.apiRequestCount;
     final errors = _stats!.apiErrorCount;
     final successRate = total > 0 ? ((total - errors) / total * 100) : 100.0;
@@ -482,9 +486,9 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.softGrey.withValues(alpha: 0.25),
+        color: cs.outlineVariant.withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.mutedOlive.withValues(alpha: 0.15)),
+        border: Border.all(color: cs.onSurfaceVariant.withValues(alpha: 0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -496,17 +500,15 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                     ? Icons.check_circle_outline_rounded
                     : Icons.warning_amber_rounded,
                 size: 18,
-                color: isHealthy
-                    ? AppColors.debugSuccess
-                    : AppColors.debugWarning,
+                color: isHealthy ? cs.primary : cs.secondary,
               ),
               const SizedBox(width: 8),
               Text(
                 'Success Rate: ${successRate.toStringAsFixed(1)}%',
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
-                  color: AppColors.darkOlive,
+                  color: cs.onSurface,
                 ),
               ),
             ],
@@ -516,10 +518,8 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
             borderRadius: BorderRadius.circular(4),
             child: LinearProgressIndicator(
               value: successRate / 100,
-              backgroundColor: AppColors.debugError.withValues(alpha: 0.15),
-              color: isHealthy
-                  ? AppColors.debugSuccess
-                  : AppColors.debugWarning,
+              backgroundColor: cs.error.withValues(alpha: 0.15),
+              color: isHealthy ? cs.primary : cs.secondary,
               minHeight: 8,
             ),
           ),
@@ -529,6 +529,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
   }
 
   Widget _buildDeviceLogsSummary() {
+    final cs = Theme.of(context).colorScheme;
     final local = _logger.localLogs;
     final errorCount = local
         .where((l) => l.level == LogLevel.error || l.level == LogLevel.fatal)
@@ -539,19 +540,19 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.softGrey.withValues(alpha: 0.25),
+        color: cs.outlineVariant.withValues(alpha: 0.25),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.mutedOlive.withValues(alpha: 0.15)),
+        border: Border.all(color: cs.onSurfaceVariant.withValues(alpha: 0.15)),
       ),
       child: Column(
         children: [
-          _buildDeviceLogRow('Buffered', local.length, AppColors.darkOlive),
+          _buildDeviceLogRow('Buffered', local.length, cs.onSurface),
           const SizedBox(height: 8),
-          _buildDeviceLogRow('Errors', errorCount, AppColors.debugError),
+          _buildDeviceLogRow('Errors', errorCount, cs.error),
           const SizedBox(height: 8),
-          _buildDeviceLogRow('Warnings', warnCount, AppColors.debugWarning),
+          _buildDeviceLogRow('Warnings', warnCount, cs.secondary),
           const SizedBox(height: 8),
-          _buildDeviceLogRow('Info', infoCount, AppColors.debugInfo),
+          _buildDeviceLogRow('Info', infoCount, cs.secondary),
         ],
       ),
     );
@@ -569,7 +570,10 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
         Expanded(
           child: Text(
             label,
-            style: const TextStyle(fontSize: 13, color: AppColors.mutedOlive),
+            style: TextStyle(
+              fontSize: 13,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
         ),
         Text(
@@ -623,16 +627,17 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
   Widget _buildStatHeader(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         fontSize: 13,
         fontWeight: FontWeight.w600,
-        color: AppColors.mutedOlive,
+        color: Theme.of(context).colorScheme.onSurfaceVariant,
         letterSpacing: 1.2,
       ),
     );
   }
 
   Widget _buildEmptyState(IconData icon, String message) {
+    final cs = Theme.of(context).colorScheme;
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -640,14 +645,14 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
           Icon(
             icon,
             size: 48,
-            color: AppColors.mutedOlive.withValues(alpha: 0.4),
+            color: cs.onSurfaceVariant.withValues(alpha: 0.4),
           ),
           const SizedBox(height: 12),
           Text(
             message,
             style: TextStyle(
               fontSize: 15,
-              color: AppColors.mutedOlive.withValues(alpha: 0.7),
+              color: cs.onSurfaceVariant.withValues(alpha: 0.7),
             ),
           ),
         ],
@@ -662,11 +667,12 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
     List<String> labels,
     ValueChanged<T?> onChanged,
   ) {
+    final cs = Theme.of(context).colorScheme;
     return GestureDetector(
       onTap: () async {
         final result = await showModalBottomSheet<T>(
           context: context,
-          backgroundColor: AppColors.cream,
+          backgroundColor: cs.surface,
           shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
           ),
@@ -679,17 +685,17 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.mutedOlive.withValues(alpha: 0.3),
+                    color: cs.onSurfaceVariant.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
                 const SizedBox(height: 16),
                 Text(
                   label,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.darkOlive,
+                    color: cs.onSurface,
                   ),
                 ),
                 const SizedBox(height: 8),
@@ -703,10 +709,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                             (values[i] != null &&
                                 currentLabel ==
                                     (values[i] as dynamic)?.toString())
-                        ? const Icon(
-                            Icons.check_rounded,
-                            color: AppColors.darkOlive,
-                          )
+                        ? Icon(Icons.check_rounded, color: cs.primary)
                         : null,
                     onTap: () => Navigator.pop(context, values[i]),
                   ),
@@ -729,13 +732,13 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
           color: currentLabel != null
-              ? AppColors.darkOlive.withValues(alpha: 0.08)
+              ? cs.primary.withValues(alpha: 0.08)
               : Colors.white,
           borderRadius: BorderRadius.circular(10),
           border: Border.all(
             color: currentLabel != null
-                ? AppColors.darkOlive.withValues(alpha: 0.3)
-                : AppColors.mutedOlive.withValues(alpha: 0.2),
+                ? cs.primary.withValues(alpha: 0.3)
+                : cs.onSurfaceVariant.withValues(alpha: 0.2),
           ),
         ),
         child: Row(
@@ -746,8 +749,8 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                 style: TextStyle(
                   fontSize: 13,
                   color: currentLabel != null
-                      ? AppColors.darkOlive
-                      : AppColors.mutedOlive,
+                      ? cs.onSurface
+                      : cs.onSurfaceVariant,
                   fontWeight: currentLabel != null
                       ? FontWeight.w600
                       : FontWeight.w400,
@@ -758,7 +761,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
             Icon(
               Icons.unfold_more_rounded,
               size: 16,
-              color: AppColors.mutedOlive.withValues(alpha: 0.5),
+              color: cs.onSurfaceVariant.withValues(alpha: 0.5),
             ),
           ],
         ),
@@ -767,6 +770,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
   }
 
   Widget _buildIconAction(IconData icon, VoidCallback onTap) {
+    final cs = Theme.of(context).colorScheme;
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -777,10 +781,10 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
             border: Border.all(
-              color: AppColors.mutedOlive.withValues(alpha: 0.2),
+              color: cs.onSurfaceVariant.withValues(alpha: 0.2),
             ),
           ),
-          child: Icon(icon, size: 18, color: AppColors.mutedOlive),
+          child: Icon(icon, size: 18, color: cs.onSurfaceVariant),
         ),
       ),
     );
@@ -797,6 +801,7 @@ class _ServerLogTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Material(
       color: Colors.white,
       borderRadius: BorderRadius.circular(14),
@@ -808,7 +813,7 @@ class _ServerLogTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
             border: Border.all(
-              color: AppColors.mutedOlive.withValues(alpha: 0.12),
+              color: cs.onSurfaceVariant.withValues(alpha: 0.12),
             ),
           ),
           child: Column(
@@ -829,7 +834,7 @@ class _ServerLogTile extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 11,
                       fontFamily: 'SF Mono',
-                      color: AppColors.mutedOlive.withValues(alpha: 0.6),
+                      color: cs.onSurfaceVariant.withValues(alpha: 0.6),
                     ),
                   ),
                 ],
@@ -843,11 +848,11 @@ class _ServerLogTile extends StatelessWidget {
                     Expanded(
                       child: Text(
                         log.path!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 13,
                           fontFamily: 'SF Mono',
                           fontWeight: FontWeight.w500,
-                          color: AppColors.darkOlive,
+                          color: cs.onSurface,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -859,10 +864,10 @@ class _ServerLogTile extends StatelessWidget {
                   (log.method == null || log.path == null))
                 Text(
                   log.message!,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 13,
                     fontWeight: FontWeight.w500,
-                    color: AppColors.darkOlive,
+                    color: cs.onSurface,
                   ),
                   maxLines: 2,
                   overflow: TextOverflow.ellipsis,
@@ -876,14 +881,14 @@ class _ServerLogTile extends StatelessWidget {
                     vertical: 6,
                   ),
                   decoration: BoxDecoration(
-                    color: AppColors.debugError.withValues(alpha: 0.06),
+                    color: cs.error.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Text(
                     log.error!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: AppColors.debugError,
+                      color: cs.error,
                       fontFamily: 'SF Mono',
                     ),
                     maxLines: 2,
@@ -899,14 +904,14 @@ class _ServerLogTile extends StatelessWidget {
                       Icon(
                         Icons.timer_outlined,
                         size: 13,
-                        color: AppColors.mutedOlive.withValues(alpha: 0.5),
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.5),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         '${log.duration!.toStringAsFixed(0)}ms',
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.mutedOlive.withValues(alpha: 0.6),
+                          color: cs.onSurfaceVariant.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -916,14 +921,14 @@ class _ServerLogTile extends StatelessWidget {
                       Icon(
                         Icons.person_outline,
                         size: 13,
-                        color: AppColors.mutedOlive.withValues(alpha: 0.5),
+                        color: cs.onSurfaceVariant.withValues(alpha: 0.5),
                       ),
                       const SizedBox(width: 4),
                       Text(
                         log.userName!,
                         style: TextStyle(
                           fontSize: 11,
-                          color: AppColors.mutedOlive.withValues(alpha: 0.6),
+                          color: cs.onSurfaceVariant.withValues(alpha: 0.6),
                         ),
                       ),
                     ],
@@ -938,6 +943,7 @@ class _ServerLogTile extends StatelessWidget {
   }
 
   void _showDetails(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -947,9 +953,9 @@ class _ServerLogTile extends StatelessWidget {
         maxChildSize: 0.95,
         minChildSize: 0.5,
         builder: (_, controller) => Container(
-          decoration: const BoxDecoration(
-            color: AppColors.cream,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          decoration: BoxDecoration(
+            color: cs.surface,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
           ),
           child: ListView(
             controller: controller,
@@ -960,7 +966,7 @@ class _ServerLogTile extends StatelessWidget {
                   width: 40,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.mutedOlive.withValues(alpha: 0.3),
+                    color: cs.onSurfaceVariant.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -981,28 +987,32 @@ class _ServerLogTile extends StatelessWidget {
               _detailField(
                 'Time',
                 DateFormat('yyyy-MM-dd HH:mm:ss').format(log.createdAt),
+                cs,
               ),
-              if (log.method != null) _detailField('Method', log.method!),
-              if (log.path != null) _detailField('Path', log.path!),
+              if (log.method != null) _detailField('Method', log.method!, cs),
+              if (log.path != null) _detailField('Path', log.path!, cs),
               if (log.duration != null)
                 _detailField(
                   'Duration',
                   '${log.duration!.toStringAsFixed(2)}ms',
+                  cs,
                 ),
-              if (log.userName != null) _detailField('User', log.userName!),
-              if (log.userEmail != null) _detailField('Email', log.userEmail!),
-              if (log.ip != null) _detailField('IP', log.ip!),
+              if (log.userName != null) _detailField('User', log.userName!, cs),
+              if (log.userEmail != null)
+                _detailField('Email', log.userEmail!, cs),
+              if (log.ip != null) _detailField('IP', log.ip!, cs),
               if (log.userAgent != null)
-                _detailField('User Agent', log.userAgent!),
-              if (log.message != null) _detailField('Message', log.message!),
+                _detailField('User Agent', log.userAgent!, cs),
+              if (log.message != null)
+                _detailField('Message', log.message!, cs),
               if (log.error != null) ...[
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Error',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.mutedOlive,
+                    color: cs.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -1010,27 +1020,27 @@ class _ServerLogTile extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.debugError.withValues(alpha: 0.06),
+                    color: cs.error.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: SelectableText(
                     log.error!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 13,
                       fontFamily: 'SF Mono',
-                      color: AppColors.debugError,
+                      color: cs.error,
                     ),
                   ),
                 ),
               ],
               if (log.stackTrace != null) ...[
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Stack Trace',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.mutedOlive,
+                    color: cs.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -1038,28 +1048,28 @@ class _ServerLogTile extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.darkOlive.withValues(alpha: 0.06),
+                    color: cs.onSurface.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: SelectableText(
                     log.stackTrace!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 11,
                       fontFamily: 'SF Mono',
                       height: 1.5,
-                      color: AppColors.darkOlive,
+                      color: cs.onSurface,
                     ),
                   ),
                 ),
               ],
               if (log.metadata != null) ...[
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Metadata',
                   style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
-                    color: AppColors.mutedOlive,
+                    color: cs.onSurfaceVariant,
                   ),
                 ),
                 const SizedBox(height: 6),
@@ -1067,18 +1077,18 @@ class _ServerLogTile extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.darkOlive.withValues(alpha: 0.06),
+                    color: cs.onSurface.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: SelectableText(
                     log.metadata!.entries
                         .map((e) => '${e.key}: ${e.value}')
                         .join('\n'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontFamily: 'SF Mono',
                       height: 1.5,
-                      color: AppColors.darkOlive,
+                      color: cs.onSurface,
                     ),
                   ),
                 ),
@@ -1090,7 +1100,7 @@ class _ServerLogTile extends StatelessWidget {
     );
   }
 
-  Widget _detailField(String label, String value) {
+  Widget _detailField(String label, String value, ColorScheme cs) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 10),
       child: Row(
@@ -1100,17 +1110,17 @@ class _ServerLogTile extends StatelessWidget {
             width: 80,
             child: Text(
               label,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
-                color: AppColors.mutedOlive,
+                color: cs.onSurfaceVariant,
               ),
             ),
           ),
           Expanded(
             child: SelectableText(
               value,
-              style: const TextStyle(fontSize: 13, color: AppColors.darkOlive),
+              style: TextStyle(fontSize: 13, color: cs.onSurface),
             ),
           ),
         ],
@@ -1129,6 +1139,7 @@ class _LocalLogTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     final hasDetails =
         entry.error != null ||
         entry.stackTrace != null ||
@@ -1145,7 +1156,7 @@ class _LocalLogTile extends StatelessWidget {
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(
-              color: AppColors.mutedOlive.withValues(alpha: 0.1),
+              color: cs.onSurfaceVariant.withValues(alpha: 0.1),
             ),
           ),
           child: Row(
@@ -1155,7 +1166,7 @@ class _LocalLogTile extends StatelessWidget {
                 width: 4,
                 height: 40,
                 decoration: BoxDecoration(
-                  color: _levelColor(entry.level),
+                  color: _levelColor(entry.level, cs),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
@@ -1174,6 +1185,7 @@ class _LocalLogTile extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: _categoryColor(
                               entry.category,
+                              cs,
                             ).withValues(alpha: 0.1),
                             borderRadius: BorderRadius.circular(4),
                           ),
@@ -1182,7 +1194,7 @@ class _LocalLogTile extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 10,
                               fontWeight: FontWeight.w700,
-                              color: _categoryColor(entry.category),
+                              color: _categoryColor(entry.category, cs),
                             ),
                           ),
                         ),
@@ -1192,7 +1204,7 @@ class _LocalLogTile extends StatelessWidget {
                           style: TextStyle(
                             fontSize: 10,
                             fontFamily: 'SF Mono',
-                            color: AppColors.mutedOlive.withValues(alpha: 0.5),
+                            color: cs.onSurfaceVariant.withValues(alpha: 0.5),
                           ),
                         ),
                       ],
@@ -1200,10 +1212,7 @@ class _LocalLogTile extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       entry.message,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: AppColors.darkOlive,
-                      ),
+                      style: TextStyle(fontSize: 12, color: cs.onSurface),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1211,10 +1220,10 @@ class _LocalLogTile extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         entry.error!,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 11,
                           fontFamily: 'SF Mono',
-                          color: AppColors.debugError,
+                          color: cs.error,
                         ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
@@ -1228,7 +1237,7 @@ class _LocalLogTile extends StatelessWidget {
                 Icon(
                   Icons.chevron_right_rounded,
                   size: 18,
-                  color: AppColors.mutedOlive.withValues(alpha: 0.3),
+                  color: cs.onSurfaceVariant.withValues(alpha: 0.3),
                 ),
               ],
             ],
@@ -1239,9 +1248,10 @@ class _LocalLogTile extends StatelessWidget {
   }
 
   void _showDetails(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     showModalBottomSheet(
       context: context,
-      backgroundColor: AppColors.cream,
+      backgroundColor: cs.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
       ),
@@ -1257,7 +1267,7 @@ class _LocalLogTile extends StatelessWidget {
                   width: 36,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: AppColors.mutedOlive.withValues(alpha: 0.3),
+                    color: cs.onSurfaceVariant.withValues(alpha: 0.3),
                     borderRadius: BorderRadius.circular(2),
                   ),
                 ),
@@ -1275,6 +1285,7 @@ class _LocalLogTile extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: _categoryColor(
                         entry.category,
+                        cs,
                       ).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(6),
                     ),
@@ -1283,7 +1294,7 @@ class _LocalLogTile extends StatelessWidget {
                       style: TextStyle(
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
-                        color: _categoryColor(entry.category),
+                        color: _categoryColor(entry.category, cs),
                       ),
                     ),
                   ),
@@ -1292,10 +1303,10 @@ class _LocalLogTile extends StatelessWidget {
               const SizedBox(height: 12),
               Text(
                 entry.message,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
-                  color: AppColors.darkOlive,
+                  color: cs.onSurface,
                 ),
               ),
               if (entry.error != null) ...[
@@ -1304,15 +1315,15 @@ class _LocalLogTile extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.debugError.withValues(alpha: 0.06),
+                    color: cs.error.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: SelectableText(
                     entry.error!,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontFamily: 'SF Mono',
-                      color: AppColors.debugError,
+                      color: cs.error,
                     ),
                   ),
                 ),
@@ -1324,17 +1335,17 @@ class _LocalLogTile extends StatelessWidget {
                   constraints: const BoxConstraints(maxHeight: 200),
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.darkOlive.withValues(alpha: 0.06),
+                    color: cs.onSurface.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: SingleChildScrollView(
                     child: SelectableText(
                       entry.stackTrace!,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 11,
                         fontFamily: 'SF Mono',
                         height: 1.5,
-                        color: AppColors.darkOlive,
+                        color: cs.onSurface,
                       ),
                     ),
                   ),
@@ -1346,18 +1357,18 @@ class _LocalLogTile extends StatelessWidget {
                   width: double.infinity,
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    color: AppColors.darkOlive.withValues(alpha: 0.06),
+                    color: cs.onSurface.withValues(alpha: 0.06),
                     borderRadius: BorderRadius.circular(10),
                   ),
                   child: SelectableText(
                     entry.metadata!.entries
                         .map((e) => '${e.key}: ${e.value}')
                         .join('\n'),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
                       fontFamily: 'SF Mono',
                       height: 1.5,
-                      color: AppColors.darkOlive,
+                      color: cs.onSurface,
                     ),
                   ),
                 ),
@@ -1369,39 +1380,39 @@ class _LocalLogTile extends StatelessWidget {
     );
   }
 
-  static Color _levelColor(LogLevel level) {
+  static Color _levelColor(LogLevel level, ColorScheme cs) {
     switch (level) {
       case LogLevel.debug:
-        return AppColors.debugGrey;
+        return cs.onSurfaceVariant;
       case LogLevel.info:
-        return AppColors.debugInfo;
+        return cs.secondary;
       case LogLevel.warn:
-        return AppColors.debugWarning;
+        return cs.secondary;
       case LogLevel.error:
-        return AppColors.debugError;
+        return cs.error;
       case LogLevel.fatal:
-        return AppColors.debugPink;
+        return cs.error;
     }
   }
 
-  static Color _categoryColor(LogCategory cat) {
+  static Color _categoryColor(LogCategory cat, ColorScheme cs) {
     switch (cat) {
       case LogCategory.api:
-        return AppColors.debugInfo;
+        return cs.secondary;
       case LogCategory.auth:
-        return AppColors.debugPurple;
+        return cs.primary;
       case LogCategory.navigation:
-        return AppColors.debugTeal;
+        return cs.onSurfaceVariant;
       case LogCategory.ui:
-        return AppColors.debugWarning;
+        return cs.secondary;
       case LogCategory.lifecycle:
-        return AppColors.debugBlueGrey;
+        return cs.onSurfaceVariant;
       case LogCategory.storage:
-        return AppColors.debugBrown;
+        return cs.onSurfaceVariant;
       case LogCategory.network:
-        return AppColors.debugLightBlue;
+        return cs.secondary;
       case LogCategory.system:
-        return AppColors.darkOlive;
+        return cs.onSurface;
     }
   }
 }
@@ -1414,36 +1425,37 @@ class _LevelBadge extends StatelessWidget {
   final String level;
   const _LevelBadge({required this.level});
 
-  Color get _color {
+  Color _getColor(ColorScheme cs) {
     switch (level) {
       case 'FATAL':
-        return AppColors.debugPink;
+        return cs.error;
       case 'ERROR':
-        return AppColors.debugError;
+        return cs.error;
       case 'WARN':
-        return AppColors.debugWarning;
+        return cs.secondary;
       case 'INFO':
-        return AppColors.debugInfo;
+        return cs.secondary;
       default:
-        return AppColors.debugGrey;
+        return cs.onSurfaceVariant;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final color = _getColor(Theme.of(context).colorScheme);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: _color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: _color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Text(
         level,
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: _color,
+          color: color,
           letterSpacing: 0.5,
         ),
       ),
@@ -1472,18 +1484,19 @@ class _TypeBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
-        color: AppColors.darkOlive.withValues(alpha: 0.08),
+        color: cs.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
         _label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.w700,
-          color: AppColors.darkOlive,
+          color: cs.primary,
           letterSpacing: 0.5,
         ),
       ),
@@ -1495,19 +1508,20 @@ class _StatusCodeBadge extends StatelessWidget {
   final int statusCode;
   const _StatusCodeBadge({required this.statusCode});
 
-  Color get _color {
-    if (statusCode >= 500) return AppColors.debugError;
-    if (statusCode >= 400) return AppColors.debugWarning;
-    if (statusCode >= 300) return AppColors.debugInfo;
-    return AppColors.debugSuccess;
+  Color _getColor(ColorScheme cs) {
+    if (statusCode >= 500) return cs.error;
+    if (statusCode >= 400) return cs.secondary;
+    if (statusCode >= 300) return cs.secondary;
+    return cs.primary;
   }
 
   @override
   Widget build(BuildContext context) {
+    final color = _getColor(Theme.of(context).colorScheme);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        color: _color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(6),
       ),
       child: Text(
@@ -1516,7 +1530,7 @@ class _StatusCodeBadge extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.w700,
           fontFamily: 'SF Mono',
-          color: _color,
+          color: color,
         ),
       ),
     );
@@ -1527,28 +1541,29 @@ class _HttpMethodChip extends StatelessWidget {
   final String method;
   const _HttpMethodChip({required this.method});
 
-  Color get _color {
+  Color _getColor(ColorScheme cs) {
     switch (method.toUpperCase()) {
       case 'GET':
-        return AppColors.debugSuccess;
+        return cs.primary;
       case 'POST':
-        return AppColors.debugInfo;
+        return cs.secondary;
       case 'PATCH':
       case 'PUT':
-        return AppColors.debugWarning;
+        return cs.secondary;
       case 'DELETE':
-        return AppColors.debugError;
+        return cs.error;
       default:
-        return AppColors.mutedOlive;
+        return cs.onSurfaceVariant;
     }
   }
 
   @override
   Widget build(BuildContext context) {
+    final color = _getColor(Theme.of(context).colorScheme);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
       decoration: BoxDecoration(
-        color: _color.withValues(alpha: 0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(4),
       ),
       child: Text(
@@ -1557,7 +1572,7 @@ class _HttpMethodChip extends StatelessWidget {
           fontSize: 10,
           fontWeight: FontWeight.w700,
           fontFamily: 'SF Mono',
-          color: _color,
+          color: color,
         ),
       ),
     );
@@ -1579,12 +1594,13 @@ class _StatTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: AppColors.mutedOlive.withValues(alpha: 0.12)),
+        border: Border.all(color: cs.onSurfaceVariant.withValues(alpha: 0.12)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1600,10 +1616,10 @@ class _StatTile extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             value.toString(),
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w700,
-              color: AppColors.darkOlive,
+              color: cs.onSurface,
             ),
           ),
           const SizedBox(height: 2),
@@ -1611,7 +1627,7 @@ class _StatTile extends StatelessWidget {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: AppColors.mutedOlive.withValues(alpha: 0.7),
+              color: cs.onSurfaceVariant.withValues(alpha: 0.7),
             ),
           ),
         ],

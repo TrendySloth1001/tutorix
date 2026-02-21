@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
 
@@ -325,7 +324,7 @@ class _RecordTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final statusColor = _statusColor(record.status);
+    final statusColor = _statusColor(record.status, theme.colorScheme);
     final memberName = record.member?.name ?? 'Unknown Student';
     final memberPic = record.member?.picture;
 
@@ -425,8 +424,8 @@ class _RecordTile extends StatelessWidget {
                                   padding: const EdgeInsets.only(top: 2),
                                   child: Text(
                                     'Paid ₹${record.paidAmount.toStringAsFixed(0)}',
-                                    style: const TextStyle(
-                                      color: AppColors.success,
+                                    style: TextStyle(
+                                      color: theme.colorScheme.primary,
                                       fontSize: 10,
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -448,15 +447,15 @@ class _RecordTile extends StatelessWidget {
                           _Chip(
                             label: 'Due ${_fmtDate(record.dueDate)}',
                             color: record.isOverdue
-                                ? AppColors.error
+                                ? theme.colorScheme.error
                                 : theme.colorScheme.onSurfaceVariant,
                           ),
                           if (record.daysOverdue > 0) ...[
                             const SizedBox(width: 6),
                             Text(
                               '${record.daysOverdue}d late',
-                              style: const TextStyle(
-                                color: AppColors.error,
+                              style: TextStyle(
+                                color: theme.colorScheme.error,
                                 fontSize: 11,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -546,9 +545,9 @@ class _ErrorRetry extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
-            color: AppColors.error,
+            color: Theme.of(context).colorScheme.error,
             size: 40,
           ),
           const SizedBox(height: 10),
@@ -568,20 +567,20 @@ class _ErrorRetry extends StatelessWidget {
   }
 }
 
-Color _statusColor(String s) {
+Color _statusColor(String s, ColorScheme cs) {
   switch (s) {
     case 'PAID':
-      return AppColors.success;
+      return cs.primary;
     case 'PENDING':
-      return AppColors.info;
+      return cs.secondary;
     case 'OVERDUE':
-      return AppColors.error;
+      return cs.error;
     case 'PARTIALLY_PAID':
-      return AppColors.warning;
+      return cs.secondary;
     case 'WAIVED':
-      return AppColors.mutedOlive;
+      return cs.onSurfaceVariant;
     default:
-      return AppColors.mutedOlive;
+      return cs.onSurfaceVariant;
   }
 }
 

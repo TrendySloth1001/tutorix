@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../coaching/models/member_model.dart';
 import '../../coaching/services/member_service.dart';
 import '../models/fee_model.dart';
@@ -232,9 +231,9 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
       Navigator.pop(context);
     } else if (succeeded.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Failed to assign fee to all students'),
-          backgroundColor: AppColors.error,
+        SnackBar(
+          content: const Text('Failed to assign fee to all students'),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
     } else {
@@ -402,25 +401,25 @@ class _Body extends StatelessWidget {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.warningBg,
+                color: theme.colorScheme.secondary.withValues(alpha: 0.08),
                 borderRadius: BorderRadius.circular(12),
                 border: Border.all(
-                  color: AppColors.warning.withValues(alpha: 0.3),
+                  color: theme.colorScheme.secondary.withValues(alpha: 0.3),
                 ),
               ),
-              child: const Row(
+              child: Row(
                 children: [
                   Icon(
                     Icons.warning_amber_rounded,
-                    color: AppColors.warning,
+                    color: theme.colorScheme.secondary,
                     size: 20,
                   ),
-                  SizedBox(width: 10),
+                  const SizedBox(width: 10),
                   Expanded(
                     child: Text(
                       'No fee structures found. Create one in Fee Structures first.',
                       style: TextStyle(
-                        color: AppColors.deepOrange,
+                        color: theme.colorScheme.onSurface,
                         fontSize: 13,
                       ),
                     ),
@@ -776,12 +775,13 @@ class _Body extends StatelessWidget {
 
     if (withPartial.isEmpty) return const SizedBox.shrink();
 
-    const cardColor = AppColors.warningBg;
-    const borderColor = AppColors.amberBorder;
-    const titleColor = AppColors.deepOrange;
-    const bodyColor = AppColors.brown;
-    const paidColor = AppColors.success;
-    const waivedColor = AppColors.warning;
+    final theme = Theme.of(context);
+    final cardColor = theme.colorScheme.secondary.withValues(alpha: 0.08);
+    final borderColor = theme.colorScheme.outlineVariant;
+    final titleColor = theme.colorScheme.onSurface;
+    final bodyColor = theme.colorScheme.onSurfaceVariant;
+    final paidColor = theme.colorScheme.primary;
+    final waivedColor = theme.colorScheme.secondary;
 
     if (withPartial.length == 1) {
       final entry = withPartial.first;
@@ -804,13 +804,9 @@ class _Body extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(
-                  Icons.info_outline_rounded,
-                  color: waivedColor,
-                  size: 15,
-                ),
+                Icon(Icons.info_outline_rounded, color: waivedColor, size: 15),
                 const SizedBox(width: 6),
-                const Text(
+                Text(
                   'Settlement Preview',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
@@ -823,7 +819,7 @@ class _Body extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               '$memberName is currently assigned to “${preview.currentStructureName}”.',
-              style: const TextStyle(color: bodyColor, fontSize: 12),
+              style: TextStyle(color: bodyColor, fontSize: 12),
             ),
             const SizedBox(height: 10),
             ...preview.partialRecords.map(
@@ -843,7 +839,7 @@ class _Body extends StatelessWidget {
                     children: [
                       Text(
                         r.title,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: bodyColor,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
@@ -854,22 +850,19 @@ class _Body extends StatelessWidget {
                         children: [
                           Text(
                             '₹${r.paidAmount.toStringAsFixed(0)} paid',
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: paidColor,
                               fontSize: 11,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
-                          const Text(
+                          Text(
                             '  ·  ',
                             style: TextStyle(color: bodyColor, fontSize: 11),
                           ),
                           Text(
                             '₹${r.balance.toStringAsFixed(0)} remaining → auto-waived',
-                            style: const TextStyle(
-                              color: waivedColor,
-                              fontSize: 11,
-                            ),
+                            style: TextStyle(color: waivedColor, fontSize: 11),
                           ),
                         ],
                       ),
@@ -896,7 +889,7 @@ class _Body extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(
+                      Icon(
                         Icons.add_circle_outline_rounded,
                         color: paidColor,
                         size: 14,
@@ -905,14 +898,14 @@ class _Body extends StatelessWidget {
                       Expanded(
                         child: Text(
                           'Apply ₹${preview.totalPaid.toStringAsFixed(0)} already paid as discount on new structure',
-                          style: const TextStyle(
-                            color: AppColors.deepGreen,
+                          style: TextStyle(
+                            color: theme.colorScheme.primary,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
                       ),
-                      const Icon(
+                      Icon(
                         Icons.arrow_forward_ios_rounded,
                         color: paidColor,
                         size: 11,
@@ -940,14 +933,14 @@ class _Body extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(Icons.info_outline_rounded, color: waivedColor, size: 15),
+          Icon(Icons.info_outline_rounded, color: waivedColor, size: 15),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
               '${withPartial.length} student${withPartial.length == 1 ? '' : 's'} have partial payments '
               '(₹${totalPaid.toStringAsFixed(0)} total paid). '
               'Remaining balances will be auto-waived — no manual action needed.',
-              style: const TextStyle(color: titleColor, fontSize: 12),
+              style: TextStyle(color: titleColor, fontSize: 12),
             ),
           ),
         ],
@@ -1098,9 +1091,9 @@ class _ErrorRetry extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
-            color: AppColors.error,
+            color: theme.colorScheme.error,
             size: 40,
           ),
           const SizedBox(height: 10),

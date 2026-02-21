@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../models/fee_model.dart';
@@ -906,13 +905,13 @@ class _FeeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final statusColor = _statusColor(record.status);
+    final theme = Theme.of(context);
+    final statusColor = _statusColor(record.status, theme.colorScheme);
     final canPay =
         record.status == 'PENDING' ||
         record.status == 'OVERDUE' ||
         record.status == 'PARTIALLY_PAID';
 
-    final theme = Theme.of(context);
     return Material(
       color: isSelected
           ? theme.colorScheme.primary.withValues(alpha: 0.08)
@@ -1286,7 +1285,7 @@ class _StatusPill extends StatelessWidget {
   const _StatusPill({required this.status});
   @override
   Widget build(BuildContext context) {
-    final c = _statusColor(status);
+    final c = _statusColor(status, Theme.of(context).colorScheme);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
       decoration: BoxDecoration(
@@ -1310,10 +1309,10 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.check_circle_outline_rounded,
             size: 52,
-            color: AppColors.success,
+            color: theme.colorScheme.primary,
           ),
           const SizedBox(height: 12),
           Text(
@@ -1346,9 +1345,9 @@ class _ErrorRetry extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
-            color: AppColors.error,
+            color: theme.colorScheme.error,
             size: 40,
           ),
           const SizedBox(height: 10),
@@ -1365,20 +1364,20 @@ class _ErrorRetry extends StatelessWidget {
   }
 }
 
-Color _statusColor(String s) {
+Color _statusColor(String s, ColorScheme cs) {
   switch (s) {
     case 'PAID':
-      return AppColors.success;
+      return cs.primary;
     case 'PENDING':
-      return AppColors.info;
+      return cs.secondary;
     case 'OVERDUE':
-      return AppColors.error;
+      return cs.error;
     case 'PARTIALLY_PAID':
-      return AppColors.warning;
+      return cs.secondary;
     case 'WAIVED':
-      return AppColors.mutedOlive;
+      return cs.onSurfaceVariant;
     default:
-      return AppColors.mutedOlive;
+      return cs.onSurfaceVariant;
   }
 }
 
@@ -1806,7 +1805,7 @@ class _FeeInstallmentSheet extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: paid
-                        ? AppColors.success.withValues(alpha: 0.07)
+                        ? theme.colorScheme.primary.withValues(alpha: 0.07)
                         : isPayable
                         ? theme.colorScheme.onSurface.withValues(alpha: 0.07)
                         : theme.colorScheme.outlineVariant.withValues(
@@ -1815,7 +1814,7 @@ class _FeeInstallmentSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: paid
-                          ? AppColors.success.withValues(alpha: 0.35)
+                          ? theme.colorScheme.primary.withValues(alpha: 0.35)
                           : isPayable
                           ? theme.colorScheme.onSurface.withValues(alpha: 0.25)
                           : theme.colorScheme.outlineVariant,
@@ -1828,7 +1827,7 @@ class _FeeInstallmentSheet extends StatelessWidget {
                           item.label,
                           style: TextStyle(
                             color: paid
-                                ? AppColors.success
+                                ? theme.colorScheme.primary
                                 : isPayable
                                 ? theme.colorScheme.onSurface
                                 : theme.colorScheme.onSurfaceVariant,
@@ -1841,7 +1840,7 @@ class _FeeInstallmentSheet extends StatelessWidget {
                         '₹${item.amount.toStringAsFixed(0)}',
                         style: TextStyle(
                           color: paid
-                              ? AppColors.success
+                              ? theme.colorScheme.primary
                               : isPayable
                               ? theme.colorScheme.onSurface
                               : theme.colorScheme.onSurfaceVariant,
@@ -1851,10 +1850,10 @@ class _FeeInstallmentSheet extends StatelessWidget {
                       ),
                       const SizedBox(width: 8),
                       if (paid)
-                        const Icon(
+                        Icon(
                           Icons.check_circle_rounded,
                           size: 18,
-                          color: AppColors.success,
+                          color: theme.colorScheme.primary,
                         )
                       else if (!isPayable)
                         Icon(

@@ -11,7 +11,6 @@ import '../../../shared/widgets/accept_invite_sheet.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
 import '../../../shared/widgets/invitation_card.dart';
-import '../../../core/theme/app_colors.dart';
 
 class PersonalNotificationsScreen extends StatefulWidget {
   const PersonalNotificationsScreen({super.key});
@@ -226,11 +225,11 @@ class _PersonalNotificationsScreenState
     switch (type) {
       case 'REMOVED_FROM_COACHING':
       case 'WARD_REMOVED_FROM_COACHING':
-        return AppColors.error;
+        return theme.colorScheme.error;
       case 'INVITATION_ACCEPTED':
-        return AppColors.success;
+        return theme.colorScheme.primary;
       case 'NEW_MEMBER':
-        return AppColors.info;
+        return theme.colorScheme.secondary;
       default:
         return theme.colorScheme.primary;
     }

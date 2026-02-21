@@ -10,7 +10,6 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../../shared/widgets/app_alert.dart';
 import '../models/batch_note_model.dart';
-import '../../../core/theme/app_colors.dart';
 
 /// Enhanced file viewer for documents and images.
 /// - Images: full-screen zoomable preview
@@ -451,7 +450,7 @@ class _EnhancedPdfViewerState extends State<_EnhancedPdfViewer> {
                 Icon(
                   Icons.picture_as_pdf_rounded,
                   size: 16,
-                  color: AppColors.filePdf.withValues(alpha: 0.6),
+                  color: colors.onSurface.withValues(alpha: 0.6),
                 ),
                 const SizedBox(width: 8),
                 Text(
@@ -506,10 +505,12 @@ class _DocumentViewer extends StatefulWidget {
 class _DocumentViewerState extends State<_DocumentViewer> {
   bool _isOpening = false;
 
-  static const _typeConfig = {
-    'pdf': (Icons.picture_as_pdf_rounded, AppColors.filePdf, 'PDF Document'),
-    'doc': (Icons.description_rounded, AppColors.fileDoc, 'Document'),
-    'link': (Icons.link_rounded, AppColors.fileLink, 'Link'),
+  static Map<String, (IconData, Color, String)> _typeConfig(
+    ColorScheme colors,
+  ) => {
+    'pdf': (Icons.picture_as_pdf_rounded, colors.onSurface, 'PDF Document'),
+    'doc': (Icons.description_rounded, colors.primary, 'Document'),
+    'link': (Icons.link_rounded, colors.onSurfaceVariant, 'Link'),
   };
 
   Future<void> _openFile() async {
@@ -563,7 +564,7 @@ class _DocumentViewerState extends State<_DocumentViewer> {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
     final config =
-        _typeConfig[widget.attachment.fileType] ??
+        _typeConfig(colors)[widget.attachment.fileType] ??
         (Icons.attach_file_rounded, colors.primary, 'File');
     final (icon, color, typeLabel) = config;
 

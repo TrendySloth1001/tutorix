@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -680,17 +679,17 @@ class _PhotoOptionsSheet extends StatelessWidget {
               leading: Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: AppColors.error.withValues(alpha: 0.1),
+                  color: theme.colorScheme.error.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
+                child: Icon(
                   Icons.delete_outline_rounded,
-                  color: AppColors.error,
+                  color: theme.colorScheme.error,
                 ),
               ),
-              title: const Text(
+              title: Text(
                 'Remove Photo',
-                style: TextStyle(color: AppColors.error),
+                style: TextStyle(color: theme.colorScheme.error),
               ),
               onTap: onRemoveTap,
             ),

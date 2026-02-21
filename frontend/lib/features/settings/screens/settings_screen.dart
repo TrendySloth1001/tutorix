@@ -3,7 +3,6 @@ import 'package:provider/provider.dart';
 import '../../../core/services/cache_manager.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/theme/theme_provider.dart';
 import '../../profile/services/user_service.dart';
 
@@ -406,7 +405,9 @@ class _ActionTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final accent = isDestructive ? AppColors.error : theme.colorScheme.primary;
+    final accent = isDestructive
+        ? theme.colorScheme.error
+        : theme.colorScheme.primary;
 
     return InkWell(
       onTap: onTap,
@@ -418,7 +419,7 @@ class _ActionTile extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isDestructive
-                ? AppColors.error.withValues(alpha: 0.15)
+                ? theme.colorScheme.error.withValues(alpha: 0.15)
                 : theme.colorScheme.primary.withValues(alpha: 0.08),
           ),
         ),
@@ -441,7 +442,7 @@ class _ActionTile extends StatelessWidget {
                     title,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       fontWeight: FontWeight.w600,
-                      color: isDestructive ? AppColors.error : null,
+                      color: isDestructive ? theme.colorScheme.error : null,
                     ),
                   ),
                   const SizedBox(height: 2),

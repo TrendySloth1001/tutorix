@@ -3,7 +3,6 @@ import '../../../shared/services/invitation_service.dart';
 import '../../../shared/widgets/accept_invite_sheet.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
-import '../../../core/theme/app_colors.dart';
 
 class MyInvitationsScreen extends StatefulWidget {
   const MyInvitationsScreen({super.key});
@@ -270,13 +269,13 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
     Color color;
     switch (role) {
       case 'TEACHER':
-        color = AppColors.info;
+        color = theme.colorScheme.secondary;
         break;
       case 'PARENT':
-        color = AppColors.info;
+        color = theme.colorScheme.secondary;
         break;
       default:
-        color = AppColors.warning;
+        color = theme.colorScheme.secondary;
     }
 
     return Container(

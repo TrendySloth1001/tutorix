@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/services/error_logger_service.dart';
-import '../../../core/theme/app_colors.dart';
 import '../models/coaching_model.dart';
 import '../models/member_model.dart';
 import '../models/invitation_model.dart';
@@ -803,6 +802,7 @@ class _StatChipRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Wrap(
       spacing: 8,
       runSpacing: 8,
@@ -810,18 +810,18 @@ class _StatChipRow extends StatelessWidget {
         if (admins > 0)
           _Chip(
             label: '$admins Admin${admins > 1 ? 's' : ''}',
-            color: AppColors.roleAdmin,
+            color: theme.colorScheme.primary,
           ),
         _Chip(
           label: '$teachers Teacher${teachers != 1 ? 's' : ''}',
-          color: AppColors.roleTeacher,
+          color: theme.colorScheme.secondary,
         ),
         _Chip(
           label: '$students Student${students != 1 ? 's' : ''}',
-          color: AppColors.roleStudent,
+          color: theme.colorScheme.onSurfaceVariant,
         ),
         if (pending > 0)
-          _Chip(label: '$pending Pending', color: AppColors.rolePending),
+          _Chip(label: '$pending Pending', color: theme.colorScheme.secondary),
       ],
     );
   }
@@ -1015,18 +1015,18 @@ class _CompactMemberTile extends StatelessWidget {
                 ],
               ),
             ),
-            _roleBadge(member.role),
+            _roleBadge(member.role, theme.colorScheme),
           ],
         ),
       ),
     );
   }
 
-  Widget _roleBadge(String role) {
+  Widget _roleBadge(String role, ColorScheme colorScheme) {
     final (Color color, String label) = switch (role) {
-      'ADMIN' => (AppColors.roleAdmin, 'Admin'),
-      'TEACHER' => (AppColors.roleTeacher, 'Teacher'),
-      _ => (AppColors.roleStudent, 'Student'),
+      'ADMIN' => (colorScheme.primary, 'Admin'),
+      'TEACHER' => (colorScheme.secondary, 'Teacher'),
+      _ => (colorScheme.onSurfaceVariant, 'Student'),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
@@ -1054,7 +1054,7 @@ class _CompactInviteTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    const pendingColor = AppColors.rolePending;
+    final pendingColor = theme.colorScheme.secondary;
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
       child: Container(
@@ -1071,7 +1071,7 @@ class _CompactInviteTile extends StatelessWidget {
                 color: pendingColor.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: const Icon(
+              child: Icon(
                 Icons.mail_outline_rounded,
                 color: pendingColor,
                 size: 16,
@@ -1092,7 +1092,7 @@ class _CompactInviteTile extends StatelessWidget {
                   ),
                   Text(
                     invite.role,
-                    style: const TextStyle(
+                    style: TextStyle(
                       color: pendingColor,
                       fontSize: 11,
                       fontWeight: FontWeight.w500,
@@ -1101,7 +1101,7 @@ class _CompactInviteTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.schedule_rounded, size: 15, color: pendingColor),
+            Icon(Icons.schedule_rounded, size: 15, color: pendingColor),
           ],
         ),
       ),
@@ -1213,11 +1213,13 @@ class _NoteCard extends StatelessWidget {
 
   const _NoteCard({required this.note, required this.onTap});
 
-  static const _typeConfig = {
-    'pdf': (Icons.picture_as_pdf_rounded, AppColors.filePdf),
-    'image': (Icons.image_rounded, AppColors.fileImage),
-    'doc': (Icons.description_rounded, AppColors.fileDoc),
-    'link': (Icons.link_rounded, AppColors.fileLink),
+  static Map<String, (IconData, Color)> _getTypeConfig(
+    ColorScheme colorScheme,
+  ) => {
+    'pdf': (Icons.picture_as_pdf_rounded, colorScheme.onSurface),
+    'image': (Icons.image_rounded, colorScheme.secondary),
+    'doc': (Icons.description_rounded, colorScheme.primary),
+    'link': (Icons.link_rounded, colorScheme.onSurfaceVariant),
   };
 
   (IconData, Color) _primaryType(ThemeData theme) {
@@ -1226,7 +1228,7 @@ class _NoteCard extends StatelessWidget {
     }
     // Use the first attachment type for the main icon
     final first = note.attachments.first.fileType;
-    return _typeConfig[first] ??
+    return _getTypeConfig(theme.colorScheme)[first] ??
         (Icons.attach_file_rounded, theme.colorScheme.primary);
   }
 
@@ -1485,7 +1487,7 @@ class _NoteCard extends StatelessWidget {
                       // Show first 2 attachments with descriptions in reading flow
                       ...note.attachments.take(2).expand((a) {
                         final ac =
-                            _typeConfig[a.fileType] ??
+                            _getTypeConfig(theme.colorScheme)[a.fileType] ??
                             (
                               Icons.attach_file_rounded,
                               theme.colorScheme.primary,
@@ -2034,7 +2036,9 @@ class _FeedAssessmentCard extends StatelessWidget {
     final totalMarks = a['totalMarks'];
 
     final isQuiz = type == 'QUIZ';
-    final color = isQuiz ? AppColors.roleTeacher : AppColors.roleAdmin;
+    final color = isQuiz
+        ? theme.colorScheme.secondary
+        : theme.colorScheme.primary;
     final icon = isQuiz
         ? Icons.quiz_rounded
         : Icons.assignment_turned_in_rounded;
@@ -2175,7 +2179,7 @@ class _FeedAssignmentCard extends StatelessWidget {
         ? DateTime.tryParse(a['dueDate'] as String)
         : null;
 
-    const color = AppColors.roleStudent;
+    final color = theme.colorScheme.onSurfaceVariant;
 
     final card = Padding(
       padding: const EdgeInsets.only(bottom: 8),
@@ -2199,7 +2203,7 @@ class _FeedAssignmentCard extends StatelessWidget {
                     color: color.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(
+                  child: Icon(
                     Icons.assignment_outlined,
                     color: color,
                     size: 22,

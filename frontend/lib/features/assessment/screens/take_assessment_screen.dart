@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../models/assessment_model.dart';
 import '../services/assessment_service.dart';
@@ -325,7 +324,7 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
                     ),
                     decoration: BoxDecoration(
                       color: _remainingSeconds < 300
-                          ? AppColors.error.withValues(alpha: 0.15)
+                          ? theme.colorScheme.error.withValues(alpha: 0.15)
                           : theme.colorScheme.primary.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(8),
                     ),
@@ -336,7 +335,7 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
                           Icons.timer_outlined,
                           size: 16,
                           color: _remainingSeconds < 300
-                              ? AppColors.error
+                              ? theme.colorScheme.error
                               : theme.colorScheme.primary,
                         ),
                         const SizedBox(width: 4),
@@ -344,7 +343,7 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
                           _timerText,
                           style: theme.textTheme.labelMedium?.copyWith(
                             color: _remainingSeconds < 300
-                                ? AppColors.error
+                                ? theme.colorScheme.error
                                 : theme.colorScheme.primary,
                             fontWeight: FontWeight.w700,
                             fontFeatures: [const FontFeature.tabularFigures()],
@@ -457,9 +456,9 @@ class _QuestionNavigator extends StatelessWidget {
           if (isCurrent) {
             bgColor = theme.colorScheme.primary;
           } else if (isMarked) {
-            bgColor = AppColors.warning;
+            bgColor = theme.colorScheme.secondary;
           } else if (answered) {
-            bgColor = AppColors.success;
+            bgColor = theme.colorScheme.primary;
           } else {
             bgColor = theme.colorScheme.surfaceContainerHighest;
           }
@@ -618,7 +617,7 @@ class _QuestionWidget extends StatelessWidget {
               label: Text(isMarked ? 'Remove review' : 'Mark for review'),
               style: TextButton.styleFrom(
                 foregroundColor: isMarked
-                    ? AppColors.warning
+                    ? theme.colorScheme.secondary
                     : theme.colorScheme.primary,
               ),
             ),

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_colors.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../models/fee_model.dart';
@@ -1120,22 +1119,29 @@ class _OverdueBanner extends StatelessWidget {
   const _OverdueBanner({required this.days});
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       decoration: BoxDecoration(
-        color: AppColors.errorBg,
+        color: theme.colorScheme.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.error.withValues(alpha: 0.4)),
+        border: Border.all(
+          color: theme.colorScheme.error.withValues(alpha: 0.4),
+        ),
       ),
       child: Row(
         children: [
-          Icon(Icons.timer_off_rounded, color: AppColors.error, size: 18),
+          Icon(
+            Icons.timer_off_rounded,
+            color: theme.colorScheme.error,
+            size: 18,
+          ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
               'This fee is $days day${days == 1 ? '' : 's'} overdue',
               style: TextStyle(
-                color: AppColors.error,
+                color: theme.colorScheme.error,
                 fontWeight: FontWeight.w600,
                 fontSize: 13,
               ),
@@ -1154,7 +1160,7 @@ class _HeaderCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final statusColor = _statusColor(record.status);
+    final statusColor = _statusColor(record.status, theme.colorScheme);
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -1189,7 +1195,10 @@ class _HeaderCard extends StatelessWidget {
                 if (record.paidAt != null)
                   Text(
                     'Paid: ${_fmtDateLong(record.paidAt!)}',
-                    style: TextStyle(color: AppColors.success, fontSize: 13),
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
+                      fontSize: 13,
+                    ),
                   ),
               ],
             ),
@@ -1209,7 +1218,7 @@ class _HeaderCard extends StatelessWidget {
                 Text(
                   '₹${record.balance.toStringAsFixed(0)} left',
                   style: TextStyle(
-                    color: AppColors.warning,
+                    color: theme.colorScheme.secondary,
                     fontSize: 13,
                     fontWeight: FontWeight.w600,
                   ),
@@ -1265,14 +1274,14 @@ class _BreakdownCard extends StatelessWidget {
             _Row(
               'Discount',
               '- ₹${record.discountAmount.toStringAsFixed(0)}',
-              color: AppColors.success,
+              color: theme.colorScheme.primary,
             ),
           // ── Late Fine ──
           if (record.fineAmount > 0)
             _Row(
               'Late Fine',
               '+ ₹${record.fineAmount.toStringAsFixed(0)}',
-              color: AppColors.error,
+              color: theme.colorScheme.error,
             ),
           // ── GST_EXCLUSIVE: show taxable base + additive GST above total ──
           if (record.hasTax && isExclusive) ...[
@@ -1358,14 +1367,14 @@ class _BreakdownCard extends StatelessWidget {
             _Row(
               'Paid',
               '₹${record.paidAmount.toStringAsFixed(0)}',
-              color: AppColors.success,
+              color: theme.colorScheme.primary,
               bold: true,
             ),
           if (record.isPartial)
             _Row(
               'Balance',
               '₹${record.balance.toStringAsFixed(0)}',
-              color: AppColors.warning,
+              color: theme.colorScheme.secondary,
               bold: true,
             ),
           if (record.receiptNo != null) ...[
@@ -1533,9 +1542,9 @@ class _PaymentRow extends StatelessWidget {
         ),
         child: Row(
           children: [
-            const Icon(
+            Icon(
               Icons.check_circle_rounded,
-              color: AppColors.primaryGreen,
+              color: theme.colorScheme.primary,
               size: 18,
             ),
             const SizedBox(width: 10),
@@ -1563,9 +1572,9 @@ class _PaymentRow extends StatelessWidget {
             ),
             Text(
               '₹${payment.amount.toStringAsFixed(0)}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.w700,
-                color: AppColors.primaryGreen,
+                color: theme.colorScheme.primary,
                 fontSize: 14,
               ),
             ),
@@ -1706,7 +1715,11 @@ class _FailedAttempts extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Icons.cancel_rounded, color: AppColors.error, size: 18),
+                Icon(
+                  Icons.cancel_rounded,
+                  color: theme.colorScheme.error,
+                  size: 18,
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -1716,7 +1729,7 @@ class _FailedAttempts extends StatelessWidget {
                         reason,
                         style: TextStyle(
                           fontSize: 12,
-                          color: AppColors.error,
+                          color: theme.colorScheme.error,
                           fontWeight: FontWeight.w600,
                         ),
                         maxLines: 2,
@@ -1735,9 +1748,9 @@ class _FailedAttempts extends StatelessWidget {
                 ),
                 Text(
                   amtStr,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    color: AppColors.error,
+                    color: theme.colorScheme.error,
                     fontSize: 14,
                   ),
                 ),
@@ -1838,7 +1851,7 @@ class _StatusBadge extends StatelessWidget {
   const _StatusBadge({required this.status});
   @override
   Widget build(BuildContext context) {
-    final color = _statusColor(status);
+    final color = _statusColor(status, Theme.of(context).colorScheme);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
@@ -2187,7 +2200,11 @@ class _ErrorRetry extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.error_outline_rounded, color: AppColors.error, size: 40),
+          Icon(
+            Icons.error_outline_rounded,
+            color: theme.colorScheme.error,
+            size: 40,
+          ),
           const SizedBox(height: 10),
           Text(
             error,
@@ -2202,20 +2219,20 @@ class _ErrorRetry extends StatelessWidget {
   }
 }
 
-Color _statusColor(String s) {
+Color _statusColor(String s, ColorScheme cs) {
   switch (s) {
     case 'PAID':
-      return AppColors.success;
+      return cs.primary;
     case 'PENDING':
-      return AppColors.info;
+      return cs.secondary;
     case 'OVERDUE':
-      return AppColors.error;
+      return cs.error;
     case 'PARTIALLY_PAID':
-      return AppColors.warning;
+      return cs.secondary;
     case 'WAIVED':
-      return AppColors.mutedOlive;
+      return cs.onSurfaceVariant;
     default:
-      return AppColors.mutedOlive;
+      return cs.onSurfaceVariant;
   }
 }
 
@@ -2382,7 +2399,7 @@ class _InstallmentPickerSheet extends StatelessWidget {
                   ),
                   decoration: BoxDecoration(
                     color: paid
-                        ? AppColors.success.withValues(alpha: 0.07)
+                        ? theme.colorScheme.primary.withValues(alpha: 0.07)
                         : isPayable
                         ? theme.colorScheme.primary.withValues(alpha: 0.07)
                         : theme.colorScheme.outlineVariant.withValues(
@@ -2391,7 +2408,7 @@ class _InstallmentPickerSheet extends StatelessWidget {
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: paid
-                          ? AppColors.success.withValues(alpha: 0.35)
+                          ? theme.colorScheme.primary.withValues(alpha: 0.35)
                           : isPayable
                           ? theme.colorScheme.primary.withValues(alpha: 0.25)
                           : theme.colorScheme.outlineVariant,
@@ -2404,7 +2421,7 @@ class _InstallmentPickerSheet extends StatelessWidget {
                           item.label,
                           style: TextStyle(
                             color: paid
-                                ? AppColors.success
+                                ? theme.colorScheme.primary
                                 : isPayable
                                 ? theme.colorScheme.primary
                                 : theme.colorScheme.onSurfaceVariant,
@@ -2417,7 +2434,7 @@ class _InstallmentPickerSheet extends StatelessWidget {
                         '₹${item.amount.toStringAsFixed(0)}',
                         style: TextStyle(
                           color: paid
-                              ? AppColors.success
+                              ? theme.colorScheme.primary
                               : isPayable
                               ? theme.colorScheme.primary
                               : theme.colorScheme.onSurfaceVariant,
@@ -2430,7 +2447,7 @@ class _InstallmentPickerSheet extends StatelessWidget {
                         Icon(
                           Icons.check_circle_rounded,
                           size: 18,
-                          color: AppColors.success,
+                          color: theme.colorScheme.primary,
                         )
                       else if (!isPayable)
                         Icon(

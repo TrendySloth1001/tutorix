@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
 
@@ -290,20 +289,20 @@ class _AuditLogTile extends StatelessWidget {
   final FeeAuditLogModel log;
   const _AuditLogTile({required this.log});
 
-  static const _eventColors = <String, Color>{
-    'STRUCTURE_CREATED': AppColors.success,
-    'STRUCTURE_REPLACED': AppColors.warning,
-    'STRUCTURE_UPDATED': AppColors.info,
-    'STRUCTURE_DELETED': AppColors.error,
-    'ASSIGNMENT_CREATED': AppColors.success,
-    'ASSIGNMENT_UPDATED': AppColors.info,
-    'ASSIGNMENT_REMOVED': AppColors.error,
-    'ASSIGNMENT_PAUSED': AppColors.purple,
-    'ASSIGNMENT_UNPAUSED': AppColors.success,
-    'PAYMENT_RECORDED': AppColors.success,
-    'FEE_WAIVED': AppColors.purple,
-    'REFUND_ISSUED': AppColors.deepTeal,
-    'INSTALLMENT_SETTINGS_CHANGED': AppColors.info,
+  static Map<String, Color> _eventColorsFor(ColorScheme cs) => {
+    'STRUCTURE_CREATED': cs.primary,
+    'STRUCTURE_REPLACED': cs.secondary,
+    'STRUCTURE_UPDATED': cs.secondary,
+    'STRUCTURE_DELETED': cs.error,
+    'ASSIGNMENT_CREATED': cs.primary,
+    'ASSIGNMENT_UPDATED': cs.secondary,
+    'ASSIGNMENT_REMOVED': cs.error,
+    'ASSIGNMENT_PAUSED': cs.secondary,
+    'ASSIGNMENT_UNPAUSED': cs.primary,
+    'PAYMENT_RECORDED': cs.primary,
+    'FEE_WAIVED': cs.secondary,
+    'REFUND_ISSUED': cs.secondary,
+    'INSTALLMENT_SETTINGS_CHANGED': cs.secondary,
   };
 
   // Human-readable labels for common JSON keys stored in before/after/meta
@@ -378,7 +377,7 @@ class _AuditLogTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final color = _eventColors[log.event] ?? theme.colorScheme.onSurfaceVariant;
+    final color = _eventColorsFor(theme.colorScheme)[log.event] ?? theme.colorScheme.onSurfaceVariant;
     final actorLabel = log.actorType == 'SYSTEM'
         ? 'System'
         : log.actorName ?? log.actorId ?? 'Admin';
@@ -675,8 +674,8 @@ class _DiffRow extends StatelessWidget {
             child: isAdded
                 ? Text(
                     newVal!,
-                    style: const TextStyle(
-                      color: AppColors.success,
+                    style: TextStyle(
+                      color: theme.colorScheme.primary,
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
                     ),
@@ -684,8 +683,8 @@ class _DiffRow extends StatelessWidget {
                 : isRemoved
                 ? Text(
                     oldVal!,
-                    style: const TextStyle(
-                      color: AppColors.error,
+                    style: TextStyle(
+                      color: theme.colorScheme.error,
                       fontSize: 11,
                       decoration: TextDecoration.lineThrough,
                     ),
@@ -696,8 +695,8 @@ class _DiffRow extends StatelessWidget {
                     children: [
                       Text(
                         oldVal!,
-                        style: const TextStyle(
-                          color: AppColors.error,
+                        style: TextStyle(
+                          color: theme.colorScheme.error,
                           fontSize: 11,
                           decoration: TextDecoration.lineThrough,
                         ),
@@ -709,8 +708,8 @@ class _DiffRow extends StatelessWidget {
                       ),
                       Text(
                         newVal!,
-                        style: const TextStyle(
-                          color: AppColors.success,
+                        style: TextStyle(
+                          color: theme.colorScheme.primary,
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
                         ),
@@ -1015,9 +1014,9 @@ class _ErrorRetry extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
-            color: AppColors.error,
+            color: theme.colorScheme.error,
             size: 40,
           ),
           const SizedBox(height: 10),

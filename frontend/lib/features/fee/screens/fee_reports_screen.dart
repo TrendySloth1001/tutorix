@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
 import 'fee_record_detail_screen.dart';
@@ -155,10 +154,10 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(
+                            Icon(
                               Icons.check_circle_outline_rounded,
                               size: 52,
-                              color: AppColors.success,
+                              color: cs.primary,
                             ),
                             const SizedBox(height: 12),
                             Text(
@@ -261,14 +260,14 @@ class _OverdueList extends StatelessWidget {
                       width: 44,
                       height: 44,
                       decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.1),
+                        color: theme.colorScheme.error.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Center(
                         child: Text(
                           '${r.daysOverdue}d',
-                          style: const TextStyle(
-                            color: AppColors.error,
+                          style: TextStyle(
+                            color: theme.colorScheme.error,
                             fontWeight: FontWeight.w800,
                             fontSize: 12,
                           ),
@@ -299,8 +298,8 @@ class _OverdueList extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             'Due since ${_fmtDate(r.dueDate)}',
-                            style: const TextStyle(
-                              color: AppColors.error,
+                            style: TextStyle(
+                              color: theme.colorScheme.error,
                               fontSize: 11,
                               fontWeight: FontWeight.w500,
                             ),
@@ -314,9 +313,9 @@ class _OverdueList extends StatelessWidget {
                       children: [
                         Text(
                           '₹${r.balance.toStringAsFixed(0)}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontWeight: FontWeight.w800,
-                            color: AppColors.error,
+                            color: theme.colorScheme.error,
                             fontSize: 16,
                           ),
                         ),
@@ -622,7 +621,7 @@ class _FinancialOverviewCard extends StatelessWidget {
                   child: _MiniStat(
                     label: 'Overdue',
                     value: '₹${_formatAmount(summary.totalOverdue)}',
-                    color: AppColors.error,
+                    color: theme.colorScheme.error,
                   ),
                 ),
                 if (summary.totalRefunded > 0) ...[
@@ -635,7 +634,7 @@ class _FinancialOverviewCard extends StatelessWidget {
                     child: _MiniStat(
                       label: 'Refunded',
                       value: '₹${_formatAmount(summary.totalRefunded)}',
-                      color: AppColors.info,
+                      color: theme.colorScheme.secondary,
                     ),
                   ),
                 ],
@@ -764,9 +763,9 @@ class _ErrorRetry extends StatelessWidget {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(
+          Icon(
             Icons.error_outline_rounded,
-            color: AppColors.error,
+            color: theme.colorScheme.error,
             size: 40,
           ),
           const SizedBox(height: 10),

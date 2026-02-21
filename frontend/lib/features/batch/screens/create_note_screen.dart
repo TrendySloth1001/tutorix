@@ -4,7 +4,6 @@ import '../../../core/services/error_logger_service.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../services/batch_service.dart';
-import '../../../core/theme/app_colors.dart';
 
 /// Screen to create a new note with multiple file attachments.
 class CreateNoteScreen extends StatefulWidget {
@@ -333,9 +332,9 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
     final exceeds = _exceedsStorage;
 
     final barColor = exceeds
-        ? AppColors.error
+        ? theme.colorScheme.error
         : ratio > 0.8
-        ? AppColors.warning
+        ? theme.colorScheme.secondary
         : theme.colorScheme.primary;
 
     return Container(
@@ -345,7 +344,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
         borderRadius: BorderRadius.circular(14),
         border: Border.all(
           color: exceeds
-              ? AppColors.error.withValues(alpha: 0.2)
+              ? theme.colorScheme.error.withValues(alpha: 0.2)
               : theme.colorScheme.onSurface.withValues(alpha: 0.06),
         ),
       ),
@@ -393,7 +392,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
               style: theme.textTheme.bodySmall?.copyWith(
                 fontSize: 11,
                 color: exceeds
-                    ? AppColors.error
+                    ? theme.colorScheme.error
                     : theme.colorScheme.onSurface.withValues(alpha: 0.4),
               ),
             ),
@@ -405,7 +404,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
                 'Not enough space — remove some files',
                 style: theme.textTheme.bodySmall?.copyWith(
                   fontSize: 11,
-                  color: AppColors.error,
+                  color: theme.colorScheme.error,
                   fontWeight: FontWeight.w600,
                 ),
               ),
@@ -574,10 +573,10 @@ class _FileCardWithDescription extends StatefulWidget {
 class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
   bool _isExpanded = false;
 
-  static const _typeConfig = {
-    'pdf': (Icons.picture_as_pdf_rounded, AppColors.filePdf),
-    'image': (Icons.image_rounded, AppColors.fileImage),
-    'doc': (Icons.description_rounded, AppColors.fileDoc),
+  static Map<String, (IconData, Color)> _typeConfig(ColorScheme colors) => {
+    'pdf': (Icons.picture_as_pdf_rounded, colors.onSurface),
+    'image': (Icons.image_rounded, colors.secondary),
+    'doc': (Icons.description_rounded, colors.primary),
   };
 
   String get _formattedSize {
@@ -592,7 +591,7 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final config =
-        _typeConfig[widget.fileType] ??
+        _typeConfig(theme.colorScheme)[widget.fileType] ??
         (Icons.attach_file_rounded, theme.colorScheme.primary);
     final color = config.$2;
 
@@ -668,13 +667,13 @@ class _FileCardWithDescriptionState extends State<_FileCardWithDescription> {
                     child: Container(
                       padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: AppColors.error.withValues(alpha: 0.08),
+                        color: theme.colorScheme.error.withValues(alpha: 0.08),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Icon(
                         Icons.close_rounded,
                         size: 18,
-                        color: AppColors.error,
+                        color: theme.colorScheme.error,
                       ),
                     ),
                   ),
@@ -784,7 +783,7 @@ class _FieldLabel extends StatelessWidget {
           Text(
             ' *',
             style: TextStyle(
-              color: AppColors.error,
+              color: theme.colorScheme.error,
               fontWeight: FontWeight.w600,
             ),
           ),

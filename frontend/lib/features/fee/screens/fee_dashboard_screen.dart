@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_colors.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
 import 'fee_records_screen.dart';
@@ -276,7 +275,7 @@ class _FinancialOverviewCard extends StatelessWidget {
                   child: _MiniStat(
                     label: 'Overdue',
                     value: '₹${_formatAmount(summary.totalOverdue)}',
-                    color: AppColors.error,
+                    color: theme.colorScheme.error,
                   ),
                 ),
               ],
@@ -413,7 +412,7 @@ class _SimpleStatusRow extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: isAlert
-                ? AppColors.errorBg
+                ? theme.colorScheme.error.withValues(alpha: 0.08)
                 : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(12),
           ),
@@ -422,7 +421,9 @@ class _SimpleStatusRow extends StatelessWidget {
             style: TextStyle(
               fontSize: 12,
               fontWeight: FontWeight.w600,
-              color: isAlert ? AppColors.error : theme.colorScheme.onSurface,
+              color: isAlert
+                  ? theme.colorScheme.error
+                  : theme.colorScheme.onSurface,
             ),
           ),
         ),
@@ -695,44 +696,45 @@ class _OverdueBanner extends StatelessWidget {
   });
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppColors.errorBg,
+        color: theme.colorScheme.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Row(
         children: [
-          const Icon(
+          Icon(
             Icons.warning_amber_rounded,
-            color: AppColors.error,
+            color: theme.colorScheme.error,
             size: 20,
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               '$count student${count == 1 ? '' : 's'} have overdue fees',
-              style: const TextStyle(
-                color: AppColors.error,
+              style: TextStyle(
+                color: theme.colorScheme.error,
                 fontWeight: FontWeight.w600,
                 fontSize: 14,
               ),
             ),
           ),
           if (isLoading)
-            const SizedBox(
+            SizedBox(
               width: 20,
               height: 20,
               child: CircularProgressIndicator(
                 strokeWidth: 2,
-                color: AppColors.error,
+                color: theme.colorScheme.error,
               ),
             )
           else
             TextButton(
               onPressed: onRemind,
               style: TextButton.styleFrom(
-                foregroundColor: AppColors.error,
+                foregroundColor: theme.colorScheme.error,
                 padding: const EdgeInsets.symmetric(
                   horizontal: 12,
                   vertical: 6,
@@ -768,9 +770,9 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(
+            Icon(
               Icons.error_outline_rounded,
-              color: AppColors.error,
+              color: theme.colorScheme.error,
               size: 40,
             ),
             const SizedBox(height: 12),

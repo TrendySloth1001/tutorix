@@ -8,7 +8,6 @@ import '../models/batch_model.dart';
 import '../services/batch_service.dart';
 import 'create_batch_screen.dart';
 import 'batch_detail_screen.dart';
-import '../../../core/theme/app_colors.dart';
 
 /// Batches list — the 4th tab in the coaching shell.
 /// Admins see all batches; teachers/students see only their assigned batches.
@@ -509,8 +508,11 @@ class _StatusBadge extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final isActive = status == 'active';
-    final color = isActive ? AppColors.activeGreen : AppColors.pendingAmber;
+    final color = isActive
+        ? theme.colorScheme.primary
+        : theme.colorScheme.secondary;
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),

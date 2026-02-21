@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../models/batch_note_model.dart';
 import 'file_viewer_screen.dart';
-import '../../../core/theme/app_colors.dart';
 
 /// Comprehensive note detail screen showing title, description,
 /// uploader info, and tappable file attachments.
@@ -41,7 +40,7 @@ class NoteDetailScreen extends StatelessWidget {
                   padding: const EdgeInsets.only(right: 8),
                   child: _CircleActionButton(
                     icon: Icons.delete_outline_rounded,
-                    color: AppColors.error,
+                    color: colors.error,
                     onTap: () => _confirmDelete(context),
                   ),
                 ),
@@ -186,7 +185,7 @@ class NoteDetailScreen extends StatelessWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         title: Row(
           children: [
-            Icon(Icons.warning_amber_rounded, color: AppColors.error),
+            Icon(Icons.warning_amber_rounded, color: theme.colorScheme.error),
             const SizedBox(width: 10),
             const Text('Delete Note'),
           ],
@@ -206,7 +205,9 @@ class NoteDetailScreen extends StatelessWidget {
               onDelete?.call();
               Navigator.pop(context, true);
             },
-            style: FilledButton.styleFrom(backgroundColor: AppColors.error),
+            style: FilledButton.styleFrom(
+              backgroundColor: theme.colorScheme.error,
+            ),
             child: const Text('Delete'),
           ),
         ],
@@ -235,18 +236,19 @@ class _HeroHeader extends StatelessWidget {
   final ThemeData theme;
   const _HeroHeader({required this.note, required this.theme});
 
-  static const _typeConfig = {
-    'pdf': (Icons.picture_as_pdf_rounded, AppColors.filePdf),
-    'image': (Icons.image_rounded, AppColors.fileImage),
-    'doc': (Icons.description_rounded, AppColors.fileDoc),
-    'link': (Icons.link_rounded, AppColors.fileLink),
+  static Map<String, (IconData, Color)> _typeConfig(ColorScheme colors) => {
+    'pdf': (Icons.picture_as_pdf_rounded, colors.onSurface),
+    'image': (Icons.image_rounded, colors.secondary),
+    'doc': (Icons.description_rounded, colors.primary),
+    'link': (Icons.link_rounded, colors.onSurfaceVariant),
   };
 
   @override
   Widget build(BuildContext context) {
     final colors = theme.colorScheme;
     final primaryColor = note.attachments.isNotEmpty
-        ? (_typeConfig[note.attachments.first.fileType]?.$2 ?? colors.primary)
+        ? (_typeConfig(colors)[note.attachments.first.fileType]?.$2 ??
+              colors.primary)
         : colors.primary;
 
     return Container(
@@ -461,18 +463,20 @@ class _AttachmentCard extends StatelessWidget {
     required this.onTap,
   });
 
-  static const _typeConfig = {
-    'pdf': (Icons.picture_as_pdf_rounded, AppColors.filePdf, 'PDF'),
-    'image': (Icons.image_rounded, AppColors.fileImage, 'Image'),
-    'doc': (Icons.description_rounded, AppColors.fileDoc, 'Document'),
-    'link': (Icons.link_rounded, AppColors.fileLink, 'Link'),
+  static Map<String, (IconData, Color, String)> _typeConfig(
+    ColorScheme colors,
+  ) => {
+    'pdf': (Icons.picture_as_pdf_rounded, colors.onSurface, 'PDF'),
+    'image': (Icons.image_rounded, colors.secondary, 'Image'),
+    'doc': (Icons.description_rounded, colors.primary, 'Document'),
+    'link': (Icons.link_rounded, colors.onSurfaceVariant, 'Link'),
   };
 
   @override
   Widget build(BuildContext context) {
     final colors = theme.colorScheme;
     final config =
-        _typeConfig[attachment.fileType] ??
+        _typeConfig(colors)[attachment.fileType] ??
         (Icons.attach_file_rounded, colors.primary, 'File');
     final (icon, color, typeLabel) = config;
     final isImage = attachment.fileType == 'image';
