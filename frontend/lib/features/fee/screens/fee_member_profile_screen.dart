@@ -85,7 +85,10 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
               child: picture == null
                   ? Text(
                       displayName[0].toUpperCase(),
-                      style: TextStyle(fontSize: FontSize.caption, color: cs.onSurface),
+                      style: TextStyle(
+                        fontSize: FontSize.caption,
+                        color: cs.onSurface,
+                      ),
                     )
                   : null,
             ),
@@ -103,7 +106,10 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
                 ),
                 Text(
                   'Student Profile',
-                  style: TextStyle(color: cs.onSurfaceVariant, fontSize: FontSize.caption),
+                  style: TextStyle(
+                    color: cs.onSurfaceVariant,
+                    fontSize: FontSize.caption,
+                  ),
                 ),
               ],
             ),
@@ -235,8 +241,9 @@ class _FeeTab extends StatelessWidget {
         DateTime? dueDate;
         if (dateStr != null) dueDate = DateTime.tryParse(dateStr);
 
-        if (status != 'PENDING')
+        if (status != 'PENDING') {
           return true; // Always show history/paid/overdue
+        }
         if (dueDate == null) return true; // Show if no date
 
         // Check if due date is before or on endOfNextMonth
@@ -349,8 +356,9 @@ class _AcademicTabState extends State<_AcademicTab>
     super.build(context);
     final theme = Theme.of(context);
     if (_loading) return const Center(child: CircularProgressIndicator());
-    if (_error != null)
+    if (_error != null) {
       return _ErrorRetry(error: _error!, onRetry: _loadResults);
+    }
     if (_results.isEmpty) {
       return Center(
         child: Column(
@@ -739,7 +747,9 @@ class _LedgerBanner extends StatelessWidget {
                       alpha: 0.15,
                     ),
                     foregroundColor: theme.colorScheme.onPrimary,
-                    padding: const EdgeInsets.symmetric(horizontal: Spacing.sp10),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.sp10,
+                    ),
                     minimumSize: const Size(0, 28),
                     tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     elevation: 0,
@@ -760,7 +770,10 @@ class _LedgerBanner extends StatelessWidget {
                 const SizedBox(width: Spacing.sp4),
                 Text(
                   'Refunded: ₹${_fmt(totalRefunded)}',
-                  style: const TextStyle(color: Colors.white54, fontSize: FontSize.caption),
+                  style: const TextStyle(
+                    color: Colors.white54,
+                    fontSize: FontSize.caption,
+                  ),
                 ),
               ],
             ),
@@ -788,7 +801,10 @@ class _BannerStat extends StatelessWidget {
       children: [
         Text(
           label,
-          style: const TextStyle(color: Colors.white54, fontSize: FontSize.micro),
+          style: const TextStyle(
+            color: Colors.white54,
+            fontSize: FontSize.micro,
+          ),
         ),
         const SizedBox(height: Spacing.sp2),
         Text(
@@ -981,7 +997,10 @@ class _RecordRow extends StatelessWidget {
           borderRadius: BorderRadius.circular(Radii.md),
           onTap: onTap,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: Spacing.sp12, vertical: Spacing.sp10),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.sp12,
+              vertical: Spacing.sp10,
+            ),
             child: Row(
               children: [
                 Container(
@@ -1080,7 +1099,10 @@ class _SmallChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp6, vertical: Spacing.sp2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp6,
+        vertical: Spacing.sp2,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(Radii.sm),

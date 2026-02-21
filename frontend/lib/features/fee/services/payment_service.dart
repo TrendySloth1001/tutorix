@@ -77,8 +77,8 @@ class PaymentService {
   }) async {
     final body = <String, dynamic>{
       'paymentId': paymentId,
-      if (amount != null) 'amount': amount,
-      if (reason != null) 'reason': reason,
+      'amount': ?amount,
+      'reason': ?reason,
     };
     final data = await _api.postAuthenticated(
       ApiConstants.feeOnlineRefund(coachingId, recordId),
@@ -274,9 +274,9 @@ class PaymentService {
       'description': feeTitle,
       'order_id': orderId,
       'prefill': {
-        if (userEmail != null) 'email': userEmail,
-        if (userPhone != null) 'contact': userPhone,
-        if (userName != null) 'name': userName,
+        'email': ?userEmail,
+        'contact': ?userPhone,
+        'name': ?userName,
       },
       'theme': {'color': '#3D4F2F'},
       // Enable external wallets for broader payment support

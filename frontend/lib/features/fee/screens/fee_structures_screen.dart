@@ -282,7 +282,12 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
                       ],
                     )
                   : ListView(
-                      padding: const EdgeInsets.fromLTRB(Spacing.sp16, Spacing.sp16, Spacing.sp16, 96),
+                      padding: const EdgeInsets.fromLTRB(
+                        Spacing.sp16,
+                        Spacing.sp16,
+                        Spacing.sp16,
+                        96,
+                      ),
                       children: _structures
                           .map(
                             (s) => _StructureCard(
@@ -335,7 +340,12 @@ class _StructureCard extends StatelessWidget {
         children: [
           // Header row
           Padding(
-            padding: const EdgeInsets.fromLTRB(Spacing.sp16, Spacing.sp14, Spacing.sp8, 0),
+            padding: const EdgeInsets.fromLTRB(
+              Spacing.sp16,
+              Spacing.sp14,
+              Spacing.sp8,
+              0,
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -422,7 +432,12 @@ class _StructureCard extends StatelessWidget {
           ),
           // Amount + cycle
           Padding(
-            padding: const EdgeInsets.fromLTRB(Spacing.sp16, Spacing.sp10, Spacing.sp16, 0),
+            padding: const EdgeInsets.fromLTRB(
+              Spacing.sp16,
+              Spacing.sp10,
+              Spacing.sp16,
+              0,
+            ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
@@ -450,7 +465,12 @@ class _StructureCard extends StatelessWidget {
           ),
           // Chips
           Padding(
-            padding: const EdgeInsets.fromLTRB(Spacing.sp16, Spacing.sp10, Spacing.sp16, Spacing.sp14),
+            padding: const EdgeInsets.fromLTRB(
+              Spacing.sp16,
+              Spacing.sp10,
+              Spacing.sp16,
+              Spacing.sp14,
+            ),
             child: Wrap(
               spacing: 8,
               runSpacing: 6,
@@ -502,7 +522,10 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp8, vertical: Spacing.sp4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp8,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(Radii.sm),
@@ -666,7 +689,9 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
       ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(Radii.lg)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(Radii.lg),
+        ),
       ),
       padding: EdgeInsets.only(
         left: Spacing.sp20,
@@ -1062,7 +1087,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
             const SizedBox(height: Spacing.sp8),
             SwitchListTile(
               contentPadding: EdgeInsets.zero,
-              activeColor: theme.colorScheme.primary,
+              activeThumbColor: theme.colorScheme.primary,
               title: Text(
                 'Allow installment payments',
                 style: TextStyle(

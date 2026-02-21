@@ -242,13 +242,15 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                       ),
                       textCapitalization: TextCapitalization.characters,
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty)
+                        if (v == null || v.trim().isEmpty) {
                           return null; // optional
+                        }
                         final re = RegExp(
                           r'^\d{2}[A-Z]{5}\d{4}[A-Z]\d[Z][A-Z0-9]$',
                         );
-                        if (!re.hasMatch(v.trim()))
+                        if (!re.hasMatch(v.trim())) {
                           return 'Invalid GSTIN format';
+                        }
                         return null;
                       },
                     ),
@@ -261,10 +263,13 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                       ),
                       textCapitalization: TextCapitalization.characters,
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty)
+                        if (v == null || v.trim().isEmpty) {
                           return null; // optional
+                        }
                         final re = RegExp(r'^[A-Z]{5}\d{4}[A-Z]$');
-                        if (!re.hasMatch(v.trim())) return 'Invalid PAN format';
+                        if (!re.hasMatch(v.trim())) {
+                          return 'Invalid PAN format';
+                        }
                         return null;
                       },
                     ),
@@ -311,11 +316,13 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                       ),
                       textCapitalization: TextCapitalization.characters,
                       validator: (v) {
-                        if (v == null || v.trim().isEmpty)
+                        if (v == null || v.trim().isEmpty) {
                           return null; // optional
+                        }
                         final re = RegExp(r'^[A-Z]{4}0[A-Z0-9]{6}$');
-                        if (!re.hasMatch(v.trim()))
+                        if (!re.hasMatch(v.trim())) {
                           return 'Invalid IFSC format';
+                        }
                         return null;
                       },
                     ),

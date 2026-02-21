@@ -237,8 +237,9 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                       ? null
                       : notesCtrl.text.trim(),
                 );
-                if (mounted)
+                if (mounted) {
                   AppAlert.success(context, 'Fee waived successfully');
+                }
                 _load();
               } catch (e) {
                 if (mounted) AppAlert.error(context, e);
@@ -458,7 +459,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
               ),
               const SizedBox(height: Spacing.sp12),
               DropdownButtonFormField<String>(
-                value: mode,
+                initialValue: mode,
                 decoration: const InputDecoration(labelText: 'Refund Mode'),
                 items: const [
                   DropdownMenuItem(value: 'CASH', child: Text('Cash')),
@@ -575,7 +576,9 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
           return Container(
             decoration: BoxDecoration(
               color: theme.colorScheme.surface,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.lg)),
+              borderRadius: BorderRadius.vertical(
+                top: Radius.circular(Radii.lg),
+              ),
             ),
             padding: EdgeInsets.only(
               left: Spacing.sp20,
@@ -1122,7 +1125,10 @@ class _OverdueBanner extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp14, vertical: Spacing.sp10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp14,
+        vertical: Spacing.sp10,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.error.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(Radii.md),
@@ -1536,7 +1542,10 @@ class _PaymentRow extends StatelessWidget {
       ),
       child: Container(
         margin: const EdgeInsets.only(bottom: Spacing.sp8),
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.sp14, vertical: Spacing.sp10),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp14,
+          vertical: Spacing.sp10,
+        ),
         decoration: BoxDecoration(
           color: theme.colorScheme.outlineVariant.withValues(alpha: 0.22),
           borderRadius: BorderRadius.circular(Radii.md),
@@ -1623,7 +1632,10 @@ class _RefundRow extends StatelessWidget {
     final theme = Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(bottom: Spacing.sp8),
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp14, vertical: Spacing.sp10),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp14,
+        vertical: Spacing.sp10,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.outlineVariant.withValues(alpha: 0.22),
         borderRadius: BorderRadius.circular(Radii.md),
@@ -1709,7 +1721,10 @@ class _FailedAttempts extends StatelessWidget {
               : '';
           return Container(
             margin: const EdgeInsets.only(bottom: Spacing.sp8),
-            padding: const EdgeInsets.symmetric(horizontal: Spacing.sp14, vertical: Spacing.sp10),
+            padding: const EdgeInsets.symmetric(
+              horizontal: Spacing.sp14,
+              vertical: Spacing.sp10,
+            ),
             decoration: BoxDecoration(
               color: theme.colorScheme.outlineVariant.withValues(alpha: 0.22),
               borderRadius: BorderRadius.circular(Radii.md),
@@ -1854,7 +1869,10 @@ class _StatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _statusColor(status, Theme.of(context).colorScheme);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp10, vertical: Spacing.sp4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp10,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.15),
         borderRadius: BorderRadius.circular(Radii.sm),
@@ -1924,7 +1942,9 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(Radii.lg)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(Radii.lg),
+        ),
       ),
       padding: EdgeInsets.only(
         left: Spacing.sp20,
@@ -2049,7 +2069,10 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
           GestureDetector(
             onTap: _pickDate,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: Spacing.sp14, vertical: Spacing.sp12),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.sp14,
+                vertical: Spacing.sp12,
+              ),
               decoration: BoxDecoration(
                 border: Border.all(
                   color: theme.colorScheme.onSurfaceVariant.withValues(
@@ -2327,9 +2350,16 @@ class _InstallmentPickerSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(Radii.lg)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(Radii.lg),
+        ),
       ),
-      padding: const EdgeInsets.fromLTRB(Spacing.sp20, Spacing.sp20, Spacing.sp20, Spacing.sp32),
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.sp20,
+        Spacing.sp20,
+        Spacing.sp20,
+        Spacing.sp32,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

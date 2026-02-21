@@ -21,8 +21,7 @@ class FeeService {
       final data = await _api.getAuthenticated(
         ApiConstants.feeStructureCurrent(coachingId),
       );
-      if (data == null) return null;
-      return FeeStructureModel.fromJson(data as Map<String, dynamic>);
+      return FeeStructureModel.fromJson(data);
     } catch (_) {
       return null;
     }
@@ -34,7 +33,7 @@ class FeeService {
     final data = await _api.getAuthenticated(
       ApiConstants.feeStructureReplacePreview(coachingId),
     );
-    return data as Map<String, dynamic>;
+    return data;
   }
 
   Future<FeeStructureModel> createStructure(
@@ -145,9 +144,9 @@ class FeeService {
     final params = <String, String>{
       'page': '$page',
       'limit': '$limit',
-      if (entityType != null) 'entityType': entityType,
-      if (entityId != null) 'entityId': entityId,
-      if (event != null) 'event': event,
+      'entityType': ?entityType,
+      'entityId': ?entityId,
+      'event': ?event,
       if (from != null) 'from': from.toIso8601String(),
       if (to != null) 'to': to.toIso8601String(),
     };
@@ -226,7 +225,7 @@ class FeeService {
     final data = await _api.getAuthenticated(
       ApiConstants.feeAssignmentPreview(coachingId, memberId),
     );
-    return data as Map<String, dynamic>;
+    return data;
   }
 
   // ── Fee Records ─────────────────────────────────────────────────

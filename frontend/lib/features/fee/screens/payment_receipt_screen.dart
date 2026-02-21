@@ -118,7 +118,10 @@ class PaymentReceiptScreen extends StatelessWidget {
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.sp24, vertical: Spacing.sp16),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp24,
+          vertical: Spacing.sp16,
+        ),
         child: Column(
           children: [
             const SizedBox(height: Spacing.sp8),
@@ -360,7 +363,9 @@ class PaymentReceiptScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(Radii.md),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: Spacing.sp14),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: Spacing.sp14,
+                      ),
                     ),
                     icon: const Icon(Icons.copy_rounded, size: 18),
                     label: const Text(
@@ -378,7 +383,9 @@ class PaymentReceiptScreen extends StatelessWidget {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(Radii.md),
                       ),
-                      padding: const EdgeInsets.symmetric(vertical: Spacing.sp14),
+                      padding: const EdgeInsets.symmetric(
+                        vertical: Spacing.sp14,
+                      ),
                     ),
                     icon: const Icon(Icons.check_rounded, size: 18),
                     label: const Text(
@@ -413,14 +420,18 @@ class PaymentReceiptScreen extends StatelessWidget {
       lines.add(
         'Tax (GST ${gstRate.toStringAsFixed(0)}%): ₹${taxAmount.toStringAsFixed(2)}',
       );
-      if (cgstAmount > 0)
+      if (cgstAmount > 0) {
         lines.add('  CGST: ₹${cgstAmount.toStringAsFixed(2)}');
-      if (sgstAmount > 0)
+      }
+      if (sgstAmount > 0) {
         lines.add('  SGST: ₹${sgstAmount.toStringAsFixed(2)}');
-      if (igstAmount > 0)
+      }
+      if (igstAmount > 0) {
         lines.add('  IGST: ₹${igstAmount.toStringAsFixed(2)}');
-      if (cessAmount > 0)
+      }
+      if (cessAmount > 0) {
         lines.add('  Cess: ₹${cessAmount.toStringAsFixed(2)}');
+      }
     }
     lines.add('Payment Mode: $_modeLabel');
     if (transactionRef != null && transactionRef!.isNotEmpty) {

@@ -120,9 +120,9 @@ class AdminLogsService {
     int offset = 0,
   }) async {
     final params = <String, String>{
-      if (type != null) 'type': type,
-      if (level != null) 'level': level,
-      if (userId != null) 'userId': userId,
+      'type': ?type,
+      'level': ?level,
+      'userId': ?userId,
       if (startDate != null) 'startDate': startDate.toIso8601String(),
       if (endDate != null) 'endDate': endDate.toIso8601String(),
       'limit': limit.toString(),

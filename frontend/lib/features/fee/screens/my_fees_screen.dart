@@ -37,7 +37,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
   String? _myMemberId; // student's own memberId in this coaching
 
   // Transaction history tab
-  List<Map<String, dynamic>> _transactions = [];
+  final List<Map<String, dynamic>> _transactions = [];
   bool _txLoading = false;
   String? _txError;
   int _txPage = 1;
@@ -345,7 +345,12 @@ class _MyFeesScreenState extends State<MyFeesScreen>
         if (_myMemberId != null)
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(Spacing.sp16, Spacing.sp14, Spacing.sp16, Spacing.sp4),
+              padding: const EdgeInsets.fromLTRB(
+                Spacing.sp16,
+                Spacing.sp14,
+                Spacing.sp16,
+                Spacing.sp4,
+              ),
               child: Row(
                 children: [
                   Expanded(
@@ -389,7 +394,12 @@ class _MyFeesScreenState extends State<MyFeesScreen>
         if (payable.isNotEmpty) ...[
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(Spacing.sp16, Spacing.sp16, Spacing.sp16, Spacing.sp4),
+              padding: const EdgeInsets.fromLTRB(
+                Spacing.sp16,
+                Spacing.sp16,
+                Spacing.sp16,
+                Spacing.sp4,
+              ),
               child: Row(
                 children: [
                   Text(
@@ -425,7 +435,9 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                   if (!_selectMode)
                     TextButton.icon(
                       style: TextButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(horizontal: Spacing.sp8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: Spacing.sp8,
+                        ),
                         visualDensity: VisualDensity.compact,
                       ),
                       icon: const Icon(Icons.select_all_rounded, size: 16),
@@ -479,7 +491,12 @@ class _MyFeesScreenState extends State<MyFeesScreen>
         if (settled.isNotEmpty) ...[
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(Spacing.sp16, Spacing.sp16, Spacing.sp16, Spacing.sp4),
+              padding: const EdgeInsets.fromLTRB(
+                Spacing.sp16,
+                Spacing.sp16,
+                Spacing.sp16,
+                Spacing.sp4,
+              ),
               child: Row(
                 children: [
                   Text(
@@ -777,7 +794,10 @@ class _AccountShortcutButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(Radii.md),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: Spacing.sp12, horizontal: Spacing.sp14),
+          padding: const EdgeInsets.symmetric(
+            vertical: Spacing.sp12,
+            horizontal: Spacing.sp14,
+          ),
           child: Row(
             children: [
               Icon(icon, size: 18, color: theme.colorScheme.onSurface),
@@ -822,7 +842,12 @@ class _PayBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.fromLTRB(Spacing.sp20, Spacing.sp12, Spacing.sp20, Spacing.sp16),
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.sp20,
+        Spacing.sp12,
+        Spacing.sp20,
+        Spacing.sp16,
+      ),
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         boxShadow: [
@@ -875,7 +900,10 @@ class _PayBar extends StatelessWidget {
               icon: const Icon(Icons.bolt_rounded, size: 18),
               label: const Text(
                 'Pay Now',
-                style: TextStyle(fontWeight: FontWeight.w700, fontSize: FontSize.body),
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: FontSize.body,
+                ),
               ),
             ),
           ],
@@ -1288,14 +1316,21 @@ class _StatusPill extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = _statusColor(status, Theme.of(context).colorScheme);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp8, vertical: Spacing.sp4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp8,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: c.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(Radii.sm),
       ),
       child: Text(
         _statusLabel(status),
-        style: TextStyle(color: c, fontSize: FontSize.nano, fontWeight: FontWeight.w700),
+        style: TextStyle(
+          color: c,
+          fontSize: FontSize.nano,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -1469,7 +1504,12 @@ class _TransactionHistory extends StatelessWidget {
     }
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.fromLTRB(Spacing.sp16, Spacing.sp12, Spacing.sp16, Spacing.sp32),
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.sp16,
+        Spacing.sp12,
+        Spacing.sp16,
+        Spacing.sp32,
+      ),
       itemCount: transactions.length,
       itemBuilder: (ctx, i) => _TxnCard(txn: transactions[i]),
     );
@@ -1570,7 +1610,12 @@ class _TxnCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.only(bottom: Spacing.sp10),
-      padding: const EdgeInsets.fromLTRB(Spacing.sp14, Spacing.sp12, Spacing.sp14, Spacing.sp12),
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.sp14,
+        Spacing.sp12,
+        Spacing.sp14,
+        Spacing.sp12,
+      ),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(Radii.md),
@@ -1626,7 +1671,10 @@ class _TxnCard extends StatelessWidget {
                     padding: const EdgeInsets.only(top: Spacing.sp2),
                     child: Text(
                       line,
-                      style: TextStyle(fontSize: FontSize.micro, color: accentColor),
+                      style: TextStyle(
+                        fontSize: FontSize.micro,
+                        color: accentColor,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1735,9 +1783,16 @@ class _FeeInstallmentSheet extends StatelessWidget {
     return Container(
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(Radii.lg)),
+        borderRadius: const BorderRadius.vertical(
+          top: Radius.circular(Radii.lg),
+        ),
       ),
-      padding: const EdgeInsets.fromLTRB(Spacing.sp20, Spacing.sp20, Spacing.sp20, Spacing.sp32),
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.sp20,
+        Spacing.sp20,
+        Spacing.sp20,
+        Spacing.sp32,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,

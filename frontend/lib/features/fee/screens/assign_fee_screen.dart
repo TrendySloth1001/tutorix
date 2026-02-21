@@ -1253,7 +1253,7 @@ class _PullSettingsSheet extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final rows = <_SettingRow>[];
-    if (log.customAmount != null)
+    if (log.customAmount != null) {
       rows.add(
         _SettingRow(
           icon: Icons.edit_rounded,
@@ -1261,19 +1261,19 @@ class _PullSettingsSheet extends StatelessWidget {
           value: '₹${log.customAmount!.toStringAsFixed(0)}',
         ),
       );
-    if ((log.discountAmount ?? 0) > 0)
+    }
+    if ((log.discountAmount ?? 0) > 0) {
       rows.add(
         _SettingRow(
           icon: Icons.discount_outlined,
           label: 'Discount',
           value:
-              '₹${log.discountAmount!.toStringAsFixed(0)}' +
-              (log.discountReason != null && log.discountReason!.isNotEmpty
-                  ? ' — ${log.discountReason}'
-                  : ''),
+              '₹${log.discountAmount!.toStringAsFixed(0)}'
+              '${log.discountReason != null && log.discountReason!.isNotEmpty ? " — ${log.discountReason}" : ""}',
         ),
       );
-    if (log.scholarshipTag != null && log.scholarshipTag!.isNotEmpty)
+    }
+    if (log.scholarshipTag != null && log.scholarshipTag!.isNotEmpty) {
       rows.add(
         _SettingRow(
           icon: Icons.school_outlined,
@@ -1285,6 +1285,7 @@ class _PullSettingsSheet extends StatelessWidget {
                   : ''),
         ),
       );
+    }
 
     return Container(
       decoration: BoxDecoration(

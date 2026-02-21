@@ -221,9 +221,9 @@ class _ExploreScreenState extends State<ExploreScreen>
             );
             // Also log to console for local debugging
             if (kDebugMode) {
-              print(' Explore nearby error: $error');
+              debugPrint('Explore nearby error: $error');
             }
-            print('Stack trace: $stackTrace');
+            debugPrint('Stack trace: $stackTrace');
             setState(() => _nearbyLoading = false);
             // Show error to user
             AppAlert.error(
@@ -262,8 +262,8 @@ class _ExploreScreenState extends State<ExploreScreen>
           stackTrace: stackTrace.toString(),
           metadata: {'query': query},
         );
-        print('❌ Search error: $error');
-        print('Stack trace: $stackTrace');
+        debugPrint('❌ Search error: $error');
+        debugPrint('Stack trace: $stackTrace');
         if (!mounted) return;
         setState(() => _isSearching = false);
         AppAlert.error(context, 'Search failed. Please try again.');
@@ -505,7 +505,10 @@ class _ExploreScreenState extends State<ExploreScreen>
         borderRadius: BorderRadius.circular(Radii.md),
         color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.sp14, vertical: Spacing.sp10),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.sp14,
+            vertical: Spacing.sp10,
+          ),
           child: Row(
             children: [
               Icon(
@@ -592,7 +595,9 @@ class _ExploreScreenState extends State<ExploreScreen>
             InkWell(
               borderRadius: BorderRadius.vertical(
                 top: const Radius.circular(Radii.lg),
-                bottom: _mapExpanded ? Radius.zero : const Radius.circular(Radii.lg),
+                bottom: _mapExpanded
+                    ? Radius.zero
+                    : const Radius.circular(Radii.lg),
               ),
               onTap: () => setState(() => _mapExpanded = !_mapExpanded),
               child: Padding(
@@ -1166,7 +1171,10 @@ class _ExploreScreenState extends State<ExploreScreen>
               color: theme.colorScheme.primary,
             )
           : null,
-      contentPadding: const EdgeInsets.symmetric(horizontal: Spacing.sp16, vertical: Spacing.sp4),
+      contentPadding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp16,
+        vertical: Spacing.sp4,
+      ),
     );
   }
 
@@ -1308,7 +1316,10 @@ class _ExploreScreenState extends State<ExploreScreen>
           const SizedBox(width: Spacing.sp8),
           if (!_nearbyLoading && _nearby.isNotEmpty)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: Spacing.sp8, vertical: Spacing.sp2),
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.sp8,
+                vertical: Spacing.sp2,
+              ),
               decoration: BoxDecoration(
                 color: theme.colorScheme.primaryContainer.withValues(
                   alpha: 0.5,

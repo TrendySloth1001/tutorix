@@ -118,7 +118,10 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
             SizedBox(width: Spacing.sp10),
             Text(
               'Debug Console',
-              style: TextStyle(fontWeight: FontWeight.w600, fontSize: FontSize.title),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: FontSize.title,
+              ),
             ),
           ],
         ),
@@ -137,7 +140,10 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                 children: [
                   const Icon(Icons.cloud_outlined, size: 18),
                   const SizedBox(width: Spacing.sp6),
-                  const Text('Server', style: TextStyle(fontSize: FontSize.body)),
+                  const Text(
+                    'Server',
+                    style: TextStyle(fontSize: FontSize.body),
+                  ),
                   const SizedBox(width: Spacing.sp6),
                   _buildBadge(_totalLogs.toString()),
                 ],
@@ -149,7 +155,10 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                 children: [
                   const Icon(Icons.phone_android_outlined, size: 18),
                   const SizedBox(width: Spacing.sp6),
-                  const Text('Device', style: TextStyle(fontSize: FontSize.body)),
+                  const Text(
+                    'Device',
+                    style: TextStyle(fontSize: FontSize.body),
+                  ),
                   const SizedBox(width: Spacing.sp6),
                   _buildBadge(_logger.localLogCount.toString()),
                 ],
@@ -182,14 +191,20 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
   Widget _buildBadge(String text) {
     final cs = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp6, vertical: Spacing.sp2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp6,
+        vertical: Spacing.sp2,
+      ),
       decoration: BoxDecoration(
         color: cs.surface.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(Radii.md),
       ),
       child: Text(
         text,
-        style: const TextStyle(fontSize: FontSize.nano, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+          fontSize: FontSize.nano,
+          fontWeight: FontWeight.bold,
+        ),
       ),
     );
   }
@@ -214,7 +229,8 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
                   child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                     itemCount: _logs.length + (_hasMorePages ? 1 : 0),
-                    separatorBuilder: (_, __) => const SizedBox(height: Spacing.sp8),
+                    separatorBuilder: (_, _) =>
+                        const SizedBox(height: Spacing.sp8),
                     itemBuilder: (context, index) {
                       if (index >= _logs.length) {
                         return _buildLoadMoreButton();
@@ -252,7 +268,10 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
   Widget _buildServerFilters() {
     final cs = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp16, vertical: Spacing.sp12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp16,
+        vertical: Spacing.sp12,
+      ),
       decoration: BoxDecoration(
         color: cs.outlineVariant.withValues(alpha: 0.25),
         border: Border(
@@ -311,7 +330,8 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
               : ListView.separated(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
                   itemCount: logs.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: Spacing.sp6),
+                  separatorBuilder: (_, _) =>
+                      const SizedBox(height: Spacing.sp6),
                   itemBuilder: (context, index) {
                     return _LocalLogTile(entry: logs[index]);
                   },
@@ -324,7 +344,10 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
   Widget _buildLocalFilters() {
     final cs = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp16, vertical: Spacing.sp12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp16,
+        vertical: Spacing.sp12,
+      ),
       decoration: BoxDecoration(
         color: cs.outlineVariant.withValues(alpha: 0.25),
         border: Border(
@@ -730,7 +753,10 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
         onChanged(result);
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.sp12, vertical: Spacing.sp8),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp12,
+          vertical: Spacing.sp8,
+        ),
         decoration: BoxDecoration(
           color: currentLabel != null
               ? cs.primary.withValues(alpha: 0.08)
@@ -956,7 +982,9 @@ class _ServerLogTile extends StatelessWidget {
         builder: (_, controller) => Container(
           decoration: BoxDecoration(
             color: cs.surface,
-            borderRadius: const BorderRadius.vertical(top: Radius.circular(Radii.lg)),
+            borderRadius: const BorderRadius.vertical(
+              top: Radius.circular(Radii.lg),
+            ),
           ),
           child: ListView(
             controller: controller,
@@ -1153,7 +1181,10 @@ class _LocalLogTile extends StatelessWidget {
         onTap: hasDetails ? () => _showDetails(context) : null,
         borderRadius: BorderRadius.circular(Radii.md),
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: Spacing.sp12, vertical: Spacing.sp10),
+          padding: const EdgeInsets.symmetric(
+            horizontal: Spacing.sp12,
+            vertical: Spacing.sp10,
+          ),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(Radii.md),
             border: Border.all(
@@ -1213,7 +1244,10 @@ class _LocalLogTile extends StatelessWidget {
                     const SizedBox(height: Spacing.sp4),
                     Text(
                       entry.message,
-                      style: TextStyle(fontSize: FontSize.caption, color: cs.onSurface),
+                      style: TextStyle(
+                        fontSize: FontSize.caption,
+                        color: cs.onSurface,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -1445,7 +1479,10 @@ class _LevelBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _getColor(Theme.of(context).colorScheme);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp8, vertical: Spacing.sp4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp8,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(Radii.sm),
@@ -1487,7 +1524,10 @@ class _TypeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp8, vertical: Spacing.sp4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp8,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: cs.primary.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(Radii.sm),
@@ -1520,7 +1560,10 @@ class _StatusCodeBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _getColor(Theme.of(context).colorScheme);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp6, vertical: Spacing.sp4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp6,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(Radii.sm),
@@ -1562,7 +1605,10 @@ class _HttpMethodChip extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = _getColor(Theme.of(context).colorScheme);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp6, vertical: Spacing.sp2),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp6,
+        vertical: Spacing.sp2,
+      ),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(Radii.sm),
