@@ -10,17 +10,21 @@ class PaymentReceiptScreen extends StatelessWidget {
   final String coachingName;
   final String feeTitle;
   final double amount;
+
   /// Razorpay payment ID — null for non-Razorpay modes.
   final String? paymentId;
+
   /// Razorpay order ID — null for non-Razorpay modes.
   final String? orderId;
   final DateTime paidAt;
   final String? studentName;
   final String receiptNo;
+
   /// Payment mode string, e.g. 'RAZORPAY', 'CASH', 'UPI', 'BANK_TRANSFER',
   /// 'CHEQUE', 'CREDIT_TRANSFER', 'ONLINE', 'OTHER'.
   /// Defaults to 'RAZORPAY' for backward compatibility.
   final String paymentMode;
+
   /// Reference number for non-Razorpay modes (UPI ID, cheque no, etc.).
   final String? transactionRef;
 
@@ -65,9 +69,7 @@ class PaymentReceiptScreen extends StatelessWidget {
   });
 
   bool get _isRazorpay =>
-      paymentMode == 'RAZORPAY' ||
-      paymentMode == 'ONLINE' ||
-      paymentId != null;
+      paymentMode == 'RAZORPAY' || paymentMode == 'ONLINE' || paymentId != null;
 
   String get _modeLabel {
     switch (paymentMode) {
@@ -190,11 +192,15 @@ class PaymentReceiptScreen extends StatelessWidget {
                     _Divider(),
                     _DetailRow('Reference', transactionRef!),
                   ],
-                  if (_isRazorpay && orderId != null && orderId!.isNotEmpty) ...[
+                  if (_isRazorpay &&
+                      orderId != null &&
+                      orderId!.isNotEmpty) ...[
                     _Divider(),
                     _DetailRow('Order ID', _truncateId(orderId!)),
                   ],
-                  if (_isRazorpay && paymentId != null && paymentId!.isNotEmpty) ...[
+                  if (_isRazorpay &&
+                      paymentId != null &&
+                      paymentId!.isNotEmpty) ...[
                     _Divider(),
                     _DetailRow('Payment ID', _truncateId(paymentId!)),
                   ],
