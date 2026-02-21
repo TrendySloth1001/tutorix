@@ -228,7 +228,10 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
               onPressed: _showCreateSheet,
               backgroundColor: theme.colorScheme.primary,
               tooltip: 'New Fee Structure',
-              child: Icon(Icons.add_rounded, color: theme.colorScheme.onPrimary),
+              child: Icon(
+                Icons.add_rounded,
+                color: theme.colorScheme.onPrimary,
+              ),
             ),
       body: _loading
           ? const Center(child: CircularProgressIndicator())
@@ -261,7 +264,9 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
                               ),
                               const SizedBox(height: 8),
                               Padding(
-                                padding: const EdgeInsets.symmetric(horizontal: 40),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 40,
+                                ),
                                 child: Text(
                                   'Tap + to create structures like "Monthly Tuition" or "Annual Fee". Each can be assigned to multiple students.',
                                   textAlign: TextAlign.center,
@@ -314,7 +319,9 @@ class _StructureCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2)),
+        border: Border.all(
+          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -739,13 +746,17 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                     decoration: BoxDecoration(
                       color: sel
                           ? theme.colorScheme.primary
-                          : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                          : theme.colorScheme.outlineVariant.withValues(
+                              alpha: 0.3,
+                            ),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       _cycleLabels[c] ?? c,
                       style: TextStyle(
-                        color: sel ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                        color: sel
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.onSurface,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -803,13 +814,17 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                     decoration: BoxDecoration(
                       color: sel
                           ? theme.colorScheme.primary
-                          : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                          : theme.colorScheme.outlineVariant.withValues(
+                              alpha: 0.3,
+                            ),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       _taxLabels[t] ?? t,
                       style: TextStyle(
-                        color: sel ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                        color: sel
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.onSurface,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -844,13 +859,17 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                       decoration: BoxDecoration(
                         color: sel
                             ? theme.colorScheme.primary
-                            : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                            : theme.colorScheme.outlineVariant.withValues(
+                                alpha: 0.3,
+                              ),
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
                         '${r.toStringAsFixed(0)}%',
                         style: TextStyle(
-                          color: sel ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                          color: sel
+                              ? theme.colorScheme.onPrimary
+                              : theme.colorScheme.onSurface,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -888,7 +907,9 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                           decoration: BoxDecoration(
                             color: sel
                                 ? theme.colorScheme.primary
-                                : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                                : theme.colorScheme.outlineVariant.withValues(
+                                    alpha: 0.3,
+                                  ),
                             borderRadius: BorderRadius.circular(20),
                           ),
                           child: Text(
@@ -961,7 +982,10 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Text(
                   'Add breakdowns like "Books", "Lab Fee"',
-                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ..._lineItems.asMap().entries.map((entry) {
@@ -1030,7 +1054,10 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
             const SizedBox(height: 4),
             Text(
               'Control whether parents can pay in installments and define the allowed amounts.',
-              style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: 12,
+              ),
             ),
             const SizedBox(height: 8),
             SwitchListTile(
@@ -1096,7 +1123,10 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
                   padding: const EdgeInsets.only(bottom: 8),
                   child: Text(
                     'Leave empty to allow any amount. Add specific amounts to restrict payment options.',
-                    style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
+                    style: TextStyle(
+                      color: theme.colorScheme.onSurfaceVariant,
+                      fontSize: 12,
+                    ),
                   ),
                 ),
               ..._installmentAmounts.asMap().entries.map((entry) {

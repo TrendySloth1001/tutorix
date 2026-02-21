@@ -258,7 +258,9 @@ class _DateDivider extends StatelessWidget {
       child: Row(
         children: [
           Expanded(
-            child: Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+            child: Divider(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+            ),
           ),
           const SizedBox(width: 10),
           Text(
@@ -272,7 +274,9 @@ class _DateDivider extends StatelessWidget {
           ),
           const SizedBox(width: 10),
           Expanded(
-            child: Divider(color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5)),
+            child: Divider(
+              color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+            ),
           ),
         ],
       ),
@@ -384,7 +388,9 @@ class _AuditLogTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.15)),
+        border: Border.all(
+          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.15),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(14),
@@ -420,7 +426,9 @@ class _AuditLogTile extends StatelessWidget {
                     vertical: 3,
                   ),
                   decoration: BoxDecoration(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                    color: theme.colorScheme.outlineVariant.withValues(
+                      alpha: 0.5,
+                    ),
                     borderRadius: BorderRadius.circular(6),
                   ),
                   child: Text(
@@ -871,7 +879,9 @@ class _FilterChip extends StatelessWidget {
         child: Text(
           label,
           style: TextStyle(
-            color: selected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+            color: selected
+                ? theme.colorScheme.onPrimary
+                : theme.colorScheme.onSurface,
             fontSize: 12,
             fontWeight: FontWeight.w600,
           ),
@@ -983,7 +993,10 @@ class _EmptyState extends StatelessWidget {
           Text(
             'Events like creating structures, assigning fees,\nand recording payments will appear here.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 12,
+            ),
           ),
         ],
       ),

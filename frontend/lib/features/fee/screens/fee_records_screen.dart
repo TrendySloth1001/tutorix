@@ -113,18 +113,12 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
         backgroundColor: cs.surface,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: cs.onSurface,
-          ),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: cs.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
           'Fee Records',
-          style: TextStyle(
-            color: cs.onSurface,
-            fontWeight: FontWeight.w700,
-          ),
+          style: TextStyle(color: cs.onSurface, fontWeight: FontWeight.w700),
         ),
       ),
       body: Column(
@@ -216,7 +210,10 @@ class _SearchBar extends StatelessWidget {
         style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 14),
         decoration: InputDecoration(
           hintText: 'Search by student name...',
-          hintStyle: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
+          hintStyle: TextStyle(
+            color: theme.colorScheme.onSurfaceVariant,
+            fontSize: 13,
+          ),
           prefixIcon: Icon(
             Icons.search_rounded,
             color: theme.colorScheme.onSurfaceVariant,
@@ -299,7 +296,9 @@ class _FilterBar extends StatelessWidget {
                 child: Text(
                   e.value,
                   style: TextStyle(
-                    color: isSelected ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                    color: isSelected
+                        ? theme.colorScheme.onPrimary
+                        : theme.colorScheme.onSurface,
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -351,9 +350,7 @@ class _RecordTile extends StatelessWidget {
                 Container(
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(
-                      color: theme.colorScheme.outlineVariant,
-                    ),
+                    border: Border.all(color: theme.colorScheme.outlineVariant),
                   ),
                   child: CircleAvatar(
                     radius: 22,
@@ -558,7 +555,10 @@ class _ErrorRetry extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),

@@ -80,10 +80,7 @@ class _FeeLedgerScreenState extends State<FeeLedgerScreen> {
         backgroundColor: cs.surface,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: cs.onSurface,
-          ),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: cs.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -422,7 +419,9 @@ class _TimelineEntry extends StatelessWidget {
                               if (entry.mode != null) ...[
                                 Text(
                                   ' · ',
-                                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                                  style: TextStyle(
+                                    color: theme.colorScheme.onSurfaceVariant,
+                                  ),
                                 ),
                                 Flexible(
                                   child: Text(
@@ -532,7 +531,9 @@ class _ErrorRetry extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),

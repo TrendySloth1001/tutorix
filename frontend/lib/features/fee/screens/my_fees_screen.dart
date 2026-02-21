@@ -926,7 +926,10 @@ class _FeeCard extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: isSelected
               ? BoxDecoration(
-                  border: Border.all(color: theme.colorScheme.primary, width: 1.5),
+                  border: Border.all(
+                    color: theme.colorScheme.primary,
+                    width: 1.5,
+                  ),
                   borderRadius: BorderRadius.circular(16),
                 )
               : null,
@@ -1268,7 +1271,9 @@ class _ProgressBar extends StatelessWidget {
       borderRadius: BorderRadius.circular(4),
       child: LinearProgressIndicator(
         value: ratio,
-        backgroundColor: theme.colorScheme.outlineVariant.withValues(alpha: 0.4),
+        backgroundColor: theme.colorScheme.outlineVariant.withValues(
+          alpha: 0.4,
+        ),
         valueColor: AlwaysStoppedAnimation(statusColor),
         minHeight: 4,
       ),
@@ -1451,7 +1456,10 @@ class _TransactionHistory extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   'Your payment history will appear here.',
-                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 13,
+                  ),
                 ),
               ],
             ),
@@ -1756,7 +1764,10 @@ class _FeeInstallmentSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Outstanding balance: ₹${balance.toStringAsFixed(0)}',
-            style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 12,
+            ),
           ),
           if (options.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -1798,7 +1809,9 @@ class _FeeInstallmentSheet extends StatelessWidget {
                         ? AppColors.success.withValues(alpha: 0.07)
                         : isPayable
                         ? theme.colorScheme.onSurface.withValues(alpha: 0.07)
-                        : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                        : theme.colorScheme.outlineVariant.withValues(
+                            alpha: 0.3,
+                          ),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: paid

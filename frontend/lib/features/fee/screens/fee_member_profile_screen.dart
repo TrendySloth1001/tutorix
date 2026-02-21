@@ -85,10 +85,7 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
               child: picture == null
                   ? Text(
                       displayName[0].toUpperCase(),
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: cs.onSurface,
-                      ),
+                      style: TextStyle(fontSize: 12, color: cs.onSurface),
                     )
                   : null,
             ),
@@ -359,7 +356,11 @@ class _AcademicTabState extends State<_AcademicTab>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.school_outlined, size: 48, color: theme.colorScheme.onSurfaceVariant),
+            Icon(
+              Icons.school_outlined,
+              size: 48,
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
             const SizedBox(height: 16),
             Text(
               'No academic records found',
@@ -936,7 +937,10 @@ class _StatusBar extends StatelessWidget {
           if (pending > 0)
             Expanded(
               flex: pending,
-              child: Container(height: 8, color: Theme.of(context).colorScheme.outlineVariant),
+              child: Container(
+                height: 8,
+                color: Theme.of(context).colorScheme.outlineVariant,
+              ),
             ),
         ],
       ),
@@ -1043,7 +1047,9 @@ class _RecordRow extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.all(6),
                       decoration: BoxDecoration(
-                        color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.1),
+                        color: theme.colorScheme.onSurfaceVariant.withValues(
+                          alpha: 0.1,
+                        ),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -1106,7 +1112,10 @@ class _ErrorRetry extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: TextStyle(color: Theme.of(context).colorScheme.onSurfaceVariant, fontSize: 13),
+            style: TextStyle(
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),

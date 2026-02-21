@@ -609,7 +609,10 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'Select an online payment to refund via Razorpay',
-                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 13,
+                  ),
                 ),
                 const SizedBox(height: 16),
                 if (loading)
@@ -625,7 +628,9 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                     child: Center(
                       child: Text(
                         'No online payments found for this record',
-                        style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   )
@@ -642,7 +647,9 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                       child: Material(
                         color: selected
                             ? theme.colorScheme.primary.withValues(alpha: 0.08)
-                            : theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
+                            : theme.colorScheme.outlineVariant.withValues(
+                                alpha: 0.2,
+                              ),
                         borderRadius: BorderRadius.circular(12),
                         child: InkWell(
                           borderRadius: BorderRadius.circular(12),
@@ -678,7 +685,9 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                                         Text(
                                           '${date.day}/${date.month}/${date.year}',
                                           style: TextStyle(
-                                            color: theme.colorScheme.onSurfaceVariant,
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
                                             fontSize: 12,
                                           ),
                                         ),
@@ -1781,7 +1790,10 @@ class _MemberCard extends StatelessWidget {
                 ? NetworkImage(member.picture!)
                 : null,
             child: member.picture == null
-                ? Icon(Icons.person_rounded, color: theme.colorScheme.onSurfaceVariant)
+                ? Icon(
+                    Icons.person_rounded,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  )
                 : null,
           ),
           const SizedBox(width: 12),
@@ -1921,13 +1933,13 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
             ),
           ),
           const SizedBox(height: 16),
-          Text(
-            'Collect Payment',
-            style: theme.textTheme.titleLarge,
-          ),
+          Text('Collect Payment', style: theme.textTheme.titleLarge),
           Text(
             'Balance: ₹${widget.record.balance.toStringAsFixed(0)}',
-            style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 16),
           TextField(
@@ -1963,12 +1975,16 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
                   decoration: BoxDecoration(
                     color: sel
                         ? theme.colorScheme.primary
-                        : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                        : theme.colorScheme.outlineVariant.withValues(
+                            alpha: 0.3,
+                          ),
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
                       color: sel
                           ? theme.colorScheme.primary
-                          : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3),
+                          : theme.colorScheme.onSurfaceVariant.withValues(
+                              alpha: 0.3,
+                            ),
                     ),
                   ),
                   child: Row(
@@ -1977,13 +1993,17 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
                       Icon(
                         _modeIcon(m),
                         size: 13,
-                        color: sel ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                        color: sel
+                            ? theme.colorScheme.onPrimary
+                            : theme.colorScheme.onSurface,
                       ),
                       const SizedBox(width: 4),
                       Text(
                         _modeLabel(m),
                         style: TextStyle(
-                          color: sel ? theme.colorScheme.onPrimary : theme.colorScheme.onSurface,
+                          color: sel
+                              ? theme.colorScheme.onPrimary
+                              : theme.colorScheme.onSurface,
                           fontSize: 12,
                           fontWeight: FontWeight.w600,
                         ),
@@ -2018,7 +2038,9 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.4,
+                  ),
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -2317,7 +2339,10 @@ class _InstallmentPickerSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             'Outstanding balance: ₹${balance.toStringAsFixed(0)}',
-            style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 12,
+            ),
           ),
           if (options.isNotEmpty) ...[
             const SizedBox(height: 6),
@@ -2360,7 +2385,9 @@ class _InstallmentPickerSheet extends StatelessWidget {
                         ? AppColors.success.withValues(alpha: 0.07)
                         : isPayable
                         ? theme.colorScheme.primary.withValues(alpha: 0.07)
-                        : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                        : theme.colorScheme.outlineVariant.withValues(
+                            alpha: 0.3,
+                          ),
                     borderRadius: BorderRadius.circular(12),
                     border: Border.all(
                       color: paid

@@ -219,7 +219,9 @@ class _FinancialOverviewCard extends StatelessWidget {
       color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2)),
+        side: BorderSide(
+          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -253,7 +255,11 @@ class _FinancialOverviewCard extends StatelessWidget {
                     color: theme.colorScheme.onSurface,
                   ),
                 ),
-                Container(width: 1, height: 30, color: theme.colorScheme.outlineVariant),
+                Container(
+                  width: 1,
+                  height: 30,
+                  color: theme.colorScheme.outlineVariant,
+                ),
                 Expanded(
                   child: _MiniStat(
                     label: 'Pending',
@@ -261,7 +267,11 @@ class _FinancialOverviewCard extends StatelessWidget {
                     color: theme.colorScheme.onSurface,
                   ),
                 ),
-                Container(width: 1, height: 30, color: theme.colorScheme.outlineVariant),
+                Container(
+                  width: 1,
+                  height: 30,
+                  color: theme.colorScheme.outlineVariant,
+                ),
                 Expanded(
                   child: _MiniStat(
                     label: 'Overdue',
@@ -328,7 +338,9 @@ class _SectionCard extends StatelessWidget {
       color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2)),
+        side: BorderSide(
+          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -446,7 +458,10 @@ class _PaymentModeList extends StatelessWidget {
     if (modes.isEmpty) {
       return Text(
         'No payments recorded yet',
-        style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
+        style: TextStyle(
+          color: theme.colorScheme.onSurfaceVariant,
+          fontSize: 13,
+        ),
       );
     }
     return Column(
@@ -458,7 +473,9 @@ class _PaymentModeList extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: 0.3,
+                  ),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(

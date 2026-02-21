@@ -444,12 +444,16 @@ class _Body extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? theme.colorScheme.onSurface.withValues(alpha: 0.07)
-                          : theme.colorScheme.outlineVariant.withValues(alpha: 0.2),
+                          : theme.colorScheme.outlineVariant.withValues(
+                              alpha: 0.2,
+                            ),
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
                         color: isSelected
                             ? theme.colorScheme.onSurface.withValues(alpha: 0.5)
-                            : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.15),
+                            : theme.colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.15,
+                              ),
                         width: isSelected ? 1.5 : 1,
                       ),
                     ),
@@ -534,7 +538,10 @@ class _Body extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 'Custom amount for this assignment',
-                style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 13),
+                style: TextStyle(
+                  color: theme.colorScheme.onSurface,
+                  fontSize: 13,
+                ),
               ),
             ],
           ),
@@ -605,7 +612,9 @@ class _Body extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.4,
+                  ),
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -648,7 +657,9 @@ class _Body extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
               decoration: BoxDecoration(
                 border: Border.all(
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.4,
+                  ),
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
@@ -687,14 +698,20 @@ class _Body extends StatelessWidget {
                 onPressed: onSelectAll,
                 child: Text(
                   'All',
-                  style: TextStyle(color: theme.colorScheme.onSurface, fontSize: 12),
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurface,
+                    fontSize: 12,
+                  ),
                 ),
               ),
               TextButton(
                 onPressed: onClearAll,
                 child: Text(
                   'Clear',
-                  style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
+                  style: TextStyle(
+                    color: theme.colorScheme.onSurfaceVariant,
+                    fontSize: 12,
+                  ),
                 ),
               ),
             ],
@@ -702,7 +719,10 @@ class _Body extends StatelessWidget {
           const SizedBox(height: 8),
           Text(
             '${selectedMemberIds.length} of ${members.length} selected',
-            style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12),
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 12,
+            ),
           ),
           const SizedBox(height: 10),
           if (members.isEmpty)
@@ -1058,7 +1078,10 @@ class _Hint extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 12),
       child: Text(
         text,
-        style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
+        style: TextStyle(
+          color: theme.colorScheme.onSurfaceVariant,
+          fontSize: 13,
+        ),
       ),
     );
   }
@@ -1342,7 +1365,11 @@ class _PullSettingsSheet extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          Icon(r.icon, size: 15, color: theme.colorScheme.onSurfaceVariant),
+                          Icon(
+                            r.icon,
+                            size: 15,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
                           const SizedBox(width: 10),
                           Text(
                             r.label,

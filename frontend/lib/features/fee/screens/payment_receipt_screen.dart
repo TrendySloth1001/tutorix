@@ -148,7 +148,10 @@ class PaymentReceiptScreen extends StatelessWidget {
             const SizedBox(height: 4),
             Text(
               _formatDateTime(paidAt),
-              style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
             ),
             const SizedBox(height: 32),
 
@@ -353,9 +356,7 @@ class PaymentReceiptScreen extends StatelessWidget {
                     onPressed: () => _copyReceipt(context),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: theme.colorScheme.primary,
-                      side: BorderSide(
-                        color: theme.colorScheme.outlineVariant,
-                      ),
+                      side: BorderSide(color: theme.colorScheme.outlineVariant),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -490,7 +491,10 @@ class _DetailRow extends StatelessWidget {
             width: 110,
             child: Text(
               label,
-              style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
+              style: TextStyle(
+                color: theme.colorScheme.onSurfaceVariant,
+                fontSize: 13,
+              ),
             ),
           ),
           Expanded(
@@ -513,6 +517,9 @@ class _DetailRow extends StatelessWidget {
 class _Divider extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Divider(height: 1, color: Theme.of(context).colorScheme.outlineVariant);
+    return Divider(
+      height: 1,
+      color: Theme.of(context).colorScheme.outlineVariant,
+    );
   }
 }

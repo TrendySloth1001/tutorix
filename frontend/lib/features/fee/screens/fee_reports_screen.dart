@@ -113,10 +113,7 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
         backgroundColor: cs.surface,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(
-            Icons.arrow_back_ios_new_rounded,
-            color: cs.onSurface,
-          ),
+          icon: Icon(Icons.arrow_back_ios_new_rounded, color: cs.onSurface),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -239,7 +236,9 @@ class _OverdueList extends StatelessWidget {
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(16),
               side: BorderSide(
-                color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+                color: theme.colorScheme.onSurfaceVariant.withValues(
+                  alpha: 0.2,
+                ),
               ),
             ),
             child: InkWell(
@@ -379,10 +378,14 @@ class _FYReport extends StatelessWidget {
                   vertical: 6,
                 ),
                 decoration: BoxDecoration(
-                  color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
+                  color: theme.colorScheme.outlineVariant.withValues(
+                    alpha: 0.1,
+                  ),
                   borderRadius: BorderRadius.circular(20),
                   border: Border.all(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.2,
+                    ),
                   ),
                 ),
                 child: DropdownButton<String>(
@@ -428,7 +431,9 @@ class _FYReport extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(vertical: 24),
                     child: Text(
                       'No data for this financial year',
-                      style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
+                      style: TextStyle(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
                     ),
                   )
                 else ...[
@@ -463,9 +468,8 @@ class _FYReport extends StatelessWidget {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.outlineVariant.withValues(
-                                    alpha: 0.3,
-                                  ),
+                                  color: theme.colorScheme.outlineVariant
+                                      .withValues(alpha: 0.3),
                                   borderRadius: BorderRadius.circular(12),
                                 ),
                                 child: Text(
@@ -523,7 +527,9 @@ class _SectionCard extends StatelessWidget {
       color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2)),
+        side: BorderSide(
+          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -559,7 +565,9 @@ class _FinancialOverviewCard extends StatelessWidget {
       color: theme.colorScheme.outlineVariant.withValues(alpha: 0.1),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
-        side: BorderSide(color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2)),
+        side: BorderSide(
+          color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.2),
+        ),
       ),
       child: Padding(
         padding: const EdgeInsets.all(20),
@@ -593,7 +601,11 @@ class _FinancialOverviewCard extends StatelessWidget {
                     color: theme.colorScheme.onSurface,
                   ),
                 ),
-                Container(width: 1, height: 30, color: theme.colorScheme.outlineVariant),
+                Container(
+                  width: 1,
+                  height: 30,
+                  color: theme.colorScheme.outlineVariant,
+                ),
                 Expanded(
                   child: _MiniStat(
                     label: 'Pending',
@@ -601,7 +613,11 @@ class _FinancialOverviewCard extends StatelessWidget {
                     color: theme.colorScheme.onSurface,
                   ),
                 ),
-                Container(width: 1, height: 30, color: theme.colorScheme.outlineVariant),
+                Container(
+                  width: 1,
+                  height: 30,
+                  color: theme.colorScheme.outlineVariant,
+                ),
                 Expanded(
                   child: _MiniStat(
                     label: 'Overdue',
@@ -610,7 +626,11 @@ class _FinancialOverviewCard extends StatelessWidget {
                   ),
                 ),
                 if (summary.totalRefunded > 0) ...[
-                  Container(width: 1, height: 30, color: theme.colorScheme.outlineVariant),
+                  Container(
+                    width: 1,
+                    height: 30,
+                    color: theme.colorScheme.outlineVariant,
+                  ),
                   Expanded(
                     child: _MiniStat(
                       label: 'Refunded',
@@ -703,7 +723,9 @@ class _MonthlyBarChart extends StatelessWidget {
                           '₹${d.total.toStringAsFixed(0)} · ${d.count} payments',
                       child: Container(
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primary.withValues(alpha: 0.8),
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.8,
+                          ),
                           borderRadius: BorderRadius.vertical(
                             top: Radius.circular(6),
                           ),
@@ -751,7 +773,10 @@ class _ErrorRetry extends StatelessWidget {
           Text(
             error,
             textAlign: TextAlign.center,
-            style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 13),
+            style: TextStyle(
+              color: theme.colorScheme.onSurfaceVariant,
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 16),
           OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
