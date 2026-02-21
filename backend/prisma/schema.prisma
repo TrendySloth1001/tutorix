@@ -157,8 +157,11 @@ model Coaching {
   panNumber     String?   // PAN for TDS/compliance
 
   // Razorpay Route — linked account for direct settlement
-  razorpayAccountId String?  // Razorpay linked account id (acc_xxxxx)
-  razorpayActivated Boolean @default(false)  // Whether Razorpay Route is active
+  razorpayAccountId    String?  // Razorpay linked account id (acc_xxxxx)
+  razorpayActivated    Boolean @default(false)  // Whether Razorpay Route is active
+  razorpayStakeholderId String?  // Stakeholder id for KYC tracking
+  razorpayProductId    String?  // Product config id for Route product
+  razorpayOnboardingStatus String? // needs_clarification | under_review | activated | suspended
   platformFeePercent Float  @default(1.0)    // Tutorix commission (default 1%)
 
   // Bank details (for Razorpay linked account creation)

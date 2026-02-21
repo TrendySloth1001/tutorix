@@ -1,11 +1,17 @@
 import { type Request, type Response, Router } from 'express';
 import crypto from 'crypto';
+import Razorpay from 'razorpay';
 import prisma from '../../infra/prisma.js';
 import { PaymentService } from './payment.service.js';
 import { NotificationService } from '../notification/notification.service.js';
 
 const paymentSvc = new PaymentService();
 const notifSvc = new NotificationService();
+
+const razorpay = new Razorpay({
+    key_id: process.env.RAZORPAY_KEY_ID || '',
+    key_secret: process.env.RAZORPAY_KEY_SECRET || '',
+});
 
 /**
  * Razorpay Webhook Handler.
@@ -264,11 +270,44 @@ webhookRouter.post('/razorpay', async (req: Request, res: Response) => {
                         }).catch(() => {});
                     }
 
-                    // If dispute is lost, reverse the payment on the fee record
+                    // If dispute is lost, reverse the Route transfer + reverse the payment on the fee record
                     // C4 fix: Order lookup + balance reversal inside single Serializable tx
                     if (event === 'payment.dispute.lost') {
                         const disputeAmount = disputeEntity?.amount ? disputeEntity.amount / 100 : 0;
                         if (disputeAmount > 0) {
+                            // Reverse Route transfer before adjusting balance
+                            const disputeAmountPaise = Math.round(disputeAmount * 100);
+                            const routeOrder = await prisma.razorpayOrder.findFirst({
+                                where: {
+                                    razorpayPaymentId: disputePaymentId,
+                                    paymentRecorded: true,
+                                    transferId: { not: null },
+                                    transferStatus: { in: ['created', 'processed', 'settled'] },
+                                },
+                                select: { id: true, transferId: true, amountPaise: true, platformFeePaise: true },
+                            });
+                            if (routeOrder?.transferId) {
+                                try {
+                                    const orderAmt = routeOrder.amountPaise;
+                                    const platformFee = routeOrder.platformFeePaise ?? 0;
+                                    const transferAmt = orderAmt - platformFee;
+                                    const reversalAmt = orderAmt > 0
+                                        ? Math.round((disputeAmountPaise / orderAmt) * transferAmt)
+                                        : 0;
+                                    if (reversalAmt > 0) {
+                                        await (razorpay as any).transfers.reverse(routeOrder.transferId, {
+                                            amount: reversalAmt,
+                                        });
+                                        console.log(`[Webhook] Route transfer reversed on dispute: ₹${(reversalAmt / 100).toFixed(2)} from transfer ${routeOrder.transferId}`);
+                                    }
+                                } catch (revErr: any) {
+                                    console.error(
+                                        `[Webhook] Route transfer reversal on dispute failed for ${routeOrder.transferId}:`,
+                                        revErr?.error?.description || revErr?.message,
+                                    );
+                                }
+                            }
+
                             await prisma.$transaction(async (tx) => {
                                 const disputeOrder = await tx.razorpayOrder.findFirst({
                                     where: { razorpayPaymentId: disputePaymentId },
@@ -317,6 +356,62 @@ webhookRouter.post('/razorpay', async (req: Request, res: Response) => {
                     where: { event, processed: false },
                     data: { processed: true },
                 });
+                break;
+            }
+
+            // Handle linked account status changes (Route onboarding)
+            case 'account.under_review':
+            case 'account.activated':
+            case 'account.suspended':
+            case 'account.needs_clarification':
+            case 'account.funds_on_hold':
+            case 'account.funds_released': {
+                const accountEntity = payload?.payload?.account?.entity;
+                const accountId = accountEntity?.id;
+                if (accountId) {
+                    const statusMap: Record<string, string> = {
+                        'account.under_review': 'under_review',
+                        'account.activated': 'activated',
+                        'account.suspended': 'suspended',
+                        'account.needs_clarification': 'needs_clarification',
+                        'account.funds_on_hold': 'funds_on_hold',
+                        'account.funds_released': 'activated', // funds released = back to active
+                    };
+                    const newStatus = statusMap[event] ?? 'unknown';
+                    const isActivated = event === 'account.activated' || event === 'account.funds_released';
+
+                    await prisma.coaching.updateMany({
+                        where: { razorpayAccountId: accountId },
+                        data: {
+                            razorpayOnboardingStatus: newStatus,
+                            ...(isActivated ? { razorpayActivated: true } : {}),
+                            ...(event === 'account.suspended' ? { razorpayActivated: false } : {}),
+                        },
+                    });
+
+                    // Notify coaching owner about account status change
+                    const coaching = await prisma.coaching.findFirst({
+                        where: { razorpayAccountId: accountId },
+                        select: { id: true, ownerId: true, name: true },
+                    });
+                    if (coaching?.ownerId) {
+                        const statusLabels: Record<string, string> = {
+                            'under_review': 'Your payment account is under review by Razorpay.',
+                            'activated': 'Your payment account has been activated! You can now receive payments directly.',
+                            'suspended': 'Your payment account has been suspended. Please contact support.',
+                            'needs_clarification': 'Razorpay needs additional information for your payment account. Please check your email.',
+                            'funds_on_hold': 'Settlements to your bank account are temporarily on hold.',
+                        };
+                        await notifSvc.create({
+                            userId: coaching.ownerId,
+                            coachingId: coaching.id,
+                            type: 'FEE_PAYMENT',
+                            title: 'Payment Account Update',
+                            message: statusLabels[newStatus] ?? `Payment account status changed to ${newStatus}.`,
+                            data: { accountId, status: newStatus },
+                        }).catch(() => {});
+                    }
+                }
                 break;
             }
 

@@ -68,6 +68,11 @@ app.get('/payment/config', authMiddleware, paymentCtrl.getConfig.bind(paymentCtr
 app.get('/coaching/:coachingId/payment-settings', authMiddleware, paymentCtrl.getPaymentSettings.bind(paymentCtrl));
 app.patch('/coaching/:coachingId/payment-settings', authMiddleware, paymentCtrl.updatePaymentSettings.bind(paymentCtrl));
 
+// Razorpay Route linked account management
+app.post('/coaching/:coachingId/payment-settings/linked-account', authMiddleware, paymentCtrl.createLinkedAccount.bind(paymentCtrl));
+app.post('/coaching/:coachingId/payment-settings/linked-account/refresh', authMiddleware, paymentCtrl.refreshLinkedAccountStatus.bind(paymentCtrl));
+app.delete('/coaching/:coachingId/payment-settings/linked-account', authMiddleware, paymentCtrl.deleteLinkedAccount.bind(paymentCtrl));
+
 app.get('/hello', (req, res) => {
   res.json({ message: 'Hello from Express TypeScript!' });
 });

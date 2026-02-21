@@ -3,6 +3,7 @@ import { PaymentService } from './payment.service.js';
 import {
     createOrderSchema, verifyPaymentSchema, initiateRefundSchema,
     multiPayCreateOrderSchema, failOrderSchema, paymentSettingsSchema,
+    createLinkedAccountSchema,
     validateBody,
 } from '../../shared/validation/fee.validation.js';
 
@@ -149,4 +150,42 @@ export class PaymentController {
             res.status(e.status ?? 500).json({ error: e.message });
         }
     }
-}
+
+    // ── Razorpay Route Linked Account Management ──────────────────
+
+    /** POST /coaching/:coachingId/payment-settings/linked-account */
+    async createLinkedAccount(req: Request, res: Response) {
+        try {
+            const { coachingId } = req.params as { coachingId: string };
+            const userId = requireUserId(req);
+            const body = validateBody(createLinkedAccountSchema, req.body);
+            const data = await svc.createLinkedAccount(coachingId, userId, body);
+            res.status(201).json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message, fieldErrors: e.fieldErrors });
+        }
+    }
+
+    /** POST /coaching/:coachingId/payment-settings/linked-account/refresh */
+    async refreshLinkedAccountStatus(req: Request, res: Response) {
+        try {
+            const { coachingId } = req.params as { coachingId: string };
+            const userId = requireUserId(req);
+            const data = await svc.refreshLinkedAccountStatus(coachingId, userId);
+            res.json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }
+
+    /** DELETE /coaching/:coachingId/payment-settings/linked-account */
+    async deleteLinkedAccount(req: Request, res: Response) {
+        try {
+            const { coachingId } = req.params as { coachingId: string };
+            const userId = requireUserId(req);
+            const data = await svc.deleteLinkedAccount(coachingId, userId);
+            res.json(data);
+        } catch (e: any) {
+            res.status(e.status ?? 500).json({ error: e.message });
+        }
+    }}

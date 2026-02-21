@@ -6,6 +6,7 @@ import 'fee_structures_screen.dart';
 import 'assign_fee_screen.dart';
 import 'fee_reports_screen.dart';
 import 'fee_calendar_screen.dart';
+import 'payment_settings_screen.dart';
 import '../../../core/theme/design_tokens.dart';
 
 /// Admin-facing fee dashboard for a coaching.
@@ -584,6 +585,17 @@ class _QuickActions extends StatelessWidget {
             context,
             MaterialPageRoute(
               builder: (_) => AssignFeeScreen(coachingId: coachingId),
+            ),
+          ),
+        ),
+        const SizedBox(height: Spacing.sp12),
+        _ActionTile(
+          icon: Icons.account_balance_rounded,
+          label: 'Payment Settings',
+          onTap: () => Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => PaymentSettingsScreen(coachingId: coachingId),
             ),
           ),
         ),

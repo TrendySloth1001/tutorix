@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../services/payment_service.dart';
 import '../../../core/theme/design_tokens.dart';
+import '../../auth/controllers/auth_controller.dart';
+import '../../../shared/widgets/app_alert.dart';
 
 /// Admin screen for configuring coaching payment settings:
 /// bank account, GSTIN, PAN — required for Razorpay Route transfers.
@@ -25,9 +28,12 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
 
   bool _loading = true;
   bool _saving = false;
+  bool _activating = false;
+  bool _refreshing = false;
   String? _error;
   String? _razorpayAccountId;
   bool _razorpayActivated = false;
+  String? _onboardingStatus;
 
   @override
   void initState() {
@@ -63,6 +69,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
         _ifscCtrl.text = data['bankIfscCode'] as String? ?? '';
         _razorpayAccountId = data['razorpayAccountId'] as String?;
         _razorpayActivated = data['razorpayActivated'] as bool? ?? false;
+        _onboardingStatus = data['razorpayOnboardingStatus'] as String?;
         _loading = false;
       });
     } catch (e) {
@@ -114,6 +121,304 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
     }
   }
 
+  // ── Razorpay Route Linked Account ──────────────────────────────
+
+  Future<void> _activateRoute() async {
+    final auth = Provider.of<AuthController>(context, listen: false);
+    final user = auth.user;
+    if (user == null) return;
+
+    // Validate bank details are filled
+    if (_accNumCtrl.text.trim().isEmpty ||
+        _ifscCtrl.text.trim().isEmpty ||
+        _accNameCtrl.text.trim().isEmpty) {
+      AppAlert.error(
+        context,
+        'Please save your bank details first (Account Number, IFSC, Account Holder Name)',
+      );
+      return;
+    }
+
+    final confirm = await AppAlert.confirm(
+      context,
+      title: 'Activate Razorpay Route',
+      message:
+          'This will create a linked account on Razorpay for receiving payments directly. '
+          'Your bank details and PAN will be shared with Razorpay for KYC verification.\n\n'
+          'Continue?',
+      confirmText: 'Activate',
+      cancelText: 'Cancel',
+    );
+    if (!confirm || !mounted) return;
+
+    setState(() => _activating = true);
+    try {
+      final result = await _svc.createLinkedAccount(
+        widget.coachingId,
+        ownerName: user.name ?? 'Account Owner',
+        ownerEmail: user.email,
+        ownerPhone: (user.phone ?? '').replaceAll(RegExp(r'^\+91'), ''),
+      );
+      if (!mounted) return;
+
+      final msg = result['message'] as String? ?? 'Linked account created';
+      AppAlert.info(context, title: 'Route Activation', message: msg);
+      _load(); // reload status
+    } catch (e) {
+      if (!mounted) return;
+      AppAlert.error(context, e);
+    } finally {
+      if (mounted) setState(() => _activating = false);
+    }
+  }
+
+  Future<void> _refreshStatus() async {
+    setState(() => _refreshing = true);
+    try {
+      final result = await _svc.refreshLinkedAccountStatus(widget.coachingId);
+      if (!mounted) return;
+
+      final msg = result['message'] as String? ?? 'Status updated';
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(msg)),
+      );
+      _load();
+    } catch (e) {
+      if (!mounted) return;
+      AppAlert.error(context, e);
+    } finally {
+      if (mounted) setState(() => _refreshing = false);
+    }
+  }
+
+  Future<void> _deleteLinkedAccount() async {
+    final confirm = await AppAlert.confirm(
+      context,
+      title: 'Remove Linked Account',
+      message:
+          'This will delete the Razorpay linked account. '
+          'Payments will no longer be routed to your bank automatically.\n\n'
+          'This action cannot be undone.',
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      confirmColor: Theme.of(context).colorScheme.error,
+    );
+    if (!confirm || !mounted) return;
+
+    try {
+      await _svc.deleteLinkedAccount(widget.coachingId);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Linked account removed')),
+      );
+      _load();
+    } catch (e) {
+      if (!mounted) return;
+      AppAlert.error(context, e);
+    }
+  }
+
+  Widget _buildRouteStatusCard(ThemeData theme) {
+    // No linked account yet — show activation CTA
+    if (_razorpayAccountId == null) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(Spacing.sp16),
+        decoration: BoxDecoration(
+          color: theme.colorScheme.secondary.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(Radii.md),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  Icons.account_balance_outlined,
+                  color: theme.colorScheme.secondary,
+                ),
+                const SizedBox(width: Spacing.sp12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Razorpay Route Not Configured',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: theme.colorScheme.secondary,
+                          fontSize: FontSize.body,
+                        ),
+                      ),
+                      Text(
+                        'Activate to receive payments directly in your bank account',
+                        style: TextStyle(
+                          color: theme.colorScheme.secondary,
+                          fontSize: FontSize.caption,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: Spacing.sp12),
+            SizedBox(
+              width: double.infinity,
+              child: FilledButton.icon(
+                onPressed: _activating ? null : _activateRoute,
+                icon: _activating
+                    ? SizedBox(
+                        height: 16,
+                        width: 16,
+                        child: CircularProgressIndicator(
+                          color: theme.colorScheme.onPrimary,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : const Icon(Icons.rocket_launch_rounded, size: 18),
+                label: Text(
+                  _activating
+                      ? 'Creating linked account...'
+                      : 'Activate Razorpay Route',
+                ),
+                style: FilledButton.styleFrom(
+                  backgroundColor: theme.colorScheme.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(Radii.md),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Linked account exists
+    final isActive = _razorpayActivated;
+    final isPending = _onboardingStatus == 'under_review' ||
+        _onboardingStatus == 'needs_clarification';
+
+    final Color statusColor;
+    final IconData statusIcon;
+    final String statusTitle;
+    final String statusSubtitle;
+
+    if (isActive) {
+      statusColor = theme.colorScheme.primary;
+      statusIcon = Icons.check_circle_rounded;
+      statusTitle = 'Razorpay Route Active';
+      statusSubtitle = 'Payments are routed directly to your bank account';
+    } else if (isPending) {
+      statusColor = Colors.orange;
+      statusIcon = Icons.hourglass_top_rounded;
+      statusTitle = 'Verification Pending';
+      statusSubtitle = _onboardingStatus == 'needs_clarification'
+          ? 'Razorpay requires additional information — check your email'
+          : 'Razorpay is reviewing your details (1-2 business days)';
+    } else {
+      statusColor = theme.colorScheme.error;
+      statusIcon = Icons.warning_rounded;
+      statusTitle = 'Account ${_onboardingStatus ?? 'Unknown'}';
+      statusSubtitle = 'Contact support if you need help';
+    }
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(Spacing.sp16),
+      decoration: BoxDecoration(
+        color: statusColor.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(Radii.md),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(statusIcon, color: statusColor),
+              const SizedBox(width: Spacing.sp12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      statusTitle,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: statusColor,
+                        fontSize: FontSize.body,
+                      ),
+                    ),
+                    Text(
+                      statusSubtitle,
+                      style: TextStyle(
+                        color: statusColor,
+                        fontSize: FontSize.caption,
+                      ),
+                    ),
+                    if (_razorpayAccountId != null)
+                      Text(
+                        'Account: $_razorpayAccountId',
+                        style: TextStyle(
+                          color: theme.colorScheme.onSurfaceVariant,
+                          fontSize: FontSize.micro,
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          if (!isActive) ...[
+            const SizedBox(height: Spacing.sp12),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: _refreshing ? null : _refreshStatus,
+                    icon: _refreshing
+                        ? const SizedBox(
+                            height: 14,
+                            width: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh_rounded, size: 16),
+                    label: const Text('Check Status'),
+                    style: OutlinedButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(Radii.md),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: Spacing.sp8),
+                OutlinedButton.icon(
+                  onPressed: _deleteLinkedAccount,
+                  icon: Icon(
+                    Icons.delete_outline_rounded,
+                    size: 16,
+                    color: theme.colorScheme.error,
+                  ),
+                  label: Text(
+                    'Remove',
+                    style: TextStyle(color: theme.colorScheme.error),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: theme.colorScheme.error),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(Radii.md),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -158,70 +463,8 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // ── Razorpay Status ──
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(Spacing.sp16),
-                      decoration: BoxDecoration(
-                        color: _razorpayActivated
-                            ? theme.colorScheme.primary.withValues(alpha: 0.08)
-                            : theme.colorScheme.secondary.withValues(
-                                alpha: 0.08,
-                              ),
-                        borderRadius: BorderRadius.circular(Radii.md),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _razorpayActivated
-                                ? Icons.check_circle_rounded
-                                : Icons.info_outline_rounded,
-                            color: _razorpayActivated
-                                ? theme.colorScheme.primary
-                                : theme.colorScheme.secondary,
-                          ),
-                          const SizedBox(width: Spacing.sp12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _razorpayActivated
-                                      ? 'Razorpay Route Active'
-                                      : 'Razorpay Route Not Configured',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w700,
-                                    color: _razorpayActivated
-                                        ? theme.colorScheme.primary
-                                        : theme.colorScheme.secondary,
-                                    fontSize: FontSize.body,
-                                  ),
-                                ),
-                                Text(
-                                  _razorpayActivated
-                                      ? 'Payments will be routed to your bank account'
-                                      : 'Contact Tutorix support to link your Razorpay account',
-                                  style: TextStyle(
-                                    color: _razorpayActivated
-                                        ? theme.colorScheme.primary
-                                        : theme.colorScheme.secondary,
-                                    fontSize: FontSize.caption,
-                                  ),
-                                ),
-                                if (_razorpayAccountId != null)
-                                  Text(
-                                    'Account: $_razorpayAccountId',
-                                    style: TextStyle(
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                      fontSize: FontSize.micro,
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
+                    // ── Razorpay Route Status ──
+                    _buildRouteStatusCard(theme),
 
                     // ── Tax Details ──
                     const SizedBox(height: Spacing.sp24),

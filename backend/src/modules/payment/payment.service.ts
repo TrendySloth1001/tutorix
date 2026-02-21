@@ -487,7 +487,50 @@ export class PaymentService {
             return { feeRefund, razorpayRefund };
         }, { isolationLevel: 'Serializable' });
 
-        // 5. Call Razorpay refund API (after DB records exist)
+        // 5. Reverse Route transfer if one exists (before refunding the payment)
+        //    When a Route transfer was made, we must reverse the proportional amount from
+        //    the linked account first. Razorpay also auto-reverses on refund, but explicit
+        //    reversal gives us better tracking and error handling for insufficient balance cases.
+        const routeOrder = await prisma.razorpayOrder.findFirst({
+            where: {
+                razorpayPaymentId: payment.razorpayPaymentId!,
+                coachingId,
+                paymentRecorded: true,
+                transferId: { not: null },
+                transferStatus: { in: ['created', 'processed', 'settled'] },
+            },
+            select: { id: true, transferId: true, amountPaise: true, platformFeePaise: true },
+        });
+
+        if (routeOrder?.transferId) {
+            try {
+                // Reverse proportional amount from linked account
+                // transferAmount = orderAmount - platformFee, so reversal = refundPaise * (transferAmount / orderPaise)
+                const orderAmount = routeOrder.amountPaise;
+                const platformFee = routeOrder.platformFeePaise ?? 0;
+                const transferAmount = orderAmount - platformFee;
+                const reversalAmount = orderAmount > 0
+                    ? Math.round((amountPaise / orderAmount) * transferAmount)
+                    : 0;
+
+                if (reversalAmount > 0) {
+                    await (razorpay as any).transfers.reverse(routeOrder.transferId, {
+                        amount: reversalAmount,
+                    });
+                    console.log(`[PaymentService] Route transfer reversed: ₹${(reversalAmount / 100).toFixed(2)} from transfer ${routeOrder.transferId}`);
+                }
+            } catch (transferErr: any) {
+                // Transfer reversal failed — likely insufficient balance in linked account.
+                // Log but continue with the refund — Razorpay may auto-reverse, or the refund
+                // will come from the platform's pool (which is the fallback behavior).
+                console.error(
+                    `[PaymentService] Route transfer reversal failed for ${routeOrder.transferId}:`,
+                    transferErr?.error?.description || transferErr?.message,
+                );
+            }
+        }
+
+        // 6. Call Razorpay refund API (after DB records exist + transfer reversal attempted)
         try {
             const rzpRefund = await razorpay.payments.refund(payment.razorpayPaymentId, {
                 amount: amountPaise,
@@ -1013,15 +1056,18 @@ export class PaymentService {
 
     // ── Payment Settings (Bank Account + Razorpay Route) ──────────
 
+    private static readonly SETTINGS_SELECT = {
+        id: true, name: true,
+        gstNumber: true, panNumber: true,
+        razorpayAccountId: true, razorpayActivated: true, platformFeePercent: true,
+        razorpayStakeholderId: true, razorpayProductId: true, razorpayOnboardingStatus: true,
+        bankAccountName: true, bankAccountNumber: true, bankIfscCode: true, bankName: true,
+    } as const;
+
     async getPaymentSettings(coachingId: string) {
         const coaching = await prisma.coaching.findUnique({
             where: { id: coachingId },
-            select: {
-                id: true, name: true,
-                gstNumber: true, panNumber: true,
-                razorpayAccountId: true, razorpayActivated: true, platformFeePercent: true,
-                bankAccountName: true, bankAccountNumber: true, bankIfscCode: true, bankName: true,
-            },
+            select: PaymentService.SETTINGS_SELECT,
         });
         if (!coaching) throw Object.assign(new Error('Coaching not found'), { status: 404 });
         return coaching;
@@ -1051,12 +1097,272 @@ export class PaymentService {
         return prisma.coaching.update({
             where: { id: coachingId },
             data,
+            select: PaymentService.SETTINGS_SELECT,
+        });
+    }
+
+    // ── Razorpay Route Linked Account Onboarding ──────────────────
+
+    /**
+     * Creates a Razorpay linked account for a coaching using Route v2 APIs.
+     * Steps: 1) Create Account  2) Create Stakeholder  3) Request Route Product  4) Configure Settlement
+     *
+     * Requires: owner's email/phone, coaching name, PAN, bank details.
+     * After this, Razorpay performs KYC (may take time). Check status via fetchLinkedAccountStatus().
+     */
+    async createLinkedAccount(coachingId: string, userId: string, dto: {
+        ownerName: string;
+        ownerEmail: string;
+        ownerPhone: string;
+        businessType?: string | undefined;
+    }) {
+        // 1. Verify ownership + prerequisites
+        const coaching = await prisma.coaching.findUnique({
+            where: { id: coachingId },
             select: {
-                id: true, name: true,
-                gstNumber: true, panNumber: true,
-                razorpayAccountId: true, razorpayActivated: true, platformFeePercent: true,
+                id: true, name: true, ownerId: true,
+                razorpayAccountId: true, razorpayActivated: true,
+                panNumber: true, gstNumber: true,
                 bankAccountName: true, bankAccountNumber: true, bankIfscCode: true, bankName: true,
             },
         });
+        if (!coaching) throw Object.assign(new Error('Coaching not found'), { status: 404 });
+        if (coaching.ownerId !== userId) throw Object.assign(new Error('Only the owner can create a linked account'), { status: 403 });
+
+        if (coaching.razorpayAccountId) {
+            throw Object.assign(
+                new Error('Linked account already exists. Use refresh status to check activation.'),
+                { status: 409 },
+            );
+        }
+
+        // Validate prerequisites
+        if (!coaching.bankAccountNumber || !coaching.bankIfscCode || !coaching.bankAccountName) {
+            throw Object.assign(
+                new Error('Bank details (account number, IFSC, account holder name) are required before creating a linked account'),
+                { status: 400 },
+            );
+        }
+
+        try {
+            // 2. Create Razorpay Account (Route v2)
+            const legalInfo: Record<string, string> = {};
+            if (coaching.panNumber) legalInfo.pan = coaching.panNumber;
+            if (coaching.gstNumber) legalInfo.gst = coaching.gstNumber;
+
+            const account = await (razorpay as any).accounts.create({
+                email: dto.ownerEmail,
+                phone: dto.ownerPhone,
+                type: 'route',
+                legal_business_name: coaching.name,
+                business_type: dto.businessType || 'individual',
+                ...(Object.keys(legalInfo).length > 0 ? { legal_info: legalInfo } : {}),
+                profile: {
+                    category: 'education',
+                    subcategory: 'coaching',
+                    addresses: {
+                        registered: {
+                            street1: 'N/A',
+                            street2: '',
+                            city: 'N/A',
+                            state: 'N/A',
+                            postal_code: '000000',
+                            country: 'IN',
+                        },
+                    },
+                },
+                notes: {
+                    coachingId,
+                    platform: 'tutorix',
+                },
+            });
+
+            const accountId: string = account.id;
+
+            // 3. Create Stakeholder (owner's KYC info)
+            let stakeholderId: string | null = null;
+            try {
+                const nameParts = dto.ownerName.trim().split(/\s+/);
+                const stakeholder = await (razorpay as any).stakeholders.create(accountId, {
+                    name: {
+                        first: nameParts[0] || dto.ownerName,
+                        last: nameParts.slice(1).join(' ') || '.',
+                    },
+                    phone: {
+                        primary: dto.ownerPhone,
+                    },
+                    email: dto.ownerEmail,
+                    notes: { role: 'owner', coachingId },
+                });
+                stakeholderId = stakeholder.id;
+            } catch (err: any) {
+                console.error(`[PaymentService] Stakeholder creation failed for acc ${accountId}:`, err?.message);
+                // Non-fatal — continue without stakeholder, Razorpay will request KYC later
+            }
+
+            // 4. Request Route product configuration
+            let productId: string | null = null;
+            try {
+                const product = await (razorpay as any).products.requestProductConfiguration(accountId, {
+                    product_name: 'route',
+                    tnc_accepted: true,
+                });
+                productId = product.id;
+
+                // 5. Update product with settlement bank account details
+                if (productId) {
+                    await (razorpay as any).products.edit(accountId, productId, {
+                        settlements: {
+                            account_number: coaching.bankAccountNumber,
+                            ifsc_code: coaching.bankIfscCode,
+                            beneficiary_name: coaching.bankAccountName,
+                        },
+                    }).catch((err: any) => {
+                        console.error(`[PaymentService] Product settlement config failed:`, err?.message);
+                    });
+                }
+            } catch (err: any) {
+                console.error(`[PaymentService] Product config failed for acc ${accountId}:`, err?.message);
+                // Non-fatal — account created, product config can be retried
+            }
+
+            // 6. Determine initial activation status from Razorpay response
+            const onboardingStatus = account.status ?? 'under_review';
+            const isActivated = onboardingStatus === 'activated';
+
+            // 7. Save to DB
+            const updated = await prisma.coaching.update({
+                where: { id: coachingId },
+                data: {
+                    razorpayAccountId: accountId,
+                    razorpayStakeholderId: stakeholderId,
+                    razorpayProductId: productId,
+                    razorpayOnboardingStatus: onboardingStatus,
+                    razorpayActivated: isActivated,
+                },
+                select: PaymentService.SETTINGS_SELECT,
+            });
+
+            return {
+                ...updated,
+                message: isActivated
+                    ? 'Linked account created and activated! Payments will be routed to your bank.'
+                    : 'Linked account created. Razorpay is reviewing your details — this usually takes 1-2 business days.',
+            };
+        } catch (err: any) {
+            console.error(`[PaymentService] Linked account creation failed:`, err?.message, err?.error);
+            const razorpayError = err?.error?.description || err?.message || 'Unknown error';
+            throw Object.assign(
+                new Error(`Failed to create linked account: ${razorpayError}`),
+                { status: 502 },
+            );
+        }
     }
-}
+
+    /**
+     * Fetches the current activation status of the coaching's linked account from Razorpay.
+     * Updates our DB with the latest status.
+     */
+    async refreshLinkedAccountStatus(coachingId: string, userId: string) {
+        const coaching = await prisma.coaching.findUnique({
+            where: { id: coachingId },
+            select: { id: true, ownerId: true, razorpayAccountId: true, razorpayProductId: true },
+        });
+        if (!coaching) throw Object.assign(new Error('Coaching not found'), { status: 404 });
+        if (coaching.ownerId !== userId) throw Object.assign(new Error('Only the owner can check linked account status'), { status: 403 });
+        if (!coaching.razorpayAccountId) {
+            throw Object.assign(new Error('No linked account found. Create one first.'), { status: 404 });
+        }
+
+        try {
+            const account = await (razorpay as any).accounts.fetch(coaching.razorpayAccountId);
+
+            const onboardingStatus: string = account.status ?? 'unknown';
+            const isActivated = onboardingStatus === 'activated';
+
+            // Also check product status if we have a product ID
+            let productActive = false;
+            if (coaching.razorpayProductId) {
+                try {
+                    const product = await (razorpay as any).products.fetch(
+                        coaching.razorpayAccountId,
+                        coaching.razorpayProductId,
+                    );
+                    productActive = product.active_configuration?.route?.status === 'activated'
+                        || product.active_configuration?.payment_gateway?.status === 'activated';
+                } catch {
+                    // Product fetch failed — use account status only
+                }
+            }
+
+            const fullyActivated = isActivated || productActive;
+
+            const updated = await prisma.coaching.update({
+                where: { id: coachingId },
+                data: {
+                    razorpayOnboardingStatus: onboardingStatus,
+                    razorpayActivated: fullyActivated,
+                },
+                select: PaymentService.SETTINGS_SELECT,
+            });
+
+            return {
+                ...updated,
+                razorpayAccountStatus: onboardingStatus,
+                message: fullyActivated
+                    ? 'Razorpay Route is active! Payments will be routed to your bank.'
+                    : `Account status: ${onboardingStatus}. Razorpay may require additional verification.`,
+            };
+        } catch (err: any) {
+            throw Object.assign(
+                new Error(`Failed to fetch account status: ${err?.error?.description || err?.message}`),
+                { status: 502 },
+            );
+        }
+    }
+
+    /**
+     * Deletes the Razorpay linked account and clears Route configuration.
+     * Only for accounts that haven't processed live payments yet.
+     */
+    async deleteLinkedAccount(coachingId: string, userId: string) {
+        const coaching = await prisma.coaching.findUnique({
+            where: { id: coachingId },
+            select: { id: true, ownerId: true, razorpayAccountId: true },
+        });
+        if (!coaching) throw Object.assign(new Error('Coaching not found'), { status: 404 });
+        if (coaching.ownerId !== userId) throw Object.assign(new Error('Only the owner can delete the linked account'), { status: 403 });
+        if (!coaching.razorpayAccountId) {
+            throw Object.assign(new Error('No linked account to delete'), { status: 404 });
+        }
+
+        // Check no live payments used this Route
+        const routePayments = await prisma.razorpayOrder.count({
+            where: { coachingId, transferId: { not: null } },
+        });
+        if (routePayments > 0) {
+            throw Object.assign(
+                new Error(`Cannot delete linked account — ${routePayments} payments have been routed through it. Contact support.`),
+                { status: 409 },
+            );
+        }
+
+        try {
+            await (razorpay as any).accounts.delete(coaching.razorpayAccountId);
+        } catch (err: any) {
+            console.error(`[PaymentService] Razorpay account deletion failed:`, err?.message);
+            // Continue with DB cleanup even if Razorpay API fails
+        }
+
+        return prisma.coaching.update({
+            where: { id: coachingId },
+            data: {
+                razorpayAccountId: null,
+                razorpayStakeholderId: null,
+                razorpayProductId: null,
+                razorpayOnboardingStatus: null,
+                razorpayActivated: false,
+            },
+            select: PaymentService.SETTINGS_SELECT,
+        });
+    }}

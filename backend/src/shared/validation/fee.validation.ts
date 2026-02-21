@@ -213,6 +213,13 @@ export const paymentSettingsSchema = z.object({
     bankName: z.string().max(200).optional(),
 });
 
+export const createLinkedAccountSchema = z.object({
+    ownerName: z.string().min(2).max(200),
+    ownerEmail: z.string().email(),
+    ownerPhone: z.string().regex(/^[6-9]\d{9}$/, 'Invalid Indian phone number (10 digits starting with 6-9)'),
+    businessType: z.enum(['individual', 'partnership', 'proprietorship', 'private_limited', 'public_limited', 'trust', 'society', 'ngo']).optional(),
+});
+
 // ─── Audit Log Schema ───────────────────────────────────────────────
 
 export const listAuditLogSchema = z.object({

@@ -132,6 +132,45 @@ class PaymentService {
     return data;
   }
 
+  // ── Razorpay Route Linked Account Management ─────────────────────
+
+  /// Create a Razorpay linked account for the coaching (Route onboarding).
+  Future<Map<String, dynamic>> createLinkedAccount(
+    String coachingId, {
+    required String ownerName,
+    required String ownerEmail,
+    required String ownerPhone,
+    String? businessType,
+  }) async {
+    final body = <String, dynamic>{
+      'ownerName': ownerName,
+      'ownerEmail': ownerEmail,
+      'ownerPhone': ownerPhone,
+      'businessType': ?businessType,
+    };
+    return _api.postAuthenticated(
+      '${ApiConstants.paymentSettings(coachingId)}/linked-account',
+      body: body,
+    );
+  }
+
+  /// Refresh the linked account activation status from Razorpay.
+  Future<Map<String, dynamic>> refreshLinkedAccountStatus(
+    String coachingId,
+  ) async {
+    return _api.postAuthenticated(
+      '${ApiConstants.paymentSettings(coachingId)}/linked-account/refresh',
+      body: {},
+    );
+  }
+
+  /// Delete the linked account (only if no payments routed yet).
+  Future<void> deleteLinkedAccount(String coachingId) async {
+    await _api.deleteAuthenticated(
+      '${ApiConstants.paymentSettings(coachingId)}/linked-account',
+    );
+  }
+
   // ── Multi-Pay (select & pay multiple records) ────────────────────
 
   /// Create a combined Razorpay order for multiple fee records.
