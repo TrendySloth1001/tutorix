@@ -1160,8 +1160,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                   ),
                   children: [
                     TileLayer(
-                      urlTemplate:
-                          'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                      urlTemplate: theme.brightness == Brightness.dark
+                          ? 'https://basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png'
+                          : 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                       userAgentPackageName: 'com.tutorix.app',
                       maxZoom: 18,
                     ),
