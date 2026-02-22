@@ -337,14 +337,20 @@ export class InvitationService {
                         include: { coaching: { select: { name: true } } },
                     });
 
-                    // Create membership
-                    await tx.coachingMember.create({
-                        data: {
+                    // Create or reactivate membership (member may have been removed before)
+                    await tx.coachingMember.upsert({
+                        where: { coachingId_userId: { coachingId: invitation.coachingId, userId: invitation.userId } },
+                        create: {
                             coachingId: invitation.coachingId,
                             role: invitation.role,
                             userId: invitation.userId,
                             wardId: invitation.wardId,
                             status: 'active',
+                        },
+                        update: {
+                            role: invitation.role,
+                            status: 'active',
+                            removedAt: null,
                         },
                     });
 
@@ -382,13 +388,19 @@ export class InvitationService {
                         });
                     }
                 } else {
-                    // Ward invitation acceptance (no user notification logic for now, or similar if needed)
-                    await tx.coachingMember.create({
-                        data: {
+                    // Ward invitation: create or reactivate membership
+                    await tx.coachingMember.upsert({
+                        where: { coachingId_wardId: { coachingId: invitation.coachingId, wardId: invitation.wardId! } },
+                        create: {
                             coachingId: invitation.coachingId,
                             role: invitation.role,
                             wardId: invitation.wardId,
                             status: 'active',
+                        },
+                        update: {
+                            role: invitation.role,
+                            status: 'active',
+                            removedAt: null,
                         },
                     });
                 }

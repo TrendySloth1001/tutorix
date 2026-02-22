@@ -255,7 +255,10 @@ model CoachingMember {
   wardId String?
   ward   Ward?   @relation(fields: [wardId], references: [id], onDelete: Cascade)
 
-  status String @default("active") // active, pending, suspended
+  status String @default("active") // active, pending, suspended, removed
+
+  /// Set when member is removed — row is kept for fee history integrity.
+  removedAt DateTime?
 
   // Batch memberships
   batchMembers BatchMember[]
@@ -825,7 +828,7 @@ model FeeAssignment {
   feeStructureId  String
   feeStructure    FeeStructure @relation(fields: [feeStructureId], references: [id], onDelete: Cascade)
   memberId        String
-  member          CoachingMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member          CoachingMember @relation(fields: [memberId], references: [id], onDelete: Restrict)
 
   /// Overrides structure base amount (e.g. after discount negotiation)
   customAmount    Float?
@@ -866,7 +869,7 @@ model FeeRecord {
   assignmentId   String
   assignment     FeeAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   memberId       String
-  member         CoachingMember @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member         CoachingMember @relation(fields: [memberId], references: [id], onDelete: Restrict)
 
   title       String           // e.g. "April 2025 - Monthly Tuition"
   amount      Float            // final payable = base - discount + fine

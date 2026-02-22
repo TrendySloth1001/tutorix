@@ -144,7 +144,7 @@ export class CoachingService {
      */
     async findByMember(userId: string) {
         const memberships = await prisma.coachingMember.findMany({
-            where: { userId },
+            where: { userId, status: { not: 'removed' } },
             include: {
                 coaching: {
                     include: {
@@ -514,7 +514,7 @@ export class CoachingService {
 
     async getMembers(coachingId: string) {
         const members = await prisma.coachingMember.findMany({
-            where: { coachingId },
+            where: { coachingId, status: { not: 'removed' } },
             include: {
                 user: {
                     select: {
@@ -616,30 +616,31 @@ export class CoachingService {
             role: member.role,
         });
 
-        // Delete member and create notification in transaction
+        // Soft-delete member and create notification in transaction.
+        // We NEVER hard-delete a CoachingMember once fee records exist —
+        // financial history must remain tied to the coaching & member row.
         await prisma.$transaction(async (tx) => {
-            // Delete ALL member records for this user/ward in this coaching
-            // (should be only one, but this ensures complete cleanup)
-            let deletedCount = 0;
+            const removedAt = new Date();
+
+            // Soft-delete: mark removed, never physically delete
             if (member.userId) {
-                const result = await tx.coachingMember.deleteMany({
-                    where: {
-                        coachingId,
-                        userId: member.userId,
-                    },
+                await tx.coachingMember.updateMany({
+                    where: { coachingId, userId: member.userId, status: { not: 'removed' } },
+                    data: { status: 'removed', removedAt },
                 });
-                deletedCount = result.count;
-                console.log(`Deleted ${deletedCount} member record(s) for userId: ${member.userId}`);
             } else if (member.wardId) {
-                const result = await tx.coachingMember.deleteMany({
-                    where: {
-                        coachingId,
-                        wardId: member.wardId,
-                    },
+                await tx.coachingMember.updateMany({
+                    where: { coachingId, wardId: member.wardId, status: { not: 'removed' } },
+                    data: { status: 'removed', removedAt },
                 });
-                deletedCount = result.count;
-                console.log(`Deleted ${deletedCount} member record(s) for wardId: ${member.wardId}`);
             }
+
+            // Deactivate any ongoing fee assignments for this member
+            // so no new fee records are generated after removal.
+            await tx.feeAssignment.updateMany({
+                where: { coachingId, memberId: member.id, isActive: true },
+                data: { isActive: false, endDate: removedAt },
+            });
 
             // Cancel any pending invitations for this user/ward to allow re-invitation
             if (member.userId) {
