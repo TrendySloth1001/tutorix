@@ -4,6 +4,9 @@ import '../models/fee_model.dart';
 import '../services/fee_service.dart';
 
 import 'fee_record_detail_screen.dart';
+import '../../../core/constants/error_strings.dart';
+import '../../../core/utils/error_sanitizer.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../../../core/theme/design_tokens.dart';
 
 /// Lists all fee records for a coaching (admin view).
@@ -97,7 +100,10 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = ErrorSanitizer.sanitize(
+          e,
+          fallback: FeeErrors.recordsLoadFailed,
+        );
         _loading = false;
         _loadingMore = false;
       });
@@ -145,7 +151,10 @@ class _FeeRecordsScreenState extends State<FeeRecordsScreen> {
             child: _loading
                 ? const Center(child: CircularProgressIndicator())
                 : _error != null
-                ? _ErrorRetry(error: _error!, onRetry: () => _load(reset: true))
+                ? ErrorRetry(
+                    message: _error!,
+                    onRetry: () => _load(reset: true),
+                  )
                 : _records.isEmpty
                 ? const _EmptyState()
                 : RefreshIndicator(
@@ -203,11 +212,19 @@ class _SearchBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Padding(
-      padding: const EdgeInsets.fromLTRB(Spacing.sp12, Spacing.sp10, Spacing.sp12, Spacing.sp4),
+      padding: const EdgeInsets.fromLTRB(
+        Spacing.sp12,
+        Spacing.sp10,
+        Spacing.sp12,
+        Spacing.sp4,
+      ),
       child: TextField(
         controller: controller,
         onChanged: onChanged,
-        style: TextStyle(color: theme.colorScheme.onSurface, fontSize: FontSize.body),
+        style: TextStyle(
+          color: theme.colorScheme.onSurface,
+          fontSize: FontSize.body,
+        ),
         decoration: InputDecoration(
           hintText: 'Search by student name...',
           hintStyle: TextStyle(
@@ -269,7 +286,10 @@ class _FilterBar extends StatelessWidget {
       color: theme.colorScheme.surface,
       child: ListView(
         scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: Spacing.sp12, vertical: Spacing.sp6),
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp12,
+          vertical: Spacing.sp6,
+        ),
         children: _labels.entries.map((e) {
           final isSelected = e.key == selected;
           return Padding(
@@ -422,7 +442,9 @@ class _RecordTile extends StatelessWidget {
                               ),
                               if (record.isPartial || record.isPaid)
                                 Padding(
-                                  padding: const EdgeInsets.only(top: Spacing.sp2),
+                                  padding: const EdgeInsets.only(
+                                    top: Spacing.sp2,
+                                  ),
                                   child: Text(
                                     'Paid ₹${record.paidAmount.toStringAsFixed(0)}',
                                     style: TextStyle(
@@ -489,7 +511,10 @@ class _Chip extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp8, vertical: Spacing.sp4),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp8,
+        vertical: Spacing.sp4,
+      ),
       decoration: BoxDecoration(
         color: isFilled
             ? color.withValues(alpha: 0.1)
@@ -530,38 +555,6 @@ class _EmptyState extends StatelessWidget {
             'No fee records found',
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ErrorRetry extends StatelessWidget {
-  final String error;
-  final VoidCallback onRetry;
-  const _ErrorRetry({required this.error, required this.onRetry});
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: Theme.of(context).colorScheme.error,
-            size: 40,
-          ),
-          const SizedBox(height: Spacing.sp10),
-          Text(
-            error,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontSize: FontSize.body,
-            ),
-          ),
-          const SizedBox(height: Spacing.sp16),
-          OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );

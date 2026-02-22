@@ -1,5 +1,6 @@
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -194,7 +195,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
       );
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
-      _showError('Failed to save note');
+      if (mounted) AppAlert.error(context, e, fallback: NoteErrors.saveFailed);
     }
     if (mounted) setState(() => _isSaving = false);
   }

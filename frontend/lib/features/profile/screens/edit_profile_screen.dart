@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -54,12 +55,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (updatedUser != null && mounted) {
         widget.onUserUpdated(updatedUser);
-        AppAlert.success(context, 'Profile updated successfully');
+        AppAlert.success(context, ProfileSuccess.updated);
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to update profile');
+        AppAlert.error(context, e, fallback: ProfileErrors.updateFailed);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

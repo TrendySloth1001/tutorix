@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../shared/widgets/app_alert.dart';
+import '../../../core/constants/error_strings.dart';
+import '../../../core/utils/error_sanitizer.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
@@ -72,7 +74,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = ErrorSanitizer.sanitize(e, fallback: FeeErrors.loadFailed);
         _loading = false;
       });
     }
@@ -176,7 +178,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-          ? _ErrorRetry(error: _error!, onRetry: _load)
+          ? ErrorRetry(message: _error!, onRetry: _load)
           : _Body(
               record: _record!,
               isAdmin: widget.isAdmin,
@@ -394,13 +396,16 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
       if (orderData != null) {
         final internalId = orderData['internalOrderId'] as String?;
         if (internalId != null) {
-          final reason = e.toString().replaceFirst('Exception: ', '');
+          final reason = ErrorSanitizer.sanitize(
+            e,
+            fallback: FeeErrors.paymentFailed,
+          );
           await _paySvc.markOrderFailed(widget.coachingId, internalId, reason);
         }
       }
       await _load();
       if (!mounted) return;
-      final msg = e.toString().replaceFirst('Exception: ', '');
+      final msg = ErrorSanitizer.sanitize(e, fallback: FeeErrors.paymentFailed);
       if (msg == 'Payment cancelled') return; // user dismissed — no snackbar
       // External wallet: show info instead of error (webhook will confirm)
       if (msg.contains('being processed via')) {
@@ -502,12 +507,9 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                           final amt = double.tryParse(amtCtrl.text.trim());
                           if (amt == null || amt <= 0) return;
                           if (_record != null && amt > _record!.paidAmount) {
-                            ScaffoldMessenger.of(ctx).showSnackBar(
-                              SnackBar(
-                                content: Text(
-                                  'Cannot refund more than paid amount (₹${_record!.paidAmount.toStringAsFixed(0)})',
-                                ),
-                              ),
+                            AppAlert.warning(
+                              ctx,
+                              'Cannot refund more than paid amount (₹${_record!.paidAmount.toStringAsFixed(0)})',
                             );
                             return;
                           }
@@ -552,8 +554,10 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                           } catch (e) {
                             setSt(() => submitting = false);
                             if (ctx.mounted) {
-                              ScaffoldMessenger.of(ctx).showSnackBar(
-                                SnackBar(content: Text(e.toString())),
+                              AppAlert.error(
+                                ctx,
+                                e,
+                                fallback: FeeErrors.refundFailed,
                               );
                             }
                           }
@@ -609,9 +613,7 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                   .catchError((e) {
                     if (ctx.mounted) {
                       setSt(() => loading = false);
-                      ScaffoldMessenger.of(
-                        ctx,
-                      ).showSnackBar(SnackBar(content: Text(e.toString())));
+                      AppAlert.error(ctx, e, fallback: FeeErrors.refundFailed);
                     }
                   });
               loading = false; // prevent re-trigger on rebuild
@@ -796,12 +798,9 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                                   (selPay['amount'] as num?)?.toDouble() ?? 0;
                               if (amt > payAmt) {
                                 if (ctx.mounted) {
-                                  ScaffoldMessenger.of(ctx).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'Cannot refund more than payment amount (₹${payAmt.toStringAsFixed(0)})',
-                                      ),
-                                    ),
+                                  AppAlert.warning(
+                                    ctx,
+                                    'Cannot refund more than payment amount (₹${payAmt.toStringAsFixed(0)})',
                                   );
                                 }
                                 return;
@@ -867,8 +866,10 @@ class _FeeRecordDetailScreenState extends State<FeeRecordDetailScreen> {
                               } catch (e) {
                                 setSt(() => submitting = false);
                                 if (ctx.mounted) {
-                                  ScaffoldMessenger.of(ctx).showSnackBar(
-                                    SnackBar(content: Text(e.toString())),
+                                  AppAlert.error(
+                                    ctx,
+                                    e,
+                                    fallback: FeeErrors.refundFailed,
                                   );
                                 }
                               }
@@ -1515,12 +1516,7 @@ class _BreakdownCard extends StatelessWidget {
               builder: (ctx) => GestureDetector(
                 onTap: () {
                   Clipboard.setData(ClipboardData(text: record.receiptNo!));
-                  ScaffoldMessenger.of(ctx).showSnackBar(
-                    const SnackBar(
-                      content: Text('Receipt number copied'),
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
+                  AppAlert.success(ctx, FeeSuccess.receiptCopied);
                 },
                 child: Row(
                   children: [
@@ -2372,21 +2368,16 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
   Future<void> _submit() async {
     final amount = double.tryParse(_amountCtrl.text.trim());
     if (amount == null || amount <= 0) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Enter a valid amount')));
+      AppAlert.warning(context, FeeErrors.invalidAmount);
       return;
     }
     // Allow amounts up to the ceiling of the balance (whole-rupee rounding);
     // the backend will cap at the exact balance if needed.
     final maxAllowed = widget.record.balance.ceilToDouble();
     if (amount > maxAllowed + 0.01) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Amount exceeds balance of ₹${widget.record.balance.toStringAsFixed(2)}',
-          ),
-        ),
+      AppAlert.warning(
+        context,
+        'Amount exceeds balance of ₹${widget.record.balance.toStringAsFixed(2)}',
       );
       return;
     }
@@ -2402,9 +2393,7 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        AppAlert.error(context, e, fallback: FeeErrors.recordPaymentFailed);
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -2445,36 +2434,6 @@ class _CollectPaymentSheetState extends State<_CollectPaymentSheet> {
       default:
         return Icons.more_horiz_rounded;
     }
-  }
-}
-
-class _ErrorRetry extends StatelessWidget {
-  final String error;
-  final VoidCallback onRetry;
-  const _ErrorRetry({required this.error, required this.onRetry});
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: theme.colorScheme.error,
-            size: 40,
-          ),
-          const SizedBox(height: Spacing.sp10),
-          Text(
-            error,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: Spacing.sp16),
-          OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
-        ],
-      ),
-    );
   }
 }
 

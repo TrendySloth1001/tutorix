@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../services/assessment_service.dart';
 
 /// Screen for teachers to create an assessment with questions.
@@ -62,9 +64,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_questions.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Add at least one question')),
-      );
+      AppAlert.warning(context, AssessmentErrors.addQuestion);
       return;
     }
 
@@ -72,8 +72,9 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
     for (int i = 0; i < _questions.length; i++) {
       final q = _questions[i];
       if (q.questionCtrl.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Question ${i + 1} text is empty')),
+        AppAlert.warning(
+          context,
+          'Question ${i + 1}: ${AssessmentErrors.emptyQuestion}',
         );
         return;
       }
@@ -82,37 +83,31 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
             .where((o) => o.text.trim().isNotEmpty)
             .toList();
         if (validOptions.length < 2) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Question ${i + 1} needs at least 2 options'),
-            ),
+          AppAlert.warning(
+            context,
+            'Question ${i + 1} needs at least 2 options',
           );
           return;
         }
         if (q.type == 'MCQ' && q.selectedOptions.isEmpty) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Question ${i + 1}: select the correct answer'),
-            ),
+          AppAlert.warning(
+            context,
+            'Question ${i + 1}: select the correct answer',
           );
           return;
         }
         if (q.type == 'MSQ' && q.selectedOptions.length < 2) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                'Question ${i + 1}: select at least 2 correct answers',
-              ),
-            ),
+          AppAlert.warning(
+            context,
+            'Question ${i + 1}: select at least 2 correct answers',
           );
           return;
         }
       }
       if (q.type == 'NAT' && q.natAnswerCtrl.text.trim().isEmpty) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Question ${i + 1}: enter the numerical answer'),
-          ),
+        AppAlert.warning(
+          context,
+          'Question ${i + 1}: enter the numerical answer',
         );
         return;
       }
@@ -182,9 +177,7 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppAlert.error(context, e, fallback: AssessmentErrors.createFailed);
       }
     } finally {
       if (mounted) setState(() => _saving = false);

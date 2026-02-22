@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -58,7 +59,7 @@ class _CoachingSelectorScreenState extends State<CoachingSelectorScreen> {
       },
       onError: (e) {
         if (mounted) {
-          AppAlert.error(context, e, fallback: 'Failed to load coachings');
+          AppAlert.error(context, e, fallback: CoachingErrors.loadFailed);
           setState(() => _isLoading = false);
         }
       },

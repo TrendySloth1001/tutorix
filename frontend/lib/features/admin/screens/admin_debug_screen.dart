@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:tutorix/core/theme/design_tokens.dart';
 import '../services/admin_logs_service.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../../shared/widgets/app_alert.dart';
 
@@ -68,7 +69,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
-      AppAlert.error(context, 'Failed to load logs: $e');
+      AppAlert.error(context, e, fallback: Errors.loadFailed);
     }
   }
 
@@ -406,10 +407,7 @@ class _AdminDebugScreenState extends State<AdminDebugScreen>
     }
 
     if (_stats == null) {
-      return _buildEmptyState(
-        Icons.insights_outlined,
-        'Failed to load statistics',
-      );
+      return _buildEmptyState(Icons.insights_outlined, Errors.loadFailed);
     }
 
     return RefreshIndicator(

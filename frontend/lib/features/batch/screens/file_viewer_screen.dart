@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/constants/error_strings.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../models/batch_note_model.dart';
@@ -246,7 +247,7 @@ class _ImageViewerState extends State<_ImageViewer>
     if (await canLaunchUrl(uri)) {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
     } else if (context.mounted) {
-      AppAlert.error(context, 'Could not open file');
+      AppAlert.error(context, Errors.openFileFailed);
     }
   }
 }
@@ -551,10 +552,12 @@ class _DocumentViewerState extends State<_DocumentViewer> {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
       } else {
-        _showError('No app found to open this file type');
+        _showError(Errors.noAppForFile);
       }
     } catch (e) {
-      _showError('Failed to open file: $e');
+      if (mounted) AppAlert.error(context, e, fallback: Errors.openFileFailed);
+      if (mounted) setState(() => _isOpening = false);
+      return;
     }
 
     if (mounted) setState(() => _isOpening = false);

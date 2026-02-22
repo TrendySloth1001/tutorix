@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
@@ -149,7 +150,7 @@ class _CreateNoticeScreenState extends State<CreateNoticeScreen>
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to create notice');
+        AppAlert.error(context, e, fallback: NoteErrors.createNoticeFailed);
       }
     }
     if (mounted) setState(() => _isSaving = false);

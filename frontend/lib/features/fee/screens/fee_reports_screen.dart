@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
 import 'fee_record_detail_screen.dart';
+import '../../../core/constants/error_strings.dart';
+import '../../../core/utils/error_sanitizer.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../../../core/theme/design_tokens.dart';
 
 /// Admin reports screen —
@@ -74,7 +77,10 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _overdueError = e.toString();
+        _overdueError = ErrorSanitizer.sanitize(
+          e,
+          fallback: FeeErrors.reportFailed,
+        );
         _loadingOverdue = false;
       });
     }
@@ -98,7 +104,10 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _summaryError = e.toString();
+        _summaryError = ErrorSanitizer.sanitize(
+          e,
+          fallback: FeeErrors.reportFailed,
+        );
         _loadingSummary = false;
       });
     }
@@ -145,7 +154,7 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
             child: _loadingOverdue
                 ? const Center(child: CircularProgressIndicator())
                 : _overdueError != null
-                ? _ErrorRetry(error: _overdueError!, onRetry: _loadOverdue)
+                ? ErrorRetry(message: _overdueError!, onRetry: _loadOverdue)
                 : _overdueRecords.isEmpty
                 ? ListView(
                     physics: const AlwaysScrollableScrollPhysics(),
@@ -188,7 +197,7 @@ class _FeeReportsScreenState extends State<FeeReportsScreen>
             child: _loadingSummary
                 ? const Center(child: CircularProgressIndicator())
                 : _summaryError != null
-                ? _ErrorRetry(error: _summaryError!, onRetry: _loadSummary)
+                ? ErrorRetry(message: _summaryError!, onRetry: _loadSummary)
                 : _FYReport(
                     summary: _summary!,
                     selectedFY: _selectedFY,
@@ -224,7 +233,10 @@ class _OverdueList extends StatelessWidget {
     final theme = Theme.of(context);
     return ListView.builder(
       physics: const AlwaysScrollableScrollPhysics(),
-      padding: const EdgeInsets.symmetric(horizontal: Spacing.sp16, vertical: Spacing.sp12),
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp16,
+        vertical: Spacing.sp12,
+      ),
       itemCount: records.length,
       itemBuilder: (ctx, i) {
         final r = records[i];
@@ -450,7 +462,9 @@ class _FYReport extends StatelessWidget {
                     return Column(
                       children: [
                         Padding(
-                          padding: const EdgeInsets.symmetric(vertical: Spacing.sp12),
+                          padding: const EdgeInsets.symmetric(
+                            vertical: Spacing.sp12,
+                          ),
                           child: Row(
                             children: [
                               Text(
@@ -747,41 +761,6 @@ class _MonthlyBarChart extends StatelessWidget {
           ),
         );
       }).toList(),
-    );
-  }
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────
-
-class _ErrorRetry extends StatelessWidget {
-  final String error;
-  final VoidCallback onRetry;
-  const _ErrorRetry({required this.error, required this.onRetry});
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: theme.colorScheme.error,
-            size: 40,
-          ),
-          const SizedBox(height: Spacing.sp10),
-          Text(
-            error,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: theme.colorScheme.onSurfaceVariant,
-              fontSize: FontSize.body,
-            ),
-          ),
-          const SizedBox(height: Spacing.sp16),
-          OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
-        ],
-      ),
     );
   }
 }

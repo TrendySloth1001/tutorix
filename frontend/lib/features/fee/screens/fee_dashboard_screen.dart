@@ -8,6 +8,9 @@ import 'assign_fee_screen.dart';
 import 'fee_reports_screen.dart';
 import 'fee_calendar_screen.dart';
 import 'payment_settings_screen.dart';
+import '../../../core/constants/error_strings.dart';
+import '../../../core/utils/error_sanitizer.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../../../core/theme/design_tokens.dart';
 
 // ═══════════════════════════════════════════════════════════════════════
@@ -66,7 +69,7 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = ErrorSanitizer.sanitize(e, fallback: FeeErrors.loadFailed);
         _loading = false;
       });
     }
@@ -78,15 +81,11 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
       final res = await _svc.bulkRemind(widget.coachingId);
       final count = res['reminded'] ?? res['count'] ?? 0;
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Reminder sent to $count overdue students')),
-        );
+        AppAlert.success(context, 'Reminder sent to $count overdue students');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        AppAlert.error(context, e, fallback: FeeErrors.reminderFailed);
       }
     } finally {
       if (mounted) setState(() => _sendingReminder = false);
@@ -146,7 +145,7 @@ class _FeeDashboardScreenState extends State<FeeDashboardScreen> {
         child: _loading
             ? const _ShimmerDashboard()
             : _error != null
-            ? _ErrorView(error: _error!, onRetry: _load)
+            ? ErrorRetry(message: _error!, onRetry: _load)
             : _Body(
                 summary: _summary!,
                 coachingId: widget.coachingId,
@@ -1346,44 +1345,6 @@ class _ShimmerBox extends StatelessWidget {
       decoration: BoxDecoration(
         color: color,
         borderRadius: BorderRadius.circular(Radii.lg),
-      ),
-    );
-  }
-}
-
-// ═══════════════════════════════════════════════════════════════════════
-// Error View
-// ═══════════════════════════════════════════════════════════════════════
-
-class _ErrorView extends StatelessWidget {
-  final String error;
-  final VoidCallback onRetry;
-  const _ErrorView({required this.error, required this.onRetry});
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(Spacing.sectionGap),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(
-              Icons.error_outline_rounded,
-              color: theme.colorScheme.error,
-              size: Spacing.sp40,
-            ),
-            const SizedBox(height: Spacing.sp12),
-            Text(
-              error,
-              textAlign: TextAlign.center,
-              style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-            ),
-            const SizedBox(height: Spacing.sp16),
-            OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
-          ],
-        ),
       ),
     );
   }

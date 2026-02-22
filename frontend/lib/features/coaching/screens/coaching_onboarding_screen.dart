@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geolocator/geolocator.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
@@ -173,11 +174,11 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
     // Validate current step and save if needed
     if (_currentStep == 0) {
       if (_nameController.text.trim().isEmpty) {
-        _showError('Please enter your coaching name');
+        AppAlert.warning(context, 'Please enter your coaching name');
         return;
       }
       if (_selectedCategory == null) {
-        _showError('Please select a category');
+        AppAlert.warning(context, 'Please select a category');
         return;
       }
       // Create coaching if not exists
@@ -189,7 +190,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
           );
           setState(() => _coaching = coaching);
         } catch (e) {
-          _showError('Failed to create coaching');
+          AppAlert.error(context, e, fallback: CoachingErrors.createFailed);
           setState(() => _isSaving = false);
           return;
         }
@@ -226,7 +227,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
           foundedYear: _foundedYear,
         );
       } catch (e) {
-        _showError('Failed to save details');
+        AppAlert.error(context, e, fallback: CoachingErrors.saveDetailsFailed);
         setState(() => _isSaving = false);
         return;
       }
@@ -236,19 +237,19 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
     if (_currentStep == 2) {
       // Validate address
       if (_addressLine1Controller.text.trim().isEmpty) {
-        _showError('Please enter your address');
+        AppAlert.warning(context, 'Please enter your address');
         return;
       }
       if (_cityController.text.trim().isEmpty) {
-        _showError('Please enter your city');
+        AppAlert.warning(context, 'Please enter your city');
         return;
       }
       if (_selectedState == null) {
-        _showError('Please select your state');
+        AppAlert.warning(context, 'Please select your state');
         return;
       }
       if (_pincodeController.text.trim().isEmpty) {
-        _showError('Please enter your pincode');
+        AppAlert.warning(context, 'Please enter your pincode');
         return;
       }
 
@@ -274,7 +275,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
           workingDays: _selectedWorkingDays.toList(),
         );
       } catch (e) {
-        _showError('Failed to save address');
+        AppAlert.error(context, e, fallback: CoachingErrors.saveAddressFailed);
         setState(() => _isSaving = false);
         return;
       }
@@ -308,15 +309,10 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
       await _service.completeOnboarding(_coaching!.id);
       widget.onComplete();
     } catch (e) {
-      _showError('Failed to complete setup');
+      AppAlert.error(context, e, fallback: CoachingErrors.setupFailed);
     } finally {
       if (mounted) setState(() => _isSaving = false);
     }
-  }
-
-  void _showError(String message) {
-    if (!mounted) return;
-    AppAlert.error(context, message);
   }
 
   Future<void> _fetchCurrentLocation() async {
@@ -338,7 +334,10 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
-          _showError('Location permission denied. Please try again.');
+          AppAlert.warning(
+            context,
+            'Location permission denied. Please try again.',
+          );
           setState(() => _fetchingLocation = false);
           return;
         }
@@ -371,7 +370,7 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
       }
     } catch (e) {
       if (mounted) {
-        _showError('Failed to get location. Please try again.');
+        AppAlert.error(context, e, fallback: Errors.locationFailed);
       }
       setState(() => _fetchingLocation = false);
     }
@@ -1120,7 +1119,11 @@ class _CoachingOnboardingScreenState extends State<CoachingOnboardingScreen> {
               );
               setState(() => _branches.add(newBranch));
             } catch (e) {
-              _showError('Failed to add branch');
+              AppAlert.error(
+                context,
+                e,
+                fallback: CoachingErrors.addBranchFailed,
+              );
             }
           }
         },

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/services/cache_manager.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../shared/models/user_model.dart';
@@ -76,7 +77,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to update privacy');
+        AppAlert.error(context, e, fallback: ProfileErrors.privacyFailed);
       }
     }
   }
@@ -106,7 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     await _cache.clearAll();
     await _loadSettings();
-    if (mounted) AppAlert.success(context, 'Cache cleared');
+    if (mounted) AppAlert.success(context, ProfileSuccess.cacheCleared);
   }
 
   Future<void> _deleteAllData() async {
@@ -125,7 +126,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       _cacheEntries = 0;
       _cacheSize = '0 B';
     });
-    if (mounted) AppAlert.success(context, 'All local data deleted');
+    if (mounted) AppAlert.success(context, ProfileSuccess.dataDeleted);
   }
 
   // ── Build ──────────────────────────────────────────────────────────

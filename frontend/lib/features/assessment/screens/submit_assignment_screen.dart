@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../../core/theme/design_tokens.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../models/assignment_model.dart';
 import '../services/assessment_service.dart';
 import 'file_viewer_screen.dart';
@@ -92,9 +94,7 @@ class _SubmitAssignmentScreenState extends State<SubmitAssignmentScreen> {
 
   Future<void> _submit() async {
     if (_selectedFiles.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Select at least one file')));
+      AppAlert.warning(context, AssessmentErrors.selectFile);
       return;
     }
 
@@ -108,16 +108,16 @@ class _SubmitAssignmentScreenState extends State<SubmitAssignmentScreen> {
       );
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Assignment submitted successfully!')),
-        );
+        AppAlert.success(context, AssessmentSuccess.assignmentSubmitted);
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
+        AppAlert.error(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+          e,
+          fallback: AssessmentErrors.assignmentSubmitFailed,
+        );
       }
     } finally {
       if (mounted) setState(() => _submitting = false);

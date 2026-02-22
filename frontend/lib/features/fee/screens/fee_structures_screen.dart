@@ -2,6 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
 import 'fee_audit_log_screen.dart';
+import '../../../core/constants/error_strings.dart';
+import '../../../core/utils/error_sanitizer.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../../../core/theme/design_tokens.dart';
 
 /// Manages fee structures (templates) for a coaching.
@@ -42,7 +45,10 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = ErrorSanitizer.sanitize(
+          e,
+          fallback: FeeErrors.structureLoadFailed,
+        );
         _loading = false;
       });
     }
@@ -175,9 +181,7 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
         _load();
       } catch (e) {
         if (mounted) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(e.toString())));
+          AppAlert.error(context, e, fallback: FeeErrors.structureDeleteFailed);
         }
       }
     }
@@ -236,7 +240,7 @@ class _FeeStructuresScreenState extends State<FeeStructuresScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-          ? _ErrorRetry(error: _error!, onRetry: _load)
+          ? ErrorRetry(message: _error!, onRetry: _load)
           : RefreshIndicator(
               color: theme.colorScheme.primary,
               onRefresh: _load,
@@ -1239,9 +1243,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
     final name = _nameCtrl.text.trim();
     final amount = double.tryParse(_amountCtrl.text.trim());
     if (name.isEmpty || amount == null || amount <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Name and a valid amount are required')),
-      );
+      AppAlert.warning(context, FeeErrors.nameAmountRequired);
       return;
     }
 
@@ -1294,9 +1296,7 @@ class _StructureFormSheetState extends State<_StructureFormSheet> {
       if (mounted) Navigator.pop(context);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text(e.toString())));
+        AppAlert.error(context, e, fallback: FeeErrors.structureSaveFailed);
       }
     } finally {
       if (mounted) setState(() => _submitting = false);
@@ -1314,34 +1314,4 @@ class _InstallmentItem {
   final TextEditingController labelCtrl;
   final TextEditingController amountCtrl;
   _InstallmentItem({required this.labelCtrl, required this.amountCtrl});
-}
-
-class _ErrorRetry extends StatelessWidget {
-  final String error;
-  final VoidCallback onRetry;
-  const _ErrorRetry({required this.error, required this.onRetry});
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: theme.colorScheme.error,
-            size: 40,
-          ),
-          const SizedBox(height: Spacing.sp10),
-          Text(
-            error,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: Spacing.sp16),
-          OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
-        ],
-      ),
-    );
-  }
 }

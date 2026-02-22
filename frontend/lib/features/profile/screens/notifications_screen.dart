@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../auth/controllers/auth_controller.dart';
@@ -68,13 +69,16 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     try {
       await _invitationService.respondToInvitation(id, accept);
       if (mounted) {
-        AppAlert.success(context, accept ? 'Accepted!' : 'Declined.');
+        AppAlert.success(
+          context,
+          accept ? MemberSuccess.accepted : MemberSuccess.declined,
+        );
         _load();
         context.read<AuthController>().refreshInvitations();
       }
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e);
+        AppAlert.error(context, e, fallback: MemberErrors.acceptFailed);
       }
     } finally {
       if (mounted) setState(() => _responding.remove(id));

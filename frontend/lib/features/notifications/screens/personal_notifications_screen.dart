@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 
 import '../../auth/controllers/auth_controller.dart';
@@ -91,18 +92,14 @@ class _PersonalNotificationsScreenState
           }
         } catch (e) {
           if (mounted) {
-            AppAlert.error(
-              context,
-              e,
-              fallback: 'Failed to load notifications',
-            );
+            AppAlert.error(context, e, fallback: NotifyErrors.loadFailed);
             setState(() => _isLoading = false);
           }
         }
       },
       onError: (e) {
         if (mounted) {
-          AppAlert.error(context, e, fallback: 'Failed to load notifications');
+          AppAlert.error(context, e, fallback: NotifyErrors.loadFailed);
           setState(() => _isLoading = false);
         }
       },
@@ -147,7 +144,7 @@ class _PersonalNotificationsScreenState
     } catch (e) {
       if (mounted) {
         _load(); // Reload on failure
-        AppAlert.error(context, e, fallback: 'Failed to archive');
+        AppAlert.error(context, e, fallback: NotifyErrors.archiveFailed);
       }
     }
   }
@@ -180,7 +177,7 @@ class _PersonalNotificationsScreenState
       if (mounted) {
         AppAlert.success(
           context,
-          accept ? 'Invitation accepted!' : 'Declined.',
+          accept ? MemberSuccess.accepted : MemberSuccess.declined,
         );
         // Refresh list to remove the processed invitation
         _load();
@@ -191,7 +188,7 @@ class _PersonalNotificationsScreenState
       }
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e);
+        AppAlert.error(context, e, fallback: MemberErrors.acceptFailed);
       }
     } finally {
       if (mounted) setState(() => _responding.remove(id));

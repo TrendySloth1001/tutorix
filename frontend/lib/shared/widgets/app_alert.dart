@@ -1,140 +1,31 @@
 import 'package:flutter/material.dart';
 import '../../core/theme/design_tokens.dart';
+import '../../core/utils/error_sanitizer.dart';
 
 /// Centralized alert/dialog system. Never expose raw exceptions to users.
 class AppAlert {
   AppAlert._();
 
-  /// Clean an exception message — strip 'Exception:', stack traces, etc.
-  static String _cleanMessage(dynamic error) {
-    String msg = error.toString();
-    // Remove "Exception: " prefix
-    msg = msg.replaceFirst(RegExp(r'^Exception:\s*'), '');
-    // Remove "FormatException: " prefix
-    msg = msg.replaceFirst(RegExp(r'^FormatException:\s*'), '');
-    // Truncate if too long
-    if (msg.length > 200) msg = '${msg.substring(0, 200)}…';
-    // If it looks like a technical error (stacktrace, etc.), replace
-    if (msg.contains('Stack Trace') ||
-        msg.contains('at ') ||
-        msg.contains('#0') ||
-        msg.contains('dart:') ||
-        msg.contains('package:')) {
-      return 'Something went wrong. Please try again.';
-    }
-    return msg;
-  }
-
   /// Show a simple error snackbar with a user-friendly message.
+  ///
+  /// Pass a [fallback] from `error_strings.dart` to guarantee a clean
+  /// message regardless of what the raw exception contains.
   static void error(BuildContext context, dynamic error, {String? fallback}) {
     if (!context.mounted) return;
-    final message = fallback ?? _cleanMessage(error);
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(
-                Icons.error_outline_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: Spacing.sp12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Theme.of(context).colorScheme.error,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Radii.md),
-          ),
-          margin: const EdgeInsets.all(Spacing.sp16),
-          duration: const Duration(seconds: 3),
-        ),
-      );
+    final message = ErrorSanitizer.sanitize(error, fallback: fallback);
+    _show(context, message: message, type: _AlertType.error);
   }
 
   /// Show a success snackbar.
   static void success(BuildContext context, String message) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(
-                Icons.check_circle_outline_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: Spacing.sp12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Theme.of(context).colorScheme.primary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Radii.md),
-          ),
-          margin: const EdgeInsets.all(Spacing.sp16),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+    _show(context, message: message, type: _AlertType.success);
   }
 
   /// Show a warning snackbar.
   static void warning(BuildContext context, String message) {
     if (!context.mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-        SnackBar(
-          content: Row(
-            children: [
-              const Icon(
-                Icons.warning_amber_rounded,
-                color: Colors.white,
-                size: 20,
-              ),
-              const SizedBox(width: Spacing.sp12),
-              Expanded(
-                child: Text(
-                  message,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-              ),
-            ],
-          ),
-          backgroundColor: Theme.of(context).colorScheme.secondary,
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(Radii.md),
-          ),
-          margin: const EdgeInsets.all(Spacing.sp16),
-          duration: const Duration(seconds: 3),
-        ),
-      );
+    _show(context, message: message, type: _AlertType.warning);
   }
 
   /// Show a confirmation dialog and return true if the user confirmed.
@@ -230,6 +121,126 @@ class AppAlert {
             child: Text(buttonText),
           ),
         ],
+      ),
+    );
+  }
+
+  // ── Private ─────────────────────────────────────────────────────────
+
+  static void _show(
+    BuildContext context, {
+    required String message,
+    required _AlertType type,
+  }) {
+    final theme = Theme.of(context);
+
+    final (IconData icon, Color bg, int seconds) = switch (type) {
+      _AlertType.error => (
+        Icons.error_outline_rounded,
+        theme.colorScheme.error,
+        4,
+      ),
+      _AlertType.success => (
+        Icons.check_circle_outline_rounded,
+        theme.colorScheme.primary,
+        2,
+      ),
+      _AlertType.warning => (
+        Icons.warning_amber_rounded,
+        theme.colorScheme.tertiary,
+        3,
+      ),
+    };
+
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Icon(icon, color: Colors.white, size: Spacing.sp20),
+              const SizedBox(width: Spacing.sp12),
+              Expanded(
+                child: Text(
+                  message,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w500,
+                    fontSize: FontSize.body,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: bg,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(Radii.md),
+          ),
+          margin: const EdgeInsets.all(Spacing.sp16),
+          duration: Duration(seconds: seconds),
+        ),
+      );
+  }
+}
+
+enum _AlertType { error, success, warning }
+
+// ═══════════════════════════════════════════════════════════════════════
+// Shared inline error + retry widget — replaces all private _ErrorRetry
+// ═══════════════════════════════════════════════════════════════════════
+
+/// Full-screen-center error state with icon, friendly message, and retry.
+///
+/// Use this inside any screen body when `_error != null`.
+/// ```dart
+/// _error != null
+///     ? ErrorRetry(message: _error!, onRetry: _load)
+///     : _buildContent(),
+/// ```
+class ErrorRetry extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+  const ErrorRetry({super.key, required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(Spacing.sectionGap),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(
+              Icons.cloud_off_rounded,
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+              size: Spacing.sp48,
+            ),
+            const SizedBox(height: Spacing.sp16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: FontSize.body,
+                color: theme.colorScheme.onSurfaceVariant,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: Spacing.sp20),
+            OutlinedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh_rounded, size: Spacing.sp16),
+              label: const Text('Retry'),
+              style: OutlinedButton.styleFrom(
+                side: BorderSide(color: theme.colorScheme.outlineVariant),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(Radii.md),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

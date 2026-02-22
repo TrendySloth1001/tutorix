@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
+import '../../../core/constants/error_strings.dart';
+import '../../../core/utils/error_sanitizer.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../../../core/theme/design_tokens.dart';
 
 /// Paginated audit trail for fee-related events in a coaching.
@@ -84,7 +87,7 @@ class _FeeAuditLogScreenState extends State<FeeAuditLogScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = ErrorSanitizer.sanitize(e, fallback: FeeErrors.auditLogFailed);
         _loading = false;
       });
     }
@@ -155,7 +158,7 @@ class _FeeAuditLogScreenState extends State<FeeAuditLogScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-          ? _ErrorRetry(error: _error!, onRetry: _load)
+          ? ErrorRetry(message: _error!, onRetry: _load)
           : _logs.isEmpty
           ? const _EmptyState()
           : Column(
@@ -1018,36 +1021,6 @@ class _EmptyState extends StatelessWidget {
               fontSize: FontSize.caption,
             ),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ErrorRetry extends StatelessWidget {
-  final String error;
-  final VoidCallback onRetry;
-  const _ErrorRetry({required this.error, required this.onRetry});
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: theme.colorScheme.error,
-            size: 40,
-          ),
-          const SizedBox(height: Spacing.sp10),
-          Text(
-            error,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: Spacing.sp16),
-          OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );

@@ -3,6 +3,9 @@ import '../../coaching/models/member_model.dart';
 import '../../coaching/services/member_service.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
+import '../../../core/constants/error_strings.dart';
+import '../../../core/utils/error_sanitizer.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../../../core/theme/design_tokens.dart';
 
 /// Screen to assign a fee structure to one or more students.
@@ -72,7 +75,7 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = ErrorSanitizer.sanitize(e, fallback: FeeErrors.loadFailed);
         _loading = false;
       });
     }
@@ -104,7 +107,7 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-          ? _ErrorRetry(error: _error!, onRetry: _load)
+          ? ErrorRetry(message: _error!, onRetry: _load)
           : _Body(
               structures: _structures,
               selectedStructure: _selectedStructure,
@@ -170,19 +173,14 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
 
   Future<void> _submit() async {
     if (_selectedStructure == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text(
-            'No fee structure selected. Create one in Fee Structures first.',
-          ),
-        ),
+      AppAlert.warning(
+        context,
+        'No fee structure selected. Create one in Fee Structures first.',
       );
       return;
     }
     if (_selectedMemberIds.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Select at least one student')),
-      );
+      AppAlert.warning(context, FeeErrors.selectStudent);
       return;
     }
     setState(() => _submitting = true);
@@ -224,19 +222,10 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
     if (!mounted) return;
 
     if (failed.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Fee assigned to ${succeeded.length} student(s)'),
-        ),
-      );
+      AppAlert.success(context, FeeSuccess.assigned);
       Navigator.pop(context);
     } else if (succeeded.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: const Text('Failed to assign fee to all students'),
-          backgroundColor: Theme.of(context).colorScheme.error,
-        ),
-      );
+      AppAlert.error(context, FeeErrors.assignFailed);
     } else {
       // Partial success — remove succeeded from selection
       setState(() {
@@ -244,14 +233,7 @@ class _AssignFeeScreenState extends State<AssignFeeScreen> {
           _selectedMemberIds.remove(id);
         }
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            'Assigned to ${succeeded.length}, failed for ${failed.length} student(s). Retry for remaining.',
-          ),
-          duration: const Duration(seconds: 4),
-        ),
-      );
+      AppAlert.warning(context, FeeSuccess.assignedPartial);
     }
 
     if (mounted) setState(() => _submitting = false);
@@ -1094,36 +1076,6 @@ class _Hint extends StatelessWidget {
           color: theme.colorScheme.onSurfaceVariant,
           fontSize: FontSize.body,
         ),
-      ),
-    );
-  }
-}
-
-class _ErrorRetry extends StatelessWidget {
-  final String error;
-  final VoidCallback onRetry;
-  const _ErrorRetry({required this.error, required this.onRetry});
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: theme.colorScheme.error,
-            size: 40,
-          ),
-          const SizedBox(height: Spacing.sp10),
-          Text(
-            error,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: Spacing.sp16),
-          OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
-        ],
       ),
     );
   }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
 import '../../coaching/models/coaching_model.dart';
@@ -71,7 +72,7 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
       _availableTeachers = results[1];
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to load members');
+        AppAlert.error(context, e, fallback: BatchErrors.loadMembersFailed);
       }
     }
     if (mounted) setState(() => _isLoading = false);
@@ -100,7 +101,7 @@ class _AddBatchMembersScreenState extends State<AddBatchMembersScreen>
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to add members');
+        AppAlert.error(context, e, fallback: BatchErrors.addMemberFailed);
       }
     }
     if (mounted) setState(() => _isSaving = false);

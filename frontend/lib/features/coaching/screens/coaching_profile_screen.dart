@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/services/error_logger_service.dart';
 import 'package:flutter_map/flutter_map.dart';
@@ -191,21 +192,14 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       try {
         await onSave(result);
         _refreshCoaching();
-        if (mounted) AppAlert.success(context, 'Updated successfully');
+        if (mounted) AppAlert.success(context, CoachingSuccess.updated);
       } catch (e) {
-        if (mounted) AppAlert.error(context, e, fallback: 'Update failed');
+        if (mounted)
+          AppAlert.error(context, e, fallback: CoachingErrors.updateFailed);
       } finally {
         if (mounted) setState(() => _isLoading = false);
       }
     }
-  }
-
-  void _showSuccess(String msg) {
-    AppAlert.success(context, msg);
-  }
-
-  void _showError(String msg) {
-    AppAlert.error(context, msg);
   }
 
   void _editTagline() => _editField(
@@ -347,9 +341,10 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       final url = await _coachingService.uploadLogo(picked.path);
       await _coachingService.updateCoaching(id: _coaching.id, logo: url);
       _refreshCoaching();
-      if (mounted) _showSuccess('Logo updated');
+      if (mounted) AppAlert.success(context, CoachingSuccess.avatarUpdated);
     } catch (e) {
-      if (mounted) _showError('Upload failed');
+      if (mounted)
+        AppAlert.error(context, e, fallback: CoachingErrors.uploadFailed);
     } finally {
       if (mounted) setState(() => _isUploadingLogo = false);
     }
@@ -422,9 +417,10 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       final url = await _coachingService.uploadCover(picked.path);
       await _coachingService.updateCoaching(id: _coaching.id, coverImage: url);
       _refreshCoaching();
-      if (mounted) _showSuccess('Cover updated');
+      if (mounted) AppAlert.success(context, CoachingSuccess.coverUpdated);
     } catch (e) {
-      if (mounted) _showError('Upload failed');
+      if (mounted)
+        AppAlert.error(context, e, fallback: CoachingErrors.uploadFailed);
     } finally {
       if (mounted) setState(() => _isUploadingCover = false);
     }
@@ -1325,7 +1321,8 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
           category: LogCategory.system,
           error: e2.toString(),
         );
-        if (mounted) AppAlert.error(context, 'Could not open maps');
+        if (mounted)
+          AppAlert.error(context, e2, fallback: Errors.openMapFailed);
       }
     }
   }

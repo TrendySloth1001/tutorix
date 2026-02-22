@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -92,11 +93,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final updated = await _uploadService.uploadAvatar(File(image.path));
       if (updated != null && mounted) {
         widget.onUserUpdated?.call(updated);
-        AppAlert.success(context, 'Profile picture updated successfully');
+        AppAlert.success(context, ProfileSuccess.avatarUpdated);
       }
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to update avatar');
+        AppAlert.error(context, e, fallback: ProfileErrors.avatarUpdateFailed);
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);
@@ -110,11 +111,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
       final updated = await userService.updateProfile(picture: null);
       if (updated != null && mounted) {
         widget.onUserUpdated?.call(updated);
-        AppAlert.success(context, 'Profile picture removed');
+        AppAlert.success(context, ProfileSuccess.avatarRemoved);
       }
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to remove avatar');
+        AppAlert.error(context, e, fallback: ProfileErrors.avatarRemoveFailed);
       }
     } finally {
       if (mounted) setState(() => _isUploading = false);

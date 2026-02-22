@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:table_calendar/table_calendar.dart';
 import '../services/fee_service.dart';
+import '../../../core/constants/error_strings.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../../../core/theme/design_tokens.dart';
 
 class FeeCalendarScreen extends StatefulWidget {
@@ -53,9 +55,7 @@ class _FeeCalendarScreenState extends State<FeeCalendarScreen> {
       });
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Error loading calendar: $e')));
+      AppAlert.error(context, e, fallback: FeeErrors.calendarLoadFailed);
     }
   }
 

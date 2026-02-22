@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/design_tokens.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../../../shared/models/user_model.dart';
@@ -95,7 +96,7 @@ class _HomeScreenState extends State<HomeScreen> {
       onError: (e) {
         gotMy = true;
         if (mounted) {
-          AppAlert.error(context, e, fallback: 'Failed to load coachings');
+          AppAlert.error(context, e, fallback: CoachingErrors.loadFailed);
           if (gotJoined) setState(() => _isLoading = false);
         }
       },

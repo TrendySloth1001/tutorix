@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -116,7 +117,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
                 AppAlert.error(
                   context,
                   e,
-                  fallback: 'Failed to load batch details',
+                  fallback: BatchErrors.detailLoadFailed,
                 );
               }
               checkDone();
@@ -233,7 +234,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to delete batch');
+        AppAlert.error(context, e, fallback: BatchErrors.deleteFailed);
       }
     }
   }
@@ -251,7 +252,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       _loadAll();
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to update status');
+        AppAlert.error(context, e, fallback: BatchErrors.statusFailed);
       }
     }
   }
@@ -308,7 +309,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       _loadAll();
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to remove member');
+        AppAlert.error(context, e, fallback: BatchErrors.removeMemberFailed);
       }
     }
   }
@@ -365,7 +366,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       _loadAll();
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to delete note');
+        AppAlert.error(context, e, fallback: BatchErrors.deleteNoteFailed);
       }
     }
   }
@@ -422,7 +423,7 @@ class _BatchDetailScreenState extends State<BatchDetailScreen>
       _loadAll();
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to delete notice');
+        AppAlert.error(context, e, fallback: BatchErrors.deleteNoticeFailed);
       }
     }
   }

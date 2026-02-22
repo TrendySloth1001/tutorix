@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:tutorix/core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
+import '../../../shared/widgets/app_alert.dart';
 
 /// A clean, minimal refund receipt screen shown after a refund is processed.
 /// Works for both manual (Cash, UPI, Bank Transfer, Cheque) and online
@@ -368,9 +370,7 @@ class RefundReceiptScreen extends StatelessWidget {
     ]);
 
     Clipboard.setData(ClipboardData(text: lines.join('\n')));
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Refund receipt copied to clipboard')),
-    );
+    if (context.mounted) AppAlert.success(context, FeeSuccess.receiptCopied);
   }
 
   String _truncateId(String id) {

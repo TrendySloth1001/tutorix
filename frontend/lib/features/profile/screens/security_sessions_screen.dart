@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../shared/models/login_session.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -31,7 +32,7 @@ class _SecuritySessionsScreenState extends State<SecuritySessionsScreen> {
       _sessions = await _userService.getSessions();
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to load sessions');
+        AppAlert.error(context, e, fallback: ProfileErrors.loadSessionsFailed);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

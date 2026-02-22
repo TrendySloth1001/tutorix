@@ -13,10 +13,10 @@ library;
 /// Raw tokens for mathematical spacing (padding, margin, gap, SizedBox).
 abstract final class Spacing {
   // ── Grid tokens ──
-  static const double sp2  = 2;
-  static const double sp4  = 4;
-  static const double sp6  = 6;
-  static const double sp8  = 8;
+  static const double sp2 = 2;
+  static const double sp4 = 4;
+  static const double sp6 = 6;
+  static const double sp8 = 8;
   static const double sp10 = 10;
   static const double sp12 = 12;
   static const double sp14 = 14;
@@ -38,16 +38,22 @@ abstract final class Spacing {
   // ── Semantic spacing ──
   /// Horizontal inset for full-width screens (left + right).
   static const double screenH = sp16;
+
   /// Vertical padding at top of scroll content.
   static const double screenTop = sp16;
+
   /// Internal padding inside cards.
   static const double cardPad = sp16;
+
   /// Gap between major content sections.
   static const double sectionGap = sp24;
+
   /// Gap between items in a list / column.
   static const double listGap = sp12;
+
   /// Gap between a label and its value.
   static const double labelGap = sp4;
+
   /// Internal padding inside chips / pills / badges.
   static const double chipH = sp10;
   static const double chipV = sp4;
@@ -67,13 +73,13 @@ abstract final class Spacing {
 ///  | micro  | 11 | Badges, pills, tertiary labels             |
 ///  | nano   | 10 | Minimal legal text, superscripts           |
 abstract final class FontSize {
-  static const double hero    = 32;
-  static const double title   = 20;
-  static const double sub     = 16;
-  static const double body    = 14;
+  static const double hero = 32;
+  static const double title = 20;
+  static const double sub = 16;
+  static const double body = 14;
   static const double caption = 12;
-  static const double micro   = 11;
-  static const double nano    = 10;
+  static const double micro = 11;
+  static const double nano = 10;
 }
 
 // ── Border Radius ────────────────────────────────────────────────────────
@@ -87,9 +93,9 @@ abstract final class FontSize {
 ///  | xl    | 24  | Hero banners, large modals          |
 ///  | full  | 100 | Circles, avatar clips               |
 abstract final class Radii {
-  static const double sm   = 6;
-  static const double md   = 12;
-  static const double lg   = 16;
-  static const double xl   = 24;
+  static const double sm = 6;
+  static const double md = 12;
+  static const double lg = 16;
+  static const double xl = 24;
   static const double full = 100;
 }

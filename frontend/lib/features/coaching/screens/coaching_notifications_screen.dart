@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../../shared/models/notification_model.dart';
 import '../../../../shared/services/notification_service.dart';
 import '../../../../shared/widgets/app_alert.dart';
@@ -57,11 +58,7 @@ class _CoachingNotificationsScreenState
           },
           onError: (e) {
             if (mounted) {
-              AppAlert.error(
-                context,
-                e,
-                fallback: 'Failed to load notifications',
-              );
+              AppAlert.error(context, e, fallback: NotifyErrors.loadFailed);
               setState(() => _isLoading = false);
             }
           },
@@ -96,7 +93,7 @@ class _CoachingNotificationsScreenState
       if (mounted) {
         // If archive fails, reload to get accurate state
         _load();
-        AppAlert.error(context, e, fallback: 'Failed to archive');
+        AppAlert.error(context, e, fallback: NotifyErrors.archiveFailed);
       }
     }
   }
@@ -202,14 +199,11 @@ class _CoachingNotificationsScreenState
         }
 
         if (mounted) {
-          AppAlert.success(
-            context,
-            'Member removed successfully. They have been notified.',
-          );
+          AppAlert.success(context, MemberSuccess.removed);
         }
       } catch (e) {
         if (mounted) {
-          AppAlert.error(context, e, fallback: 'Failed to remove member');
+          AppAlert.error(context, e, fallback: MemberErrors.removeFailed);
         }
       }
     } else if (action == 'ok') {
@@ -218,7 +212,7 @@ class _CoachingNotificationsScreenState
         await _archive(notificationId);
       }
       if (mounted) {
-        AppAlert.success(context, 'Notification dismissed');
+        AppAlert.success(context, NotifySuccess.dismissed);
       }
     }
   }

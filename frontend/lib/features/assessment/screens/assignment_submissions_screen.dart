@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
+import '../../../core/utils/error_sanitizer.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../models/assignment_model.dart';
 import '../services/assessment_service.dart';
 import 'file_viewer_screen.dart';
@@ -47,7 +50,10 @@ class _AssignmentSubmissionsScreenState
         widget.assignment.id,
       );
     } catch (e) {
-      _error = e.toString();
+      _error = ErrorSanitizer.sanitize(
+        e,
+        fallback: AssessmentErrors.submissionsLoadFailed,
+      );
     }
     if (mounted) setState(() => _loading = false);
   }
@@ -71,16 +77,12 @@ class _AssignmentSubmissionsScreenState
         feedback: result['feedback'] as String?,
       );
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Graded successfully')));
+        AppAlert.success(context, AssessmentSuccess.graded);
         _load();
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppAlert.error(context, e, fallback: AssessmentErrors.gradeFailed);
       }
     }
   }
@@ -130,16 +132,7 @@ class _AssignmentSubmissionsScreenState
       return const Center(child: CircularProgressIndicator());
     }
     if (_error != null) {
-      return Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text('Failed to load', style: theme.textTheme.bodyMedium),
-            const SizedBox(height: Spacing.sp8),
-            TextButton(onPressed: _load, child: const Text('Retry')),
-          ],
-        ),
-      );
+      return ErrorRetry(message: _error!, onRetry: _load);
     }
     if (_submissions == null || _submissions!.isEmpty) {
       return Center(
@@ -426,9 +419,7 @@ class _GradeDialogState extends State<_GradeDialog> {
           onPressed: () {
             final marks = int.tryParse(_marksCtl.text.trim());
             if (marks == null) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Enter valid marks')),
-              );
+              AppAlert.warning(context, AssessmentErrors.invalidMarks);
               return;
             }
             Navigator.pop(context, {

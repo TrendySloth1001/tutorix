@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
@@ -72,7 +73,7 @@ class _BatchesListScreenState extends State<BatchesListScreen> {
       },
       onError: (e) {
         if (mounted) {
-          AppAlert.error(context, e, fallback: 'Failed to load batches');
+          AppAlert.error(context, e, fallback: BatchErrors.loadFailed);
           setState(() => _isLoading = false);
         }
       },

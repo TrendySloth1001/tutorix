@@ -1,7 +1,9 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../../core/theme/design_tokens.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../models/assessment_model.dart';
 import '../services/assessment_service.dart';
 import 'assessment_result_screen.dart';
@@ -94,9 +96,7 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
       setState(() => _loading = false);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppAlert.error(context, e, fallback: AssessmentErrors.loadFailed);
         Navigator.pop(context);
       }
     }
@@ -254,9 +254,7 @@ class _TakeAssessmentScreenState extends State<TakeAssessmentScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppAlert.error(context, e, fallback: AssessmentErrors.submitFailed);
         setState(() => _submitting = false);
       }
     }

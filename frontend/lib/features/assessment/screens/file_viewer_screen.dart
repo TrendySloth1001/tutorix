@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../shared/services/secure_storage_service.dart';
 
@@ -100,18 +101,10 @@ class _FileViewerScreenState extends State<FileViewerScreen> {
                   ),
                   const SizedBox(height: Spacing.sp16),
                   Text(
-                    'Failed to load image',
+                    Errors.loadFailed,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.error,
                     ),
-                  ),
-                  const SizedBox(height: Spacing.sp8),
-                  Text(
-                    error.toString(),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-                    textAlign: TextAlign.center,
                   ),
                 ],
               ),

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:tutorix/core/theme/design_tokens.dart';
+import '../../../core/constants/error_strings.dart';
+import '../../../core/utils/error_sanitizer.dart';
 import '../../../shared/services/invitation_service.dart';
 import '../../../shared/widgets/app_alert.dart';
 
@@ -63,7 +65,7 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = e.toString().replaceFirst('Exception: ', '');
+        _errorMessage = ErrorSanitizer.sanitize(e, fallback: Errors.loadFailed);
         _isSearching = false;
       });
     }
@@ -86,16 +88,12 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
             : null,
       );
       if (mounted) {
-        final isResolved = _lookupResult?['found'] == true;
-        AppAlert.success(
-          context,
-          isResolved ? 'Invitation sent!' : 'Pending invite created',
-        );
+        AppAlert.success(context, MemberSuccess.invited);
         Navigator.pop(context, true);
       }
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e);
+        AppAlert.error(context, e, fallback: MemberErrors.inviteFailed);
       }
     } finally {
       if (mounted) setState(() => _isSending = false);
@@ -301,7 +299,10 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
 
                       if (_errorMessage != null) ...[
                         const SizedBox(height: Spacing.sp10),
-                        _ErrorBanner(message: _errorMessage!),
+                        ErrorRetry(
+                          message: _errorMessage!,
+                          onRetry: _searchContact,
+                        ),
                       ],
 
                       if (_lookupResult != null) ...[
@@ -979,43 +980,6 @@ class _PersonCard extends StatelessWidget {
             ],
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ErrorBanner extends StatelessWidget {
-  final String message;
-  const _ErrorBanner({required this.message});
-
-  @override
-  Widget build(BuildContext context) {
-    final red = Theme.of(context).colorScheme.error;
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.sp12,
-        vertical: Spacing.sp10,
-      ),
-      decoration: BoxDecoration(
-        color: red.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(Radii.md),
-        border: Border.all(color: red.withValues(alpha: 0.15)),
-      ),
-      child: Row(
-        children: [
-          Icon(Icons.error_outline_rounded, color: red, size: 16),
-          const SizedBox(width: Spacing.sp8),
-          Expanded(
-            child: Text(
-              message,
-              style: TextStyle(
-                color: red,
-                fontSize: FontSize.caption,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

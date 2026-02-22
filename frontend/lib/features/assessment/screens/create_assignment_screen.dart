@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../services/assessment_service.dart';
 
 /// Screen for teachers to create an assignment.
@@ -91,9 +93,7 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error: $e')));
+        AppAlert.error(context, e, fallback: AssessmentErrors.createFailed);
       }
     } finally {
       if (mounted) setState(() => _saving = false);

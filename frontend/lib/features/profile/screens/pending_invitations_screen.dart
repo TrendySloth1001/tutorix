@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../auth/controllers/auth_controller.dart';
 
@@ -48,13 +49,13 @@ class _PendingInvitationsScreenState extends State<PendingInvitationsScreen> {
       if (mounted) {
         AppAlert.success(
           context,
-          accept ? 'Invitation accepted!' : 'Declined.',
+          accept ? MemberSuccess.accepted : MemberSuccess.declined,
         );
         await context.read<AuthController>().refreshInvitations();
       }
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e);
+        AppAlert.error(context, e, fallback: MemberErrors.acceptFailed);
       }
     } finally {
       if (mounted) setState(() => _responding.remove(id));

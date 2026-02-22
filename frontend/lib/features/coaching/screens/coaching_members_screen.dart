@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../../shared/models/user_model.dart';
@@ -104,7 +105,7 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
             },
             onError: (e) {
               if (mounted) {
-                AppAlert.error(context, e, fallback: 'Failed to load members');
+                AppAlert.error(context, e, fallback: MemberErrors.loadFailed);
               }
               checkDone();
             },
@@ -178,12 +179,12 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
     try {
       await _memberService.removeMember(widget.coaching.id, member.id);
       if (mounted) {
-        AppAlert.success(context, 'Member removed');
+        AppAlert.success(context, MemberSuccess.removed);
         _loadData();
       }
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to remove member');
+        AppAlert.error(context, e, fallback: MemberErrors.removeFailed);
       }
     }
   }
@@ -198,12 +199,12 @@ class _CoachingMembersScreenState extends State<CoachingMembersScreen>
     try {
       await _memberService.cancelInvitation(widget.coaching.id, inv.id);
       if (mounted) {
-        AppAlert.success(context, 'Invitation cancelled');
+        AppAlert.success(context, MemberSuccess.inviteCancelled);
         _loadData();
       }
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to cancel invitation');
+        AppAlert.error(context, e, fallback: MemberErrors.cancelFailed);
       }
     }
   }

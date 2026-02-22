@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../shared/services/invitation_service.dart';
 import '../../../shared/widgets/accept_invite_sheet.dart';
@@ -65,13 +66,13 @@ class _MyInvitationsScreenState extends State<MyInvitationsScreen> {
       if (mounted) {
         AppAlert.success(
           context,
-          accept ? 'Invitation accepted!' : 'Invitation declined.',
+          accept ? MemberSuccess.accepted : MemberSuccess.declined,
         );
         _loadInvitations();
       }
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e);
+        AppAlert.error(context, e, fallback: MemberErrors.acceptFailed);
       }
     }
   }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../shared/widgets/app_alert.dart';
+import '../../../core/constants/error_strings.dart';
+import '../../../core/utils/error_sanitizer.dart';
 import '../../auth/controllers/auth_controller.dart';
 import '../models/fee_model.dart';
 import '../services/fee_service.dart';
@@ -110,7 +112,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _txError = e.toString();
+        _txError = ErrorSanitizer.sanitize(e, fallback: FeeErrors.loadFailed);
         _txLoading = false;
       });
     }
@@ -140,7 +142,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       });
     } catch (e) {
       setState(() {
-        _error = e.toString();
+        _error = ErrorSanitizer.sanitize(e, fallback: FeeErrors.loadFailed);
         _loading = false;
       });
     }
@@ -273,7 +275,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
           ? (_loading
                 ? const Center(child: CircularProgressIndicator())
                 : _error != null
-                ? _ErrorRetry(error: _error!, onRetry: _load)
+                ? ErrorRetry(message: _error!, onRetry: _load)
                 : RefreshIndicator(
                     color: theme.colorScheme.primary,
                     onRefresh: _load,
@@ -294,7 +296,7 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                 _loading
                     ? const Center(child: CircularProgressIndicator())
                     : _error != null
-                    ? _ErrorRetry(error: _error!, onRetry: _load)
+                    ? ErrorRetry(message: _error!, onRetry: _load)
                     : RefreshIndicator(
                         color: theme.colorScheme.primary,
                         onRefresh: _load,
@@ -315,8 +317,8 @@ class _MyFeesScreenState extends State<MyFeesScreen>
                   child: _txLoading
                       ? const Center(child: CircularProgressIndicator())
                       : _txError != null
-                      ? _ErrorRetry(
-                          error: _txError!,
+                      ? ErrorRetry(
+                          message: _txError!,
                           onRetry: _loadTransactions,
                         )
                       : _TransactionHistory(
@@ -684,12 +686,15 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       if (orderData != null) {
         final internalId = orderData['internalOrderId'] as String?;
         if (internalId != null) {
-          final reason = e.toString().replaceFirst('Exception: ', '');
+          final reason = ErrorSanitizer.sanitize(
+            e,
+            fallback: FeeErrors.paymentFailed,
+          );
           await _paySvc.markOrderFailed(widget.coachingId, internalId, reason);
         }
       }
       if (!mounted) return;
-      final msg = e.toString().replaceFirst('Exception: ', '');
+      final msg = ErrorSanitizer.sanitize(e, fallback: FeeErrors.paymentFailed);
       if (msg == 'Payment cancelled') return;
       // External wallet: show info instead of error (webhook will confirm)
       if (msg.contains('being processed via')) {
@@ -771,12 +776,15 @@ class _MyFeesScreenState extends State<MyFeesScreen>
       if (orderData != null) {
         final internalId = orderData['internalOrderId'] as String?;
         if (internalId != null) {
-          final reason = e.toString().replaceFirst('Exception: ', '');
+          final reason = ErrorSanitizer.sanitize(
+            e,
+            fallback: FeeErrors.paymentFailed,
+          );
           await _paySvc.markOrderFailed(widget.coachingId, internalId, reason);
         }
       }
       if (!mounted) return;
-      final msg = e.toString().replaceFirst('Exception: ', '');
+      final msg = ErrorSanitizer.sanitize(e, fallback: FeeErrors.paymentFailed);
       if (msg == 'Payment cancelled') return;
       // External wallet: show info instead of error (webhook will confirm)
       if (msg.contains('being processed via')) {
@@ -1434,36 +1442,6 @@ class _EmptyState extends StatelessWidget {
             'You are all caught up.',
             style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
           ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ErrorRetry extends StatelessWidget {
-  final String error;
-  final VoidCallback onRetry;
-  const _ErrorRetry({required this.error, required this.onRetry});
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: theme.colorScheme.error,
-            size: 40,
-          ),
-          const SizedBox(height: Spacing.sp10),
-          Text(
-            error,
-            textAlign: TextAlign.center,
-            style: TextStyle(color: theme.colorScheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: Spacing.sp16),
-          OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
         ],
       ),
     );

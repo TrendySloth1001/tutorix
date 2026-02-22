@@ -6,6 +6,8 @@ import 'package:provider/provider.dart';
 import '../services/payment_service.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../auth/controllers/auth_controller.dart';
+import '../../../core/constants/error_strings.dart';
+import '../../../core/utils/error_sanitizer.dart';
 import '../../../shared/widgets/app_alert.dart';
 
 /// 3-step onboarding wizard for Razorpay Route setup:
@@ -155,7 +157,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = ErrorSanitizer.sanitize(e, fallback: PaymentErrors.loadFailed);
         _loading = false;
       });
     }
@@ -270,7 +272,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
       if (!mounted) return;
 
       final msg = result['message'] as String? ?? 'Status updated';
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
+      AppAlert.success(context, msg);
       _load();
     } catch (e) {
       if (!mounted) return;
@@ -297,9 +299,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
     try {
       await _svc.deleteLinkedAccount(widget.coachingId);
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('Linked account removed')));
+      AppAlert.success(context, PaymentSuccess.accountRemoved);
       _load();
     } catch (e) {
       if (!mounted) return;
@@ -909,19 +909,7 @@ class _PaymentSettingsScreenState extends State<PaymentSettingsScreen> {
       body: _loading
           ? const Center(child: CircularProgressIndicator())
           : _error != null
-          ? Center(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    _error!,
-                    style: TextStyle(color: theme.colorScheme.error),
-                  ),
-                  const SizedBox(height: Spacing.sp12),
-                  OutlinedButton(onPressed: _load, child: const Text('Retry')),
-                ],
-              ),
-            )
+          ? ErrorRetry(message: _error!, onRetry: _load)
           : Column(
               children: [
                 // ── Step progress indicator ──

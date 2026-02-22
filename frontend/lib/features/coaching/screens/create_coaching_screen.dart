@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -49,13 +50,13 @@ class _CreateCoachingScreenState extends State<CreateCoachingScreen> {
           if (widget.onCoachingCreated != null && updatedUser != null) {
             widget.onCoachingCreated!(coaching, updatedUser);
           }
-          AppAlert.success(context, '${coaching.name} created successfully!');
+          AppAlert.success(context, CoachingSuccess.created);
           Navigator.pop(context, coaching);
         }
       }
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to create coaching');
+        AppAlert.error(context, e, fallback: CoachingErrors.createFailed);
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);

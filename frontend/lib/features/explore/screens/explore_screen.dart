@@ -7,6 +7,7 @@ import 'package:latlong2/latlong.dart';
 import 'package:tutorix/core/theme/design_tokens.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/constants/error_strings.dart';
 import '../../../core/services/error_logger_service.dart';
 import '../../../shared/models/user_model.dart';
 import '../../../shared/widgets/app_alert.dart';
@@ -226,10 +227,7 @@ class _ExploreScreenState extends State<ExploreScreen>
             debugPrint('Stack trace: $stackTrace');
             setState(() => _nearbyLoading = false);
             // Show error to user
-            AppAlert.error(
-              context,
-              'Failed to load nearby coachings. Please try again.',
-            );
+            AppAlert.error(context, error, fallback: ExploreErrors.loadFailed);
           },
         );
   }
@@ -266,7 +264,7 @@ class _ExploreScreenState extends State<ExploreScreen>
         debugPrint('Stack trace: $stackTrace');
         if (!mounted) return;
         setState(() => _isSearching = false);
-        AppAlert.error(context, 'Search failed. Please try again.');
+        AppAlert.error(context, error, fallback: ExploreErrors.searchFailed);
       }
     });
   }
@@ -323,7 +321,7 @@ class _ExploreScreenState extends State<ExploreScreen>
       );
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, 'Could not load coaching details');
+        AppAlert.error(context, e, fallback: ExploreErrors.detailsFailed);
       }
     }
   }
@@ -358,8 +356,8 @@ class _ExploreScreenState extends State<ExploreScreen>
     );
     try {
       await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      if (mounted) AppAlert.error(context, 'Could not open maps');
+    } catch (e) {
+      if (mounted) AppAlert.error(context, e, fallback: Errors.openMapFailed);
     }
   }
 

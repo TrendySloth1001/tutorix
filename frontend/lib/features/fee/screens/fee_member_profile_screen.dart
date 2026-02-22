@@ -3,6 +3,9 @@ import 'package:intl/intl.dart';
 import '../../coaching/services/member_service.dart';
 import '../services/fee_service.dart';
 import 'fee_record_detail_screen.dart';
+import '../../../core/constants/error_strings.dart';
+import '../../../core/utils/error_sanitizer.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../../../core/theme/design_tokens.dart';
 
 /// Unified Student Profile — Fees, Academic, and Personal details.
@@ -54,7 +57,7 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
     } catch (e) {
       if (!mounted) return;
       setState(() {
-        _error = e.toString();
+        _error = ErrorSanitizer.sanitize(e, fallback: FeeErrors.profileFailed);
         _loading = false;
       });
     }
@@ -152,7 +155,7 @@ class _FeeMemberProfileScreenState extends State<FeeMemberProfileScreen> {
               child: _loading
                   ? const Center(child: CircularProgressIndicator())
                   : _error != null
-                  ? _ErrorRetry(error: _error!, onRetry: _load)
+                  ? ErrorRetry(message: _error!, onRetry: _load)
                   : TabBarView(
                       children: [
                         _FeeTab(
@@ -195,15 +198,11 @@ class _FeeTab extends StatelessWidget {
     try {
       await FeeService().sendReminder(coachingId, recordId);
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('Reminder sent')));
+        AppAlert.success(context, 'Reminder sent');
       }
     } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Failed: ${e.toString()}')));
+        AppAlert.error(context, e, fallback: FeeErrors.reminderFailed);
       }
     }
   }
@@ -344,7 +343,7 @@ class _AcademicTabState extends State<_AcademicTab>
     } catch (e) {
       if (mounted) {
         setState(() {
-          _error = e.toString();
+          _error = ErrorSanitizer.sanitize(e, fallback: Errors.loadFailed);
           _loading = false;
         });
       }
@@ -357,7 +356,7 @@ class _AcademicTabState extends State<_AcademicTab>
     final theme = Theme.of(context);
     if (_loading) return const Center(child: CircularProgressIndicator());
     if (_error != null) {
-      return _ErrorRetry(error: _error!, onRetry: _loadResults);
+      return ErrorRetry(message: _error!, onRetry: _loadResults);
     }
     if (_results.isEmpty) {
       return Center(
@@ -1114,38 +1113,6 @@ class _SmallChip extends StatelessWidget {
           fontSize: FontSize.nano,
           fontWeight: FontWeight.w600,
         ),
-      ),
-    );
-  }
-}
-
-class _ErrorRetry extends StatelessWidget {
-  final String error;
-  final VoidCallback onRetry;
-  const _ErrorRetry({required this.error, required this.onRetry});
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.error_outline_rounded,
-            color: Theme.of(context).colorScheme.error,
-            size: 40,
-          ),
-          const SizedBox(height: Spacing.sp10),
-          Text(
-            error,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: Theme.of(context).colorScheme.onSurfaceVariant,
-              fontSize: FontSize.body,
-            ),
-          ),
-          const SizedBox(height: Spacing.sp16),
-          OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
-        ],
       ),
     );
   }

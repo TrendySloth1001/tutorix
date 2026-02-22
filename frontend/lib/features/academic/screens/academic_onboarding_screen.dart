@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/design_tokens.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../../shared/widgets/app_shimmer.dart';
 import '../models/academic_masters.dart';
@@ -133,7 +134,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
       widget.onComplete();
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to save profile');
+        AppAlert.error(context, e, fallback: AcademicErrors.saveFailed);
       }
     } finally {
       if (mounted) setState(() => _isSaving = false);
@@ -146,7 +147,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
       widget.onRemindLater();
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Something went wrong');
+        AppAlert.error(context, e, fallback: Errors.fallback);
       }
     }
   }
@@ -169,7 +170,7 @@ class _AcademicOnboardingScreenState extends State<AcademicOnboardingScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text('Failed to load data'),
+              const Text(AcademicErrors.loadFailed),
               const SizedBox(height: Spacing.sp16),
               FilledButton(
                 onPressed: () {

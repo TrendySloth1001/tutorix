@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
 import '../models/batch_model.dart';
@@ -160,7 +161,7 @@ class _CreateBatchScreenState extends State<CreateBatchScreen>
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) {
-        AppAlert.error(context, e, fallback: 'Failed to save batch');
+        AppAlert.error(context, e, fallback: BatchErrors.saveFailed);
       }
     }
     if (mounted) setState(() => _isSaving = false);

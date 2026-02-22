@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
+import '../../../shared/widgets/app_alert.dart';
 import '../models/assessment_model.dart';
 import '../services/assessment_service.dart';
 
@@ -73,9 +75,7 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(SnackBar(content: Text('Error loading results: $e')));
+        AppAlert.error(context, e, fallback: AssessmentErrors.loadResultFailed);
       }
     }
     if (mounted) setState(() => _loading = false);
@@ -283,9 +283,11 @@ class _AssessmentResultScreenState extends State<AssessmentResultScreen> {
       );
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(
+        AppAlert.error(
           context,
-        ).showSnackBar(SnackBar(content: Text('Error loading response: $e')));
+          e,
+          fallback: AssessmentErrors.loadResponseFailed,
+        );
       }
     }
   }
