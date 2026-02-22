@@ -74,6 +74,7 @@ app.get('/coaching/:coachingId/subscription', authMiddleware, subLimiter, subCtr
 app.get('/coaching/:coachingId/subscription/usage', authMiddleware, subLimiter, subCtrl.getUsage.bind(subCtrl));
 app.get('/coaching/:coachingId/subscription/invoices', authMiddleware, subLimiter, subCtrl.getInvoices.bind(subCtrl));
 app.post('/coaching/:coachingId/subscription/subscribe', authMiddleware, subscribeActionLimiter, subCtrl.subscribe.bind(subCtrl));
+app.post('/coaching/:coachingId/subscription/verify-payment', authMiddleware, subscribeActionLimiter, subCtrl.verifyPayment.bind(subCtrl));
 app.post('/coaching/:coachingId/subscription/cancel', authMiddleware, subscribeActionLimiter, subCtrl.cancel.bind(subCtrl));
 
 // Payment config (Razorpay key for frontend)

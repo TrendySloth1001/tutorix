@@ -27,10 +27,12 @@ class PlanDetailScreen extends StatefulWidget {
   State<PlanDetailScreen> createState() => _PlanDetailScreenState();
 }
 
-class _PlanDetailScreenState extends State<PlanDetailScreen> {
+class _PlanDetailScreenState extends State<PlanDetailScreen>
+    with WidgetsBindingObserver {
   final _service = SubscriptionService.instance;
   bool _policyAccepted = false;
   bool _isSubscribing = false;
+  bool _awaitingPayment = false; // true while user is in the browser paying
 
   PlanModel get plan => widget.plan;
   bool get yearly => widget.yearly;
@@ -53,6 +55,27 @@ class _PlanDetailScreenState extends State<PlanDetailScreen> {
 
   // ── Subscribe flow ────────────────────────────────────────────────
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // When the user returns from the payment browser, verify payment.
+    if (state == AppLifecycleState.resumed && _awaitingPayment) {
+      _awaitingPayment = false;
+      _verifyPayment();
+    }
+  }
+
   Future<void> _onBuyPressed() async {
     if (!_policyAccepted || _isSubscribing) return;
 
@@ -74,14 +97,71 @@ class _PlanDetailScreenState extends State<PlanDetailScreen> {
       if (!mounted) return;
 
       if (canOpen) {
+        _awaitingPayment = true;
         await launchUrl(uri, mode: LaunchMode.externalApplication);
+        // Don't pop — wait for user to return, then verify in didChangeAppLifecycleState
+      } else {
+        AppAlert.error(context, 'Could not open payment page');
       }
-      if (!mounted) return;
-      AppAlert.success(context, 'Redirecting to payment...');
-      Navigator.of(context).pop(true);
     } catch (e) {
       if (!mounted) return;
       AppAlert.error(context, e, fallback: 'Failed to start subscription');
+    } finally {
+      if (mounted) setState(() => _isSubscribing = false);
+    }
+  }
+
+  /// Called when the user returns from the payment browser.
+  /// Polls the backend to check if payment completed, then pops with result.
+  Future<void> _verifyPayment() async {
+    if (!mounted) return;
+    setState(() => _isSubscribing = true);
+
+    try {
+      // Give Razorpay a moment to process
+      await Future.delayed(const Duration(seconds: 1));
+
+      // Poll up to 3 times with 2-second gaps
+      for (var attempt = 0; attempt < 3; attempt++) {
+        if (!mounted) return;
+
+        final result = await _service.verifyPayment(widget.coachingId);
+
+        if (result.activated) {
+          if (!mounted) return;
+          AppAlert.success(context, 'Payment successful! Plan activated.');
+          Navigator.of(context).pop(true);
+          return;
+        }
+
+        if (result.status == 'expired' || result.status == 'cancelled') {
+          if (!mounted) return;
+          AppAlert.error(
+            context,
+            'Payment link ${result.status}. Please try again.',
+          );
+          setState(() => _isSubscribing = false);
+          return;
+        }
+
+        // Still pending — wait and retry
+        if (attempt < 2) {
+          await Future.delayed(const Duration(seconds: 2));
+        }
+      }
+
+      // After 3 attempts, still not paid
+      if (!mounted) return;
+      AppAlert.info(
+        context,
+        title: 'Payment Processing',
+        message:
+            'Payment is being processed. It may take a few moments. '
+            'Please check back shortly.',
+      );
+    } catch (e) {
+      if (!mounted) return;
+      AppAlert.error(context, e, fallback: 'Could not verify payment');
     } finally {
       if (mounted) setState(() => _isSubscribing = false);
     }

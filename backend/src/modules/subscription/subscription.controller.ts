@@ -117,6 +117,25 @@ export class SubscriptionController {
         }
     }
 
+    // POST /coaching/:coachingId/subscription/verify-payment — Verify payment after browser return
+    async verifyPayment(req: Request, res: Response) {
+        try {
+            const coachingId = req.params.coachingId as string;
+            const userId = (req as any).user?.id as string;
+            if (!userId) return res.status(401).json({ message: 'Unauthorized' });
+
+            const result = await subscriptionService.verifyPaymentLink(coachingId, userId);
+            res.json(result);
+        } catch (error: unknown) {
+            const msg = errorMsg(error);
+            if (msg.includes('Only the owner')) {
+                return res.status(403).json({ message: msg });
+            }
+            console.error('[SubscriptionController] verifyPayment error:', error);
+            res.status(500).json({ message: msg });
+        }
+    }
+
     // GET /coaching/:coachingId/subscription/invoices — List billing invoices
     async getInvoices(req: Request, res: Response) {
         try {

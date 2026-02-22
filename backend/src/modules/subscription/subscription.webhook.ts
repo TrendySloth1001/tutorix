@@ -1,8 +1,11 @@
 /**
  * Razorpay webhook handler for subscription billing events.
  *
- * Mounted alongside the existing payment webhook under /webhooks/subscription
- * with express.raw() body parsing for signature verification.
+ * Option B — handles `payment_link.paid` from Payment Links API.
+ * Option A subscription.* events are commented out until Plans API is activated.
+ *
+ * Mounted under /webhooks/subscription with express.raw() body parsing
+ * for signature verification.
  */
 import { Router } from 'express';
 import type { Request, Response } from 'express';
@@ -46,6 +49,20 @@ router.post('/', async (req: Request, res: Response) => {
         console.log(`[SubscriptionWebhook] Received event: ${event}`);
 
         switch (event) {
+            // ── Option B: Payment Links ────────────────────────────────
+            case 'payment_link.paid': {
+                const plinkEntity = payload.payload?.payment_link?.entity;
+                const paymentEntity = payload.payload?.payment?.entity;
+                if (plinkEntity?.id) {
+                    await subscriptionService.handlePaymentLinkPaid(
+                        plinkEntity,
+                        paymentEntity,
+                    );
+                }
+                break;
+            }
+
+            /* ── Option A: Razorpay Subscriptions (uncomment when activated) ──
             case 'subscription.charged': {
                 const subEntity = payload.payload?.subscription?.entity;
                 const paymentEntity = payload.payload?.payment?.entity;
@@ -81,17 +98,12 @@ router.post('/', async (req: Request, res: Response) => {
                 break;
             }
 
-            case 'subscription.paused': {
-                // Future: handle pause
-                console.log('[SubscriptionWebhook] Subscription paused — no action taken');
-                break;
-            }
-
+            case 'subscription.paused':
             case 'subscription.resumed': {
-                // Future: handle resume
-                console.log('[SubscriptionWebhook] Subscription resumed — no action taken');
+                console.log(`[SubscriptionWebhook] ${event} — no action taken`);
                 break;
             }
+            ── End Option A ──────────────────────────────────────────── */
 
             default:
                 console.log(`[SubscriptionWebhook] Unhandled event: ${event}`);
@@ -99,8 +111,9 @@ router.post('/', async (req: Request, res: Response) => {
 
         // Always return 200 to Razorpay to acknowledge receipt
         res.json({ status: 'ok' });
-    } catch (error: any) {
-        console.error('[SubscriptionWebhook] Error:', error.message);
+    } catch (error: unknown) {
+        const msg = error instanceof Error ? error.message : String(error);
+        console.error('[SubscriptionWebhook] Error:', msg);
         // Still return 200 to prevent Razorpay retries on our bugs
         res.json({ status: 'ok' });
     }

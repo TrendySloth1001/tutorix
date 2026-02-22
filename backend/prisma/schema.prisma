@@ -1293,9 +1293,12 @@ model Subscription {
   gracePeriodEndsAt DateTime? // 3 days after payment failure
   pastDueAt         DateTime? // when payment first failed
 
-  // ── Razorpay Subscription ──────────────────────────────────────
-  razorpaySubscriptionId String?  @unique // sub_xxxxx
-  razorpayPlanId         String?  // plan_xxxxx (Razorpay plan id)
+  // ── Razorpay Linkage ────────────────────────────────────────────
+  /// Stores the Razorpay entity ID linked to this subscription:
+  ///   Option A (Subscriptions API): sub_xxxxx
+  ///   Option B (Payment Links):     plink_xxxxx
+  razorpaySubscriptionId String?  @unique
+  razorpayPlanId         String?  // plan_xxxxx (Option A only)
   razorpayCustomerId     String?  // cust_xxxxx
 
   // ── Upgrade / downgrade scheduling ─────────────────────────────

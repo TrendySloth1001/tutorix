@@ -311,6 +311,8 @@ class ApiConstants {
       '$baseUrl/coaching/$coachingId/subscription/subscribe';
   static String subscriptionCancel(String coachingId) =>
       '$baseUrl/coaching/$coachingId/subscription/cancel';
+  static String subscriptionVerifyPayment(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/subscription/verify-payment';
   static String subscriptionInvoices(String coachingId) =>
       '$baseUrl/coaching/$coachingId/subscription/invoices';
 

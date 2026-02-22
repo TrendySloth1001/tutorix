@@ -265,7 +265,13 @@ export class SubscriptionService {
 
     // ── Subscribe / Upgrade / Downgrade ──────────────────────────────
 
-    /** Create a Razorpay subscription for a paid plan. Returns checkout URL. */
+    /**
+     * Create a Razorpay Payment Link for a paid plan.
+     *
+     * Option B — uses Payment Links API (works without Plans API activation).
+     * The subscription is NOT activated here; it remains on the current plan
+     * until the `payment_link.paid` webhook fires and calls handlePaymentLinkPaid().
+     */
     async createSubscription(coachingId: string, planSlug: string, cycle: 'MONTHLY' | 'YEARLY', userId: string) {
         if (!razorpay) throw new Error('Razorpay not configured');
 
@@ -281,80 +287,66 @@ export class SubscriptionService {
         if (coaching.ownerId !== userId) throw new Error('Only the coaching owner can manage subscriptions');
 
         const amount = cycle === 'YEARLY' ? plan.priceYearly : plan.priceMonthly;
-        const period = cycle === 'YEARLY' ? 'yearly' : 'monthly';
-        const interval = cycle === 'YEARLY' ? 12 : 1; // Razorpay uses monthly intervals
+        const amountPaise = toPaise(amount);
 
-        // Create or find Razorpay plan
-        const razorpayPlanId = await this._getOrCreateRazorpayPlan(plan.slug, cycle, amount);
+        // Ensure subscription record exists (may still be on free plan)
+        const sub = await this.getOrCreateSubscription(coachingId);
 
-        // Create Razorpay subscription
-        const rzpSub = await razorpay.subscriptions.create({
-            plan_id: razorpayPlanId,
-            total_count: cycle === 'YEARLY' ? 10 : 120, // 10 years or 120 months max
-            quantity: 1,
+        // ── Option B: Razorpay Payment Link ──────────────────────────
+        const paymentLink = await (razorpay as any).paymentLink.create({
+            amount: amountPaise,
+            currency: 'INR',
+            accept_partial: false,
+            description: `Tutorix ${plan.name} — ${cycle.toLowerCase()} subscription`,
+            expire_by: Math.floor(Date.now() / 1000) + 86400, // 24-hour expiry
+            reference_id: `${sub.id.replace(/-/g, '').slice(0, 24)}_${Date.now().toString(36)}`, // unique per attempt, max 40 chars
             notes: {
                 coachingId,
+                subscriptionId: sub.id,
                 planSlug: plan.slug,
                 cycle,
             },
-        } as any);
-
-        // Get subscription end date
-        const now = new Date();
-        const periodEnd = cycle === 'YEARLY' ? addYears(now, 1) : addMonths(now, 1);
-
-        // Update/create subscription record
-        const existingSub = await prisma.subscription.findUnique({ where: { coachingId } });
-
-        if (existingSub) {
-            await prisma.subscription.update({
-                where: { coachingId },
-                data: {
-                    planId: plan.id,
-                    billingCycle: cycle,
-                    status: 'ACTIVE',
-                    currentPeriodStart: now,
-                    currentPeriodEnd: periodEnd,
-                    razorpaySubscriptionId: (rzpSub as any).id,
-                    razorpayPlanId: razorpayPlanId,
-                    cancelledAt: null,
-                    pausedAt: null,
-                    gracePeriodEndsAt: null,
-                    pastDueAt: null,
-                    failedPaymentCount: 0,
-                },
-            });
-        } else {
-            await prisma.subscription.create({
-                data: {
-                    coachingId,
-                    planId: plan.id,
-                    billingCycle: cycle,
-                    status: 'ACTIVE',
-                    currentPeriodStart: now,
-                    currentPeriodEnd: periodEnd,
-                    razorpaySubscriptionId: (rzpSub as any).id,
-                    razorpayPlanId: razorpayPlanId,
-                },
-            });
-        }
-
-        // Update coaching storage limit based on plan
-        await prisma.coaching.update({
-            where: { id: coachingId },
-            data: { storageLimit: plan.storageLimitBytes },
+            // No callback_url — the app polls verifyPaymentLink() after the user
+            // returns from the browser. Razorpay shows its own success page.
         });
 
+        const plinkId = paymentLink.id as string;
+        const shortUrl = paymentLink.short_url as string;
+
+        // Store payment link ID on the subscription for webhook lookup
+        await prisma.subscription.update({
+            where: { id: sub.id },
+            data: { razorpaySubscriptionId: plinkId },
+        });
+
+        console.log(`[SubscriptionService] Payment link created: ${plinkId} for coaching ${coachingId}`);
+
         return {
-            subscriptionId: (rzpSub as any).id,
-            shortUrl: (rzpSub as any).short_url,
+            subscriptionId: plinkId,
+            shortUrl,
             planName: plan.name,
             amount,
             cycle,
         };
     }
 
-    /** Cancel subscription at period end */
+    /* ── OPTION A — Razorpay Subscriptions (requires Plans API activation) ────
+     * Replace createSubscription above with this when Razorpay activates the
+     * Subscriptions product on your account.
+     *
+     * async createSubscription_optionA(coachingId, planSlug, cycle, userId) {
+     *   const razorpayPlanId = await this._getOrCreateRazorpayPlan(planSlug, cycle, amount);
+     *   const rzpSub = await razorpay.subscriptions.create({ plan_id: razorpayPlanId, ... });
+     *   // Activate immediately, store razorpaySubscriptionId = rzpSub.id
+     * }
+     * ─────────────────────────────────────────────────────────────────────────── */
+
+    /**
+     * Cancel subscription at period end.
+     *
+     * Option B — no Razorpay subscription to cancel; just mark in DB.
+     * The coaching keeps the paid plan until currentPeriodEnd, then downgrades.
+     */
     async cancelSubscription(coachingId: string, userId: string) {
         const coaching = await prisma.coaching.findUnique({
             where: { id: coachingId },
@@ -363,20 +355,23 @@ export class SubscriptionService {
         if (!coaching) throw new Error('Coaching not found');
         if (coaching.ownerId !== userId) throw new Error('Only the owner can cancel');
 
-        const sub = await prisma.subscription.findUnique({ where: { coachingId } });
+        const sub = await prisma.subscription.findUnique({
+            where: { coachingId },
+            include: { plan: true },
+        });
         if (!sub) throw new Error('No subscription found');
-        if (sub.razorpaySubscriptionId) {
-            // Cancel on Razorpay
-            if (razorpay) {
-                try {
-                    await razorpay.subscriptions.cancel(sub.razorpaySubscriptionId, false); // cancel_at_cycle_end
-                } catch (e: any) {
-                    console.error('[SubscriptionService] Razorpay cancel error:', e.message);
-                }
+        if (sub.plan.slug === 'free') throw new Error('Cannot cancel a free plan');
+
+        /* OPTION A — Razorpay Subscriptions (uncomment when Plans API is activated)
+        if (sub.razorpaySubscriptionId && razorpay) {
+            try {
+                await razorpay.subscriptions.cancel(sub.razorpaySubscriptionId, false);
+            } catch (e: any) {
+                console.error('[SubscriptionService] Razorpay cancel error:', e.message);
             }
         }
+        */
 
-        // Downgrade to free on Razorpay cancel
         const freePlan = await prisma.plan.findUnique({ where: { slug: 'free' } });
         if (!freePlan) throw new Error('Free plan not found');
 
@@ -385,7 +380,6 @@ export class SubscriptionService {
             data: {
                 status: 'CANCELLED',
                 cancelledAt: new Date(),
-                // Schedule downgrade to free at period end
                 scheduledPlanId: freePlan.id,
             },
         });
@@ -446,154 +440,171 @@ export class SubscriptionService {
 
     // ── Webhook Handlers ─────────────────────────────────────────────
 
-    /** Handle Razorpay subscription.charged event */
-    async handlePaymentSuccess(razorpaySubscriptionId: string, razorpayPaymentId: string, amountPaise: number) {
-        const sub = await prisma.subscription.findUnique({
-            where: { razorpaySubscriptionId },
-            include: { plan: true },
-        });
-        if (!sub) {
-            console.warn(`[SubscriptionService] No subscription found for ${razorpaySubscriptionId}`);
+    /**
+     * Handle payment_link.paid webhook event (Option B).
+     *
+     * Activates the paid plan and creates an invoice record.
+     * Called from the webhook router when Razorpay confirms payment.
+     */
+    async handlePaymentLinkPaid(paymentLinkEntity: any, paymentEntity: any) {
+        const plinkId = paymentLinkEntity.id as string;
+        const notes = paymentLinkEntity.notes ?? {};
+        const coachingId = notes.coachingId as string;
+        const planSlug = notes.planSlug as string;
+        const cycle = (notes.cycle as 'MONTHLY' | 'YEARLY') ?? 'MONTHLY';
+
+        if (!coachingId || !planSlug) {
+            console.warn(`[SubscriptionService] payment_link.paid missing notes: ${plinkId}`);
             return;
         }
 
-        const now = new Date();
-        const periodEnd = sub.billingCycle === 'YEARLY'
-            ? addYears(now, 1)
-            : addMonths(now, 1);
-
-        // Idempotency check — don't process same payment twice
-        const existing = await prisma.subscriptionInvoice.findUnique({
-            where: { razorpayPaymentId },
+        // Look up subscription by coachingId (reliable even if plink ID was overwritten)
+        const sub = await prisma.subscription.findUnique({
+            where: { coachingId },
+            include: { plan: true },
         });
-        if (existing) return;
+        if (!sub) {
+            console.warn(`[SubscriptionService] No subscription for coaching ${coachingId}`);
+            return;
+        }
+
+        const plan = await prisma.plan.findUnique({ where: { slug: planSlug } });
+        if (!plan) {
+            console.warn(`[SubscriptionService] Plan not found: ${planSlug}`);
+            return;
+        }
+
+        const razorpayPaymentId = paymentEntity?.id as string | undefined;
+        const amountPaise = (paymentEntity?.amount as number) ?? 0;
+
+        // Idempotency — don't process same payment twice
+        if (razorpayPaymentId) {
+            const existing = await prisma.subscriptionInvoice.findUnique({
+                where: { razorpayPaymentId },
+            });
+            if (existing) return;
+        }
+
+        const now = new Date();
+        const periodEnd = cycle === 'YEARLY' ? addYears(now, 1) : addMonths(now, 1);
 
         await prisma.$transaction([
-            // Update subscription
+            // Activate subscription on the paid plan
             prisma.subscription.update({
                 where: { id: sub.id },
                 data: {
+                    planId: plan.id,
+                    billingCycle: cycle,
                     status: 'ACTIVE',
                     currentPeriodStart: now,
                     currentPeriodEnd: periodEnd,
                     lastPaymentAt: now,
                     lastPaymentAmount: amountPaise / 100,
                     failedPaymentCount: 0,
+                    cancelledAt: null,
+                    pausedAt: null,
                     gracePeriodEndsAt: null,
                     pastDueAt: null,
-                    // Apply scheduled plan change if any
-                    ...(sub.scheduledPlanId ? {
-                        planId: sub.scheduledPlanId,
-                        billingCycle: sub.scheduledCycle ?? sub.billingCycle,
-                        scheduledPlanId: null,
-                        scheduledCycle: null,
-                    } : {}),
+                    scheduledPlanId: null,
+                    scheduledCycle: null,
                 },
             }),
-            // Create invoice
+            // Create invoice record
             prisma.subscriptionInvoice.create({
                 data: {
                     subscriptionId: sub.id,
-                    razorpayPaymentId,
+                    razorpayPaymentId: razorpayPaymentId ?? `plink_${plinkId}_${Date.now()}`,
                     amountPaise,
                     totalPaise: amountPaise,
                     status: 'PAID',
                     type: sub.lastPaymentAt ? 'RENEWAL' : 'INITIAL',
                     paidAt: now,
-                    planSlug: sub.plan.slug,
-                    billingCycle: sub.billingCycle,
+                    planSlug: plan.slug,
+                    billingCycle: cycle,
+                    notes: `Payment Link: ${plinkId}`,
                 },
             }),
         ]);
-    }
 
-    /** Handle Razorpay subscription.payment_failed */
-    async handlePaymentFailed(razorpaySubscriptionId: string, razorpayPaymentId: string, amountPaise: number) {
-        const sub = await prisma.subscription.findUnique({
-            where: { razorpaySubscriptionId },
+        // Update coaching storage limit based on new plan
+        await prisma.coaching.update({
+            where: { id: coachingId },
+            data: { storageLimit: plan.storageLimitBytes },
         });
-        if (!sub) return;
 
-        const now = new Date();
-        const gracePeriodDays = 3;
-
-        await prisma.$transaction([
-            prisma.subscription.update({
-                where: { id: sub.id },
-                data: {
-                    status: 'PAST_DUE',
-                    pastDueAt: sub.pastDueAt ?? now,
-                    gracePeriodEndsAt: sub.gracePeriodEndsAt ?? new Date(now.getTime() + gracePeriodDays * 86400000),
-                    failedPaymentCount: { increment: 1 },
-                },
-            }),
-            prisma.subscriptionInvoice.create({
-                data: {
-                    subscriptionId: sub.id,
-                    razorpayPaymentId,
-                    amountPaise,
-                    totalPaise: amountPaise,
-                    status: 'FAILED',
-                    type: 'RENEWAL',
-                    failedAt: now,
-                    planSlug: sub.scheduledPlanId ?? null,
-                    billingCycle: sub.billingCycle,
-                },
-            }),
-        ]);
+        console.log(`[SubscriptionService] Activated ${planSlug}/${cycle} for coaching ${coachingId} via payment link ${plinkId}`);
     }
 
-    /** Handle Razorpay subscription.cancelled */
-    async handleSubscriptionCancelled(razorpaySubscriptionId: string) {
-        const sub = await prisma.subscription.findUnique({
-            where: { razorpaySubscriptionId },
-        });
-        if (!sub) return;
-
-        // Downgrade to free
-        await this.downgradeToFree(sub.coachingId);
-    }
-
-    // ── Internal Helpers ─────────────────────────────────────────────
-
-    /** Cache Razorpay plan IDs in memory to avoid re-creating */
-    private _razorpayPlanCache = new Map<string, string>();
-
-    private async _getOrCreateRazorpayPlan(planSlug: string, cycle: 'MONTHLY' | 'YEARLY', amount: number): Promise<string> {
+    /**
+     * Verify a pending payment link by fetching its current status from Razorpay.
+     *
+     * Called by the frontend after the user returns from the payment browser.
+     * If the payment link is paid, activates the subscription (same logic as webhook).
+     *
+     * Returns { status, activated } so the frontend knows the outcome.
+     */
+    async verifyPaymentLink(coachingId: string, userId: string): Promise<{ status: string; activated: boolean }> {
         if (!razorpay) throw new Error('Razorpay not configured');
 
-        const cacheKey = `${planSlug}_${cycle}`;
-        const cached = this._razorpayPlanCache.get(cacheKey);
-        if (cached) return cached;
-
-        // Check if we already have a subscription with this plan in DB
-        const existingSub = await prisma.subscription.findFirst({
-            where: {
-                razorpayPlanId: { not: null },
-                plan: { slug: planSlug },
-                billingCycle: cycle,
-            },
-            select: { razorpayPlanId: true },
+        const coaching = await prisma.coaching.findUnique({
+            where: { id: coachingId },
+            select: { ownerId: true },
         });
-        if (existingSub?.razorpayPlanId) {
-            this._razorpayPlanCache.set(cacheKey, existingSub.razorpayPlanId);
-            return existingSub.razorpayPlanId;
+        if (!coaching) throw new Error('Coaching not found');
+        if (coaching.ownerId !== userId) throw new Error('Only the owner can verify');
+
+        const sub = await prisma.subscription.findUnique({
+            where: { coachingId },
+            include: { plan: true },
+        });
+        if (!sub) throw new Error('No subscription found');
+
+        // If already on a paid plan and active, no need to verify
+        if (sub.status === 'ACTIVE' && sub.plan.slug !== 'free') {
+            return { status: 'paid', activated: true };
         }
 
-        // Create Razorpay plan
-        const rzpPlan = await razorpay.plans.create({
-            period: 'monthly',
-            interval: cycle === 'YEARLY' ? 12 : 1,
-            item: {
-                name: `Tutorix ${planSlug.charAt(0).toUpperCase() + planSlug.slice(1)} (${cycle.toLowerCase()})`,
-                amount: toPaise(amount),
-                currency: 'INR',
-                description: `Tutorix ${planSlug} plan — ${cycle.toLowerCase()} billing`,
-            },
-        } as any);
+        const plinkId = sub.razorpaySubscriptionId;
+        if (!plinkId || !plinkId.startsWith('plink_')) {
+            return { status: 'no_pending_payment', activated: false };
+        }
 
-        const planId = (rzpPlan as any).id;
-        this._razorpayPlanCache.set(cacheKey, planId);
-        return planId;
+        // Fetch payment link from Razorpay
+        const plink = await (razorpay as any).paymentLink.fetch(plinkId);
+        const plinkStatus = plink.status as string; // created | paid | expired | cancelled
+
+        console.log(`[SubscriptionService] Payment link ${plinkId} status: ${plinkStatus}`);
+
+        if (plinkStatus === 'paid') {
+            // Check if already processed (idempotency)
+            const alreadyInvoiced = await prisma.subscriptionInvoice.findFirst({
+                where: { notes: { contains: plinkId } },
+            });
+            if (!alreadyInvoiced) {
+                // Extract details from notes and activate
+                const payments = plink.payments ?? [];
+                const lastPayment = payments[payments.length - 1] ?? {};
+                await this.handlePaymentLinkPaid(plink, lastPayment);
+            }
+            return { status: 'paid', activated: true };
+        }
+
+        return { status: plinkStatus, activated: false };
     }
+
+    /* ── OPTION A — Razorpay Subscription Webhook Handlers ─────────────────────
+     * Uncomment these when switching to Razorpay Subscriptions API.
+     *
+     * handlePaymentSuccess(razorpaySubscriptionId, razorpayPaymentId, amountPaise)
+     *   → Handles subscription.charged — renews period, creates PAID invoice.
+     *
+     * handlePaymentFailed(razorpaySubscriptionId, razorpayPaymentId, amountPaise)
+     *   → Handles subscription.payment_failed — sets PAST_DUE + grace period.
+     *
+     * handleSubscriptionCancelled(razorpaySubscriptionId)
+     *   → Handles subscription.cancelled/expired — downgrades to free.
+     *
+     * _getOrCreateRazorpayPlan(planSlug, cycle, amount)
+     *   → Creates/caches Razorpay Plans via razorpay.plans.create().
+     * ───────────────────────────────────────────────────────────────────────── */
 }

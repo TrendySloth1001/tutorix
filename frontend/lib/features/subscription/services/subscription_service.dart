@@ -69,6 +69,20 @@ class SubscriptionService {
     return data['message'] as String? ?? 'Subscription cancelled.';
   }
 
+  /// Verify payment after user returns from the Razorpay browser.
+  /// Returns `{status, activated}`. Activates the subscription if paid.
+  Future<({String status, bool activated})> verifyPayment(
+    String coachingId,
+  ) async {
+    final data = await _api.postAuthenticated(
+      ApiConstants.subscriptionVerifyPayment(coachingId),
+    );
+    return (
+      status: data['status'] as String? ?? 'unknown',
+      activated: data['activated'] as bool? ?? false,
+    );
+  }
+
   // ── Invoices ─────────────────────────────────────────────────────
 
   Future<List<InvoiceModel>> getInvoices(String coachingId) async {
