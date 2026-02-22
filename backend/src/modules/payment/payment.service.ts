@@ -19,6 +19,15 @@ const razorpay = new Razorpay({
     key_secret: RAZORPAY_KEY_SECRET || '',
 });
 
+/**
+ * True when running with Razorpay test-mode keys (rzp_test_*).
+ * In test mode:
+ *  - Route onboarding gate is bypassed (no penny-drop / linked-account needed)
+ *  - Route transfers (payment splitting) are skipped
+ * This lets you test the full payment flow without enabling Route on your account.
+ */
+const IS_RAZORPAY_TEST_MODE = RAZORPAY_KEY_ID?.startsWith('rzp_test_') ?? false;
+
 // ─── DTOs ────────────────────────────────────────────────────────────
 
 export interface CreateOrderDto {
@@ -167,15 +176,18 @@ export class PaymentService {
      */
     async createOrder(coachingId: string, recordId: string, userId: string, dto?: CreateOrderDto) {
         // 0. Server-side gate: block online payments if coaching hasn't completed Route onboarding
-        const coachingGate = await prisma.coaching.findUnique({
-            where: { id: coachingId },
-            select: { razorpayActivated: true },
-        });
-        if (!coachingGate?.razorpayActivated) {
-            throw Object.assign(
-                new Error('Online payments are not enabled for this coaching. Ask your coaching admin to complete payment setup.'),
-                { status: 403 },
-            );
+        //    Bypassed in test mode so you can test payments without Route activation.
+        if (!IS_RAZORPAY_TEST_MODE) {
+            const coachingGate = await prisma.coaching.findUnique({
+                where: { id: coachingId },
+                select: { razorpayActivated: true },
+            });
+            if (!coachingGate?.razorpayActivated) {
+                throw Object.assign(
+                    new Error('Online payments are not enabled for this coaching. Ask your coaching admin to complete payment setup.'),
+                    { status: 403 },
+                );
+            }
         }
 
         // 1. Validate the fee record
@@ -652,15 +664,18 @@ export class PaymentService {
         }
 
         // 0. Server-side gate: block online payments if coaching hasn't completed Route onboarding
-        const coachingGate = await prisma.coaching.findUnique({
-            where: { id: coachingId },
-            select: { razorpayActivated: true },
-        });
-        if (!coachingGate?.razorpayActivated) {
-            throw Object.assign(
-                new Error('Online payments are not enabled for this coaching. Ask your coaching admin to complete payment setup.'),
-                { status: 403 },
-            );
+        //    Bypassed in test mode.
+        if (!IS_RAZORPAY_TEST_MODE) {
+            const coachingGate = await prisma.coaching.findUnique({
+                where: { id: coachingId },
+                select: { razorpayActivated: true },
+            });
+            if (!coachingGate?.razorpayActivated) {
+                throw Object.assign(
+                    new Error('Online payments are not enabled for this coaching. Ask your coaching admin to complete payment setup.'),
+                    { status: 403 },
+                );
+            }
         }
 
         // 1. Fetch all records and validate
@@ -983,6 +998,8 @@ export class PaymentService {
         }, { isolationLevel: 'Serializable' });
 
         // ── Razorpay Route Transfer (move funds to coaching's bank) ───
+        // Skipped in test mode — Route APIs are not available with test keys.
+        if (!IS_RAZORPAY_TEST_MODE) {
         // H3 fix: Re-read the order to get the latest state (paymentRecorded, etc.)
         // and use the snapshotted platformFeePercent from order creation time.
         const freshOrder = await prisma.razorpayOrder.findUniqueOrThrow({ where: { id: internalOrderId } });
@@ -1028,6 +1045,7 @@ export class PaymentService {
                 },
             }).catch(() => { /* swallow DB error in error handler */ });
         }
+        } // end !IS_RAZORPAY_TEST_MODE
 
         // Send payment confirmation notification (outside transaction)
         try {
@@ -1200,6 +1218,29 @@ export class PaymentService {
             );
         }
 
+        // ── TEST MODE: skip all Razorpay API calls, save mock IDs and activate instantly ──
+        if (IS_RAZORPAY_TEST_MODE) {
+            const mockAccountId = `acc_test_${coachingId.slice(-8)}_${Date.now()}`;
+            const mockStakeholderId = `sth_test_${Date.now()}`;
+            const mockProductId = `prd_test_${Date.now()}`;
+            const updated = await prisma.coaching.update({
+                where: { id: coachingId },
+                data: {
+                    razorpayAccountId: mockAccountId,
+                    razorpayStakeholderId: mockStakeholderId,
+                    razorpayProductId: mockProductId,
+                    razorpayOnboardingStatus: 'activated',
+                    razorpayActivated: true,
+                    bankVerified: true,
+                },
+                select: PaymentService.SETTINGS_SELECT,
+            });
+            return {
+                ...updated,
+                message: '[TEST MODE] Linked account activated instantly. Switch to live keys for real Route onboarding.',
+            };
+        }
+
         try {
             // 2. Create Razorpay Account (Route v2)
             const legalInfo: Record<string, string> = {};
@@ -1211,6 +1252,7 @@ export class PaymentService {
                 phone: dto.ownerPhone,
                 type: 'route',
                 legal_business_name: coaching.name,
+                contact_name: dto.ownerName,
                 business_type: dto.businessType || 'individual',
                 ...(Object.keys(legalInfo).length > 0 ? { legal_info: legalInfo } : {}),
                 profile: {
@@ -1238,12 +1280,8 @@ export class PaymentService {
             // 3. Create Stakeholder (owner's KYC info)
             let stakeholderId: string | null = null;
             try {
-                const nameParts = dto.ownerName.trim().split(/\s+/);
                 const stakeholder = await (razorpay as any).stakeholders.create(accountId, {
-                    name: {
-                        first: nameParts[0] || dto.ownerName,
-                        last: nameParts.slice(1).join(' ') || '.',
-                    },
+                    name: dto.ownerName.trim(),
                     phone: {
                         primary: dto.ownerPhone,
                     },
@@ -1453,6 +1491,19 @@ export class PaymentService {
                 new Error('Bank account number, IFSC code, and account holder name are required'),
                 { status: 400 },
             );
+        }
+
+        // ── TEST MODE: skip penny-drop API call, mark as verified instantly ──
+        if (IS_RAZORPAY_TEST_MODE) {
+            await prisma.coaching.update({
+                where: { id: coachingId },
+                data: { bankVerified: true, bankVerifiedAt: new Date() },
+            });
+            return {
+                verified: true,
+                message: '[TEST MODE] Bank account marked as verified. Switch to live keys for real penny-drop validation.',
+                verifiedAt: new Date(),
+            };
         }
 
         // Skip if already verified recently (within last 30 days) — avoid unnecessary charges

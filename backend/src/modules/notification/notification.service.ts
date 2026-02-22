@@ -16,7 +16,9 @@ export class NotificationService {
      */
     async getCoachingNotifications(coachingId: string, limit = 20, offset = 0) {
         return prisma.notification.findMany({
-            where: { coachingId, archived: false },
+            // userId: null ensures personal notifications (targeted at a specific user)
+            // are NEVER visible in the shared coaching feed.
+            where: { coachingId, userId: null, archived: false },
             orderBy: { createdAt: 'desc' },
             take: limit,
             skip: offset,
@@ -41,7 +43,7 @@ export class NotificationService {
      */
     async getCoachingUnreadCount(coachingId: string) {
         return prisma.notification.count({
-            where: { coachingId, read: false, archived: false },
+            where: { coachingId, userId: null, read: false, archived: false },
         });
     }
 

@@ -4,6 +4,9 @@ import { NotificationService } from '../notification/notification.service.js';
 
 const notifSvc = new NotificationService();
 
+/** True when running with Razorpay test keys — bypasses Route onboarding checks. */
+const IS_RAZORPAY_TEST_MODE = process.env.RAZORPAY_KEY_ID?.startsWith('rzp_test_') ?? false;
+
 // ─── DTOs ────────────────────────────────────────────────────────────
 
 export interface CreateFeeStructureDto {
@@ -1015,7 +1018,7 @@ export class FeeService {
         return {
             ...record,
             daysOverdue: record.status === 'OVERDUE' ? calcDaysOverdue(record.dueDate) : 0,
-            onlinePaymentEnabled: coaching?.razorpayActivated ?? false,
+            onlinePaymentEnabled: IS_RAZORPAY_TEST_MODE || (coaching?.razorpayActivated ?? false),
         };
     }
 
@@ -1466,9 +1469,9 @@ export class FeeService {
             financialYear: financialYear ?? null,
             // New: onboarding status for dashboard banner
             onboarding: {
-                razorpayActivated: ob?.razorpayActivated ?? false,
-                razorpayOnboardingStatus: ob?.razorpayOnboardingStatus ?? null,
-                bankVerified: ob?.bankVerified ?? false,
+                razorpayActivated: IS_RAZORPAY_TEST_MODE || (ob?.razorpayActivated ?? false),
+                razorpayOnboardingStatus: IS_RAZORPAY_TEST_MODE ? 'activated' : (ob?.razorpayOnboardingStatus ?? null),
+                bankVerified: IS_RAZORPAY_TEST_MODE || (ob?.bankVerified ?? false),
                 stepsCompleted: onboardingStepsCompleted,
                 totalSteps: 3,
             },
@@ -1710,7 +1713,7 @@ export class FeeService {
             where: { id: coachingId },
             select: { razorpayActivated: true },
         });
-        const onlinePaymentEnabled = coaching?.razorpayActivated ?? false;
+        const onlinePaymentEnabled = IS_RAZORPAY_TEST_MODE || (coaching?.razorpayActivated ?? false);
 
         // Find member record for this user (or ward of this user)
         const member = await prisma.coachingMember.findFirst({
