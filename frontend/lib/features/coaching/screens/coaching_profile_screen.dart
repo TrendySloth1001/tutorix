@@ -194,8 +194,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
         _refreshCoaching();
         if (mounted) AppAlert.success(context, CoachingSuccess.updated);
       } catch (e) {
-        if (mounted)
+        if (mounted) {
           AppAlert.error(context, e, fallback: CoachingErrors.updateFailed);
+        }
       } finally {
         if (mounted) setState(() => _isLoading = false);
       }
@@ -343,8 +344,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       _refreshCoaching();
       if (mounted) AppAlert.success(context, CoachingSuccess.avatarUpdated);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         AppAlert.error(context, e, fallback: CoachingErrors.uploadFailed);
+      }
     } finally {
       if (mounted) setState(() => _isUploadingLogo = false);
     }
@@ -419,8 +421,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
       _refreshCoaching();
       if (mounted) AppAlert.success(context, CoachingSuccess.coverUpdated);
     } catch (e) {
-      if (mounted)
+      if (mounted) {
         AppAlert.error(context, e, fallback: CoachingErrors.uploadFailed);
+      }
     } finally {
       if (mounted) setState(() => _isUploadingCover = false);
     }
@@ -1558,8 +1561,9 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
           category: LogCategory.system,
           error: e2.toString(),
         );
-        if (mounted)
+        if (mounted) {
           AppAlert.error(context, e2, fallback: Errors.openMapFailed);
+        }
       }
     }
   }

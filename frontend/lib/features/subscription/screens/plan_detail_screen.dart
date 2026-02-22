@@ -101,11 +101,12 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
   Future<void> _loadCredits() async {
     try {
       final balance = await _service.getCredits();
-      if (mounted)
+      if (mounted) {
         setState(() {
           _creditBalanceRupees = balance;
           _creditsLoaded = true;
         });
+      }
     } catch (_) {
       if (mounted) setState(() => _creditsLoaded = true);
     }
