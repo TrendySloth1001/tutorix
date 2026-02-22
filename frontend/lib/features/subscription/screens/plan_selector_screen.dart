@@ -250,13 +250,24 @@ class _PlanSelectorScreenState extends State<PlanSelectorScreen> {
     if (comparePlans.isEmpty) return const SizedBox.shrink();
 
     final features = <(String label, List<String> values)>[
-      ('Students', comparePlans.map((p) => p.formatQuota(p.maxStudents)).toList()),
-      ('Teachers', comparePlans.map((p) => p.formatQuota(p.maxTeachers)).toList()),
-      ('Batches', comparePlans.map((p) => p.formatQuota(p.maxBatches)).toList()),
+      (
+        'Students',
+        comparePlans.map((p) => p.formatQuota(p.maxStudents)).toList(),
+      ),
+      (
+        'Teachers',
+        comparePlans.map((p) => p.formatQuota(p.maxTeachers)).toList(),
+      ),
+      (
+        'Batches',
+        comparePlans.map((p) => p.formatQuota(p.maxBatches)).toList(),
+      ),
       ('Storage', comparePlans.map((p) => p.storageLabel).toList()),
       (
         'Assessments/mo',
-        comparePlans.map((p) => p.formatQuota(p.maxAssessmentsPerMonth)).toList(),
+        comparePlans
+            .map((p) => p.formatQuota(p.maxAssessmentsPerMonth))
+            .toList(),
       ),
       (
         'Online Pay',
