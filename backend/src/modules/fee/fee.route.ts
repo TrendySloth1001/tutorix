@@ -4,6 +4,7 @@ import { PaymentController } from '../payment/payment.controller.js';
 import { authMiddleware } from '../../shared/middleware/auth.middleware.js';
 import { requireCoachingRole, requireCoachingMember } from '../../shared/middleware/coaching-role.middleware.js';
 import { rateLimiter } from '../../shared/middleware/rate-limiter.middleware.js';
+import { enforceQuota } from '../../shared/middleware/quota.middleware.js';
 
 const router = Router({ mergeParams: true }); // access :coachingId from parent
 const ctrl = new FeeController();
@@ -63,13 +64,13 @@ router.get('/my', ...memberAuth, ctrl.getMyFees.bind(ctrl));
 router.get('/my-transactions', ...memberAuth, ctrl.getMyTransactions.bind(ctrl));
 
 // ── Online Payment — student-facing (any member) ───────────────────
-router.post('/records/:recordId/create-order', ...memberAuth, orderLimiter, payCtrl.createOrder.bind(payCtrl));
+router.post('/records/:recordId/create-order', ...memberAuth, enforceQuota('RAZORPAY'), orderLimiter, payCtrl.createOrder.bind(payCtrl));
 router.post('/records/:recordId/verify-payment', ...memberAuth, verifyLimiter, payCtrl.verifyPayment.bind(payCtrl));
 router.get('/records/:recordId/online-payments', ...adminAuth, payCtrl.getOnlinePayments.bind(payCtrl));
 router.post('/records/:recordId/online-refund', ...adminAuth, refundLimiter, payCtrl.initiateOnlineRefund.bind(payCtrl));
 
 // ── Multi-record payment — student-facing ──────────────────────────
-router.post('/multi-pay/create-order', ...memberAuth, orderLimiter, payCtrl.createMultiOrder.bind(payCtrl));
+router.post('/multi-pay/create-order', ...memberAuth, enforceQuota('RAZORPAY'), orderLimiter, payCtrl.createMultiOrder.bind(payCtrl));
 router.post('/multi-pay/verify', ...memberAuth, verifyLimiter, payCtrl.verifyMultiPayment.bind(payCtrl));
 
 // ── Failed order tracking ──────────────────────────────────────────

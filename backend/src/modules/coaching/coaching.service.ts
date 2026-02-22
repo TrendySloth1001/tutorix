@@ -1,6 +1,16 @@
 import prisma from '../../infra/prisma.js';
 import redis from '../../infra/redis.js';
 import { assessmentService } from '../assessment/assessment.service.js';
+import { CreditService } from '../subscription/credit.service.js';
+import Razorpay from 'razorpay';
+
+const creditService = new CreditService();
+
+const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
+const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET;
+const razorpay = RAZORPAY_KEY_ID && RAZORPAY_KEY_SECRET
+    ? new Razorpay({ key_id: RAZORPAY_KEY_ID, key_secret: RAZORPAY_KEY_SECRET })
+    : null;
 
 export interface CreateCoachingDto {
     name: string;
@@ -229,16 +239,71 @@ export class CoachingService {
     }
 
     async delete(id: string, ownerId: string) {
-        // Single deleteMany with ownership check — avoids extra findFirst query
-        const result = await prisma.coaching.deleteMany({
+        // 1. Verify ownership
+        const coaching = await prisma.coaching.findFirst({
             where: { id, ownerId },
+            select: { id: true, name: true, ownerId: true },
         });
-
-        if (result.count === 0) {
+        if (!coaching) {
             throw new Error('Coaching not found or you do not have permission');
         }
 
-        return { deleted: true };
+        // 2. Issue credit for remaining subscription value (50%)
+        let creditResult = { creditIssuedPaise: 0, message: 'No credit issued.' };
+        try {
+            creditResult = await creditService.issueDeleteCredit(ownerId, id, coaching.name);
+        } catch (e: any) {
+            console.error('[CoachingService] Credit issue error:', e.message);
+        }
+
+        // 3. Cancel Razorpay subscription if active
+        const sub = await prisma.subscription.findUnique({
+            where: { coachingId: id },
+            select: { razorpaySubscriptionId: true },
+        });
+        if (sub?.razorpaySubscriptionId && razorpay) {
+            try {
+                await razorpay.subscriptions.cancel(sub.razorpaySubscriptionId, true); // cancel immediately
+            } catch (e: any) {
+                console.error('[CoachingService] Razorpay cancel error:', e.message);
+            }
+        }
+
+        // 4. Notify all members before deletion
+        const members = await prisma.coachingMember.findMany({
+            where: { coachingId: id, status: 'active' },
+            select: { userId: true },
+        });
+        const memberUserIds = members
+            .map(m => m.userId)
+            .filter((uid): uid is string => uid != null && uid !== ownerId);
+
+        if (memberUserIds.length > 0) {
+            await prisma.notification.createMany({
+                data: memberUserIds.map(uid => ({
+                    userId: uid,
+                    type: 'COACHING_DELETED',
+                    title: 'Coaching Deleted',
+                    message: `"${coaching.name}" has been deleted by the owner. You have been removed.`,
+                    // NOTE: coachingId left null — coaching is about to be cascade-deleted
+                })),
+            });
+        }
+
+        // 5. Invalidate Redis cache
+        try {
+            await redis.del(`coaching:${id}`);
+            await redis.del('coaching:searchable');
+        } catch (_) { /* ignore redis errors */ }
+
+        // 6. Delete coaching (cascades to members, batches, fees, assessments, etc.)
+        await prisma.coaching.delete({ where: { id } });
+
+        return {
+            deleted: true,
+            creditIssuedPaise: creditResult.creditIssuedPaise,
+            creditMessage: creditResult.message,
+        };
     }
 
     async findAll(page: number = 1, limit: number = 10) {

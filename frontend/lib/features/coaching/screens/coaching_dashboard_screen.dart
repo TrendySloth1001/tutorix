@@ -21,6 +21,7 @@ import '../../assessment/screens/take_assessment_screen.dart';
 import '../../assessment/screens/submit_assignment_screen.dart';
 import '../../fee/screens/fee_dashboard_screen.dart';
 import '../../fee/screens/my_fees_screen.dart';
+import '../../subscription/screens/subscription_dashboard_screen.dart';
 
 /// Coaching dashboard — compact, data-driven overview.
 class CoachingDashboardScreen extends StatefulWidget {
@@ -444,6 +445,22 @@ class _CoachingDashboardScreenState extends State<CoachingDashboardScreen> {
                         ),
                       ),
                     ),
+                    if (_isOwner) ...[
+                      const SizedBox(height: Spacing.sp10),
+                      _QuickAction(
+                        icon: Icons.card_membership_rounded,
+                        label: 'Subscription',
+                        onTap: () => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => SubscriptionDashboardScreen(
+                              coachingId: widget.coaching.id,
+                              isOwner: true,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
 
                   // ── My Fees shortcut (for students/parents) ──

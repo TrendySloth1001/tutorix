@@ -586,6 +586,7 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
                           title: 'Information',
                           child: _buildInfoContent(theme),
                         ),
+                        if (_isOwner) _buildDangerZone(theme),
                       ]),
                     ),
                   ),
@@ -1016,6 +1017,242 @@ class _CoachingProfileScreenState extends State<CoachingProfileScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  // ── Danger Zone ────────────────────────────────────────────────────
+
+  bool _isDeleting = false;
+
+  Widget _buildDangerZone(ThemeData theme) {
+    final cs = theme.colorScheme;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(20, 28, 20, 12),
+          child: Text(
+            'DANGER ZONE',
+            style: TextStyle(
+              fontSize: FontSize.micro,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1,
+              color: cs.error.withValues(alpha: 0.7),
+            ),
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: Spacing.sp20),
+          child: Container(
+            padding: const EdgeInsets.all(Spacing.sp16),
+            decoration: BoxDecoration(
+              color: cs.error.withValues(alpha: 0.04),
+              borderRadius: BorderRadius.circular(Radii.lg),
+              border: Border.all(color: cs.error.withValues(alpha: 0.15)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Icon(
+                      Icons.warning_amber_rounded,
+                      size: 20,
+                      color: cs.error,
+                    ),
+                    const SizedBox(width: Spacing.sp8),
+                    Text(
+                      'Delete Coaching',
+                      style: theme.textTheme.titleSmall?.copyWith(
+                        fontWeight: FontWeight.w700,
+                        color: cs.error,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: Spacing.sp12),
+                Text(
+                  'This action is permanent and cannot be undone. '
+                  'All members will be removed and notified.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.onSurface.withValues(alpha: 0.6),
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: Spacing.sp8),
+                Container(
+                  padding: const EdgeInsets.all(Spacing.sp12),
+                  decoration: BoxDecoration(
+                    color: cs.surface,
+                    borderRadius: BorderRadius.circular(Radii.md),
+                    border: Border.all(
+                      color: cs.primary.withValues(alpha: 0.08),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.account_balance_wallet_outlined,
+                        size: 16,
+                        color: cs.primary,
+                      ),
+                      const SizedBox(width: Spacing.sp8),
+                      Expanded(
+                        child: Text(
+                          'If you have an active subscription, 50% of the '
+                          'remaining value will be credited to your account '
+                          'for future use.',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: cs.onSurface.withValues(alpha: 0.5),
+                            fontSize: FontSize.nano,
+                            height: 1.4,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: Spacing.sp16),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: _isDeleting ? null : _deleteCoaching,
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: cs.error,
+                      side: BorderSide(color: cs.error.withValues(alpha: 0.4)),
+                    ),
+                    icon: _isDeleting
+                        ? SizedBox(
+                            width: 18,
+                            height: 18,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              color: cs.error,
+                            ),
+                          )
+                        : const Icon(Icons.delete_forever_rounded, size: 18),
+                    label: Text(
+                      _isDeleting ? 'Deleting...' : 'Delete Coaching',
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: Spacing.sp24),
+      ],
+    );
+  }
+
+  Future<void> _deleteCoaching() async {
+    // Step 1: First confirmation
+    final confirmed = await AppAlert.confirm(
+      context,
+      title: 'Delete "${_coaching.name}"?',
+      message:
+          'This will permanently delete this coaching, remove all '
+          '${_coaching.memberCount} members, and cancel any active subscription.\n\n'
+          'You will receive 50% of remaining subscription value as credits.',
+    );
+    if (confirmed != true || !mounted) return;
+
+    // Step 2: Type coaching name to confirm
+    final nameConfirm = await _showNameConfirmDialog();
+    if (nameConfirm != true || !mounted) return;
+
+    setState(() => _isDeleting = true);
+    try {
+      final result = await _coachingService.deleteCoaching(_coaching.id);
+      if (!mounted) return;
+
+      if (result.deleted) {
+        // Show credit info if applicable
+        if (result.creditIssuedPaise > 0) {
+          AppAlert.success(context, result.creditMessage);
+        } else {
+          AppAlert.success(context, 'Coaching deleted successfully');
+        }
+        // Pop back to the list
+        Navigator.of(context).pop(true);
+      } else {
+        AppAlert.error(
+          context,
+          'Failed to delete coaching',
+          fallback: 'Failed to delete coaching',
+        );
+      }
+    } catch (e) {
+      if (!mounted) return;
+      AppAlert.error(context, e, fallback: 'Failed to delete coaching');
+    } finally {
+      if (mounted) setState(() => _isDeleting = false);
+    }
+  }
+
+  Future<bool?> _showNameConfirmDialog() {
+    final controller = TextEditingController();
+    return showDialog<bool>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          title: const Text('Confirm Deletion'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Type the coaching name to confirm:',
+                style: Theme.of(ctx).textTheme.bodySmall?.copyWith(
+                  color: Theme.of(
+                    ctx,
+                  ).colorScheme.onSurface.withValues(alpha: 0.6),
+                ),
+              ),
+              const SizedBox(height: Spacing.sp4),
+              Text(
+                _coaching.name,
+                style: Theme.of(
+                  ctx,
+                ).textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.w600),
+              ),
+              const SizedBox(height: Spacing.sp12),
+              TextField(
+                controller: controller,
+                autofocus: true,
+                decoration: InputDecoration(
+                  hintText: 'Enter coaching name',
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(Radii.sm),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('Cancel'),
+            ),
+            ValueListenableBuilder<TextEditingValue>(
+              valueListenable: controller,
+              builder: (_, value, child) {
+                final matches =
+                    value.text.trim().toLowerCase() ==
+                    _coaching.name.trim().toLowerCase();
+                return FilledButton(
+                  onPressed: matches ? () => Navigator.pop(ctx, true) : null,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: Theme.of(ctx).colorScheme.error,
+                  ),
+                  child: const Text('Delete Forever'),
+                );
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 

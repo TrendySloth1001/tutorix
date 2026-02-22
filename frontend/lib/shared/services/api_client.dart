@@ -230,6 +230,13 @@ class ApiClient {
     return response.statusCode == 200;
   }
 
+  /// Authenticated DELETE → parsed response body.
+  Future<Map<String, dynamic>> deleteAuthenticatedWithBody(String url) async {
+    final headers = await _authHeaders();
+    final response = await _trackedDelete(url, headers: headers);
+    return _handleResponse(response);
+  }
+
   /// Authenticated multipart POST (single file upload).
   Future<Map<String, dynamic>> uploadFile(
     String url, {

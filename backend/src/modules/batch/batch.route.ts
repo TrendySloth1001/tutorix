@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { BatchController } from './batch.controller.js';
 import { authMiddleware } from '../../shared/middleware/auth.middleware.js';
+import { enforceQuota } from '../../shared/middleware/quota.middleware.js';
 import assessmentRoutes from '../assessment/assessment.route.js';
 import assignmentRoutes from '../assessment/assignment.route.js';
 
@@ -11,7 +12,7 @@ const ctrl = new BatchController();
 // and require authentication
 
 // Batch CRUD
-router.post('/', authMiddleware, ctrl.create.bind(ctrl));
+router.post('/', authMiddleware, enforceQuota('BATCH'), ctrl.create.bind(ctrl));
 router.get('/', authMiddleware, ctrl.list.bind(ctrl));
 router.get('/my', authMiddleware, ctrl.getMyBatches.bind(ctrl));
 router.get('/recent-notes', authMiddleware, ctrl.getRecentNotes.bind(ctrl));

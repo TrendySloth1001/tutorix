@@ -301,6 +301,22 @@ class ApiConstants {
   static const String adminLogsStats = '$baseUrl/admin/logs/stats';
   static const String adminLogsCleanup = '$baseUrl/admin/logs/cleanup';
 
+  // Subscription
+  static const String subscriptionPlans = '$baseUrl/subscription/plans';
+  static String coachingSubscription(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/subscription';
+  static String subscriptionUsage(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/subscription/usage';
+  static String subscriptionSubscribe(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/subscription/subscribe';
+  static String subscriptionCancel(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/subscription/cancel';
+  static String subscriptionInvoices(String coachingId) =>
+      '$baseUrl/coaching/$coachingId/subscription/invoices';
+
+  // Credits
+  static const String credits = '$baseUrl/subscription/credits';
+
   // Google
   static const String googleClientId =
       '299795936862-s70dge4e1k99b3db0faqss8qrcrjj12b.apps.googleusercontent.com';

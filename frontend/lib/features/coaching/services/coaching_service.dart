@@ -112,17 +112,26 @@ class CoachingService {
     return CoachingModel.fromJson(data['coaching']);
   }
 
-  /// DELETE /coaching/:id
-  Future<bool> deleteCoaching(String id) async {
-    final ok = await _api.deleteAuthenticated(ApiConstants.coachingById(id));
-    if (ok) {
+  /// DELETE /coaching/:id — returns credit info if applicable.
+  Future<({bool deleted, int creditIssuedPaise, String creditMessage})>
+  deleteCoaching(String id) async {
+    try {
+      final data = await _api.deleteAuthenticatedWithBody(
+        ApiConstants.coachingById(id),
+      );
       await Future.wait([
         _cache.invalidate('coaching:my'),
         _cache.invalidate('coaching:joined'),
         _cache.invalidatePrefix('coaching:$id'),
       ]);
+      return (
+        deleted: true,
+        creditIssuedPaise: (data['creditIssuedPaise'] as num?)?.toInt() ?? 0,
+        creditMessage: data['creditMessage'] as String? ?? '',
+      );
+    } catch (e) {
+      return (deleted: false, creditIssuedPaise: 0, creditMessage: '');
     }
-    return ok;
   }
 
   /// GET /coaching/check-slug/:slug

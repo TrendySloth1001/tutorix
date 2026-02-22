@@ -170,9 +170,13 @@ export class CoachingController {
             }
 
             const id = req.params.id as string;
-            await coachingService.delete(id, userId);
+            const result = await coachingService.delete(id, userId);
 
-            res.json({ message: 'Coaching deleted successfully' });
+            res.json({
+                message: 'Coaching deleted successfully',
+                creditIssuedPaise: result.creditIssuedPaise,
+                creditMessage: result.creditMessage,
+            });
         } catch (error: any) {
             if (error.message.includes('not found')) {
                 return res.status(404).json({ message: error.message });

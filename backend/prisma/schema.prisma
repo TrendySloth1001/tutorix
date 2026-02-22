@@ -58,6 +58,7 @@ model User {
   processedFeeRefunds FeeRefund[]        @relation("FeeRefundProcessor")
   razorpayOrders      RazorpayOrder[]    @relation("RazorpayOrderUser")
   feeAuditActions     FeeAuditLog[]      @relation("FeeAuditActor")
+  creditBalance       CreditBalance?     @relation("UserCredits")
 }
 
 model Ward {
@@ -151,6 +152,7 @@ model Coaching {
   razorpayRefunds RazorpayRefund[]
   receiptSequences ReceiptSequence[]
   feeAuditLogs FeeAuditLog[]
+  subscription Subscription?
 
   // Tax & Financial
   gstNumber     String?   // GSTIN (15-char) for tax invoices
@@ -1218,4 +1220,178 @@ model Log {
   @@index([createdAt])
   @@index([type, createdAt])
   @@index([level, createdAt])
+}
+
+// ═══════════════════════════════════════════════════════════════════════
+// Subscription & Billing System (per-coaching)
+// ═══════════════════════════════════════════════════════════════════════
+
+/// Static plan definitions. Seeded at deploy time.
+/// FREE / BASIC / STANDARD / PREMIUM — Enterprise is contact-us (no DB row needed).
+model Plan {
+  id    String @id @default(uuid())
+  slug  String @unique // "free", "basic", "standard", "premium"
+  name  String         // "Free", "Basic", "Standard ⭐", "Premium"
+  order Int   @default(0) // display ordering (0=free, 1=basic, …)
+
+  // ── Pricing (INR) ──────────────────────────────────────────────
+  priceMonthly   Float  @default(0)
+  priceYearly    Float  @default(0)
+
+  // ── Quotas ─────────────────────────────────────────────────────
+  maxStudents       Int  @default(10)
+  maxParents        Int  @default(10)
+  maxTeachers       Int  @default(5)
+  maxAdmins         Int  @default(1)
+  maxBatches        Int  @default(3)
+  maxAssessmentsPerMonth Int @default(5)
+  storageLimitBytes BigInt @default(209715200) // 200MB
+
+  // ── Feature flags ──────────────────────────────────────────────
+  hasRazorpay       Boolean @default(false)
+  hasAutoRemind     Boolean @default(false)
+  hasFeeReports     Boolean @default(false)
+  hasFeeLedger      Boolean @default(false)
+  hasRoutePayouts   Boolean @default(false)
+  hasPushNotify     Boolean @default(false)
+  hasEmailNotify    Boolean @default(false)
+  hasSmsNotify      Boolean @default(false)
+  hasWhatsappNotify Boolean @default(false)
+  hasCustomLogo     Boolean @default(false)
+  hasWhiteLabel     Boolean @default(false)
+
+  // Relations
+  subscriptions Subscription[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+/// One subscription per coaching. Tracks billing state + Razorpay subscription.
+model Subscription {
+  id         String   @id @default(uuid())
+  coachingId String   @unique
+  coaching   Coaching @relation(fields: [coachingId], references: [id], onDelete: Cascade)
+  planId     String
+  plan       Plan     @relation(fields: [planId], references: [id])
+
+  // ── Billing cycle ──────────────────────────────────────────────
+  billingCycle String @default("MONTHLY") // MONTHLY, YEARLY
+
+  // ── Status ─────────────────────────────────────────────────────
+  /// ACTIVE | TRIALING | PAST_DUE | CANCELLED | PAUSED | EXPIRED
+  status     String  @default("ACTIVE")
+
+  // ── Dates ──────────────────────────────────────────────────────
+  currentPeriodStart DateTime @default(now())
+  currentPeriodEnd   DateTime
+  trialEndsAt        DateTime? // 14-day Pro trial
+  cancelledAt        DateTime?
+  pausedAt           DateTime?
+
+  // ── Grace period (payment retry) ───────────────────────────────
+  gracePeriodEndsAt DateTime? // 3 days after payment failure
+  pastDueAt         DateTime? // when payment first failed
+
+  // ── Razorpay Subscription ──────────────────────────────────────
+  razorpaySubscriptionId String?  @unique // sub_xxxxx
+  razorpayPlanId         String?  // plan_xxxxx (Razorpay plan id)
+  razorpayCustomerId     String?  // cust_xxxxx
+
+  // ── Upgrade / downgrade scheduling ─────────────────────────────
+  scheduledPlanId    String?  // plan to switch to at period end
+  scheduledCycle     String?  // cycle to switch to
+
+  // ── Metadata ───────────────────────────────────────────────────
+  lastPaymentAt      DateTime?
+  lastPaymentAmount  Float?
+  failedPaymentCount Int @default(0)
+
+  invoices SubscriptionInvoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([status])
+  @@index([currentPeriodEnd])
+  @@index([razorpaySubscriptionId])
+}
+
+/// Invoice record for each billing event (payment, refund, credit note).
+model SubscriptionInvoice {
+  id             String       @id @default(uuid())
+  subscriptionId String
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  // ── Razorpay linkage ───────────────────────────────────────────
+  razorpayPaymentId String?  @unique
+  razorpayInvoiceId String?
+
+  // ── Amounts ────────────────────────────────────────────────────
+  amountPaise    Int
+  currency       String @default("INR")
+  taxPaise       Int    @default(0) // GST on subscription
+  totalPaise     Int    // amount + tax
+
+  // ── Status / type ──────────────────────────────────────────────
+  /// PAID | FAILED | REFUNDED | PENDING
+  status  String @default("PENDING")
+  type    String @default("RENEWAL") // INITIAL, RENEWAL, UPGRADE, REFUND
+
+  // ── Invoice details ────────────────────────────────────────────
+  invoiceNumber String? // SUB/2025-26/0001
+  paidAt        DateTime?
+  failedAt      DateTime?
+
+  // ── Metadata ───────────────────────────────────────────────────
+  planSlug     String? // snapshot of plan at time of invoice
+  billingCycle String? // MONTHLY/YEARLY snapshot
+  notes        String?
+
+  createdAt DateTime @default(now())
+
+  @@index([subscriptionId])
+  @@index([subscriptionId, status])
+  @@index([razorpayPaymentId])
+}
+
+// ─── Credit System ─────────────────────────────────────────────────
+// Credits are issued when a coaching is deleted mid-subscription (50% of remaining value).
+// They can only be redeemed against new subscription purchases — not cashed out.
+
+model CreditBalance {
+  id     String @id @default(uuid())
+  userId String @unique
+  user   User   @relation("UserCredits", fields: [userId], references: [id], onDelete: Cascade)
+
+  /// Current available balance in paise (INR × 100).
+  balancePaise Int @default(0)
+
+  updatedAt DateTime @updatedAt
+
+  transactions CreditTransaction[]
+}
+
+model CreditTransaction {
+  id              String        @id @default(uuid())
+  creditBalanceId String
+  creditBalance   CreditBalance @relation(fields: [creditBalanceId], references: [id], onDelete: Cascade)
+
+  /// CREDIT (added) or DEBIT (redeemed).
+  type String // CREDIT, DEBIT
+
+  /// Amount in paise.
+  amountPaise Int
+
+  /// Human-readable reason.
+  description String
+
+  /// Reference IDs for traceability.
+  coachingId     String? // coaching that was deleted (for CREDIT)
+  subscriptionId String? // new subscription purchased (for DEBIT)
+
+  createdAt DateTime @default(now())
+
+  @@index([creditBalanceId])
+  @@index([creditBalanceId, type])
 }

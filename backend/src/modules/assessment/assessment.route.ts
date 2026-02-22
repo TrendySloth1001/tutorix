@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { AssessmentController } from './assessment.controller.js';
 import { authMiddleware } from '../../shared/middleware/auth.middleware.js';
+import { enforceQuota } from '../../shared/middleware/quota.middleware.js';
 
 const router = Router({ mergeParams: true });
 const ctrl = new AssessmentController();
@@ -9,7 +10,7 @@ const ctrl = new AssessmentController();
 router.use(authMiddleware);
 
 // ── Assessment CRUD (teacher) ──
-router.post('/', ctrl.create.bind(ctrl));
+router.post('/', enforceQuota('ASSESSMENT'), ctrl.create.bind(ctrl));
 router.get('/', ctrl.list.bind(ctrl));
 router.get('/:assessmentId', ctrl.getById.bind(ctrl));
 router.patch('/:assessmentId/status', ctrl.updateStatus.bind(ctrl));

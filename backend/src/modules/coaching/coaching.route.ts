@@ -2,6 +2,7 @@ import { Router } from 'express';
 import { CoachingController } from './coaching.controller.js';
 import { InvitationController } from './invitation.controller.js';
 import { authMiddleware } from '../../shared/middleware/auth.middleware.js';
+import { enforceQuota } from '../../shared/middleware/quota.middleware.js';
 import batchRoutes from '../batch/batch.route.js';
 import feeRoutes from '../fee/fee.route.js';
 
@@ -38,6 +39,7 @@ router.get('/:id/full', coachingController.getFullDetails.bind(coachingControlle
 
 // Invitation routes (protected)
 router.post('/:id/invite/lookup', authMiddleware, invitationController.lookup.bind(invitationController));
+// Quota enforced dynamically — invitation controller resolves the role to check
 router.post('/:id/invite', authMiddleware, invitationController.createInvitation.bind(invitationController));
 router.get('/:id/invitations', authMiddleware, invitationController.getCoachingInvitations.bind(invitationController));
 router.delete('/:id/invitations/:invitationId', authMiddleware, invitationController.cancelInvitation.bind(invitationController));

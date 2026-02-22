@@ -20,11 +20,13 @@ import academicRoutes from './modules/academic/academic.route.js';
 import adminRoutes from './modules/admin/admin.route.js';
 // import { webhookRouter } from './modules/payment/payment.webhook.js'; // Uncomment for production
 import { webhookRouter } from './modules/payment/payment.webhook.js';
+import { subscriptionWebhookRouter } from './modules/subscription/subscription.webhook.js';
 import { PaymentController } from './modules/payment/payment.controller.js';
 import { requestLoggerMiddleware } from './shared/middleware/request-logger.middleware.js';
 import { authMiddleware } from './shared/middleware/auth.middleware.js';
 import { rateLimiter } from './shared/middleware/rate-limiter.middleware.js';
 import { AdminLogsController } from './modules/admin/logs.controller.js';
+import subscriptionRoutes from './modules/subscription/subscription.route.js';
 
 
 const app = express();
@@ -43,6 +45,7 @@ app.use(cors(allowedOrigins.length > 0 ? {
 // C6 fix: Webhook route MUST be mounted BEFORE express.json() with express.raw()
 // so the body arrives as a raw Buffer for accurate signature verification.
 app.use('/webhooks', express.raw({ type: 'application/json' }), webhookRouter);
+app.use('/webhooks/subscription', express.raw({ type: 'application/json' }), subscriptionWebhookRouter);
 
 app.use(express.json({ limit: '100kb' }));
 
@@ -60,6 +63,18 @@ app.use('/upload', uploadRoutes);
 app.use('/notifications', notificationRoutes);
 app.use('/academic', academicRoutes);
 app.use('/admin', adminRoutes);
+app.use('/subscription', subscriptionRoutes);
+
+// Coaching-level subscription routes (nested under /coaching/:coachingId)
+import { SubscriptionController } from './modules/subscription/subscription.controller.js';
+const subCtrl = new SubscriptionController();
+const subLimiter = rateLimiter(60_000, 20, 'subscription');
+const subscribeActionLimiter = rateLimiter(60_000, 5, 'subscribe-action');
+app.get('/coaching/:coachingId/subscription', authMiddleware, subLimiter, subCtrl.getSubscription.bind(subCtrl));
+app.get('/coaching/:coachingId/subscription/usage', authMiddleware, subLimiter, subCtrl.getUsage.bind(subCtrl));
+app.get('/coaching/:coachingId/subscription/invoices', authMiddleware, subLimiter, subCtrl.getInvoices.bind(subCtrl));
+app.post('/coaching/:coachingId/subscription/subscribe', authMiddleware, subscribeActionLimiter, subCtrl.subscribe.bind(subCtrl));
+app.post('/coaching/:coachingId/subscription/cancel', authMiddleware, subscribeActionLimiter, subCtrl.cancel.bind(subCtrl));
 
 // Payment config (Razorpay key for frontend)
 const paymentCtrl = new PaymentController();
