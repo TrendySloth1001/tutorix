@@ -169,12 +169,16 @@ class _LedgerSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.5);
     return Container(
       margin: const EdgeInsets.all(Spacing.sp16),
       padding: const EdgeInsets.all(Spacing.sp20),
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(Radii.lg),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,7 +186,7 @@ class _LedgerSummaryCard extends StatelessWidget {
           Text(
             'Account Summary',
             style: TextStyle(
-              color: theme.colorScheme.onPrimary,
+              color: theme.colorScheme.onSurface,
               fontWeight: FontWeight.w700,
               fontSize: FontSize.sub,
             ),
@@ -194,14 +198,14 @@ class _LedgerSummaryCard extends StatelessWidget {
                 child: _LedgerStat(
                   label: 'Charged',
                   amount: summary.totalCharged,
-                  color: theme.colorScheme.onPrimary,
+                  color: theme.colorScheme.onSurface,
                 ),
               ),
               Expanded(
                 child: _LedgerStat(
                   label: 'Paid',
                   amount: summary.totalPaid,
-                  color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                  color: theme.colorScheme.primary,
                 ),
               ),
               if (summary.totalRefunded > 0)
@@ -215,24 +219,21 @@ class _LedgerSummaryCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: Spacing.sp16),
-          const Divider(color: Colors.white24, height: 1),
+          Divider(color: theme.colorScheme.outlineVariant, height: 1),
           const SizedBox(height: Spacing.sp12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
                 'Outstanding Balance',
-                style: TextStyle(
-                  color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
-                  fontSize: FontSize.body,
-                ),
+                style: TextStyle(color: muted, fontSize: FontSize.body),
               ),
               Text(
                 '₹${(summary.balance > 0 ? summary.balance : 0).toStringAsFixed(0)}',
                 style: TextStyle(
                   color: summary.balance > 0
-                      ? theme.colorScheme.error.withValues(alpha: 0.5)
-                      : theme.colorScheme.primary.withValues(alpha: 0.5),
+                      ? theme.colorScheme.error
+                      : theme.colorScheme.primary,
                   fontWeight: FontWeight.w800,
                   fontSize: FontSize.title,
                 ),
@@ -247,7 +248,7 @@ class _LedgerSummaryCard extends StatelessWidget {
                 Text(
                   'Available Credits',
                   style: TextStyle(
-                    color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                    color: theme.colorScheme.primary,
                     fontSize: FontSize.body,
                     fontWeight: FontWeight.w600,
                   ),
@@ -261,11 +262,9 @@ class _LedgerSummaryCard extends StatelessWidget {
                   label: Text('₹${summary.balance.abs().toStringAsFixed(0)}'),
                   style: FilledButton.styleFrom(
                     backgroundColor: theme.colorScheme.primary.withValues(
-                      alpha: 0.08,
+                      alpha: 0.1,
                     ),
-                    foregroundColor: theme.colorScheme.primary.withValues(
-                      alpha: 0.5,
-                    ),
+                    foregroundColor: theme.colorScheme.primary,
                     padding: const EdgeInsets.symmetric(
                       horizontal: Spacing.sp12,
                     ),
@@ -284,15 +283,12 @@ class _LedgerSummaryCard extends StatelessWidget {
               children: [
                 Text(
                   'Next Due',
-                  style: TextStyle(
-                    color: theme.colorScheme.onPrimary.withValues(alpha: 0.7),
-                    fontSize: FontSize.caption,
-                  ),
+                  style: TextStyle(color: muted, fontSize: FontSize.caption),
                 ),
                 Text(
                   '₹${summary.nextDueAmount.toStringAsFixed(0)} · ${_fmtDateShort(summary.nextDueDate!)}',
                   style: TextStyle(
-                    color: theme.colorScheme.onPrimary,
+                    color: theme.colorScheme.onSurface,
                     fontSize: FontSize.caption,
                     fontWeight: FontWeight.w600,
                   ),

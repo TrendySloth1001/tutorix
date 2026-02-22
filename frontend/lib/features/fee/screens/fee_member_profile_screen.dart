@@ -650,19 +650,24 @@ class _LedgerBanner extends StatelessWidget {
         ? (totalPaid / totalFee).clamp(0.0, 1.0)
         : 0.0;
 
+    final muted = theme.colorScheme.onSurface.withValues(alpha: 0.5);
+
     return Container(
       decoration: BoxDecoration(
-        color: theme.colorScheme.primary,
+        color: theme.colorScheme.surfaceContainerHighest,
         borderRadius: BorderRadius.circular(Radii.lg),
+        border: Border.all(
+          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+        ),
       ),
       padding: const EdgeInsets.all(Spacing.sp20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Total Fees',
             style: TextStyle(
-              color: Colors.white70,
+              color: muted,
               fontSize: FontSize.caption,
               fontWeight: FontWeight.w500,
             ),
@@ -670,8 +675,8 @@ class _LedgerBanner extends StatelessWidget {
           const SizedBox(height: Spacing.sp4),
           Text(
             '₹${_fmt(totalFee)}',
-            style: const TextStyle(
-              color: Colors.white,
+            style: TextStyle(
+              color: theme.colorScheme.onSurface,
               fontSize: FontSize.hero,
               fontWeight: FontWeight.w800,
               height: 1.0,
@@ -683,9 +688,11 @@ class _LedgerBanner extends StatelessWidget {
             child: LinearProgressIndicator(
               value: paidFraction,
               minHeight: 8,
-              backgroundColor: Colors.white24,
+              backgroundColor: theme.colorScheme.outlineVariant.withValues(
+                alpha: 0.3,
+              ),
               valueColor: AlwaysStoppedAnimation<Color>(
-                theme.colorScheme.onPrimary.withValues(alpha: 0.9),
+                theme.colorScheme.primary,
               ),
             ),
           ),
@@ -696,27 +703,21 @@ class _LedgerBanner extends StatelessWidget {
                 child: _BannerStat(
                   label: 'Paid',
                   value: '₹${_fmt(totalPaid)}',
-                  color: totalPaid > 0
-                      ? theme.colorScheme.onPrimary
-                      : Colors.white54,
+                  color: totalPaid > 0 ? theme.colorScheme.primary : muted,
                 ),
               ),
               Expanded(
                 child: _BannerStat(
                   label: 'Balance',
                   value: '₹${_fmt(balance > 0 ? balance : 0)}',
-                  color: balance > 0
-                      ? theme.colorScheme.onPrimary
-                      : Colors.white54,
+                  color: balance > 0 ? theme.colorScheme.onSurface : muted,
                 ),
               ),
               Expanded(
                 child: _BannerStat(
                   label: 'Overdue',
                   value: '₹${_fmt(totalOverdue)}',
-                  color: totalOverdue > 0
-                      ? theme.colorScheme.onPrimary
-                      : Colors.white54,
+                  color: totalOverdue > 0 ? theme.colorScheme.error : muted,
                 ),
               ),
             ],
@@ -729,7 +730,7 @@ class _LedgerBanner extends StatelessWidget {
                 Text(
                   'Available Credits',
                   style: TextStyle(
-                    color: theme.colorScheme.onPrimary.withValues(alpha: 0.8),
+                    color: theme.colorScheme.primary,
                     fontSize: FontSize.caption,
                     fontWeight: FontWeight.w600,
                   ),
@@ -742,10 +743,10 @@ class _LedgerBanner extends StatelessWidget {
                   ),
                   label: Text('₹${_fmt(balance.abs())}'),
                   style: FilledButton.styleFrom(
-                    backgroundColor: theme.colorScheme.onPrimary.withValues(
-                      alpha: 0.15,
+                    backgroundColor: theme.colorScheme.primary.withValues(
+                      alpha: 0.1,
                     ),
-                    foregroundColor: theme.colorScheme.onPrimary,
+                    foregroundColor: theme.colorScheme.primary,
                     padding: const EdgeInsets.symmetric(
                       horizontal: Spacing.sp10,
                     ),
@@ -761,18 +762,11 @@ class _LedgerBanner extends StatelessWidget {
             const SizedBox(height: Spacing.sp12),
             Row(
               children: [
-                const Icon(
-                  Icons.keyboard_return_rounded,
-                  size: 14,
-                  color: Colors.white54,
-                ),
+                Icon(Icons.keyboard_return_rounded, size: 14, color: muted),
                 const SizedBox(width: Spacing.sp4),
                 Text(
                   'Refunded: ₹${_fmt(totalRefunded)}',
-                  style: const TextStyle(
-                    color: Colors.white54,
-                    fontSize: FontSize.caption,
-                  ),
+                  style: TextStyle(color: muted, fontSize: FontSize.caption),
                 ),
               ],
             ),
@@ -796,12 +790,13 @@ class _BannerStat extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     return Column(
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.white54,
+          style: TextStyle(
+            color: theme.colorScheme.onSurface.withValues(alpha: 0.5),
             fontSize: FontSize.micro,
           ),
         ),
