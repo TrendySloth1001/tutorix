@@ -741,6 +741,8 @@ class FeeSummaryModel {
   final List<FeeStatusGroup> statusBreakdown;
   final List<FeePaymentModeGroup> paymentModes;
   final List<FeeMonthlyData> monthlyCollection;
+  final FeeOnboardingStatus onboarding;
+  final List<FeeRecentActivity> recentActivity;
 
   const FeeSummaryModel({
     required this.totalCollected,
@@ -753,6 +755,8 @@ class FeeSummaryModel {
     required this.statusBreakdown,
     required this.paymentModes,
     required this.monthlyCollection,
+    this.onboarding = const FeeOnboardingStatus(),
+    this.recentActivity = const [],
   });
 
   factory FeeSummaryModel.fromJson(Map<String, dynamic> json) {
@@ -781,6 +785,81 @@ class FeeSummaryModel {
               ?.map((e) => FeeMonthlyData.fromJson(e as Map<String, dynamic>))
               .toList() ??
           [],
+      onboarding: json['onboarding'] != null
+          ? FeeOnboardingStatus.fromJson(
+              json['onboarding'] as Map<String, dynamic>,
+            )
+          : const FeeOnboardingStatus(),
+      recentActivity:
+          (json['recentActivity'] as List<dynamic>?)
+              ?.map(
+                (e) => FeeRecentActivity.fromJson(e as Map<String, dynamic>),
+              )
+              .toList() ??
+          [],
+    );
+  }
+}
+
+/// Payment onboarding progress for the dashboard.
+class FeeOnboardingStatus {
+  final bool razorpayActivated;
+  final String? razorpayOnboardingStatus;
+  final bool bankVerified;
+  final int stepsCompleted;
+  final int totalSteps;
+
+  const FeeOnboardingStatus({
+    this.razorpayActivated = false,
+    this.razorpayOnboardingStatus,
+    this.bankVerified = false,
+    this.stepsCompleted = 0,
+    this.totalSteps = 3,
+  });
+
+  factory FeeOnboardingStatus.fromJson(Map<String, dynamic> json) {
+    return FeeOnboardingStatus(
+      razorpayActivated: json['razorpayActivated'] as bool? ?? false,
+      razorpayOnboardingStatus: json['razorpayOnboardingStatus'] as String?,
+      bankVerified: json['bankVerified'] as bool? ?? false,
+      stepsCompleted: json['stepsCompleted'] as int? ?? 0,
+      totalSteps: json['totalSteps'] as int? ?? 3,
+    );
+  }
+}
+
+/// A recent payment or refund for the dashboard activity feed.
+class FeeRecentActivity {
+  final String id;
+  final String type; // PAYMENT or REFUND
+  final double amount;
+  final String mode;
+  final DateTime date;
+  final String? receiptNo;
+  final String studentName;
+  final String feeTitle;
+
+  const FeeRecentActivity({
+    required this.id,
+    required this.type,
+    required this.amount,
+    required this.mode,
+    required this.date,
+    this.receiptNo,
+    required this.studentName,
+    required this.feeTitle,
+  });
+
+  factory FeeRecentActivity.fromJson(Map<String, dynamic> json) {
+    return FeeRecentActivity(
+      id: json['id'] as String? ?? '',
+      type: json['type'] as String? ?? 'PAYMENT',
+      amount: (json['amount'] as num?)?.toDouble() ?? 0,
+      mode: json['mode'] as String? ?? 'CASH',
+      date: DateTime.tryParse(json['date'] as String? ?? '') ?? DateTime.now(),
+      receiptNo: json['receiptNo'] as String?,
+      studentName: json['studentName'] as String? ?? 'Unknown',
+      feeTitle: json['feeTitle'] as String? ?? '',
     );
   }
 }

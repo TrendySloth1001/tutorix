@@ -1351,7 +1351,7 @@ export class FeeService {
         // already counted on the source (waived) record.
         const cashPyWhere = { ...pyWhere, mode: { not: 'CREDIT_TRANSFER' as const } };
 
-        const [statusGroups, totalCollected, totalRefunded, outstandingRecords, paymentModes, monthlyCollection, overdueCount, todayCollection] = await Promise.all([
+        const [statusGroups, totalCollected, totalRefunded, outstandingRecords, paymentModes, monthlyCollection, overdueCount, todayCollection, onboardingInfo, recentPayments, recentRefunds] = await Promise.all([
             prisma.feeRecord.groupBy({ by: ['status'], where: recWhere, _count: true, _sum: { finalAmount: true } }),
             prisma.feePayment.aggregate({ where: cashPyWhere, _sum: { amount: true } }),
             prisma.feeRefund.aggregate({ where: refundWhere, _sum: { amount: true } }),
@@ -1376,11 +1376,82 @@ export class FeeService {
                 where: { coachingId, paidAt: { gte: new Date(new Date().setHours(0, 0, 0, 0)) } },
                 _sum: { amount: true },
             }),
+            // Payment onboarding status
+            prisma.coaching.findUnique({
+                where: { id: coachingId },
+                select: {
+                    panNumber: true, contactPhone: true,
+                    bankAccountNumber: true, bankIfscCode: true, bankAccountName: true,
+                    bankVerified: true, razorpayAccountId: true,
+                    razorpayActivated: true, razorpayOnboardingStatus: true,
+                },
+            }),
+            // Recent activity: last 5 payments
+            prisma.feePayment.findMany({
+                where: { coachingId, mode: { not: 'CREDIT_TRANSFER' } },
+                orderBy: { paidAt: 'desc' },
+                take: 5,
+                select: {
+                    id: true, amount: true, mode: true, paidAt: true, receiptNo: true,
+                    record: {
+                        select: {
+                            title: true,
+                            member: { select: { user: { select: { name: true } }, ward: { select: { name: true } } } },
+                        },
+                    },
+                },
+            }),
+            // Recent refunds
+            prisma.feeRefund.findMany({
+                where: { coachingId },
+                orderBy: { refundedAt: 'desc' },
+                take: 3,
+                select: {
+                    id: true, amount: true, mode: true, refundedAt: true, reason: true,
+                    record: {
+                        select: {
+                            title: true,
+                            member: { select: { user: { select: { name: true } }, ward: { select: { name: true } } } },
+                        },
+                    },
+                },
+            }),
         ]);
 
         // Calculate actual outstanding balance (not inflated finalAmount)
         const totalPending = outstandingRecords.reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0);
         const totalOverdue = outstandingRecords.filter(r => r.status === 'OVERDUE').reduce((s, r) => s + (r.finalAmount - r.paidAmount), 0);
+
+        // Onboarding progress: how far along the payment setup is
+        const ob = onboardingInfo;
+        const hasTaxInfo = !!(ob?.panNumber && ob?.contactPhone);
+        const hasBankInfo = !!(ob?.bankAccountNumber && ob?.bankIfscCode && ob?.bankAccountName);
+        const hasLinkedAccount = !!ob?.razorpayAccountId;
+        const onboardingStepsCompleted = (hasTaxInfo ? 1 : 0) + (hasBankInfo ? 1 : 0) + (hasLinkedAccount ? 1 : 0);
+
+        // Merge recent payments + refunds into a single activity feed sorted by date
+        const recentActivity = [
+            ...recentPayments.map(p => ({
+                id: p.id,
+                type: 'PAYMENT' as const,
+                amount: p.amount,
+                mode: p.mode,
+                date: p.paidAt,
+                receiptNo: p.receiptNo,
+                studentName: p.record?.member?.ward?.name ?? p.record?.member?.user?.name ?? 'Unknown',
+                feeTitle: p.record?.title ?? '',
+            })),
+            ...recentRefunds.map(r => ({
+                id: r.id,
+                type: 'REFUND' as const,
+                amount: r.amount,
+                mode: r.mode,
+                date: r.refundedAt,
+                receiptNo: null,
+                studentName: r.record?.member?.ward?.name ?? r.record?.member?.user?.name ?? 'Unknown',
+                feeTitle: r.record?.title ?? '',
+            })),
+        ].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()).slice(0, 5);
 
         return {
             statusBreakdown: statusGroups,
@@ -1393,6 +1464,15 @@ export class FeeService {
             paymentModes,
             monthlyCollection,
             financialYear: financialYear ?? null,
+            // New: onboarding status for dashboard banner
+            onboarding: {
+                razorpayActivated: ob?.razorpayActivated ?? false,
+                razorpayOnboardingStatus: ob?.razorpayOnboardingStatus ?? null,
+                bankVerified: ob?.bankVerified ?? false,
+                stepsCompleted: onboardingStepsCompleted,
+                totalSteps: 3,
+            },
+            recentActivity,
         };
     }
 
