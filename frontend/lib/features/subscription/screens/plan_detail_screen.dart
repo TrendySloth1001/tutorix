@@ -578,12 +578,54 @@ class _PlanDetailScreenState extends State<PlanDetailScreen> {
                 color: cs.primary.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(Radii.full),
               ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.workspace_premium_rounded,
+                    size: 12,
+                    color: cs.primary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Most Popular',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: cs.primary,
+                      fontSize: FontSize.micro,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+          // MRP struck-through (monthly offer)
+          if (plan.hasOffer && !yearly)
+            Padding(
+              padding: const EdgeInsets.only(bottom: Spacing.sp4),
               child: Text(
-                '\u2B50 Most Popular',
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: cs.primary,
-                  fontSize: FontSize.micro,
+                '\u20B9${plan.mrpMonthly.toStringAsFixed(0)}/mo',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  decoration: TextDecoration.lineThrough,
+                  decorationColor: Colors.red.shade400,
+                  decorationThickness: 2.5,
+                  color: Colors.grey.shade500,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          // MRP struck-through (yearly offer)
+          if (plan.mrpYearly > 0 && plan.mrpYearly > plan.priceYearly && yearly)
+            Padding(
+              padding: const EdgeInsets.only(bottom: Spacing.sp4),
+              child: Text(
+                '\u20B9${(plan.mrpYearly / 12).toStringAsFixed(0)}/mo',
+                style: theme.textTheme.titleMedium?.copyWith(
+                  decoration: TextDecoration.lineThrough,
+                  decorationColor: Colors.red.shade400,
+                  decorationThickness: 2.5,
+                  color: Colors.grey.shade500,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
@@ -604,6 +646,28 @@ class _PlanDetailScreenState extends State<PlanDetailScreen> {
             ),
           ),
 
+          // Offer / yearly savings badges
+          if (plan.hasOffer && !yearly) ...[
+            const SizedBox(height: Spacing.sp8),
+            Container(
+              padding: const EdgeInsets.symmetric(
+                horizontal: Spacing.sp10,
+                vertical: Spacing.sp4,
+              ),
+              decoration: BoxDecoration(
+                color: Colors.green.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(Radii.full),
+              ),
+              child: Text(
+                '${plan.discountPercent}% off',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  fontSize: FontSize.nano,
+                  fontWeight: FontWeight.w600,
+                  color: Colors.green.shade700,
+                ),
+              ),
+            ),
+          ],
           if (yearly && plan.yearlySavingsPercent > 0) ...[
             const SizedBox(height: Spacing.sp8),
             Container(
@@ -947,6 +1011,32 @@ class _PlanDetailScreenState extends State<PlanDetailScreen> {
         mainAxisSize: MainAxisSize.min,
         children: [
           if (!plan.isFree) ...[
+            // MRP row (when there's an offer)
+            if (plan.hasOffer) ...[
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'MRP',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.45),
+                    ),
+                  ),
+                  Text(
+                    '\u20B9${(yearly ? plan.mrpYearly : plan.mrpMonthly).toStringAsFixed(0)}/$cycle',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      decoration: TextDecoration.lineThrough,
+                      decorationColor: Colors.red.shade400,
+                      decorationThickness: 2,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: Spacing.sp4),
+            ],
+
             // Subtotal
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,

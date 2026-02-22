@@ -273,6 +273,10 @@ class _PlanSelectorScreenState extends State<PlanSelectorScreen> {
         'Custom Logo',
         _plans.map((p) => p.hasCustomLogo ? '\u2713' : '\u2014').toList(),
       ),
+      (
+        'Web Portal',
+        _plans.map((p) => p.hasWebManagement ? '\u2713' : '\u2014').toList(),
+      ),
     ];
 
     return Column(
@@ -291,39 +295,47 @@ class _PlanSelectorScreenState extends State<PlanSelectorScreen> {
             borderRadius: BorderRadius.circular(Radii.lg),
             border: Border.all(color: cs.primary.withValues(alpha: 0.08)),
           ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(Radii.lg),
-            child: Table(
-              defaultVerticalAlignment: TableCellVerticalAlignment.middle,
-              columnWidths: {
-                0: const FlexColumnWidth(1.4),
-                for (var i = 0; i < _plans.length; i++)
-                  i + 1: const FlexColumnWidth(1),
-              },
-              children: [
-                TableRow(
-                  decoration: BoxDecoration(
-                    color: cs.primary.withValues(alpha: 0.06),
-                  ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minWidth: MediaQuery.of(context).size.width - Spacing.sp32 - 2,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(Radii.lg),
+                child: Table(
+                  defaultVerticalAlignment: TableCellVerticalAlignment.middle,
+                  columnWidths: {
+                    0: const FixedColumnWidth(90),
+                    for (var i = 0; i < _plans.length; i++)
+                      i + 1: const FixedColumnWidth(72),
+                  },
                   children: [
-                    _tableCell('', theme, isHeader: true),
-                    for (final plan in _plans)
-                      _tableCell(plan.name, theme, isHeader: true),
+                    TableRow(
+                      decoration: BoxDecoration(
+                        color: cs.primary.withValues(alpha: 0.06),
+                      ),
+                      children: [
+                        _tableCell('', theme, isHeader: true),
+                        for (final plan in _plans)
+                          _tableCell(plan.name, theme, isHeader: true),
+                      ],
+                    ),
+                    for (var i = 0; i < features.length; i++)
+                      TableRow(
+                        decoration: BoxDecoration(
+                          color: i.isEven
+                              ? Colors.transparent
+                              : cs.primary.withValues(alpha: 0.02),
+                        ),
+                        children: [
+                          _tableCell(features[i].$1, theme, isLabel: true),
+                          for (final v in features[i].$2) _tableCell(v, theme),
+                        ],
+                      ),
                   ],
                 ),
-                for (var i = 0; i < features.length; i++)
-                  TableRow(
-                    decoration: BoxDecoration(
-                      color: i.isEven
-                          ? Colors.transparent
-                          : cs.primary.withValues(alpha: 0.02),
-                    ),
-                    children: [
-                      _tableCell(features[i].$1, theme, isLabel: true),
-                      for (final v in features[i].$2) _tableCell(v, theme),
-                    ],
-                  ),
-              ],
+              ),
             ),
           ),
         ),
@@ -474,26 +486,56 @@ class _PlanCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          if (isPopular || isCurrent)
+          if (isPopular || isCurrent || plan.hasOffer || plan.isWebPortal)
             Container(
               padding: const EdgeInsets.symmetric(vertical: Spacing.sp4),
               decoration: BoxDecoration(
                 color: isCurrent
                     ? cs.primary
+                    : plan.hasOffer
+                    ? const Color(0xFFD32F2F)
+                    : plan.isWebPortal
+                    ? const Color(0xFF1565C0)
                     : cs.primary.withValues(alpha: 0.08),
                 borderRadius: const BorderRadius.vertical(
                   top: Radius.circular(Radii.lg - 1),
                 ),
               ),
-              child: Text(
-                isCurrent ? 'Current Plan' : '\u2B50 Most Popular',
-                textAlign: TextAlign.center,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  fontSize: FontSize.micro,
-                  fontWeight: FontWeight.w700,
-                  color: isCurrent ? cs.onPrimary : cs.primary,
-                  letterSpacing: 0.5,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isCurrent
+                        ? Icons.check_circle_rounded
+                        : plan.hasOffer
+                        ? Icons.local_offer_rounded
+                        : plan.isWebPortal
+                        ? Icons.monitor_rounded
+                        : Icons.workspace_premium_rounded,
+                    size: 11,
+                    color: (isCurrent || plan.hasOffer || plan.isWebPortal)
+                        ? Colors.white
+                        : cs.primary,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    isCurrent
+                        ? 'Current Plan'
+                        : plan.hasOffer
+                        ? '${plan.discountPercent}% OFF — Limited Offer'
+                        : plan.isWebPortal
+                        ? 'Web Management Portal'
+                        : 'Most Popular',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: FontSize.micro,
+                      fontWeight: FontWeight.w700,
+                      color: (isCurrent || plan.hasOffer || plan.isWebPortal)
+                          ? Colors.white
+                          : cs.primary,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ],
               ),
             ),
           Padding(
@@ -548,6 +590,23 @@ class _PlanCard extends StatelessWidget {
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
+                      if (plan.hasOffer && !yearly) ...[
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 4),
+                          child: Text(
+                            '\u20B9${plan.mrpMonthly.toStringAsFixed(0)}',
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              decoration: TextDecoration.lineThrough,
+                              decorationColor: cs.onSurface.withValues(
+                                alpha: 0.45,
+                              ),
+                              color: cs.onSurface.withValues(alpha: 0.45),
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: Spacing.sp4),
+                      ],
                       Text(
                         yearly
                             ? '\u20B9${plan.effectiveMonthlyRupees.toStringAsFixed(0)}'
@@ -566,6 +625,27 @@ class _PlanCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                      if (plan.hasOffer && !yearly) ...[
+                        const SizedBox(width: Spacing.sp8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: Spacing.sp8,
+                            vertical: Spacing.sp2,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.green.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(Radii.full),
+                          ),
+                          child: Text(
+                            '${plan.discountPercent}% off',
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              fontSize: FontSize.nano,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.green.shade700,
+                            ),
+                          ),
+                        ),
+                      ],
                       if (yearly) ...[
                         const SizedBox(width: Spacing.sp8),
                         Container(
@@ -592,12 +672,39 @@ class _PlanCard extends StatelessWidget {
                   if (yearly)
                     Padding(
                       padding: const EdgeInsets.only(top: Spacing.sp2),
-                      child: Text(
-                        'Billed \u20B9${plan.priceYearly.toStringAsFixed(0)}/year',
-                        style: theme.textTheme.bodySmall?.copyWith(
-                          fontSize: FontSize.nano,
-                          color: cs.onSurface.withValues(alpha: 0.4),
-                        ),
+                      child: Row(
+                        children: [
+                          if (plan.mrpYearly > 0 &&
+                              plan.mrpYearly > plan.priceYearly) ...[
+                            Text(
+                              'Billed \u20B9${plan.mrpYearly.toStringAsFixed(0)}',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontSize: FontSize.nano,
+                                decoration: TextDecoration.lineThrough,
+                                decorationColor: cs.onSurface.withValues(
+                                  alpha: 0.35,
+                                ),
+                                color: cs.onSurface.withValues(alpha: 0.35),
+                              ),
+                            ),
+                            const SizedBox(width: Spacing.sp4),
+                            Text(
+                              '\u20B9${plan.priceYearly.toStringAsFixed(0)}/year',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontSize: FontSize.nano,
+                                color: Colors.green.shade700,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ] else
+                            Text(
+                              'Billed \u20B9${plan.priceYearly.toStringAsFixed(0)}/year',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                fontSize: FontSize.nano,
+                                color: cs.onSurface.withValues(alpha: 0.4),
+                              ),
+                            ),
+                        ],
                       ),
                     ),
                 ],

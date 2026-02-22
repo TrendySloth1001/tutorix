@@ -23,6 +23,8 @@ interface PlanSeed {
     order: number;
     priceMonthly: number;
     priceYearly: number;
+    mrpMonthly: number;
+    mrpYearly: number;
     maxStudents: number;
     maxParents: number;
     maxTeachers: number;
@@ -51,6 +53,8 @@ const plans: PlanSeed[] = [
         order: 0,
         priceMonthly: 0,
         priceYearly: 0,
+        mrpMonthly: 0,
+        mrpYearly: 0,
         maxStudents: 10,
         maxParents: 10,
         maxTeachers: 5,
@@ -72,18 +76,48 @@ const plans: PlanSeed[] = [
         hasWebManagement: false,
     },
     {
+        slug: 'web-portal',
+        name: 'Web Portal',
+        order: 1,
+        priceMonthly: 499,
+        priceYearly: 4999,
+        mrpMonthly: 0,
+        mrpYearly: 0,
+        maxStudents: 100,
+        maxParents: 100,
+        maxTeachers: 10,
+        maxAdmins: 3,
+        maxBatches: -1,
+        maxAssessmentsPerMonth: 20,
+        storageLimitBytes: BigInt(2 * GB),
+        hasRazorpay: true,
+        hasAutoRemind: false,
+        hasFeeReports: false,
+        hasFeeLedger: false,
+        hasRoutePayouts: false,
+        hasPushNotify: true,
+        hasEmailNotify: false,
+        hasSmsNotify: false,
+        hasWhatsappNotify: false,
+        hasCustomLogo: false,
+        hasWhiteLabel: false,
+        hasWebManagement: true,
+    },
+    {
         slug: 'basic',
         name: 'Basic',
-        order: 1,
+        order: 2,
         priceMonthly: 599,
         priceYearly: 5999,
-        maxStudents: 75,
-        maxParents: 75,
-        maxTeachers: 15,
+        mrpMonthly: 0,
+        mrpYearly: 0,
+        maxStudents: 1,
+        maxParents: 1,
+        maxTeachers: 1,
         maxAdmins: 2,
-        maxBatches: 15,
+        maxBatches: 1,
         maxAssessmentsPerMonth: 50,
-        storageLimitBytes: BigInt(2 * GB),
+        storageLimitBytes: BigInt(5 * MB),
         hasRazorpay: true,
         hasAutoRemind: false,
         hasFeeReports: false,
@@ -100,9 +134,11 @@ const plans: PlanSeed[] = [
     {
         slug: 'standard',
         name: 'Standard',
-        order: 2,
+        order: 3,
         priceMonthly: 1499,
         priceYearly: 14999,
+        mrpMonthly: 0,
+        mrpYearly: 0,
         maxStudents: 300,
         maxParents: 300,
         maxTeachers: 40,
@@ -126,9 +162,11 @@ const plans: PlanSeed[] = [
     {
         slug: 'premium',
         name: 'Premium',
-        order: 3,
-        priceMonthly: 2999,
-        priceYearly: 29999,
+        order: 4,
+        priceMonthly: 3299,
+        priceYearly: 32999,
+        mrpMonthly: 3499,
+        mrpYearly: 34999,
         maxStudents: 1000,
         maxParents: 1000,
         maxTeachers: 100,
@@ -163,7 +201,7 @@ async function main() {
         console.log(`  ✓ ${plan.name} (₹${plan.priceMonthly}/mo)`);
     }
 
-    console.log('Done — 4 plans seeded.');
+    console.log('Done — 5 plans seeded.');
 }
 
 main()

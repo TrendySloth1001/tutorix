@@ -1237,6 +1237,8 @@ model Plan {
   // ── Pricing (INR) ──────────────────────────────────────────────
   priceMonthly   Float  @default(0)
   priceYearly    Float  @default(0)
+  mrpMonthly     Float  @default(0) // Original/MRP price (strikethrough display)
+  mrpYearly      Float  @default(0)
 
   // ── Quotas ─────────────────────────────────────────────────────
   maxStudents       Int  @default(10)

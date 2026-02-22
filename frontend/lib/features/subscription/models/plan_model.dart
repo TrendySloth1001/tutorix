@@ -5,6 +5,8 @@ class PlanModel {
   final String name;
   final double priceMonthly; // INR (rupees)
   final double priceYearly; // INR (rupees)
+  final double mrpMonthly; // Original/MRP price (0 = no offer)
+  final double mrpYearly;
 
   // Display order
   final int order;
@@ -38,6 +40,8 @@ class PlanModel {
     required this.name,
     required this.priceMonthly,
     required this.priceYearly,
+    this.mrpMonthly = 0,
+    this.mrpYearly = 0,
     this.order = 0,
     this.maxStudents = 0,
     this.maxParents = 0,
@@ -62,6 +66,16 @@ class PlanModel {
 
   bool get isFree => slug == 'free';
   bool get isPopular => slug == 'standard';
+  bool get isWebPortal => slug == 'web-portal';
+
+  /// Whether this plan has a discounted offer (MRP > actual price).
+  bool get hasOffer => mrpMonthly > 0 && mrpMonthly > priceMonthly;
+
+  /// Monthly discount percentage.
+  int get discountPercent {
+    if (!hasOffer) return 0;
+    return (((mrpMonthly - priceMonthly) / mrpMonthly) * 100).round();
+  }
 
   /// Effective monthly when billed yearly.
   double get effectiveMonthlyRupees => priceYearly / 12;
@@ -107,6 +121,8 @@ class PlanModel {
       name: json['name'] as String,
       priceMonthly: (json['priceMonthly'] as num?)?.toDouble() ?? 0,
       priceYearly: (json['priceYearly'] as num?)?.toDouble() ?? 0,
+      mrpMonthly: (json['mrpMonthly'] as num?)?.toDouble() ?? 0,
+      mrpYearly: (json['mrpYearly'] as num?)?.toDouble() ?? 0,
       order: (json['order'] as num?)?.toInt() ?? 0,
       maxStudents: (json['maxStudents'] as num?)?.toInt() ?? 0,
       maxParents: (json['maxParents'] as num?)?.toInt() ?? 0,
