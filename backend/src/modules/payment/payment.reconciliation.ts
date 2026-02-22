@@ -131,8 +131,8 @@ export async function reconcileDay(date?: string): Promise<ReconciliationResult>
         missingInRazorpay,
         amountMismatches,
         summary: isClean
-            ? `✅ ${dateStr}: Reconciled. Razorpay ₹${(razorpayTotal / 100).toFixed(2)} = DB ₹${(dbTotal / 100).toFixed(2)}`
-            : `⚠️ ${dateStr}: MISMATCH. Razorpay ₹${(razorpayTotal / 100).toFixed(2)} vs DB ₹${(dbTotal / 100).toFixed(2)} (Δ ₹${(difference / 100).toFixed(2)}). Missing in DB: ${missingInDb.length}. Missing in Razorpay: ${missingInRazorpay.length}. Amount mismatches: ${amountMismatches.length}.`,
+            ? `x ${dateStr}: Reconciled. Razorpay ₹${(razorpayTotal / 100).toFixed(2)} = DB ₹${(dbTotal / 100).toFixed(2)}`
+            : `! ${dateStr}: MISMATCH. Razorpay ₹${(razorpayTotal / 100).toFixed(2)} vs DB ₹${(dbTotal / 100).toFixed(2)} (Δ ₹${(difference / 100).toFixed(2)}). Missing in DB: ${missingInDb.length}. Missing in Razorpay: ${missingInRazorpay.length}. Amount mismatches: ${amountMismatches.length}.`,
     };
 }
 
@@ -311,8 +311,8 @@ export async function checkLedgerIntegrity(): Promise<LedgerIntegrityResult> {
             finalAmount: Number(o.finalAmount),
         })),
         summary: drifted.length === 0 && overpaid.length === 0
-            ? `✅ Ledger integrity OK. ${totalChecked} records checked.`
-            : `⚠️ LEDGER DRIFT: ${drifted.length} records with paidAmount mismatch, ${overpaid.length} records overpaid.`,
+            ? `v Ledger integrity OK. ${totalChecked} records checked.`
+            : `! LEDGER DRIFT: ${drifted.length} records with paidAmount mismatch, ${overpaid.length} records overpaid.`,
     };
 }
 
@@ -477,8 +477,8 @@ if (command === 'reconcile') {
             transfers.failed;
 
         console.log(totalIssues === 0
-            ? '✅ All systems clean.'
-            : `⚠️ ${totalIssues} total issues found. Review above.`);
+            ? 'V All systems clean.'
+            : `! ${totalIssues} total issues found. Review above.`);
         process.exit(totalIssues > 0 ? 1 : 0);
     })().catch((err) => { console.error(err); process.exit(2); });
 } else if (command) {
