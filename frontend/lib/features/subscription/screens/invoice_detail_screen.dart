@@ -17,8 +17,11 @@ class InvoiceDetailScreen extends StatelessWidget {
     final cs = theme.colorScheme;
     final df = DateFormat('dd MMM yyyy, hh:mm a');
 
-    final (Color statusColor, IconData statusIcon, String statusText) =
-        switch (invoice.status) {
+    final (
+      Color statusColor,
+      IconData statusIcon,
+      String statusText,
+    ) = switch (invoice.status) {
       'PAID' => (Colors.green.shade700, Icons.check_circle_rounded, 'Paid'),
       'FAILED' => (cs.error, Icons.cancel_rounded, 'Failed'),
       'REFUNDED' => (cs.tertiary, Icons.replay_rounded, 'Refunded'),
@@ -36,10 +39,7 @@ class InvoiceDetailScreen extends StatelessWidget {
 
     return Scaffold(
       backgroundColor: cs.surface,
-      appBar: AppBar(
-        title: const Text('Invoice Details'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('Invoice Details'), centerTitle: true),
       body: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(
           Spacing.sp24,
@@ -116,6 +116,15 @@ class InvoiceDetailScreen extends StatelessWidget {
                     label: 'Subtotal',
                     value: '\u20B9${invoice.amountRupees.toStringAsFixed(2)}',
                   ),
+                  if (invoice.creditAppliedPaise > 0) ...[
+                    _divider(cs),
+                    _DetailRow(
+                      label: 'Credits Applied',
+                      value:
+                          '- \u20B9${invoice.creditAppliedRupees.toStringAsFixed(2)}',
+                      valueColor: Colors.green.shade700,
+                    ),
+                  ],
                   if (invoice.taxPaise > 0) ...[
                     _divider(cs),
                     _DetailRow(
@@ -125,7 +134,9 @@ class InvoiceDetailScreen extends StatelessWidget {
                   ],
                   _divider(cs),
                   _DetailRow(
-                    label: 'Total',
+                    label: invoice.creditAppliedPaise > 0
+                        ? 'Amount Charged'
+                        : 'Total',
                     value: '\u20B9${invoice.totalRupees.toStringAsFixed(2)}',
                     isBold: true,
                   ),
@@ -169,10 +180,7 @@ class InvoiceDetailScreen extends StatelessWidget {
                     ),
                   ],
                   _divider(cs),
-                  _DetailRow(
-                    label: 'Currency',
-                    value: invoice.currency,
-                  ),
+                  _DetailRow(label: 'Currency', value: invoice.currency),
                 ],
               ),
             ),
@@ -201,10 +209,7 @@ class InvoiceDetailScreen extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: Spacing.sp4),
-                    Text(
-                      invoice.notes!,
-                      style: theme.textTheme.bodySmall,
-                    ),
+                    Text(invoice.notes!, style: theme.textTheme.bodySmall),
                   ],
                 ),
               ),
@@ -216,28 +221,25 @@ class InvoiceDetailScreen extends StatelessWidget {
   }
 
   Widget _divider(ColorScheme cs) => Padding(
-        padding: const EdgeInsets.symmetric(vertical: Spacing.sp10),
-        child: Divider(
-          height: 1,
-          color: cs.outlineVariant.withValues(alpha: 0.15),
-        ),
-      );
+    padding: const EdgeInsets.symmetric(vertical: Spacing.sp10),
+    child: Divider(height: 1, color: cs.outlineVariant.withValues(alpha: 0.15)),
+  );
 
   String _typeLabel(String type) => switch (type) {
-        'INITIAL' => 'First Payment',
-        'RENEWAL' => 'Renewal Payment',
-        'UPGRADE' => 'Plan Upgrade',
-        'REFUND' => 'Refund',
-        _ => type,
-      };
+    'INITIAL' => 'First Payment',
+    'RENEWAL' => 'Renewal Payment',
+    'UPGRADE' => 'Plan Upgrade',
+    'REFUND' => 'Refund',
+    _ => type,
+  };
 
   String _planLabel(String? slug) => switch (slug) {
-        'basic' => 'Basic',
-        'standard' => 'Standard',
-        'premium' => 'Premium',
-        'free' => 'Free',
-        _ => slug?.toUpperCase() ?? '—',
-      };
+    'basic' => 'Basic',
+    'standard' => 'Standard',
+    'premium' => 'Premium',
+    'free' => 'Free',
+    _ => slug?.toUpperCase() ?? '—',
+  };
 }
 
 // ── Detail Row widget ────────────────────────────────────────────────
@@ -247,12 +249,14 @@ class _DetailRow extends StatelessWidget {
   final String value;
   final bool isBold;
   final bool canCopy;
+  final Color? valueColor;
 
   const _DetailRow({
     required this.label,
     required this.value,
     this.isBold = false,
     this.canCopy = false,
+    this.valueColor,
   });
 
   @override
@@ -285,9 +289,11 @@ class _DetailRow extends StatelessWidget {
                         child: Text(
                           value,
                           style: theme.textTheme.bodySmall?.copyWith(
-                            fontWeight:
-                                isBold ? FontWeight.w700 : FontWeight.w500,
+                            fontWeight: isBold
+                                ? FontWeight.w700
+                                : FontWeight.w500,
                             fontSize: FontSize.caption,
+                            color: valueColor,
                           ),
                           textAlign: TextAlign.end,
                           overflow: TextOverflow.ellipsis,
@@ -307,6 +313,7 @@ class _DetailRow extends StatelessWidget {
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontWeight: isBold ? FontWeight.w700 : FontWeight.w500,
                     fontSize: FontSize.caption,
+                    color: valueColor,
                   ),
                   textAlign: TextAlign.end,
                 ),

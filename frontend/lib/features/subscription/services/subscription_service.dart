@@ -94,6 +94,14 @@ class SubscriptionService {
         .map((e) => InvoiceModel.fromJson(e as Map<String, dynamic>))
         .toList();
   }
+
+  // ── Credits ──────────────────────────────────────────────────────
+
+  /// Fetch the user's credit balance in rupees.
+  Future<double> getCredits() async {
+    final data = await _api.getAuthenticated(ApiConstants.credits);
+    return double.tryParse(data['balanceRupees']?.toString() ?? '0') ?? 0;
+  }
 }
 
 /// Result from subscribing — contains Razorpay subscription details.
@@ -103,6 +111,10 @@ class SubscribeResult {
   final String planName;
   final double amount;
   final String cycle;
+  final double creditAppliedRupees;
+  final double creditBalanceRupees;
+  final double netAmount;
+  final bool fullyPaidByCredits;
 
   const SubscribeResult({
     required this.subscriptionId,
@@ -110,6 +122,10 @@ class SubscribeResult {
     required this.planName,
     required this.amount,
     required this.cycle,
+    this.creditAppliedRupees = 0,
+    this.creditBalanceRupees = 0,
+    this.netAmount = 0,
+    this.fullyPaidByCredits = false,
   });
 
   factory SubscribeResult.fromJson(Map<String, dynamic> json) {
@@ -119,6 +135,12 @@ class SubscribeResult {
       planName: json['planName'] as String? ?? '',
       amount: (json['amount'] as num?)?.toDouble() ?? 0,
       cycle: json['cycle'] as String? ?? 'MONTHLY',
+      creditAppliedRupees:
+          (json['creditAppliedRupees'] as num?)?.toDouble() ?? 0,
+      creditBalanceRupees:
+          (json['creditBalanceRupees'] as num?)?.toDouble() ?? 0,
+      netAmount: (json['netAmount'] as num?)?.toDouble() ?? 0,
+      fullyPaidByCredits: json['fullyPaidByCredits'] as bool? ?? false,
     );
   }
 }

@@ -1331,10 +1331,11 @@ model SubscriptionInvoice {
   razorpayInvoiceId String?
 
   // ── Amounts ────────────────────────────────────────────────────
-  amountPaise    Int
-  currency       String @default("INR")
-  taxPaise       Int    @default(0) // GST on subscription
-  totalPaise     Int    // amount + tax
+  amountPaise        Int
+  currency           String @default("INR")
+  taxPaise           Int    @default(0) // GST on subscription
+  creditAppliedPaise Int    @default(0) // credits redeemed against this invoice
+  totalPaise         Int    // amount - credit + tax (what was actually charged)
 
   // ── Status / type ──────────────────────────────────────────────
   /// PAID | FAILED | REFUNDED | PENDING

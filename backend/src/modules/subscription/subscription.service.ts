@@ -1,5 +1,6 @@
 import prisma from '../../infra/prisma.js';
 import Razorpay from 'razorpay';
+import { CreditService } from './credit.service.js';
 
 // ─── Razorpay Instance (Tutorix master account) ─────────────────────
 
@@ -271,6 +272,11 @@ export class SubscriptionService {
      * Option B — uses Payment Links API (works without Plans API activation).
      * The subscription is NOT activated here; it remains on the current plan
      * until the `payment_link.paid` webhook fires and calls handlePaymentLinkPaid().
+     *
+     * Credits are checked and applied automatically:
+     *  - If credits fully cover the amount → activate immediately, no payment link.
+     *  - If credits partially cover → create payment link for the net amount,
+     *    redeem credits only after payment confirmation.
      */
     async createSubscription(coachingId: string, planSlug: string, cycle: 'MONTHLY' | 'YEARLY', userId: string) {
         if (!razorpay) throw new Error('Razorpay not configured');
@@ -292,23 +298,97 @@ export class SubscriptionService {
         // Ensure subscription record exists (may still be on free plan)
         const sub = await this.getOrCreateSubscription(coachingId);
 
-        // ── Option B: Razorpay Payment Link ──────────────────────────
-        // callback_url uses the tutorix:// deep link scheme so the browser
-        // redirects the user straight back into the app after payment.
+        // ── Credits ──────────────────────────────────────────────────
+        const creditService = new CreditService();
+        const creditBalancePaise = await creditService.getBalancePaise(userId);
+        const creditAppliedPaise = Math.min(creditBalancePaise, amountPaise);
+        const netAmountPaise = amountPaise - creditAppliedPaise;
+
+        // ── Fully covered by credits ─────────────────────────────────
+        if (netAmountPaise <= 0) {
+            // Redeem credits immediately and activate the subscription
+            await creditService.redeemCredit(userId, amountPaise, sub.id);
+
+            const now = new Date();
+            const periodEnd = cycle === 'YEARLY' ? addYears(now, 1) : addMonths(now, 1);
+
+            await prisma.$transaction([
+                prisma.subscription.update({
+                    where: { id: sub.id },
+                    data: {
+                        planId: plan.id,
+                        billingCycle: cycle,
+                        status: 'ACTIVE',
+                        currentPeriodStart: now,
+                        currentPeriodEnd: periodEnd,
+                        lastPaymentAt: now,
+                        lastPaymentAmount: amount,
+                        failedPaymentCount: 0,
+                        cancelledAt: null,
+                        pausedAt: null,
+                        gracePeriodEndsAt: null,
+                        pastDueAt: null,
+                        scheduledPlanId: null,
+                        scheduledCycle: null,
+                    },
+                }),
+                prisma.subscriptionInvoice.create({
+                    data: {
+                        subscriptionId: sub.id,
+                        razorpayPaymentId: `credit_${sub.id}_${Date.now()}`,
+                        amountPaise,
+                        creditAppliedPaise: amountPaise,
+                        totalPaise: 0,
+                        status: 'PAID',
+                        type: sub.lastPaymentAt ? 'RENEWAL' : 'INITIAL',
+                        paidAt: now,
+                        planSlug: plan.slug,
+                        billingCycle: cycle,
+                        notes: `Fully paid with credits (\u20B9${(amountPaise / 100).toFixed(2)})`,
+                    },
+                }),
+            ]);
+
+            // Update coaching storage limit
+            await prisma.coaching.update({
+                where: { id: coachingId },
+                data: { storageLimit: plan.storageLimitBytes },
+            });
+
+            console.log(`[SubscriptionService] Activated ${planSlug}/${cycle} for coaching ${coachingId} — fully covered by credits`);
+
+            const newBalance = await creditService.getBalancePaise(userId);
+
+            return {
+                subscriptionId: sub.id,
+                shortUrl: '', // no payment link needed
+                planName: plan.name,
+                amount,
+                cycle,
+                creditAppliedRupees: amountPaise / 100,
+                creditBalanceRupees: newBalance / 100,
+                netAmount: 0,
+                fullyPaidByCredits: true,
+            };
+        }
+
+        // ── Partial or no credits — create Payment Link ──────────────
         const callbackUrl = `tutorix://subscription/payment-complete?coachingId=${coachingId}`;
 
         const paymentLink = await (razorpay as any).paymentLink.create({
-            amount: amountPaise,
+            amount: netAmountPaise,
             currency: 'INR',
             accept_partial: false,
             description: `Tutorix ${plan.name} — ${cycle.toLowerCase()} subscription`,
             expire_by: Math.floor(Date.now() / 1000) + 86400, // 24-hour expiry
-            reference_id: `${sub.id.replace(/-/g, '').slice(0, 24)}_${Date.now().toString(36)}`, // unique per attempt, max 40 chars
+            reference_id: `${sub.id.replace(/-/g, '').slice(0, 24)}_${Date.now().toString(36)}`,
             notes: {
                 coachingId,
                 subscriptionId: sub.id,
                 planSlug: plan.slug,
                 cycle,
+                creditAppliedPaise: creditAppliedPaise.toString(),
+                originalAmountPaise: amountPaise.toString(),
             },
             callback_url: callbackUrl,
             callback_method: 'get',
@@ -323,7 +403,7 @@ export class SubscriptionService {
             data: { razorpaySubscriptionId: plinkId },
         });
 
-        console.log(`[SubscriptionService] Payment link created: ${plinkId} for coaching ${coachingId}`);
+        console.log(`[SubscriptionService] Payment link created: ${plinkId} for coaching ${coachingId} (credits: \u20B9${(creditAppliedPaise / 100).toFixed(2)})`);
 
         return {
             subscriptionId: plinkId,
@@ -331,6 +411,10 @@ export class SubscriptionService {
             planName: plan.name,
             amount,
             cycle,
+            creditAppliedRupees: creditAppliedPaise / 100,
+            creditBalanceRupees: creditBalancePaise / 100,
+            netAmount: netAmountPaise / 100,
+            fullyPaidByCredits: false,
         };
     }
 
@@ -448,6 +532,7 @@ export class SubscriptionService {
      * Handle payment_link.paid webhook event (Option B).
      *
      * Activates the paid plan and creates an invoice record.
+     * If credits were applied at purchase time, redeems them now that payment is confirmed.
      * Called from the webhook router when Razorpay confirms payment.
      */
     async handlePaymentLinkPaid(paymentLinkEntity: any, paymentEntity: any) {
@@ -456,6 +541,8 @@ export class SubscriptionService {
         const coachingId = notes.coachingId as string;
         const planSlug = notes.planSlug as string;
         const cycle = (notes.cycle as 'MONTHLY' | 'YEARLY') ?? 'MONTHLY';
+        const creditAppliedPaise = parseInt(notes.creditAppliedPaise || '0', 10);
+        const originalAmountPaise = parseInt(notes.originalAmountPaise || '0', 10);
 
         if (!coachingId || !planSlug) {
             console.warn(`[SubscriptionService] payment_link.paid missing notes: ${plinkId}`);
@@ -479,7 +566,9 @@ export class SubscriptionService {
         }
 
         const razorpayPaymentId = paymentEntity?.id as string | undefined;
-        const amountPaise = (paymentEntity?.amount as number) ?? 0;
+        const paidAmountPaise = (paymentEntity?.amount as number) ?? 0;
+        // Full invoice amount = what was paid + credits applied
+        const fullAmountPaise = originalAmountPaise || (paidAmountPaise + creditAppliedPaise);
 
         // Idempotency — don't process same payment twice
         if (razorpayPaymentId) {
@@ -489,8 +578,27 @@ export class SubscriptionService {
             if (existing) return;
         }
 
+        // ── Redeem credits if any were applied at purchase time ───────
+        if (creditAppliedPaise > 0) {
+            const coaching = await prisma.coaching.findUnique({
+                where: { id: coachingId },
+                select: { ownerId: true },
+            });
+            if (coaching) {
+                const creditService = new CreditService();
+                await creditService.redeemCredit(coaching.ownerId, creditAppliedPaise, sub.id);
+                console.log(`[SubscriptionService] Redeemed \u20B9${(creditAppliedPaise / 100).toFixed(2)} credits for coaching ${coachingId}`);
+            }
+        }
+
         const now = new Date();
         const periodEnd = cycle === 'YEARLY' ? addYears(now, 1) : addMonths(now, 1);
+
+        // Build invoice notes string
+        const invoiceNotes: string[] = [`Payment Link: ${plinkId}`];
+        if (creditAppliedPaise > 0) {
+            invoiceNotes.push(`Credits Applied: \u20B9${(creditAppliedPaise / 100).toFixed(2)}`);
+        }
 
         await prisma.$transaction([
             // Activate subscription on the paid plan
@@ -503,7 +611,7 @@ export class SubscriptionService {
                     currentPeriodStart: now,
                     currentPeriodEnd: periodEnd,
                     lastPaymentAt: now,
-                    lastPaymentAmount: amountPaise / 100,
+                    lastPaymentAmount: fullAmountPaise / 100,
                     failedPaymentCount: 0,
                     cancelledAt: null,
                     pausedAt: null,
@@ -518,14 +626,15 @@ export class SubscriptionService {
                 data: {
                     subscriptionId: sub.id,
                     razorpayPaymentId: razorpayPaymentId ?? `plink_${plinkId}_${Date.now()}`,
-                    amountPaise,
-                    totalPaise: amountPaise,
+                    amountPaise: fullAmountPaise,
+                    creditAppliedPaise,
+                    totalPaise: paidAmountPaise,
                     status: 'PAID',
                     type: sub.lastPaymentAt ? 'RENEWAL' : 'INITIAL',
                     paidAt: now,
                     planSlug: plan.slug,
                     billingCycle: cycle,
-                    notes: `Payment Link: ${plinkId}`,
+                    notes: invoiceNotes.join(' | '),
                 },
             }),
         ]);

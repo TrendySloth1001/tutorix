@@ -7,6 +7,7 @@ class InvoiceModel {
   final int totalPaise;
   final String currency;
   final int taxPaise;
+  final int creditAppliedPaise;
 
   final String status; // PAID, FAILED, REFUNDED, PENDING
   final String type; // INITIAL, RENEWAL, UPGRADE, REFUND
@@ -29,6 +30,7 @@ class InvoiceModel {
     required this.totalPaise,
     this.currency = 'INR',
     this.taxPaise = 0,
+    this.creditAppliedPaise = 0,
     required this.status,
     required this.type,
     this.invoiceNumber,
@@ -46,6 +48,7 @@ class InvoiceModel {
   double get amountRupees => amountPaise / 100;
   double get totalRupees => totalPaise / 100;
   double get taxRupees => taxPaise / 100;
+  double get creditAppliedRupees => creditAppliedPaise / 100;
 
   factory InvoiceModel.fromJson(Map<String, dynamic> json) {
     return InvoiceModel(
@@ -56,6 +59,7 @@ class InvoiceModel {
       totalPaise: (json['totalPaise'] as num?)?.toInt() ?? 0,
       currency: json['currency'] as String? ?? 'INR',
       taxPaise: (json['taxPaise'] as num?)?.toInt() ?? 0,
+      creditAppliedPaise: (json['creditAppliedPaise'] as num?)?.toInt() ?? 0,
       status: json['status'] as String? ?? 'PENDING',
       type: json['type'] as String? ?? 'RENEWAL',
       invoiceNumber: json['invoiceNumber'] as String?,

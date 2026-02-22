@@ -37,6 +37,9 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
   bool _awaitingPayment = false; // true while user is in the browser paying
   StreamSubscription<Uri>? _linkSub;
 
+  double _creditBalanceRupees = 0; // available credits loaded on init
+  bool _creditsLoaded = false;
+
   PlanModel get plan => widget.plan;
   bool get yearly => widget.yearly;
 
@@ -62,6 +65,9 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Load user's credit balance
+    _loadCredits();
 
     // Listen for deep link callbacks (tutorix://subscription/payment-complete)
     final appLinks = AppLinks();
@@ -92,6 +98,33 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
     }
   }
 
+  Future<void> _loadCredits() async {
+    try {
+      final balance = await _service.getCredits();
+      if (mounted)
+        setState(() {
+          _creditBalanceRupees = balance;
+          _creditsLoaded = true;
+        });
+    } catch (_) {
+      if (mounted) setState(() => _creditsLoaded = true);
+    }
+  }
+
+  /// The amount of credit that will be applied to this purchase.
+  double get _creditAppliedRupees {
+    final amount = yearly ? plan.priceYearly : plan.priceMonthly;
+    return _creditBalanceRupees > 0
+        ? (_creditBalanceRupees >= amount ? amount : _creditBalanceRupees)
+        : 0;
+  }
+
+  /// Net amount user needs to pay after credit deduction.
+  double get _netAmountRupees {
+    final amount = yearly ? plan.priceYearly : plan.priceMonthly;
+    return (amount - _creditAppliedRupees).clamp(0, double.infinity);
+  }
+
   Future<void> _onBuyPressed() async {
     if (!_policyAccepted || _isSubscribing) return;
 
@@ -107,6 +140,13 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
         cycle: yearly ? 'YEARLY' : 'MONTHLY',
       );
       if (!mounted) return;
+
+      // Fully covered by credits — no payment needed
+      if (result.fullyPaidByCredits) {
+        AppAlert.success(context, 'Plan activated using your credits!');
+        Navigator.of(context).pop(true);
+        return;
+      }
 
       final uri = Uri.parse(result.shortUrl);
       final canOpen = await canLaunchUrl(uri);
@@ -188,6 +228,8 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
     final theme = Theme.of(context);
     final amount = yearly ? plan.priceYearly : plan.priceMonthly;
     final cycle = yearly ? 'year' : 'month';
+    final creditApplied = _creditAppliedRupees;
+    final netAmount = _netAmountRupees;
 
     return showModalBottomSheet<bool>(
       context: context,
@@ -261,6 +303,21 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
                         yearly ? 'Yearly' : 'Monthly',
                       ),
                       const SizedBox(height: Spacing.sp8),
+                      _summaryRow(
+                        theme,
+                        'Subtotal',
+                        '\u20B9${amount.toStringAsFixed(0)}/$cycle',
+                      ),
+                      if (creditApplied > 0) ...[
+                        const SizedBox(height: Spacing.sp8),
+                        _summaryRow(
+                          theme,
+                          'Credits Applied',
+                          '- \u20B9${creditApplied.toStringAsFixed(0)}',
+                          valueColor: Colors.green.shade700,
+                        ),
+                      ],
+                      const SizedBox(height: Spacing.sp8),
                       Divider(
                         color: cs.primary.withValues(alpha: 0.08),
                         height: 1,
@@ -268,8 +325,10 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
                       const SizedBox(height: Spacing.sp8),
                       _summaryRow(
                         theme,
-                        'Amount',
-                        '\u20B9${amount.toStringAsFixed(0)}/$cycle',
+                        netAmount > 0 ? 'To Pay' : 'Total',
+                        netAmount > 0
+                            ? '\u20B9${netAmount.toStringAsFixed(0)}/$cycle'
+                            : 'Free (covered by credits)',
                         isBold: true,
                       ),
                     ],
@@ -278,8 +337,11 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
                 const SizedBox(height: Spacing.sp12),
 
                 Text(
-                  'You will be redirected to Razorpay to complete payment. '
-                  'Your subscription will activate once payment is confirmed.',
+                  netAmount > 0
+                      ? 'You will be redirected to Razorpay to complete payment. '
+                            'Your subscription will activate once payment is confirmed.'
+                      : 'Your available credits will cover the full amount. '
+                            'No payment required — the plan will activate instantly.',
                   textAlign: TextAlign.center,
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: cs.onSurface.withValues(alpha: 0.5),
@@ -305,8 +367,17 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
                           HapticFeedback.mediumImpact();
                           Navigator.pop(ctx, true);
                         },
-                        icon: const Icon(Icons.lock_rounded, size: 16),
-                        label: Text('Pay \u20B9${amount.toStringAsFixed(0)}'),
+                        icon: Icon(
+                          netAmount > 0
+                              ? Icons.lock_rounded
+                              : Icons.check_circle_rounded,
+                          size: 16,
+                        ),
+                        label: Text(
+                          netAmount > 0
+                              ? 'Pay \u20B9${netAmount.toStringAsFixed(0)}'
+                              : 'Activate with Credits',
+                        ),
                       ),
                     ),
                   ],
@@ -324,6 +395,7 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
     String label,
     String value, {
     bool isBold = false,
+    Color? valueColor,
   }) {
     final cs = theme.colorScheme;
     return Row(
@@ -339,7 +411,7 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
           value,
           style: theme.textTheme.bodySmall?.copyWith(
             fontWeight: isBold ? FontWeight.w700 : FontWeight.w600,
-            color: isBold ? cs.primary : cs.onSurface,
+            color: valueColor ?? (isBold ? cs.primary : cs.onSurface),
           ),
         ),
       ],
@@ -364,6 +436,12 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
         children: [
           // ── Header ──────────────────────────────────────────────
           _buildPriceHeader(theme),
+
+          // ── Credit banner ───────────────────────────────────────
+          if (_creditsLoaded && _creditBalanceRupees > 0) ...[
+            const SizedBox(height: Spacing.sp12),
+            _buildCreditBanner(theme),
+          ],
           const SizedBox(height: Spacing.sp24),
 
           // ── Quotas ──────────────────────────────────────────────
@@ -383,6 +461,67 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
         ],
       ),
       bottomNavigationBar: _buildBottomBar(theme),
+    );
+  }
+
+  // ── Credit banner ──────────────────────────────────────────────────
+
+  Widget _buildCreditBanner(ThemeData theme) {
+    final creditApplied = _creditAppliedRupees;
+    final amount = yearly ? plan.priceYearly : plan.priceMonthly;
+    final fullyCovered = creditApplied >= amount;
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: Spacing.sp16,
+        vertical: Spacing.sp12,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.green.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(Radii.md),
+        border: Border.all(color: Colors.green.withValues(alpha: 0.2)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(Spacing.sp8),
+            decoration: BoxDecoration(
+              color: Colors.green.withValues(alpha: 0.1),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              Icons.wallet_rounded,
+              size: 18,
+              color: Colors.green.shade700,
+            ),
+          ),
+          const SizedBox(width: Spacing.sp12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'You have \u20B9${_creditBalanceRupees.toStringAsFixed(0)} in credits',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: Colors.green.shade800,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  fullyCovered
+                      ? 'Credits will fully cover this purchase!'
+                      : '\u20B9${creditApplied.toStringAsFixed(0)} will be applied to this purchase',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontSize: FontSize.nano,
+                    color: Colors.green.shade700.withValues(alpha: 0.8),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -763,6 +902,8 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
     final cs = theme.colorScheme;
     final amount = yearly ? plan.priceYearly : plan.priceMonthly;
     final cycle = yearly ? 'year' : 'month';
+    final creditApplied = _creditAppliedRupees;
+    final netAmount = _netAmountRupees;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
@@ -785,11 +926,12 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
         mainAxisSize: MainAxisSize.min,
         children: [
           if (!plan.isFree) ...[
+            // Subtotal
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Total',
+                  creditApplied > 0 ? 'Subtotal' : 'Total',
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: cs.onSurface.withValues(alpha: 0.6),
                   ),
@@ -798,11 +940,72 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
                   '\u20B9${amount.toStringAsFixed(0)}/$cycle',
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.w800,
-                    color: cs.primary,
+                    color: creditApplied > 0
+                        ? cs.onSurface.withValues(alpha: 0.5)
+                        : cs.primary,
+                    decoration: creditApplied > 0
+                        ? TextDecoration.lineThrough
+                        : null,
                   ),
                 ),
               ],
             ),
+
+            // Credit applied row
+            if (creditApplied > 0) ...[
+              const SizedBox(height: Spacing.sp4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.wallet_rounded,
+                        size: 14,
+                        color: Colors.green.shade700,
+                      ),
+                      const SizedBox(width: Spacing.sp4),
+                      Text(
+                        'Credits',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: Colors.green.shade700,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '- \u20B9${creditApplied.toStringAsFixed(0)}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w700,
+                      color: Colors.green.shade700,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: Spacing.sp4),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    'To Pay',
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: cs.onSurface.withValues(alpha: 0.6),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    netAmount > 0
+                        ? '\u20B9${netAmount.toStringAsFixed(0)}/$cycle'
+                        : 'Free',
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w800,
+                      color: cs.primary,
+                    ),
+                  ),
+                ],
+              ),
+            ],
             const SizedBox(height: Spacing.sp12),
           ],
           SizedBox(

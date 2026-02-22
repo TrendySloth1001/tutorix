@@ -445,9 +445,7 @@ class _SubscriptionDashboardScreenState
   void _openInvoiceDetail(InvoiceModel invoice) {
     Navigator.push(
       context,
-      MaterialPageRoute(
-        builder: (_) => InvoiceDetailScreen(invoice: invoice),
-      ),
+      MaterialPageRoute(builder: (_) => InvoiceDetailScreen(invoice: invoice)),
     );
   }
 
@@ -484,9 +482,7 @@ class _SubscriptionDashboardScreenState
                   ),
                 ),
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: Spacing.sp24,
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: Spacing.sp24),
                   child: Row(
                     children: [
                       Icon(
@@ -512,9 +508,7 @@ class _SubscriptionDashboardScreenState
                   ),
                 ),
                 const SizedBox(height: Spacing.sp8),
-                Divider(
-                  color: cs.outlineVariant.withValues(alpha: 0.2),
-                ),
+                Divider(color: cs.outlineVariant.withValues(alpha: 0.2)),
                 Expanded(
                   child: ListView.separated(
                     controller: scrollCtrl,
