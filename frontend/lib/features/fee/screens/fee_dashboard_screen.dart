@@ -691,11 +691,40 @@ class _CollectionTrendCard extends StatelessWidget {
   final List<FeeMonthlyData> data;
   const _CollectionTrendCard({required this.data});
 
+  List<FeeMonthlyData> _prepareChartData() {
+    // Take last 6 months if more than 6, otherwise use all
+    final items = data.length > 6 ? data.sublist(data.length - 6) : data;
+
+    // Ensure at least 4 months for better visual appearance
+    if (items.length >= 4) return items;
+
+    // Generate missing months to reach 4 months minimum
+    final now = DateTime.now();
+    final needed = 4 - items.length;
+    final padded = <FeeMonthlyData>[];
+
+    // Create empty months working backwards from oldest existing data
+    final existingMonths = items.map((e) => e.month).toSet();
+    var currentDate = items.isNotEmpty
+        ? DateTime.tryParse('${items.first.month}-01') ?? now
+        : now;
+
+    for (int i = 0; i < needed; i++) {
+      currentDate = DateTime(currentDate.year, currentDate.month - 1);
+      final monthStr =
+          '${currentDate.year}-${currentDate.month.toString().padLeft(2, '0')}';
+      if (!existingMonths.contains(monthStr)) {
+        padded.insert(0, FeeMonthlyData(month: monthStr, total: 0, count: 0));
+      }
+    }
+
+    return [...padded, ...items];
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    // Take last 6 months max
-    final items = data.length > 6 ? data.sublist(data.length - 6) : data;
+    final items = _prepareChartData();
     final maxVal = items.fold<double>(0, (a, b) => math.max(a, b.total));
 
     return Container(
