@@ -293,6 +293,10 @@ export class SubscriptionService {
         const sub = await this.getOrCreateSubscription(coachingId);
 
         // ── Option B: Razorpay Payment Link ──────────────────────────
+        // callback_url uses the tutorix:// deep link scheme so the browser
+        // redirects the user straight back into the app after payment.
+        const callbackUrl = `tutorix://subscription/payment-complete?coachingId=${coachingId}`;
+
         const paymentLink = await (razorpay as any).paymentLink.create({
             amount: amountPaise,
             currency: 'INR',
@@ -306,8 +310,8 @@ export class SubscriptionService {
                 planSlug: plan.slug,
                 cycle,
             },
-            // No callback_url — the app polls verifyPaymentLink() after the user
-            // returns from the browser. Razorpay shows its own success page.
+            callback_url: callbackUrl,
+            callback_method: 'get',
         });
 
         const plinkId = paymentLink.id as string;

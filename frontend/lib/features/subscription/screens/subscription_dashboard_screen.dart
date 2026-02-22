@@ -6,6 +6,7 @@ import '../models/subscription_model.dart';
 import '../models/usage_model.dart';
 import '../models/invoice_model.dart';
 import '../services/subscription_service.dart';
+import 'invoice_detail_screen.dart';
 import 'plan_selector_screen.dart';
 
 /// Billing & usage dashboard — shows current plan, resource usage,
@@ -139,12 +140,12 @@ class _SubscriptionDashboardScreenState
                 children: [
                   _buildPlanCard(theme),
                   const SizedBox(height: Spacing.sp24),
-                  _buildUsageSection(theme),
-                  const SizedBox(height: Spacing.sp24),
                   if (_invoices.isNotEmpty) ...[
                     _buildInvoiceSection(theme),
                     const SizedBox(height: Spacing.sp24),
                   ],
+                  _buildUsageSection(theme),
+                  const SizedBox(height: Spacing.sp24),
                   if (widget.isOwner) _buildActions(theme),
                 ],
               ),
@@ -380,11 +381,39 @@ class _SubscriptionDashboardScreenState
   Widget _buildInvoiceSection(ThemeData theme) {
     final cs = theme.colorScheme;
     final df = DateFormat('dd MMM yyyy');
+    // Show max 3 most recent invoices; tap "View All" for the rest
+    final preview = _invoices.take(3).toList();
+    final hasMore = _invoices.length > 3;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _SectionHeader(icon: Icons.receipt_long_rounded, title: 'Invoices'),
+        Row(
+          children: [
+            const _SectionHeader(
+              icon: Icons.receipt_long_rounded,
+              title: 'Billing History',
+            ),
+            const Spacer(),
+            if (hasMore)
+              TextButton(
+                onPressed: () => _showAllInvoices(theme),
+                style: TextButton.styleFrom(
+                  padding: EdgeInsets.zero,
+                  minimumSize: const Size(0, 0),
+                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                ),
+                child: Text(
+                  'View All (${_invoices.length})',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: cs.primary,
+                    fontWeight: FontWeight.w600,
+                    fontSize: FontSize.micro,
+                  ),
+                ),
+              ),
+          ],
+        ),
         const SizedBox(height: Spacing.sp12),
         Container(
           decoration: BoxDecoration(
@@ -394,18 +423,124 @@ class _SubscriptionDashboardScreenState
           ),
           child: Column(
             children: [
-              for (var i = 0; i < _invoices.length; i++) ...[
+              for (var i = 0; i < preview.length; i++) ...[
                 if (i > 0)
                   Divider(
                     height: 1,
                     color: cs.outlineVariant.withValues(alpha: 0.2),
                   ),
-                _InvoiceTile(invoice: _invoices[i], dateFormat: df),
+                _InvoiceTile(
+                  invoice: preview[i],
+                  dateFormat: df,
+                  onTap: () => _openInvoiceDetail(preview[i]),
+                ),
               ],
             ],
           ),
         ),
       ],
+    );
+  }
+
+  void _openInvoiceDetail(InvoiceModel invoice) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => InvoiceDetailScreen(invoice: invoice),
+      ),
+    );
+  }
+
+  void _showAllInvoices(ThemeData theme) {
+    final cs = theme.colorScheme;
+    final df = DateFormat('dd MMM yyyy');
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: cs.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(Radii.xl)),
+      ),
+      builder: (ctx) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          maxChildSize: 0.95,
+          minChildSize: 0.4,
+          expand: false,
+          builder: (_, scrollCtrl) {
+            return Column(
+              children: [
+                // Handle bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: Spacing.sp12),
+                  child: Container(
+                    width: 40,
+                    height: 4,
+                    decoration: BoxDecoration(
+                      color: cs.onSurface.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(Radii.full),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: Spacing.sp24,
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.receipt_long_rounded,
+                        size: 20,
+                        color: cs.primary,
+                      ),
+                      const SizedBox(width: Spacing.sp8),
+                      Text(
+                        'All Transactions',
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '${_invoices.length} records',
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: cs.onSurface.withValues(alpha: 0.4),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: Spacing.sp8),
+                Divider(
+                  color: cs.outlineVariant.withValues(alpha: 0.2),
+                ),
+                Expanded(
+                  child: ListView.separated(
+                    controller: scrollCtrl,
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: Spacing.sp8,
+                    ),
+                    itemCount: _invoices.length,
+                    separatorBuilder: (_, _) => Divider(
+                      height: 1,
+                      color: cs.outlineVariant.withValues(alpha: 0.15),
+                    ),
+                    itemBuilder: (_, i) => _InvoiceTile(
+                      invoice: _invoices[i],
+                      dateFormat: df,
+                      onTap: () {
+                        Navigator.pop(ctx); // close bottom sheet
+                        _openInvoiceDetail(_invoices[i]);
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -630,8 +765,13 @@ class _UsageBar extends StatelessWidget {
 class _InvoiceTile extends StatelessWidget {
   final InvoiceModel invoice;
   final DateFormat dateFormat;
+  final VoidCallback? onTap;
 
-  const _InvoiceTile({required this.invoice, required this.dateFormat});
+  const _InvoiceTile({
+    required this.invoice,
+    required this.dateFormat,
+    this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -645,43 +785,53 @@ class _InvoiceTile extends StatelessWidget {
       _ => (cs.onSurface.withValues(alpha: 0.5), Icons.pending_rounded),
     };
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(
-        horizontal: Spacing.sp16,
-        vertical: Spacing.sp12,
-      ),
-      child: Row(
-        children: [
-          Icon(icon, size: 18, color: color),
-          const SizedBox(width: Spacing.sp12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${_typeLabel(invoice.type)} \u2014 ${invoice.planSlug?.toUpperCase() ?? ''}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(Radii.sm),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(
+          horizontal: Spacing.sp16,
+          vertical: Spacing.sp12,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 18, color: color),
+            const SizedBox(width: Spacing.sp12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${_typeLabel(invoice.type)} \u2014 ${invoice.planSlug?.toUpperCase() ?? ''}',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                Text(
-                  dateFormat.format(invoice.createdAt),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontSize: FontSize.nano,
-                    color: cs.onSurface.withValues(alpha: 0.4),
+                  Text(
+                    dateFormat.format(invoice.createdAt),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      fontSize: FontSize.nano,
+                      color: cs.onSurface.withValues(alpha: 0.4),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Text(
-            '\u20B9${invoice.totalRupees.toStringAsFixed(0)}',
-            style: theme.textTheme.bodyMedium?.copyWith(
-              fontWeight: FontWeight.w600,
-              color: color,
+            Text(
+              '\u20B9${invoice.totalRupees.toStringAsFixed(0)}',
+              style: theme.textTheme.bodyMedium?.copyWith(
+                fontWeight: FontWeight.w600,
+                color: color,
+              ),
             ),
-          ),
-        ],
+            const SizedBox(width: Spacing.sp8),
+            Icon(
+              Icons.chevron_right_rounded,
+              size: 18,
+              color: cs.onSurface.withValues(alpha: 0.3),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -33,6 +35,7 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
   bool _policyAccepted = false;
   bool _isSubscribing = false;
   bool _awaitingPayment = false; // true while user is in the browser paying
+  StreamSubscription<Uri>? _linkSub;
 
   PlanModel get plan => widget.plan;
   bool get yearly => widget.yearly;
@@ -59,10 +62,23 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+
+    // Listen for deep link callbacks (tutorix://subscription/payment-complete)
+    final appLinks = AppLinks();
+    _linkSub = appLinks.uriLinkStream.listen((uri) {
+      if (!mounted || !_awaitingPayment) return;
+      if (uri.scheme == 'tutorix' &&
+          uri.host == 'subscription' &&
+          uri.path.contains('payment-complete')) {
+        _awaitingPayment = false;
+        _verifyPayment();
+      }
+    });
   }
 
   @override
   void dispose() {
+    _linkSub?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
