@@ -244,38 +244,39 @@ class _PlanSelectorScreenState extends State<PlanSelectorScreen> {
     final cs = theme.colorScheme;
     if (_plans.isEmpty) return const SizedBox.shrink();
 
+    // Exclude the Web Portal plan from the comparison table — it's a separate
+    // product and would make the table too wide for no benefit.
+    final comparePlans = _plans.where((p) => !p.isWebPortal).toList();
+    if (comparePlans.isEmpty) return const SizedBox.shrink();
+
     final features = <(String label, List<String> values)>[
-      ('Students', _plans.map((p) => p.formatQuota(p.maxStudents)).toList()),
-      ('Teachers', _plans.map((p) => p.formatQuota(p.maxTeachers)).toList()),
-      ('Batches', _plans.map((p) => p.formatQuota(p.maxBatches)).toList()),
-      ('Storage', _plans.map((p) => p.storageLabel).toList()),
+      ('Students', comparePlans.map((p) => p.formatQuota(p.maxStudents)).toList()),
+      ('Teachers', comparePlans.map((p) => p.formatQuota(p.maxTeachers)).toList()),
+      ('Batches', comparePlans.map((p) => p.formatQuota(p.maxBatches)).toList()),
+      ('Storage', comparePlans.map((p) => p.storageLabel).toList()),
       (
         'Assessments/mo',
-        _plans.map((p) => p.formatQuota(p.maxAssessmentsPerMonth)).toList(),
+        comparePlans.map((p) => p.formatQuota(p.maxAssessmentsPerMonth)).toList(),
       ),
       (
         'Online Pay',
-        _plans.map((p) => p.hasRazorpay ? '\u2713' : '\u2014').toList(),
+        comparePlans.map((p) => p.hasRazorpay ? '\u2713' : '\u2014').toList(),
       ),
       (
         'Auto Remind',
-        _plans.map((p) => p.hasAutoRemind ? '\u2713' : '\u2014').toList(),
+        comparePlans.map((p) => p.hasAutoRemind ? '\u2713' : '\u2014').toList(),
       ),
       (
         'Fee Reports',
-        _plans.map((p) => p.hasFeeReports ? '\u2713' : '\u2014').toList(),
+        comparePlans.map((p) => p.hasFeeReports ? '\u2713' : '\u2014').toList(),
       ),
       (
         'Fee Ledger',
-        _plans.map((p) => p.hasFeeLedger ? '\u2713' : '\u2014').toList(),
+        comparePlans.map((p) => p.hasFeeLedger ? '\u2713' : '\u2014').toList(),
       ),
       (
         'Custom Logo',
-        _plans.map((p) => p.hasCustomLogo ? '\u2713' : '\u2014').toList(),
-      ),
-      (
-        'Web Portal',
-        _plans.map((p) => p.hasWebManagement ? '\u2713' : '\u2014').toList(),
+        comparePlans.map((p) => p.hasCustomLogo ? '\u2713' : '\u2014').toList(),
       ),
     ];
 
@@ -307,7 +308,7 @@ class _PlanSelectorScreenState extends State<PlanSelectorScreen> {
                   defaultVerticalAlignment: TableCellVerticalAlignment.middle,
                   columnWidths: {
                     0: const FixedColumnWidth(90),
-                    for (var i = 0; i < _plans.length; i++)
+                    for (var i = 0; i < comparePlans.length; i++)
                       i + 1: const FixedColumnWidth(72),
                   },
                   children: [
@@ -317,7 +318,7 @@ class _PlanSelectorScreenState extends State<PlanSelectorScreen> {
                       ),
                       children: [
                         _tableCell('', theme, isHeader: true),
-                        for (final plan in _plans)
+                        for (final plan in comparePlans)
                           _tableCell(plan.name, theme, isHeader: true),
                       ],
                     ),
