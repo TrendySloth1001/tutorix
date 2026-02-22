@@ -39,14 +39,14 @@ router.get('/:id/full', coachingController.getFullDetails.bind(coachingControlle
 
 // Invitation routes (protected)
 router.post('/:id/invite/lookup', authMiddleware, invitationController.lookup.bind(invitationController));
-// Quota enforced dynamically — invitation controller resolves the role to check
+// Quota enforced dynamically inside the controller based on the invited role
 router.post('/:id/invite', authMiddleware, invitationController.createInvitation.bind(invitationController));
 router.get('/:id/invitations', authMiddleware, invitationController.getCoachingInvitations.bind(invitationController));
 router.delete('/:id/invitations/:invitationId', authMiddleware, invitationController.cancelInvitation.bind(invitationController));
 
 // Members routes (protected)
 router.get('/:id/members', authMiddleware, coachingController.getMembers.bind(coachingController));
-router.post('/:id/members/ward', authMiddleware, coachingController.addWard.bind(coachingController));
+router.post('/:id/members/ward', authMiddleware, enforceQuota('STUDENT'), coachingController.addWard.bind(coachingController));
 router.delete('/:id/members/:memberId', authMiddleware, coachingController.removeMember.bind(coachingController));
 router.patch('/:id/members/:memberId', authMiddleware, coachingController.updateMemberRole.bind(coachingController));
 router.get('/:id/members/:memberId/academic-history', authMiddleware, coachingController.getMemberAcademicHistory.bind(coachingController));

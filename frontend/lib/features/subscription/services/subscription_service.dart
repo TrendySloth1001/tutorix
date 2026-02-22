@@ -69,13 +69,21 @@ class SubscriptionService {
     return data['message'] as String? ?? 'Subscription cancelled.';
   }
 
-  /// Verify payment after user returns from the Razorpay browser.
-  /// Returns `{status, activated}`. Activates the subscription if paid.
+  /// Verify in-app Razorpay payment with signature verification.
+  /// Returns `{status, activated}`. Activates the subscription if valid.
   Future<({String status, bool activated})> verifyPayment(
-    String coachingId,
-  ) async {
+    String coachingId, {
+    required String razorpayOrderId,
+    required String razorpayPaymentId,
+    required String razorpaySignature,
+  }) async {
     final data = await _api.postAuthenticated(
       ApiConstants.subscriptionVerifyPayment(coachingId),
+      body: {
+        'razorpay_order_id': razorpayOrderId,
+        'razorpay_payment_id': razorpayPaymentId,
+        'razorpay_signature': razorpaySignature,
+      },
     );
     return (
       status: data['status'] as String? ?? 'unknown',
@@ -104,10 +112,11 @@ class SubscriptionService {
   }
 }
 
-/// Result from subscribing — contains Razorpay subscription details.
+/// Result from subscribing — contains Razorpay order details for in-app checkout.
 class SubscribeResult {
   final String subscriptionId;
-  final String shortUrl;
+  final String orderId; // Razorpay order ID for in-app checkout
+  final String key; // Razorpay key ID for checkout
   final String planName;
   final double amount;
   final String cycle;
@@ -118,7 +127,8 @@ class SubscribeResult {
 
   const SubscribeResult({
     required this.subscriptionId,
-    required this.shortUrl,
+    this.orderId = '',
+    this.key = '',
     required this.planName,
     required this.amount,
     required this.cycle,
@@ -131,7 +141,8 @@ class SubscribeResult {
   factory SubscribeResult.fromJson(Map<String, dynamic> json) {
     return SubscribeResult(
       subscriptionId: json['subscriptionId'] as String? ?? '',
-      shortUrl: json['shortUrl'] as String? ?? '',
+      orderId: json['orderId'] as String? ?? '',
+      key: json['key'] as String? ?? '',
       planName: json['planName'] as String? ?? '',
       amount: (json['amount'] as num?)?.toDouble() ?? 0,
       cycle: json['cycle'] as String? ?? 'MONTHLY',

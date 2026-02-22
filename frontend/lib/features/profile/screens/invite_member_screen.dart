@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:tutorix/core/theme/design_tokens.dart';
 import '../../../core/constants/error_strings.dart';
 import '../../../core/utils/error_sanitizer.dart';
+import '../../../shared/services/api_client.dart';
 import '../../../shared/services/invitation_service.dart';
 import '../../../shared/widgets/app_alert.dart';
+import '../../subscription/widgets/feature_gate.dart';
 
 /// Invite member — card-based flow, tuned for cream/olive palette.
 class InviteMemberScreen extends StatefulWidget {
@@ -90,6 +92,24 @@ class _InviteMemberScreenState extends State<InviteMemberScreen> {
       if (mounted) {
         AppAlert.success(context, MemberSuccess.invited);
         Navigator.pop(context, true);
+      }
+    } on ApiException catch (e) {
+      if (mounted && e.isQuotaExceeded) {
+        final resource = switch (e.dimension) {
+          'TEACHER' => 'Teachers',
+          'ADMIN' => 'Admins',
+          'PARENT' => 'Parents',
+          _ => 'Students',
+        };
+        FeatureGate.showQuotaExceeded(
+          context,
+          coachingId: widget.coachingId,
+          resource: resource,
+          current: 0,
+          max: 0,
+        );
+      } else if (mounted) {
+        AppAlert.error(context, e, fallback: MemberErrors.inviteFailed);
       }
     } catch (e) {
       if (mounted) {

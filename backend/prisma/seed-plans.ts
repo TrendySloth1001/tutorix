@@ -41,6 +41,7 @@ interface PlanSeed {
     hasWhatsappNotify: boolean;
     hasCustomLogo: boolean;
     hasWhiteLabel: boolean;
+    hasWebManagement: boolean;
 }
 
 const plans: PlanSeed[] = [
@@ -68,6 +69,7 @@ const plans: PlanSeed[] = [
         hasWhatsappNotify: false,
         hasCustomLogo: false,
         hasWhiteLabel: false,
+        hasWebManagement: false,
     },
     {
         slug: 'basic',
@@ -93,6 +95,7 @@ const plans: PlanSeed[] = [
         hasWhatsappNotify: false,
         hasCustomLogo: false,
         hasWhiteLabel: false,
+        hasWebManagement: false,
     },
     {
         slug: 'standard',
@@ -118,6 +121,7 @@ const plans: PlanSeed[] = [
         hasWhatsappNotify: false,
         hasCustomLogo: true,
         hasWhiteLabel: false,
+        hasWebManagement: false,
     },
     {
         slug: 'premium',
@@ -143,6 +147,7 @@ const plans: PlanSeed[] = [
         hasWhatsappNotify: false,
         hasCustomLogo: true,
         hasWhiteLabel: true,
+        hasWebManagement: true,
     },
 ];
 

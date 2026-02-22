@@ -117,22 +117,30 @@ export class SubscriptionController {
         }
     }
 
-    // POST /coaching/:coachingId/subscription/verify-payment — Verify payment after browser return
+    // POST /coaching/:coachingId/subscription/verify-payment — Verify in-app Razorpay payment
     async verifyPayment(req: Request, res: Response) {
         try {
             const coachingId = req.params.coachingId as string;
             const userId = (req as any).user?.id as string;
             if (!userId) return res.status(401).json({ message: 'Unauthorized' });
 
-            const result = await subscriptionService.verifyPaymentLink(coachingId, userId);
+            const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+            if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+                return res.status(400).json({ message: 'razorpay_order_id, razorpay_payment_id, and razorpay_signature are required' });
+            }
+
+            const result = await subscriptionService.verifySubscriptionPayment(
+                coachingId, userId, razorpay_order_id, razorpay_payment_id, razorpay_signature,
+            );
             res.json(result);
         } catch (error: unknown) {
             const msg = errorMsg(error);
             if (msg.includes('Only the owner')) {
                 return res.status(403).json({ message: msg });
             }
+            const status = (error as any)?.status ?? 500;
             console.error('[SubscriptionController] verifyPayment error:', error);
-            res.status(500).json({ message: msg });
+            res.status(status).json({ message: msg });
         }
     }
 

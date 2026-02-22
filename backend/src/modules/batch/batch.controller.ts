@@ -190,8 +190,12 @@ export class BatchController {
             if (totalSize > 0) {
                 const usage = await batchService.getStorageUsage(coachingId);
                 if (usage.used + totalSize > usage.limit) {
-                    return res.status(413).json({
-                        message: 'Storage limit exceeded',
+                    const usedMB = Math.round(usage.used / (1024 * 1024));
+                    const limitMB = Math.round(usage.limit / (1024 * 1024));
+                    return res.status(402).json({
+                        message: `Storage limit reached (${usedMB}MB / ${limitMB}MB). Upgrade your plan for more storage.`,
+                        code: 'QUOTA_EXCEEDED',
+                        dimension: 'STORAGE',
                         used: usage.used,
                         limit: usage.limit,
                     });

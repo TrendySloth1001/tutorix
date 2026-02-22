@@ -1,3 +1,4 @@
+import crypto from 'crypto';
 import prisma from '../../infra/prisma.js';
 import Razorpay from 'razorpay';
 import { CreditService } from './credit.service.js';
@@ -88,6 +89,12 @@ export class SubscriptionService {
                     currentPeriodEnd: addYears(new Date(), 100), // Free = never expires
                 },
                 include: { plan: true },
+            });
+
+            // Sync coaching storage limit to match the free plan
+            await prisma.coaching.update({
+                where: { id: coachingId },
+                data: { storageLimit: freePlan.storageLimitBytes },
             });
         }
 
@@ -225,6 +232,31 @@ export class SubscriptionService {
                 const count = await prisma.assessment.count({ where: { coachingId, createdAt: { gte: monthStart } } });
                 if (count + increment > plan.maxAssessmentsPerMonth) {
                     return { allowed: false, message: `Monthly assessment limit reached (${plan.maxAssessmentsPerMonth}). Upgrade your plan.` };
+                }
+                return { allowed: true };
+            }
+            case 'PARENT': {
+                if (plan.maxParents === -1) return { allowed: true };
+                const parentCount = await prisma.coachingMember.count({
+                    where: { coachingId, status: 'active', role: 'STUDENT', wardId: { not: null } },
+                });
+                if (parentCount + increment > plan.maxParents) {
+                    return { allowed: false, message: `Parent limit reached (${plan.maxParents}). Upgrade your plan to add more parents.` };
+                }
+                return { allowed: true };
+            }
+            case 'STORAGE': {
+                // increment = file size in bytes
+                const storageCoaching = await prisma.coaching.findUnique({
+                    where: { id: coachingId },
+                    select: { storageUsed: true },
+                });
+                const used = Number(storageCoaching?.storageUsed ?? 0);
+                const limit = Number(plan.storageLimitBytes);
+                if (limit !== -1 && (used + increment) > limit) {
+                    const usedMB = Math.round(used / (1024 * 1024));
+                    const limitMB = Math.round(limit / (1024 * 1024));
+                    return { allowed: false, message: `Storage limit reached (${usedMB}MB / ${limitMB}MB). Upgrade your plan for more storage.` };
                 }
                 return { allowed: true };
             }
@@ -372,16 +404,13 @@ export class SubscriptionService {
             };
         }
 
-        // ── Partial or no credits — create Payment Link ──────────────
-        const callbackUrl = `tutorix://subscription/payment-complete?coachingId=${coachingId}`;
+        // ── Partial or no credits — create Razorpay Order (in-app checkout) ─
+        const receipt = `sub_${sub.id.replace(/-/g, '').slice(0, 12)}_${Date.now()}`;
 
-        const paymentLink = await (razorpay as any).paymentLink.create({
+        const rzpOrder = await razorpay.orders.create({
             amount: netAmountPaise,
             currency: 'INR',
-            accept_partial: false,
-            description: `Tutorix ${plan.name} — ${cycle.toLowerCase()} subscription`,
-            expire_by: Math.floor(Date.now() / 1000) + 86400, // 24-hour expiry
-            reference_id: `${sub.id.replace(/-/g, '').slice(0, 24)}_${Date.now().toString(36)}`,
+            receipt,
             notes: {
                 coachingId,
                 subscriptionId: sub.id,
@@ -389,25 +418,24 @@ export class SubscriptionService {
                 cycle,
                 creditAppliedPaise: creditAppliedPaise.toString(),
                 originalAmountPaise: amountPaise.toString(),
+                type: 'subscription',
             },
-            callback_url: callbackUrl,
-            callback_method: 'get',
         });
 
-        const plinkId = paymentLink.id as string;
-        const shortUrl = paymentLink.short_url as string;
+        const orderId = rzpOrder.id as string;
 
-        // Store payment link ID on the subscription for webhook lookup
+        // Store order ID on the subscription for lookup during verification
         await prisma.subscription.update({
             where: { id: sub.id },
-            data: { razorpaySubscriptionId: plinkId },
+            data: { razorpaySubscriptionId: orderId },
         });
 
-        console.log(`[SubscriptionService] Payment link created: ${plinkId} for coaching ${coachingId} (credits: \u20B9${(creditAppliedPaise / 100).toFixed(2)})`);
+        console.log(`[SubscriptionService] Razorpay order created: ${orderId} for coaching ${coachingId} (credits: \u20B9${(creditAppliedPaise / 100).toFixed(2)})`);
 
         return {
-            subscriptionId: plinkId,
-            shortUrl,
+            subscriptionId: sub.id,
+            orderId,
+            key: RAZORPAY_KEY_ID,
             planName: plan.name,
             amount,
             cycle,
@@ -649,15 +677,21 @@ export class SubscriptionService {
     }
 
     /**
-     * Verify a pending payment link by fetching its current status from Razorpay.
+     * Verify Razorpay in-app payment after checkout completes on client.
      *
-     * Called by the frontend after the user returns from the payment browser.
-     * If the payment link is paid, activates the subscription (same logic as webhook).
-     *
-     * Returns { status, activated } so the frontend knows the outcome.
+     * Uses HMAC SHA256 signature verification (same as fee payment verification).
+     * Activates the subscription and creates an invoice record.
+     * If credits were applied at purchase time, redeems them now.
      */
-    async verifyPaymentLink(coachingId: string, userId: string): Promise<{ status: string; activated: boolean }> {
+    async verifySubscriptionPayment(
+        coachingId: string,
+        userId: string,
+        razorpay_order_id: string,
+        razorpay_payment_id: string,
+        razorpay_signature: string,
+    ): Promise<{ status: string; activated: boolean }> {
         if (!razorpay) throw new Error('Razorpay not configured');
+        if (!RAZORPAY_KEY_SECRET) throw new Error('Payment configuration error');
 
         const coaching = await prisma.coaching.findUnique({
             where: { id: coachingId },
@@ -677,32 +711,107 @@ export class SubscriptionService {
             return { status: 'paid', activated: true };
         }
 
-        const plinkId = sub.razorpaySubscriptionId;
-        if (!plinkId || !plinkId.startsWith('plink_')) {
-            return { status: 'no_pending_payment', activated: false };
+        // ── Signature Verification (timing-safe) ────────────────────
+        const body = razorpay_order_id + '|' + razorpay_payment_id;
+        const expectedSignature = crypto
+            .createHmac('sha256', RAZORPAY_KEY_SECRET)
+            .update(body)
+            .digest('hex');
+
+        const sigBuffer = Buffer.from(razorpay_signature, 'hex');
+        const expectedBuffer = Buffer.from(expectedSignature, 'hex');
+        if (sigBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(sigBuffer, expectedBuffer)) {
+            throw Object.assign(new Error('Payment verification failed — invalid signature'), { status: 400 });
         }
 
-        // Fetch payment link from Razorpay
-        const plink = await (razorpay as any).paymentLink.fetch(plinkId);
-        const plinkStatus = plink.status as string; // created | paid | expired | cancelled
-
-        console.log(`[SubscriptionService] Payment link ${plinkId} status: ${plinkStatus}`);
-
-        if (plinkStatus === 'paid') {
-            // Check if already processed (idempotency)
-            const alreadyInvoiced = await prisma.subscriptionInvoice.findFirst({
-                where: { notes: { contains: plinkId } },
-            });
-            if (!alreadyInvoiced) {
-                // Extract details from notes and activate
-                const payments = plink.payments ?? [];
-                const lastPayment = payments[payments.length - 1] ?? {};
-                await this.handlePaymentLinkPaid(plink, lastPayment);
-            }
+        // ── Idempotency — don't process same payment twice ──────────
+        const existing = await prisma.subscriptionInvoice.findUnique({
+            where: { razorpayPaymentId: razorpay_payment_id },
+        });
+        if (existing) {
             return { status: 'paid', activated: true };
         }
 
-        return { status: plinkStatus, activated: false };
+        // ── Cross-verify payment amount with Razorpay ───────────────
+        const rzpPayment = await razorpay.payments.fetch(razorpay_payment_id);
+        if (rzpPayment.status !== 'captured') {
+            throw Object.assign(new Error(`Payment not captured (status: ${rzpPayment.status})`), { status: 400 });
+        }
+
+        // ── Extract order notes for plan details ────────────────────
+        const rzpOrder = await razorpay.orders.fetch(razorpay_order_id);
+        const notes = (rzpOrder.notes ?? {}) as Record<string, string>;
+        const planSlug = notes.planSlug ?? '';
+        const cycle = (notes.cycle as 'MONTHLY' | 'YEARLY') ?? 'MONTHLY';
+        const creditAppliedPaise = parseInt(notes.creditAppliedPaise || '0', 10);
+        const originalAmountPaise = parseInt(notes.originalAmountPaise || '0', 10);
+
+        const plan = await prisma.plan.findUnique({ where: { slug: planSlug } });
+        if (!plan) throw new Error(`Plan not found: ${planSlug}`);
+
+        const paidAmountPaise = (rzpPayment.amount as number) ?? 0;
+        const fullAmountPaise = originalAmountPaise || (paidAmountPaise + creditAppliedPaise);
+
+        // ── Redeem credits if any were applied at purchase time ──────
+        if (creditAppliedPaise > 0) {
+            const creditService = new CreditService();
+            await creditService.redeemCredit(coaching.ownerId, creditAppliedPaise, sub.id);
+            console.log(`[SubscriptionService] Redeemed \u20B9${(creditAppliedPaise / 100).toFixed(2)} credits for coaching ${coachingId}`);
+        }
+
+        const now = new Date();
+        const periodEnd = cycle === 'YEARLY' ? addYears(now, 1) : addMonths(now, 1);
+
+        const invoiceNotes: string[] = [`Order: ${razorpay_order_id}`];
+        if (creditAppliedPaise > 0) {
+            invoiceNotes.push(`Credits Applied: \u20B9${(creditAppliedPaise / 100).toFixed(2)}`);
+        }
+
+        await prisma.$transaction([
+            prisma.subscription.update({
+                where: { id: sub.id },
+                data: {
+                    planId: plan.id,
+                    billingCycle: cycle,
+                    status: 'ACTIVE',
+                    currentPeriodStart: now,
+                    currentPeriodEnd: periodEnd,
+                    lastPaymentAt: now,
+                    lastPaymentAmount: fullAmountPaise / 100,
+                    failedPaymentCount: 0,
+                    cancelledAt: null,
+                    pausedAt: null,
+                    gracePeriodEndsAt: null,
+                    pastDueAt: null,
+                    scheduledPlanId: null,
+                    scheduledCycle: null,
+                },
+            }),
+            prisma.subscriptionInvoice.create({
+                data: {
+                    subscriptionId: sub.id,
+                    razorpayPaymentId: razorpay_payment_id,
+                    amountPaise: fullAmountPaise,
+                    creditAppliedPaise,
+                    totalPaise: paidAmountPaise,
+                    status: 'PAID',
+                    type: sub.lastPaymentAt ? 'RENEWAL' : 'INITIAL',
+                    paidAt: now,
+                    planSlug: plan.slug,
+                    billingCycle: cycle,
+                    notes: invoiceNotes.join(' | '),
+                },
+            }),
+        ]);
+
+        // Update coaching storage limit based on new plan
+        await prisma.coaching.update({
+            where: { id: coachingId },
+            data: { storageLimit: plan.storageLimitBytes },
+        });
+
+        console.log(`[SubscriptionService] Activated ${planSlug}/${cycle} for coaching ${coachingId} via in-app payment ${razorpay_payment_id}`);
+        return { status: 'paid', activated: true };
     }
 
     /* ── OPTION A — Razorpay Subscription Webhook Handlers ─────────────────────

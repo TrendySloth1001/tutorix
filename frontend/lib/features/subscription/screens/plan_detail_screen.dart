@@ -1,8 +1,7 @@
 import 'dart:async';
-import 'package:app_links/app_links.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'package:razorpay_flutter/razorpay_flutter.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../models/plan_model.dart';
@@ -12,7 +11,7 @@ import '../services/subscription_service.dart';
 ///
 /// Shows full feature breakdown, a mandatory purchase-policy acceptance
 /// checkbox, and a confirmation bottom sheet before initiating the
-/// Razorpay checkout flow.
+/// in-app Razorpay checkout flow.
 class PlanDetailScreen extends StatefulWidget {
   final PlanModel plan;
   final String coachingId;
@@ -29,13 +28,14 @@ class PlanDetailScreen extends StatefulWidget {
   State<PlanDetailScreen> createState() => _PlanDetailScreenState();
 }
 
-class _PlanDetailScreenState extends State<PlanDetailScreen>
-    with WidgetsBindingObserver {
+class _PlanDetailScreenState extends State<PlanDetailScreen> {
   final _service = SubscriptionService.instance;
   bool _policyAccepted = false;
   bool _isSubscribing = false;
-  bool _awaitingPayment = false; // true while user is in the browser paying
-  StreamSubscription<Uri>? _linkSub;
+
+  Razorpay? _razorpay;
+  Completer<PaymentSuccessResponse>? _activeCompleter;
+  static const _checkoutTimeout = Duration(minutes: 10);
 
   double _creditBalanceRupees = 0; // available credits loaded on init
   bool _creditsLoaded = false;
@@ -64,38 +64,22 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addObserver(this);
-
-    // Load user's credit balance
     _loadCredits();
-
-    // Listen for deep link callbacks (tutorix://subscription/payment-complete)
-    final appLinks = AppLinks();
-    _linkSub = appLinks.uriLinkStream.listen((uri) {
-      if (!mounted || !_awaitingPayment) return;
-      if (uri.scheme == 'tutorix' &&
-          uri.host == 'subscription' &&
-          uri.path.contains('payment-complete')) {
-        _awaitingPayment = false;
-        _verifyPayment();
-      }
-    });
   }
 
   @override
   void dispose() {
-    _linkSub?.cancel();
-    WidgetsBinding.instance.removeObserver(this);
+    _disposeRazorpay();
     super.dispose();
   }
 
-  @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    // When the user returns from the payment browser, verify payment.
-    if (state == AppLifecycleState.resumed && _awaitingPayment) {
-      _awaitingPayment = false;
-      _verifyPayment();
+  void _disposeRazorpay() {
+    if (_activeCompleter != null && !_activeCompleter!.isCompleted) {
+      _activeCompleter!.completeError(Exception('Screen disposed'));
     }
+    _activeCompleter = null;
+    _razorpay?.clear();
+    _razorpay = null;
   }
 
   Future<void> _loadCredits() async {
@@ -149,79 +133,114 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
         return;
       }
 
-      final uri = Uri.parse(result.shortUrl);
-      final canOpen = await canLaunchUrl(uri);
+      // ── Open in-app Razorpay checkout ──────────────────────────
+      final paymentResponse = await _openRazorpayCheckout(
+        orderId: result.orderId,
+        key: result.key,
+        amountPaise: (result.netAmount * 100).round(),
+        planName: result.planName,
+      );
       if (!mounted) return;
 
-      if (canOpen) {
-        _awaitingPayment = true;
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-        // Don't pop — wait for user to return, then verify in didChangeAppLifecycleState
+      // ── Verify payment with backend ────────────────────────────
+      setState(() => _isSubscribing = true);
+      final verifyResult = await _service.verifyPayment(
+        widget.coachingId,
+        razorpayOrderId: paymentResponse.orderId!,
+        razorpayPaymentId: paymentResponse.paymentId!,
+        razorpaySignature: paymentResponse.signature!,
+      );
+      if (!mounted) return;
+
+      if (verifyResult.activated) {
+        AppAlert.success(context, 'Payment successful! Plan activated.');
+        Navigator.of(context).pop(true);
       } else {
-        AppAlert.error(context, 'Could not open payment page');
+        AppAlert.error(
+          context,
+          'Payment verification failed. Please contact support.',
+        );
       }
     } catch (e) {
       if (!mounted) return;
-      AppAlert.error(context, e, fallback: 'Failed to start subscription');
+      final msg = e.toString();
+      // Don't show error for user cancellation
+      if (!msg.contains('cancelled') && !msg.contains('disposed')) {
+        AppAlert.error(context, e, fallback: 'Failed to complete subscription');
+      }
     } finally {
       if (mounted) setState(() => _isSubscribing = false);
     }
   }
 
-  /// Called when the user returns from the payment browser.
-  /// Polls the backend to check if payment completed, then pops with result.
-  Future<void> _verifyPayment() async {
-    if (!mounted) return;
-    setState(() => _isSubscribing = true);
-
-    try {
-      // Give Razorpay a moment to process
-      await Future.delayed(const Duration(seconds: 1));
-
-      // Poll up to 3 times with 2-second gaps
-      for (var attempt = 0; attempt < 3; attempt++) {
-        if (!mounted) return;
-
-        final result = await _service.verifyPayment(widget.coachingId);
-
-        if (result.activated) {
-          if (!mounted) return;
-          AppAlert.success(context, 'Payment successful! Plan activated.');
-          Navigator.of(context).pop(true);
-          return;
-        }
-
-        if (result.status == 'expired' || result.status == 'cancelled') {
-          if (!mounted) return;
-          AppAlert.error(
-            context,
-            'Payment link ${result.status}. Please try again.',
-          );
-          setState(() => _isSubscribing = false);
-          return;
-        }
-
-        // Still pending — wait and retry
-        if (attempt < 2) {
-          await Future.delayed(const Duration(seconds: 2));
-        }
-      }
-
-      // After 3 attempts, still not paid
-      if (!mounted) return;
-      AppAlert.info(
-        context,
-        title: 'Payment Processing',
-        message:
-            'Payment is being processed. It may take a few moments. '
-            'Please check back shortly.',
-      );
-    } catch (e) {
-      if (!mounted) return;
-      AppAlert.error(context, e, fallback: 'Could not verify payment');
-    } finally {
-      if (mounted) setState(() => _isSubscribing = false);
+  /// Opens the Razorpay in-app checkout. Returns payment response on success.
+  Future<PaymentSuccessResponse> _openRazorpayCheckout({
+    required String orderId,
+    required String key,
+    required int amountPaise,
+    required String planName,
+  }) async {
+    // Cancel any previous active checkout
+    if (_activeCompleter != null && !_activeCompleter!.isCompleted) {
+      _activeCompleter!.completeError(Exception('New checkout started'));
     }
+
+    _razorpay ??= Razorpay();
+
+    final completer = Completer<PaymentSuccessResponse>();
+    _activeCompleter = completer;
+
+    _razorpay!.on(Razorpay.EVENT_PAYMENT_SUCCESS, (
+      PaymentSuccessResponse response,
+    ) {
+      if (!completer.isCompleted) completer.complete(response);
+    });
+
+    _razorpay!.on(Razorpay.EVENT_PAYMENT_ERROR, (
+      PaymentFailureResponse response,
+    ) {
+      if (!completer.isCompleted) {
+        final raw = response.message;
+        final isBlank =
+            raw == null || raw.isEmpty || raw == 'null' || raw == 'undefined';
+        final msg = isBlank
+            ? (response.code == 0 ? 'Payment cancelled' : 'Payment failed')
+            : raw;
+        completer.completeError(Exception(msg));
+      }
+    });
+
+    _razorpay!.on(Razorpay.EVENT_EXTERNAL_WALLET, (
+      ExternalWalletResponse response,
+    ) {
+      if (!completer.isCompleted) {
+        completer.completeError(
+          Exception(
+            'Payment is being processed via ${response.walletName ?? 'external wallet'}. You will be notified once confirmed.',
+          ),
+        );
+      }
+    });
+
+    final options = {
+      'key': key,
+      'amount': amountPaise,
+      'currency': 'INR',
+      'name': 'Tutorix',
+      'description': '$planName Subscription',
+      'order_id': orderId,
+      'theme': {'color': '#3D4F2F'},
+    };
+
+    _razorpay!.open(options);
+
+    return completer.future.timeout(
+      _checkoutTimeout,
+      onTimeout: () => throw TimeoutException(
+        'Payment checkout timed out',
+        _checkoutTimeout,
+      ),
+    );
   }
 
   Future<bool?> _showConfirmationSheet() {
@@ -339,7 +358,7 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
 
                 Text(
                   netAmount > 0
-                      ? 'You will be redirected to Razorpay to complete payment. '
+                      ? 'Razorpay checkout will open for secure payment. '
                             'Your subscription will activate once payment is confirmed.'
                       : 'Your available credits will cover the full amount. '
                             'No payment required — the plan will activate instantly.',
@@ -721,6 +740,7 @@ class _PlanDetailScreenState extends State<PlanDetailScreen>
       ('WhatsApp Notifications', plan.hasWhatsappNotify),
       ('Custom Branding / Logo', plan.hasCustomLogo),
       ('White Label Solution', plan.hasWhiteLabel),
+      ('Web Management Portal', plan.hasWebManagement),
     ];
 
     return Container(

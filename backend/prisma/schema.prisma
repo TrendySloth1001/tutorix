@@ -1259,6 +1259,7 @@ model Plan {
   hasWhatsappNotify Boolean @default(false)
   hasCustomLogo     Boolean @default(false)
   hasWhiteLabel     Boolean @default(false)
+  hasWebManagement  Boolean @default(false)
 
   // Relations
   subscriptions Subscription[]

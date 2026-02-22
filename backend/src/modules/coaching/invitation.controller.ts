@@ -1,8 +1,10 @@
 import type { Request, Response } from 'express';
 import { InvitationService } from './invitation.service.js';
+import { SubscriptionService } from '../subscription/subscription.service.js';
 import prisma from '../../infra/prisma.js';
 
 const invitationService = new InvitationService();
+const subscriptionService = new SubscriptionService();
 
 /**
  * Check if user has permission to invite (owner, admin, or teacher)
@@ -82,6 +84,20 @@ export class InvitationController {
             // Must have at least one target identifier
             if (!userId && !wardId && !invitePhone && !inviteEmail) {
                 return res.status(400).json({ error: 'At least one target (userId, wardId, phone, or email) is required' });
+            }
+
+            // ── Quota enforcement based on role ──────────────────────
+            const quotaDimension = role === 'TEACHER' ? 'TEACHER'
+                : role === 'ADMIN' ? 'ADMIN'
+                : wardId ? 'PARENT'
+                : 'STUDENT';
+            const quotaResult = await subscriptionService.checkQuota(coachingId, quotaDimension);
+            if (!quotaResult.allowed) {
+                return res.status(402).json({
+                    error: quotaResult.message,
+                    code: 'QUOTA_EXCEEDED',
+                    dimension: quotaDimension,
+                });
             }
 
             const invitation = await invitationService.createInvitation({

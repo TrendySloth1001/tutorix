@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
+import '../../../shared/services/api_client.dart';
 import '../../../shared/widgets/app_alert.dart';
+import '../../subscription/widgets/feature_gate.dart';
 import '../services/assessment_service.dart';
 
 /// Screen for teachers to create an assessment with questions.
@@ -175,6 +177,18 @@ class _CreateAssessmentScreenState extends State<CreateAssessmentScreen> {
       );
 
       if (mounted) Navigator.pop(context, true);
+    } on ApiException catch (e) {
+      if (mounted && e.isQuotaExceeded) {
+        FeatureGate.showQuotaExceeded(
+          context,
+          coachingId: widget.coachingId,
+          resource: 'Assessments',
+          current: 0,
+          max: 0,
+        );
+      } else if (mounted) {
+        AppAlert.error(context, e, fallback: AssessmentErrors.createFailed);
+      }
     } catch (e) {
       if (mounted) {
         AppAlert.error(context, e, fallback: AssessmentErrors.createFailed);

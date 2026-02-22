@@ -3,8 +3,10 @@ import 'package:flutter/material.dart';
 import '../../../core/constants/error_strings.dart';
 import '../../../core/theme/design_tokens.dart';
 import '../../../core/services/error_logger_service.dart';
+import '../../../shared/services/api_client.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
+import '../../subscription/widgets/feature_gate.dart';
 import '../services/batch_service.dart';
 
 /// Screen to create a new note with multiple file attachments.
@@ -34,9 +36,9 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
   // Multi-file state with descriptions
   final List<_FileWithDescription> _pickedFiles = [];
 
-  // Storage
+  // Storage — default to 0 so we block until real limit is fetched
   int _storageUsed = 0;
-  int _storageLimit = 524288000; // 500 MB default
+  int _storageLimit = 0;
   bool _storageLoaded = false;
 
   late AnimationController _animCtrl;
@@ -71,7 +73,7 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
       if (!mounted) return;
       setState(() {
         _storageUsed = (data['used'] as num?)?.toInt() ?? 0;
-        _storageLimit = (data['limit'] as num?)?.toInt() ?? 524288000;
+        _storageLimit = (data['limit'] as num?)?.toInt() ?? 0;
         _storageLoaded = true;
       });
     } catch (e) {
@@ -146,8 +148,14 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
   Future<void> _save() async {
     if (!_formKey.currentState!.validate()) return;
     if (_exceedsStorage) {
-      _showError(
-        'Not enough storage space. Remove some files or free up space.',
+      final limitMB = (_storageLimit / (1024 * 1024)).round();
+      final usedMB = (_storageUsed / (1024 * 1024)).round();
+      FeatureGate.showQuotaExceeded(
+        context,
+        coachingId: widget.coaching.id,
+        resource: 'Storage (MB)',
+        current: usedMB,
+        max: limitMB,
       );
       return;
     }
@@ -194,15 +202,22 @@ class _CreateNoteScreenState extends State<CreateNoteScreen>
         attachments: attachments,
       );
       if (mounted) Navigator.pop(context, true);
+    } on ApiException catch (e) {
+      if (mounted && e.isQuotaExceeded) {
+        FeatureGate.showQuotaExceeded(
+          context,
+          coachingId: widget.coaching.id,
+          resource: 'Storage',
+          current: (_storageUsed / (1024 * 1024)).round(),
+          max: (_storageLimit / (1024 * 1024)).round(),
+        );
+      } else if (mounted) {
+        AppAlert.error(context, e, fallback: NoteErrors.saveFailed);
+      }
     } catch (e) {
       if (mounted) AppAlert.error(context, e, fallback: NoteErrors.saveFailed);
     }
     if (mounted) setState(() => _isSaving = false);
-  }
-
-  void _showError(String msg) {
-    if (!mounted) return;
-    AppAlert.error(context, msg);
   }
 
   String _formatBytes(int bytes) {

@@ -30,6 +30,7 @@ class PlanModel {
   final bool hasWhatsappNotify;
   final bool hasCustomLogo;
   final bool hasWhiteLabel;
+  final bool hasWebManagement;
 
   const PlanModel({
     required this.id,
@@ -56,6 +57,7 @@ class PlanModel {
     this.hasWhatsappNotify = false,
     this.hasCustomLogo = false,
     this.hasWhiteLabel = false,
+    this.hasWebManagement = false,
   });
 
   bool get isFree => slug == 'free';
@@ -94,6 +96,7 @@ class PlanModel {
       if (hasWhatsappNotify) 'WhatsApp',
       if (hasCustomLogo) 'Custom Logo',
       if (hasWhiteLabel) 'White Label',
+      if (hasWebManagement) 'Web Management',
     ];
   }
 
@@ -124,6 +127,7 @@ class PlanModel {
       hasWhatsappNotify: json['hasWhatsappNotify'] as bool? ?? false,
       hasCustomLogo: json['hasCustomLogo'] as bool? ?? false,
       hasWhiteLabel: json['hasWhiteLabel'] as bool? ?? false,
+      hasWebManagement: json['hasWebManagement'] as bool? ?? false,
     );
   }
 }

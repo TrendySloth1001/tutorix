@@ -332,7 +332,12 @@ class ApiClient {
         data['message'] ??
         data['error'] ??
         'Request failed (${response.statusCode})';
-    throw Exception(message);
+    throw ApiException(
+      message.toString(),
+      statusCode: response.statusCode,
+      code: data['code'] as String?,
+      dimension: data['dimension'] as String?,
+    );
   }
 
   dynamic _handleResponseRaw(http.Response response) {
@@ -342,9 +347,41 @@ class ApiClient {
       return data;
     }
 
-    final message = data is Map
-        ? (data['message'] ?? 'Request failed (${response.statusCode})')
-        : 'Request failed (${response.statusCode})';
-    throw Exception(message);
+    if (data is Map) {
+      final message =
+          data['message'] ?? 'Request failed (${response.statusCode})';
+      throw ApiException(
+        message.toString(),
+        statusCode: response.statusCode,
+        code: data['code'] as String?,
+        dimension: data['dimension'] as String?,
+      );
+    }
+    throw ApiException(
+      'Request failed (${response.statusCode})',
+      statusCode: response.statusCode,
+    );
   }
+}
+
+/// Exception thrown by [ApiClient] on non-2xx responses.
+/// Preserves status code and optional error code from the backend.
+class ApiException implements Exception {
+  final String message;
+  final int statusCode;
+  final String? code;
+  final String? dimension;
+
+  const ApiException(
+    this.message, {
+    required this.statusCode,
+    this.code,
+    this.dimension,
+  });
+
+  /// Whether this is a quota-exceeded error (HTTP 402 + QUOTA_EXCEEDED code).
+  bool get isQuotaExceeded => statusCode == 402 && code == 'QUOTA_EXCEEDED';
+
+  @override
+  String toString() => message;
 }

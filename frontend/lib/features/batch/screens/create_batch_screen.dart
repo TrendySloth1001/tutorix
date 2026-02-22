@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import '../../../core/constants/error_strings.dart';
+import '../../../shared/services/api_client.dart';
 import '../../../shared/widgets/app_alert.dart';
 import '../../coaching/models/coaching_model.dart';
+import '../../subscription/widgets/feature_gate.dart';
 import '../models/batch_model.dart';
 import '../services/batch_service.dart';
 import '../../../core/theme/design_tokens.dart';
@@ -159,6 +161,18 @@ class _CreateBatchScreenState extends State<CreateBatchScreen>
         );
       }
       if (mounted) Navigator.pop(context, true);
+    } on ApiException catch (e) {
+      if (mounted && e.isQuotaExceeded) {
+        FeatureGate.showQuotaExceeded(
+          context,
+          coachingId: widget.coaching.id,
+          resource: e.dimension == 'BATCH' ? 'Batches' : 'Resources',
+          current: 0,
+          max: 0,
+        );
+      } else if (mounted) {
+        AppAlert.error(context, e, fallback: BatchErrors.saveFailed);
+      }
     } catch (e) {
       if (mounted) {
         AppAlert.error(context, e, fallback: BatchErrors.saveFailed);
